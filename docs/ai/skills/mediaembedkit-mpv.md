@@ -52,6 +52,7 @@
 
 ```powershell
 dotnet format .\MediaEmbedKit.Mpv.slnx --no-restore
+dotnet run --project .\tests\MediaEmbedKit.Mpv.Tests\MediaEmbedKit.Mpv.Tests.csproj
 dotnet build .\MediaEmbedKit.Mpv.slnx
 ```
 

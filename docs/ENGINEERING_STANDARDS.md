@@ -78,9 +78,16 @@ Visual Studio 原始碼、MSBuild、XAML 與 manifest 相關檔案必須使用 U
 
 ```powershell
 dotnet format .\MediaEmbedKit.Mpv.slnx --no-restore
+dotnet run --project .\tests\MediaEmbedKit.Mpv.Tests\MediaEmbedKit.Mpv.Tests.csproj
 dotnet build .\MediaEmbedKit.Mpv.slnx
 ```
 
 若清除 `obj` 後缺少 `project.assets.json`，請先執行不帶 `--no-restore` 的建置或 `dotnet restore .\MediaEmbedKit.Mpv.slnx`，再執行 `dotnet format --no-restore`。WinUI 3 與 MAUI Windows 範例是 app 專案，可使用 Windows App SDK self-contained 部署與 `win-x64` RID；class library 專案不得設定 `WindowsAppSDKSelfContained`。
 
 播放驗證需要平台相符的 libmpv 原生程式庫。URL 播放需要 yt-dlp 可被 mpv 找到，或透過 `MpvPlayerOptions.YtdlpPath` 指定。
+
+需要確認範例實際播放時，執行播放冒煙測試：
+
+```powershell
+dotnet run --project .\tests\MediaEmbedKit.Mpv.PlaybackSmoke\MediaEmbedKit.Mpv.PlaybackSmoke.csproj -- --seconds 20
+```

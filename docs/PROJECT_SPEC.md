@@ -57,6 +57,7 @@
 - WinUI 3/MAUI Windows：Windows HWND 後端；WinUI HWND 路線內建 AirSpace 覆蓋層。
 - design-time 支援：WinForms Designer、WPF XAML Designer、WinUI 3 XAML 載入、MAUI Windows handler 與 Avalonia previewer 皆避免初始化 libmpv，並顯示替代預覽內容或安全控制項。
 - Windows x64 runtime helper：libmpv、yt-dlp 與 Deno 下載、更新、同層資料夾配置，以及 yt-dlp/Deno 處理序輸出事件執行器。
+- 測試入口：`tests/MediaEmbedKit.Mpv.Tests` 提供不需原生執行階段的核心 API 測試，`tests/MediaEmbedKit.Mpv.PlaybackSmoke` 提供啟動範例並等待實際播放的冒煙測試執行器。
 
 目前不得宣稱完成：
 
@@ -71,6 +72,7 @@ libmpv C API wrapper 可宣稱已完成 stable v0.41.0 公開 C API 的包裝覆
 
 ```powershell
 dotnet format .\MediaEmbedKit.Mpv.slnx --no-restore
+dotnet run --project .\tests\MediaEmbedKit.Mpv.Tests\MediaEmbedKit.Mpv.Tests.csproj
 dotnet build .\MediaEmbedKit.Mpv.slnx
 ```
 

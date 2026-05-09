@@ -105,6 +105,22 @@ player.LoadFile("appmedia://sample");
 
 WinUI 3 與 MAUI Windows 範例是未封裝 app，範例專案會使用 Windows App SDK self-contained 部署設定與 `win-x64` RID，讓建置輸出帶著所需的 Windows App SDK 相依項目。此設定僅適用於範例 app，不套用到 class library 套件。
 
+## 測試
+
+不需原生執行階段的核心 API 測試：
+
+```powershell
+dotnet run --project .\tests\MediaEmbedKit.Mpv.Tests\MediaEmbedKit.Mpv.Tests.csproj
+```
+
+需要 GUI、網路與 Windows x64 執行階段的範例播放冒煙測試：
+
+```powershell
+dotnet run --project .\tests\MediaEmbedKit.Mpv.PlaybackSmoke\MediaEmbedKit.Mpv.PlaybackSmoke.csproj -- --seconds 20
+```
+
+播放冒煙測試會啟動各範例應用程式，並等待影片實際播放到指定秒數後關閉。第一次執行可能需要由 sample helper 下載 `libmpv-2.dll`、`yt-dlp.exe` 與 `deno.exe`。
+
 ## 文件與註解規範
 
 所有 `.cs` 檔案的型別與成員註解需使用 C# XML 文件註解。註解文字只能使用正體中文，優先採用 Microsoft 在地化慣用詞，其次採用臺灣地區常見技術用語；不得使用簡體中文或中國大陸慣用詞。
@@ -127,5 +143,6 @@ WinUI 3 與 MAUI Windows 範例是未封裝 app，範例專案會使用 Windows 
 
 ```powershell
 dotnet format .\MediaEmbedKit.Mpv.slnx --no-restore
+dotnet run --project .\tests\MediaEmbedKit.Mpv.Tests\MediaEmbedKit.Mpv.Tests.csproj
 dotnet build .\MediaEmbedKit.Mpv.slnx
 ```

@@ -34,6 +34,17 @@
     <Project Path="samples/MauiSample/MediaEmbedKit.Mpv.Samples.Maui.csproj" />
     <File Path="samples/MauiSample/README.md" />
   </Folder>
+  <Folder Name="/測試 (tests)/">
+    <File Path="tests/README.md" />
+  </Folder>
+  <Folder Name="/測試 (tests)/核心 API/">
+    <Project Path="tests/MediaEmbedKit.Mpv.Tests/MediaEmbedKit.Mpv.Tests.csproj" />
+    <File Path="tests/MediaEmbedKit.Mpv.Tests/README.md" />
+  </Folder>
+  <Folder Name="/測試 (tests)/播放冒煙測試/">
+    <Project Path="tests/MediaEmbedKit.Mpv.PlaybackSmoke/MediaEmbedKit.Mpv.PlaybackSmoke.csproj" />
+    <File Path="tests/MediaEmbedKit.Mpv.PlaybackSmoke/README.md" />
+  </Folder>
   <Folder Name="/範例 (samples)/WinFormsSample/">
     <Project Path="samples/WinFormsSample/MediaEmbedKit.Mpv.Samples.WinForms.csproj" />
     <File Path="samples/WinFormsSample/README.md" />

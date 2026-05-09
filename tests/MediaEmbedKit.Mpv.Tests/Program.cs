@@ -1,0 +1,309 @@
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading.Tasks;
+using MediaEmbedKit.Mpv.Downloads;
+
+namespace MediaEmbedKit.Mpv.Tests
+{
+    /// <summary>
+    /// 執行不需要原生 libmpv 的核心 API 驗證。
+    /// </summary>
+    internal static class Program
+    {
+        /// <summary>
+        /// 測試執行進入點。
+        /// </summary>
+        /// <param name="args">命令列引數；目前未使用。</param>
+        /// <returns>所有測試通過時傳回 0，否則傳回 1。</returns>
+        private static async Task<int> Main(string[] args)
+        {
+            _ = args;
+            TestRunner runner = new TestRunner();
+            runner.Add("yt-dlp 格式預設值對應", VerifyYtdlpFormatPresets);
+            runner.Add("yt-dlp 格式參數驗證", VerifyYtdlpFormatValidation);
+            runner.Add("外部工具命令列引數格式化", VerifyExternalToolArgumentFormatting);
+            runner.Add("播放器選項預設值", VerifyPlayerOptionDefaults);
+            runner.Add("執行階段來源 catalog 收斂", VerifyRuntimeCatalogs);
+            runner.Add("未知平台安裝不觸發下載", VerifyUnknownPlatformInstallAsync);
+            runner.Add("Windows 執行階段播放器選項", VerifyWindowsRuntimePlayerOptions);
+
+            await runner.RunAsync().ConfigureAwait(false);
+            return runner.FailedCount == 0 ? 0 : 1;
+        }
+
+        /// <summary>
+        /// 驗證常用 yt-dlp 格式預設值會轉換成固定 selector。
+        /// </summary>
+        /// <returns>代表測試流程的工作。</returns>
+        private static Task VerifyYtdlpFormatPresets()
+        {
+            AssertEx.Equal("ytdl", MpvYtdlpFormatSelector.FromPreset(MpvYtdlpFormatPreset.Default), "Default selector");
+            AssertEx.Equal("bestvideo*+bestaudio/best", MpvYtdlpFormatSelector.FromPreset(MpvYtdlpFormatPreset.Best), "Best selector");
+            AssertEx.Equal("bestaudio/best", MpvYtdlpFormatSelector.FromPreset(MpvYtdlpFormatPreset.AudioOnly), "AudioOnly selector");
+            AssertEx.Equal("bestvideo*[height<=720]+bestaudio/best[height<=720]", MpvYtdlpFormatSelector.FromPreset(MpvYtdlpFormatPreset.UpTo720p), "720p selector");
+            AssertEx.Equal("bestvideo*[height<=1080]+bestaudio/best[height<=1080]", MpvYtdlpFormatSelector.MaxHeight(1080), "MaxHeight selector");
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// 驗證 yt-dlp 格式 selector helper 的輸入檢查。
+        /// </summary>
+        /// <returns>代表測試流程的工作。</returns>
+        private static Task VerifyYtdlpFormatValidation()
+        {
+            AssertEx.Throws<ArgumentOutOfRangeException>(
+                delegate
+                {
+                    MpvYtdlpFormatSelector.MaxHeight(0);
+                },
+                "MaxHeight 應拒絕零高度。");
+
+            AssertEx.Throws<ArgumentOutOfRangeException>(
+                delegate
+                {
+                    MpvYtdlpFormatSelector.FromPreset((MpvYtdlpFormatPreset)999);
+                },
+                "FromPreset 應拒絕未知列舉值。");
+
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// 驗證外部工具命令列引數格式化會處理空白、空字串與引號。
+        /// </summary>
+        /// <returns>代表測試流程的工作。</returns>
+        private static Task VerifyExternalToolArgumentFormatting()
+        {
+            string formatted = ExternalToolProcessRunner.FormatArguments(new[] { "--flag", "hello world", string.Empty, "a\"b" });
+            AssertEx.Equal("--flag \"hello world\" \"\" \"a\\\"b\"", formatted, "格式化後的命令列引數");
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// 驗證播放器選項的預設值維持穩定。
+        /// </summary>
+        /// <returns>代表測試流程的工作。</returns>
+        private static Task VerifyPlayerOptionDefaults()
+        {
+            MpvPlayerOptions options = new MpvPlayerOptions();
+            AssertEx.True(options.EnableDefaultInputBindings, "預設應啟用輸入繫結。");
+            AssertEx.True(options.EnableKeyboardInput, "預設應啟用鍵盤輸入。");
+            AssertEx.True(options.EnableOsc, "預設應啟用 OSC。");
+            AssertEx.True(options.EnableYtdlp, "預設應啟用 yt-dlp。");
+            AssertEx.Equal("yt-dlp;youtube-dl", options.YtdlpPath, "預設 yt-dlp 搜尋路徑");
+            AssertEx.Equal(MpvYtdlpFormatPreset.Default, options.YtdlpFormatPreset, "預設 yt-dlp 格式");
+            AssertEx.Equal("warn", options.LogLevel, "預設記錄等級");
+            AssertEx.Equal(0, options.InitialOptions.Count, "預設初始選項數量");
+            AssertEx.Equal(0, options.ConfigFiles.Count, "預設設定檔數量");
+            AssertEx.Equal(0, options.ScriptFiles.Count, "預設腳本數量");
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// 驗證目前 catalog 只宣告 Windows x64 來源。
+        /// </summary>
+        /// <returns>代表測試流程的工作。</returns>
+        private static Task VerifyRuntimeCatalogs()
+        {
+            IReadOnlyList<MpvNativeRuntimeSource> windowsSources = MpvNativeRuntimeCatalog.GetSources(MpvNativeRuntimePlatform.Windows);
+            IReadOnlyList<MpvNativeRuntimeSource> unknownSources = MpvNativeRuntimeCatalog.GetSources(MpvNativeRuntimePlatform.Unknown);
+            AssertEx.Equal(2, windowsSources.Count, "Windows libmpv 來源數量");
+            AssertEx.Equal(0, unknownSources.Count, "未知平台 libmpv 來源數量");
+            AssertEx.Equal(MpvNativeRuntimeSupportStatus.Supported, MpvNativeRuntimeCatalog.GetProjectSupportStatus(MpvNativeRuntimePlatform.Windows), "Windows 支援狀態");
+            AssertEx.Equal(MpvNativeRuntimeSupportStatus.NotCataloged, MpvNativeRuntimeCatalog.GetProjectSupportStatus(MpvNativeRuntimePlatform.Unknown), "未知平台支援狀態");
+
+            IReadOnlyList<ExternalToolRuntimeSource> ytDlpSources = ExternalToolRuntimeCatalog.GetSources(ExternalToolKind.YtDlp, MpvNativeRuntimePlatform.Windows);
+            IReadOnlyList<ExternalToolRuntimeSource> denoSources = ExternalToolRuntimeCatalog.GetSources(ExternalToolKind.Deno, MpvNativeRuntimePlatform.Windows);
+            IReadOnlyList<ExternalToolRuntimeSource> unknownToolSources = ExternalToolRuntimeCatalog.GetSources(ExternalToolKind.YtDlp, MpvNativeRuntimePlatform.Unknown);
+            AssertEx.Equal(1, ytDlpSources.Count, "Windows yt-dlp 來源數量");
+            AssertEx.Equal(1, denoSources.Count, "Windows Deno 來源數量");
+            AssertEx.Equal(0, unknownToolSources.Count, "未知平台外部工具來源數量");
+            AssertEx.True(ytDlpSources[0].SupportsSelfUpdate, "yt-dlp 應提供自我更新命令。");
+            AssertEx.True(denoSources[0].SupportsSelfUpdate, "Deno 應提供自我更新命令。");
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// 驗證未知平台安裝流程只回傳不支援結果，不建立下載資料夾。
+        /// </summary>
+        /// <returns>代表測試流程的工作。</returns>
+        private static async Task VerifyUnknownPlatformInstallAsync()
+        {
+            string runtimeDirectory = Path.Combine(Path.GetTempPath(), "MediaEmbedKit.Mpv.Tests", Guid.NewGuid().ToString("N"));
+            MpvRuntimeInstallOptions options = new MpvRuntimeInstallOptions
+            {
+                Platform = MpvNativeRuntimePlatform.Unknown
+            };
+
+            MpvRuntimeInstallResult result = await MpvRuntimeInstaller.InstallOrUpdateAsync(runtimeDirectory, options).ConfigureAwait(false);
+            AssertEx.False(result.IsSupported, "未知平台不應標示為已支援。");
+            AssertEx.Equal(MpvNativeRuntimeSupportStatus.NotCataloged, result.Status, "未知平台安裝狀態");
+            AssertEx.Equal(0, result.NativeSources.Count, "未知平台來源數量");
+            AssertEx.False(Directory.Exists(runtimeDirectory), "未知平台不應建立執行階段資料夾。");
+        }
+
+        /// <summary>
+        /// 驗證 Windows 執行階段資料夾會產生正確播放器選項。
+        /// </summary>
+        /// <returns>代表測試流程的工作。</returns>
+        private static Task VerifyWindowsRuntimePlayerOptions()
+        {
+            string runtimeDirectory = Path.Combine(Path.GetTempPath(), "MediaEmbedKit.Mpv.Runtime");
+            MpvPlayerOptions options = MpvRuntimeInstaller.CreatePlayerOptions(runtimeDirectory, true);
+            AssertEx.Equal(Path.Combine(runtimeDirectory, "libmpv-2.dll"), options.MpvLibraryPath, "libmpv 路徑");
+            AssertEx.Equal(runtimeDirectory, options.ToolDirectory, "工具資料夾");
+            AssertEx.Equal(runtimeDirectory, options.ConfigDirectory, "設定資料夾");
+            AssertEx.True(options.LoadUserConfig, "應載入使用者設定。");
+            AssertEx.True(options.YtdlpPath.StartsWith(Path.Combine(runtimeDirectory, "yt-dlp.exe"), StringComparison.OrdinalIgnoreCase), "yt-dlp 路徑應優先指向執行階段資料夾。");
+            return Task.CompletedTask;
+        }
+    }
+
+    /// <summary>
+    /// 提供簡易測試執行器。
+    /// </summary>
+    internal sealed class TestRunner
+    {
+        /// <summary>
+        /// 保存要執行的測試案例。
+        /// </summary>
+        private readonly List<TestCase> _tests = new List<TestCase>();
+
+        /// <summary>
+        /// 取得失敗測試數量。
+        /// </summary>
+        /// <value>失敗測試數量。</value>
+        public int FailedCount { get; private set; }
+
+        /// <summary>
+        /// 加入測試案例。
+        /// </summary>
+        /// <param name="name">測試名稱。</param>
+        /// <param name="body">測試主體。</param>
+        public void Add(string name, Func<Task> body)
+        {
+            _tests.Add(new TestCase(name, body));
+        }
+
+        /// <summary>
+        /// 依序執行所有測試案例。
+        /// </summary>
+        /// <returns>代表測試執行流程的工作。</returns>
+        public async Task RunAsync()
+        {
+            foreach (TestCase test in _tests)
+            {
+                try
+                {
+                    await test.Body().ConfigureAwait(false);
+                    Console.WriteLine("[PASS] " + test.Name);
+                }
+                catch (Exception ex)
+                {
+                    FailedCount++;
+                    Console.WriteLine("[FAIL] " + test.Name + " - " + ex.GetType().Name + ": " + ex.Message);
+                }
+            }
+
+            Console.WriteLine("測試完成：通過 " + (_tests.Count - FailedCount).ToString(System.Globalization.CultureInfo.InvariantCulture) + "，失敗 " + FailedCount.ToString(System.Globalization.CultureInfo.InvariantCulture) + "。");
+        }
+    }
+
+    /// <summary>
+    /// 表示一個測試案例。
+    /// </summary>
+    internal sealed class TestCase
+    {
+        /// <summary>
+        /// 初始化 <see cref="TestCase"/> 類別的新執行個體。
+        /// </summary>
+        /// <param name="name">測試名稱。</param>
+        /// <param name="body">測試主體。</param>
+        public TestCase(string name, Func<Task> body)
+        {
+            Name = name;
+            Body = body;
+        }
+
+        /// <summary>
+        /// 取得測試名稱。
+        /// </summary>
+        /// <value>測試名稱。</value>
+        public string Name { get; private set; }
+
+        /// <summary>
+        /// 取得測試主體。
+        /// </summary>
+        /// <value>測試主體。</value>
+        public Func<Task> Body { get; private set; }
+    }
+
+    /// <summary>
+    /// 提供測試斷言方法。
+    /// </summary>
+    internal static class AssertEx
+    {
+        /// <summary>
+        /// 驗證兩個值相等。
+        /// </summary>
+        /// <typeparam name="T">要比較的值型別。</typeparam>
+        /// <param name="expected">預期值。</param>
+        /// <param name="actual">實際值。</param>
+        /// <param name="message">失敗時顯示的訊息。</param>
+        public static void Equal<T>(T expected, T actual, string message)
+        {
+            if (!EqualityComparer<T>.Default.Equals(expected, actual))
+            {
+                throw new InvalidOperationException(message + "。預期：" + expected + "，實際：" + actual);
+            }
+        }
+
+        /// <summary>
+        /// 驗證條件為真。
+        /// </summary>
+        /// <param name="condition">要驗證的條件。</param>
+        /// <param name="message">失敗時顯示的訊息。</param>
+        public static void True(bool condition, string message)
+        {
+            if (!condition)
+            {
+                throw new InvalidOperationException(message);
+            }
+        }
+
+        /// <summary>
+        /// 驗證條件為假。
+        /// </summary>
+        /// <param name="condition">要驗證的條件。</param>
+        /// <param name="message">失敗時顯示的訊息。</param>
+        public static void False(bool condition, string message)
+        {
+            if (condition)
+            {
+                throw new InvalidOperationException(message);
+            }
+        }
+
+        /// <summary>
+        /// 驗證指定動作會擲回指定例外狀況。
+        /// </summary>
+        /// <typeparam name="TException">預期的例外狀況型別。</typeparam>
+        /// <param name="action">要執行的動作。</param>
+        /// <param name="message">失敗時顯示的訊息。</param>
+        public static void Throws<TException>(Action action, string message)
+            where TException : Exception
+        {
+            try
+            {
+                action();
+            }
+            catch (TException)
+            {
+                return;
+            }
+
+            throw new InvalidOperationException(message);
+        }
+    }
+}

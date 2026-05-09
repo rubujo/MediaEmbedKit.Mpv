@@ -12,6 +12,7 @@
 - 列舉與旗標：`MpvErrorCode`、`MpvFormat`、`MpvLogLevel`、`MpvEndFileReason`、`MpvRenderParamType`、`MpvRenderFrameInfoFlags`、`MpvRenderUpdateFlags` 已對齊 v0.41.0。
 - 事件列舉：v0.41.0 事件已覆蓋；舊版相容事件值保留在 `MpvEventId`，不得視為 v0.41.0 新增事件。
 - 原生資料結構：事件、節點、stream callback、OpenGL FBO、OpenGL 初始化、DRM、render frame info 與 `mpv_byte_array` 皆有受控對應。
+- 自動化入口：`tests/MediaEmbedKit.Mpv.Tests` 先覆蓋不需原生執行階段的格式 selector、runtime catalog、播放器選項與外部工具引數格式化；`tests/MediaEmbedKit.Mpv.PlaybackSmoke` 用於執行範例播放冒煙測試。
 
 ## client.h
 
@@ -59,3 +60,15 @@
 - 以本機檔案與 `https://www.youtube.com/watch?v=dQw4w9WgXcQ` 分別驗證播放。
 - 驗證命令、屬性、觀察屬性、事件節點、記錄、掛鉤、自訂串流與 render API。
 - 驗證失敗路徑，包括不存在的屬性、錯誤格式、載入失敗、URL 工具不存在與 render context 建立失敗。
+
+不需要原生執行階段的核心測試：
+
+```powershell
+dotnet run --project .\tests\MediaEmbedKit.Mpv.Tests\MediaEmbedKit.Mpv.Tests.csproj
+```
+
+需要 Windows x64 原生執行階段與 GUI 的範例播放冒煙測試：
+
+```powershell
+dotnet run --project .\tests\MediaEmbedKit.Mpv.PlaybackSmoke\MediaEmbedKit.Mpv.PlaybackSmoke.csproj -- --seconds 20
+```

@@ -16,6 +16,16 @@ WinForms、WPF、Avalonia、WinUI 3 與 MAUI 範例會在啟動時呼叫共用 `
 
 WinUI 3 與 MAUI Windows 範例採用 Windows App SDK self-contained 部署設定與 `win-x64` RID，讓範例輸出資料夾帶著 Windows App SDK 相依項目。這個設定只屬於範例 app 專案，不代表 class library 套件會強制使用同一種部署模式。
 
+## 播放冒煙測試
+
+可使用測試執行器依序啟動範例，並等待影片實際播放到指定秒數：
+
+```powershell
+dotnet run --project .\tests\MediaEmbedKit.Mpv.PlaybackSmoke\MediaEmbedKit.Mpv.PlaybackSmoke.csproj -- --seconds 20
+```
+
+若只測單一範例，可使用 `--sample WinForms`、`--sample WPF`、`--sample Avalonia`、`--sample WinUI` 或 `--sample MAUI`。
+
 ## 共用展示內容
 
 - 啟動階段先執行 `SampleRuntime.InstallOrUpdateAsync()`，再建立實際播放視窗或頁面。
