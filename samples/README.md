@@ -17,10 +17,10 @@ WinForms、WPF、Avalonia、WinUI 3 與 MAUI 範例會在啟動時呼叫共用 `
 ## 共用展示內容
 
 - 啟動階段先執行 `SampleRuntime.InstallOrUpdateAsync()`，再建立實際播放視窗或頁面。
-- 控制項建立播放器後會建立 `SamplePlayerEventBridge`，並在下方事件清單輸出 libmpv 原始事件、常用專用事件、記錄訊息與常用屬性變更。
+- 控制項建立播放器後會建立 `SamplePlayerEventBridge`，並在下方事件清單輸出 libmpv 原始事件、常用專用事件、記錄訊息、常用屬性變更與 mpv ytdl hook 的 JSON 子程序結果。
 - 關閉視窗或頁面離開時會釋放 `SamplePlayerEventBridge`，示範取消事件訂閱與屬性觀察。
 - 支援 AirSpace 覆蓋層的控制項會同時顯示控制項內建覆蓋層與一般框架覆蓋層，方便比較 HWND 視訊區域的疊放限制。
 - 功能列提供 yt-dlp 格式預設值切換，範例預設使用最高 720p，重新載入媒體後會依選取格式交給 mpv 的 `ytdl-format`。
 - 功能列示範常用高階 API：OSD 文字、相對跳轉、音量、靜音、播放速度、外部字幕、播放軌清單、截圖、載入 `mpv.conf`、載入 Lua 指令碼與 script message。
-- 功能列也提供 yt-dlp 與 Deno 診斷，以及自我更新命令輸出。這些輸出會寫入同一個事件清單，方便和 libmpv 記錄訊息對照。
+- 功能列也提供 yt-dlp 與 Deno 診斷，以及自我更新命令輸出。yt-dlp 與 Deno 診斷會透過程式庫的處理序執行器接收 stdout/stderr 事件，再寫入同一個事件清單，方便和 libmpv 記錄訊息對照。
 - 共用 helper 會在 `runtime` 資料夾產生範例用 `mpv.conf`、Lua 指令碼、SRT 字幕與 `screenshots` 截圖資料夾，示範如何由 API 指定載入檔案。

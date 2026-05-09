@@ -22,6 +22,8 @@
 - WPF 不提供 `D3DImage`、software render 或其他 GPU composition 控制項後端。
 - WinUI 3 與 MAUI Windows 不提供 `SwapChainPanel`、software render fallback 或其他後端選擇 API。
 - Windows 執行階段 helper 可以在同一個執行階段資料夾管理 `libmpv-2.dll`、`yt-dlp.exe` 與 `deno.exe`。
+- Deno 不是所有播放情境都必需，但為完整 YouTube 支援應與 `yt-dlp.exe` 同層準備；yt-dlp 與 Deno 的直接診斷或進度輸出使用 `YtDlpProcessRunner` 與 `DenoProcessRunner`。
+- mpv ytdl hook 的子程序輸出讀取 `MpvPlayer.GetYtdlJsonSubprocessResult()`；不得解析 `log-message` 來取得 yt-dlp 結構化結果。
 - runtime folder 可選擇作為 mpv 設定資料夾與腳本來源；不得預設強制載入使用者未要求的設定或腳本。
 - yt-dlp 畫質控制使用 `MpvYtdlpFormatPreset` 與 `MpvYtdlpFormatSelector`；常用情境使用列舉，進階情境保留自訂 selector 字串。
 - libmpv 下載維持明確 helper 呼叫；控制項與建構函式永遠不執行下載。

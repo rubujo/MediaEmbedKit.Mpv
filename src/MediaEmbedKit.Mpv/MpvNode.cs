@@ -193,6 +193,16 @@ namespace MediaEmbedKit.Mpv
         }
 
         /// <summary>
+        /// 將節點值讀取為位元組陣列。
+        /// </summary>
+        /// <returns>節點位元組陣列；節點不是位元組陣列時會傳回空陣列。</returns>
+        public byte[] AsByteArray()
+        {
+            byte[]? bytes = Value as byte[];
+            return bytes == null ? Array.Empty<byte>() : bytes.ToArray();
+        }
+
+        /// <summary>
         /// 嘗試從節點對應取得指定索引鍵的值。
         /// </summary>
         /// <param name="key">要查詢的節點索引鍵。</param>

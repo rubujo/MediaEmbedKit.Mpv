@@ -50,13 +50,13 @@
 
 - 核心 `MediaEmbedKit.Mpv`：`netstandard2.0;net472;net48;net8.0;net10.0`。
 - libmpv C API 包裝：已對齊 stable v0.41.0 官方標頭，P/Invoke 匯出函式 54/54，列舉值與 render 旗標完成比對；shinchiro `20260421` / mpv `5921fe5` 與 zhongfly `2026-05-08-e0eb42c303` / mpv `e0eb42c303` 的公開 header 已比對，未發現需要新增 P/Invoke 的差異。
-- libmpv managed API：`mpv_node`、命令回傳、具名命令、命令清單探索、非同步命令、屬性、基本播放狀態、速度、音量、靜音、循環播放、屬性清單探索、profile 清單、解碼器清單、通訊協定清單、demuxer 清單、非同步屬性回覆、事件轉節點、typed 事件資料、播放清單、播放軌、章節、版本、媒體中繼資料、音訊裝置、音訊與視訊參數、demuxer 快取狀態、字幕與網路字幕掛載、外部音訊與視訊軌、OSD 文字與 ASS 覆疊、截圖、濾鏡、鍵鼠輸入、輸入綁定與 section、A-B 重複播放、指令碼訊息、外部處理序、mpv 設定資料夾、指定設定檔、Lua 與 JavaScript 腳本載入、wakeup、hook、stream callback、OpenGL render API、software render API、ICC profile、環境光、skip rendering、DRM 建立參數與原始 render 參數入口。
+- libmpv managed API：`mpv_node`、命令回傳、具名命令、命令清單探索、非同步命令、屬性、基本播放狀態、速度、音量、靜音、循環播放、屬性清單探索、profile 清單、解碼器清單、通訊協定清單、demuxer 清單、非同步屬性回覆、事件轉節點、typed 事件資料、播放清單、播放軌、章節、版本、媒體中繼資料、音訊裝置、音訊與視訊參數、demuxer 快取狀態、字幕與網路字幕掛載、外部音訊與視訊軌、OSD 文字與 ASS 覆疊、截圖、濾鏡、鍵鼠輸入、輸入綁定與 section、A-B 重複播放、指令碼訊息、外部處理序、mpv ytdl hook JSON 子程序結果、mpv 設定資料夾、指定設定檔、Lua 與 JavaScript 腳本載入、wakeup、hook、stream callback、OpenGL render API、software render API、ICC profile、環境光、skip rendering、DRM 建立參數與原始 render 參數入口。
 - yt-dlp 播放格式控制：`MpvYtdlpFormatPreset` 常用畫質列舉、`MpvYtdlpFormatSelector` selector 轉換、`MpvPlayerOptions.YtdlpFormatPreset`、`MpvPlayerOptions.YtdlpFormat` 與執行階段切換方法。
 - WinForms/WPF：Windows HWND 後端。
 - Avalonia Windows：OpenGL render API 預覽套件保留，尚未列入 HWND-only 完成範圍。
 - WinUI 3/MAUI Windows：Windows HWND 後端；WinUI HWND 路線內建 AirSpace 覆蓋層。
 - design-time 支援：WinForms Designer、WPF XAML Designer、WinUI 3 XAML 載入、MAUI Windows handler 與 Avalonia previewer 皆避免初始化 libmpv，並顯示替代預覽內容或安全控制項。
-- Windows x64 runtime helper：libmpv、yt-dlp 與 Deno 下載、更新與同層資料夾配置。
+- Windows x64 runtime helper：libmpv、yt-dlp 與 Deno 下載、更新、同層資料夾配置，以及 yt-dlp/Deno 處理序輸出事件執行器。
 
 目前不得宣稱完成：
 

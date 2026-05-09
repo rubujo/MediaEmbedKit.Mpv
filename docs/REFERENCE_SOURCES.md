@@ -50,6 +50,10 @@
 - zhongfly 最新已對齊 release `2026-05-08-e0eb42c303`：https://github.com/zhongfly/mpv-winbuild/releases/tag/2026-05-08-e0eb42c303
 - yt-dlp：https://github.com/yt-dlp/yt-dlp
 - yt-dlp release files：https://github.com/yt-dlp/yt-dlp/blob/master/README.md#release-files
+- yt-dlp EJS 指南：https://github.com/yt-dlp/yt-dlp/wiki/EJS
+- yt-dlp 外部 JavaScript runtime 公告：https://github.com/yt-dlp/yt-dlp/issues/15012
+- yt-dlp 輸出與進度選項：https://github.com/yt-dlp/yt-dlp/blob/master/README.md#verbosity-and-simulation-options
+- mpv `log-message` 與 ytdl hook user-data：https://mpv.io/manual/stable/#command-interface-log-message
 - Deno 安裝文件：https://docs.deno.com/runtime/getting_started/installation/
 - Deno 下載 tuple：https://dl.deno.land/
 - Deno releases：https://github.com/denoland/deno/releases

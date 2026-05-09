@@ -525,6 +525,43 @@ namespace MediaEmbedKit.Mpv
         }
 
         /// <summary>
+        /// 取得 mpv ytdl hook 找到的外部工具路徑。
+        /// </summary>
+        /// <returns>ytdl hook 找到的外部工具路徑；尚未解析或找不到時為 <see langword="null"/>。</returns>
+        public string? GetYtdlHookPath()
+        {
+            return GetPropertyString("user-data/mpv/ytdl/path");
+        }
+
+        /// <summary>
+        /// 取得 mpv ytdl hook 執行 yt-dlp JSON 子程序的結果。
+        /// </summary>
+        /// <returns>ytdl JSON 子程序結果；尚未解析 URL 或結果不可用時為 <see langword="null"/>。</returns>
+        public MpvYtdlJsonSubprocessResult? GetYtdlJsonSubprocessResult()
+        {
+            try
+            {
+                MpvNode node = GetPropertyNode("user-data/mpv/ytdl/json-subprocess-result");
+                return node.IsNone ? null : MpvYtdlJsonSubprocessResult.FromNode(node);
+            }
+            catch (MpvException ex) when (IsUnavailablePropertyError(ex))
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// 嘗試取得 mpv ytdl hook 執行 yt-dlp JSON 子程序的結果。
+        /// </summary>
+        /// <param name="result">找到時接收 ytdl JSON 子程序結果；找不到時接收 <see langword="null"/>。</param>
+        /// <returns>找到 ytdl JSON 子程序結果時為 <see langword="true"/>。</returns>
+        public bool TryGetYtdlJsonSubprocessResult(out MpvYtdlJsonSubprocessResult? result)
+        {
+            result = GetYtdlJsonSubprocessResult();
+            return result != null;
+        }
+
+        /// <summary>
         /// 以布林旗標格式設定 libmpv 選項。
         /// </summary>
         /// <param name="name">要設定的 mpv 選項名稱。</param>
@@ -3843,6 +3880,17 @@ namespace MediaEmbedKit.Mpv
 
                 MpvError.ThrowIfError(error);
             }
+        }
+
+        /// <summary>
+        /// 判斷例外狀況是否代表屬性不存在或目前無法使用。
+        /// </summary>
+        /// <param name="exception">要檢查的 mpv 例外狀況。</param>
+        /// <returns>例外狀況代表屬性不存在或目前無法使用時為 <see langword="true"/>。</returns>
+        private static bool IsUnavailablePropertyError(MpvException exception)
+        {
+            return exception.ErrorCode == (int)MpvErrorCode.PropertyNotFound ||
+                exception.ErrorCode == (int)MpvErrorCode.PropertyUnavailable;
         }
 
         /// <summary>

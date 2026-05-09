@@ -18,7 +18,7 @@ runtime/
 └── scripts/
 ```
 
-mpv 的 `ytdl_hook` 可以透過 `MpvPlayerOptions.YtdlpPath` 指到 `yt-dlp.exe`。yt-dlp 格式選擇可以透過 `MpvPlayerOptions.YtdlpFormatPreset`、`MpvPlayerOptions.YtdlpFormat`、`MpvPlayer.SetYtdlpFormat(...)` 或 `MpvPlayer.SetYtdlpMaximumHeight(...)` 設定；格式設定會在 mpv 解析下一個 URL 時生效。Deno 則由使用者、yt-dlp 外掛或後續 helper 需要時明確呼叫。
+mpv 的 `ytdl_hook` 可以透過 `MpvPlayerOptions.YtdlpPath` 指到 `yt-dlp.exe`。yt-dlp 格式選擇可以透過 `MpvPlayerOptions.YtdlpFormatPreset`、`MpvPlayerOptions.YtdlpFormat`、`MpvPlayer.SetYtdlpFormat(...)` 或 `MpvPlayer.SetYtdlpMaximumHeight(...)` 設定；格式設定會在 mpv 解析下一個 URL 時生效。Deno 不是本機檔案或每個 extractor 都必需，但 yt-dlp 官方已將外部 JavaScript runtime 列為完整 YouTube 支援所需條件，且 Deno 是預設啟用與優先建議項目，因此 Windows x64 runtime helper 預設與 `yt-dlp.exe` 同層安裝 `deno.exe`。
 
 使用者可選擇讓同一個 runtime folder 也成為 mpv 設定資料夾。呼叫 `MpvWindowsRuntimeInstaller.CreatePlayerOptions(runtimeDirectory, loadRuntimeConfiguration: true)` 或 `MpvRuntimeInstaller.CreatePlayerOptions(runtimeDirectory, loadRuntimeConfiguration: true)` 後，核心會設定 `config-dir` 並載入該資料夾中的 `mpv.conf`、`input.conf`、`scripts` 與其他 mpv 設定資料。若只要載入特定檔案，可使用 `MpvPlayerOptions.ConfigFiles`；若只要指定輸入設定檔，可使用 `MpvPlayerOptions.InputConfigFile`；若要指定 Lua 或 JavaScript 腳本，可使用 `MpvPlayerOptions.ScriptFiles` 或 `MpvPlayer.LoadScript(...)`。
 
@@ -45,6 +45,9 @@ yt-dlp helper 需支援：
 - 呼叫 `yt-dlp.exe -U` 或相容的自我更新命令。
 - 將工具路徑回填至 `MpvPlayerOptions.YtdlpPath`。
 - 透過 `MpvYtdlpFormatPreset` 提供常用畫質切換，同時保留 `YtdlpFormat` 自訂 selector。
+- 透過 `YtDlpProcessRunner` 直接執行 yt-dlp，並以事件接收標準輸出與標準錯誤；這用於需要完整 yt-dlp 診斷、格式清單、單行 JSON 或下載進度輸出的應用程式情境。
+
+mpv 內建 ytdl hook 的子程序輸出不應從 `log-message` 解析。若要查看 mpv 觸發 yt-dlp 解析 URL 時的 JSON 子程序結果，使用 `MpvPlayer.GetYtdlJsonSubprocessResult()` 或 `TryGetYtdlJsonSubprocessResult(...)` 讀取 `user-data/mpv/ytdl/json-subprocess-result`；若要接收 yt-dlp 自己的完整 stdout/stderr 事件流，直接使用 `YtDlpProcessRunner`。
 
 目前只支援 Windows x64 `yt-dlp.exe`。未符合支援範圍收斂準則的目標不提供 helper，也不假設可執行外部處理序。
 
@@ -55,8 +58,9 @@ Deno helper 需支援：
 - 下載官方 Windows x64 執行檔。
 - 呼叫 `deno upgrade` 或相容的自我更新命令。
 - 與 libmpv、yt-dlp 放在同一個 runtime 目錄。
+- 透過 `DenoProcessRunner` 直接執行 Deno，並以事件接收標準輸出與標準錯誤。
 
-Deno 官方下載 tuple 目前只採用本專案 Windows x64 範圍需要的發行檔。未符合支援範圍收斂準則的目標不列入目前 helper 支援。
+Deno 官方下載 tuple 目前只採用本專案 Windows x64 範圍需要的發行檔。yt-dlp 官方 EJS 指南指出 Windows 上 JavaScript runtime 可位於 `PATH`，或與 `yt-dlp.exe` 放在同一資料夾；因此本專案預設同層配置可以支援 YouTube EJS 情境。未符合支援範圍收斂準則的目標不列入目前 helper 支援。
 
 ## HTTP 要求
 

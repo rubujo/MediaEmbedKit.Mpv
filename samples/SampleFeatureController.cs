@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -240,9 +239,13 @@ namespace MediaEmbedKit.Mpv.Samples
         public async Task RunYtdlpDiagnosticsAsync(string url)
         {
             Append("yt-dlp", "版本：" + (YtDlpDownloader.GetInstalledVersion(SampleRuntime.YtDlpPath) ?? "無法讀取"));
-            SampleToolProcessResult result = await RunProcessAsync(
-                SampleRuntime.YtDlpPath,
-                new[] { "--no-warnings", "--list-formats", url },
+            YtDlpProcessRunner runner = new YtDlpProcessRunner(SampleRuntime.YtDlpPath)
+            {
+                WorkingDirectory = SampleRuntime.RuntimeDirectory
+            };
+            AttachExternalToolOutput(runner, "yt-dlp");
+            ExternalToolProcessResult result = await runner.ListFormatsAsync(
+                url,
                 TimeSpan.FromSeconds(90),
                 CancellationToken.None).ConfigureAwait(false);
             AppendProcessResult("yt-dlp", result);
@@ -255,9 +258,12 @@ namespace MediaEmbedKit.Mpv.Samples
         public async Task RunDenoDiagnosticsAsync()
         {
             Append("deno", "版本：" + (DenoDownloader.GetInstalledVersion(SampleRuntime.DenoPath) ?? "無法讀取"));
-            SampleToolProcessResult result = await RunProcessAsync(
-                SampleRuntime.DenoPath,
-                new[] { "--version" },
+            DenoProcessRunner runner = new DenoProcessRunner(SampleRuntime.DenoPath)
+            {
+                WorkingDirectory = SampleRuntime.RuntimeDirectory
+            };
+            AttachExternalToolOutput(runner, "deno");
+            ExternalToolProcessResult result = await runner.GetVersionAsync(
                 TimeSpan.FromSeconds(30),
                 CancellationToken.None).ConfigureAwait(false);
             AppendProcessResult("deno", result);
@@ -366,68 +372,6 @@ namespace MediaEmbedKit.Mpv.Samples
         }
 
         /// <summary>
-        /// 執行外部工具並收集輸出。
-        /// </summary>
-        /// <param name="fileName">工具可執行檔路徑。</param>
-        /// <param name="arguments">命令列引數。</param>
-        /// <param name="timeout">等待處理序完成的逾時時間。</param>
-        /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
-        /// <returns>外部工具執行結果。</returns>
-        private static async Task<SampleToolProcessResult> RunProcessAsync(
-            string fileName,
-            IEnumerable<string> arguments,
-            TimeSpan timeout,
-            CancellationToken cancellationToken)
-        {
-            if (arguments == null)
-            {
-                throw new ArgumentNullException(nameof(arguments));
-            }
-
-            List<string> argumentList = new List<string>(arguments);
-            ProcessStartInfo startInfo = new ProcessStartInfo
-            {
-                FileName = fileName,
-                CreateNoWindow = true,
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true
-            };
-
-            foreach (string argument in argumentList)
-            {
-                startInfo.ArgumentList.Add(argument);
-            }
-
-            using (Process? process = Process.Start(startInfo))
-            {
-                if (process == null)
-                {
-                    throw new InvalidOperationException("無法啟動外部工具：" + fileName);
-                }
-
-                Task<string> stdoutTask = process.StandardOutput.ReadToEndAsync();
-                Task<string> stderrTask = process.StandardError.ReadToEndAsync();
-                DateTimeOffset deadline = DateTimeOffset.UtcNow.Add(timeout);
-                while (!process.HasExited)
-                {
-                    cancellationToken.ThrowIfCancellationRequested();
-                    if (DateTimeOffset.UtcNow >= deadline)
-                    {
-                        process.Kill();
-                        throw new TimeoutException("外部工具逾時：" + fileName);
-                    }
-
-                    await Task.Delay(100, cancellationToken).ConfigureAwait(false);
-                }
-
-                string stdout = await stdoutTask.ConfigureAwait(false);
-                string stderr = await stderrTask.ConfigureAwait(false);
-                return new SampleToolProcessResult(fileName, string.Join(" ", argumentList), process.ExitCode, stdout, stderr);
-            }
-        }
-
-        /// <summary>
         /// 將外部工具執行結果輸出到事件清單。
         /// </summary>
         /// <param name="category">訊息分類。</param>
@@ -444,11 +388,56 @@ namespace MediaEmbedKit.Mpv.Samples
         /// </summary>
         /// <param name="category">訊息分類。</param>
         /// <param name="result">工具執行結果。</param>
-        private void AppendProcessResult(string category, SampleToolProcessResult result)
+        private void AppendProcessResult(string category, ExternalToolProcessResult result)
         {
-            Append(category, Path.GetFileName(result.ExecutablePath) + " " + result.Arguments + " exit=" + result.ExitCode.ToString(CultureInfo.InvariantCulture));
-            AppendOutputLines(category + ":out", result.StandardOutput);
-            AppendOutputLines(category + ":err", result.StandardError);
+            Append(category, Path.GetFileName(result.ExecutablePath) + " " + result.ArgumentText + " exit=" + result.ExitCode.ToString(CultureInfo.InvariantCulture));
+        }
+
+        /// <summary>
+        /// 將 yt-dlp 輸出事件連接到範例事件清單。
+        /// </summary>
+        /// <param name="runner">要觀察的 yt-dlp 處理序執行器。</param>
+        /// <param name="category">訊息分類。</param>
+        private void AttachExternalToolOutput(YtDlpProcessRunner runner, string category)
+        {
+            int emittedLines = 0;
+            runner.OutputReceived += delegate (object? sender, ExternalToolOutputEventArgs e)
+            {
+                int lineNumber = Interlocked.Increment(ref emittedLines);
+                AppendExternalToolOutput(category, e, lineNumber);
+            };
+        }
+
+        /// <summary>
+        /// 將 Deno 輸出事件連接到範例事件清單。
+        /// </summary>
+        /// <param name="runner">要觀察的 Deno 處理序執行器。</param>
+        /// <param name="category">訊息分類。</param>
+        private void AttachExternalToolOutput(DenoProcessRunner runner, string category)
+        {
+            int emittedLines = 0;
+            runner.OutputReceived += delegate (object? sender, ExternalToolOutputEventArgs e)
+            {
+                int lineNumber = Interlocked.Increment(ref emittedLines);
+                AppendExternalToolOutput(category, e, lineNumber);
+            };
+        }
+
+        /// <summary>
+        /// 將外部工具單列輸出寫入事件清單。
+        /// </summary>
+        /// <param name="category">訊息分類。</param>
+        /// <param name="e">外部工具輸出事件資料。</param>
+        /// <param name="lineNumber">目前已輸出的列數。</param>
+        private void AppendExternalToolOutput(string category, ExternalToolOutputEventArgs e, int lineNumber)
+        {
+            if (lineNumber > DiagnosticOutputLineLimit)
+            {
+                return;
+            }
+
+            string streamName = e.Stream == ExternalToolOutputStream.StandardOutput ? "out" : "err";
+            Append(category + ":" + streamName, e.Line);
         }
 
         /// <summary>
@@ -467,59 +456,6 @@ namespace MediaEmbedKit.Mpv.Samples
                 Append(category, line);
             }
         }
-    }
-
-    /// <summary>
-    /// 表示範例直接執行外部工具的結果。
-    /// </summary>
-    internal sealed class SampleToolProcessResult
-    {
-        /// <summary>
-        /// 初始化 <see cref="SampleToolProcessResult"/> 類別的新執行個體。
-        /// </summary>
-        /// <param name="executablePath">工具可執行檔路徑。</param>
-        /// <param name="arguments">命令列引數。</param>
-        /// <param name="exitCode">處理序結束代碼。</param>
-        /// <param name="standardOutput">標準輸出內容。</param>
-        /// <param name="standardError">標準錯誤內容。</param>
-        public SampleToolProcessResult(string executablePath, string arguments, int exitCode, string standardOutput, string standardError)
-        {
-            ExecutablePath = executablePath ?? throw new ArgumentNullException(nameof(executablePath));
-            Arguments = arguments ?? throw new ArgumentNullException(nameof(arguments));
-            ExitCode = exitCode;
-            StandardOutput = standardOutput ?? string.Empty;
-            StandardError = standardError ?? string.Empty;
-        }
-
-        /// <summary>
-        /// 取得工具可執行檔路徑。
-        /// </summary>
-        /// <value>工具可執行檔路徑。</value>
-        public string ExecutablePath { get; private set; }
-
-        /// <summary>
-        /// 取得命令列引數。
-        /// </summary>
-        /// <value>命令列引數文字。</value>
-        public string Arguments { get; private set; }
-
-        /// <summary>
-        /// 取得處理序結束代碼。
-        /// </summary>
-        /// <value>處理序結束代碼。</value>
-        public int ExitCode { get; private set; }
-
-        /// <summary>
-        /// 取得標準輸出內容。
-        /// </summary>
-        /// <value>標準輸出內容。</value>
-        public string StandardOutput { get; private set; }
-
-        /// <summary>
-        /// 取得標準錯誤內容。
-        /// </summary>
-        /// <value>標準錯誤內容。</value>
-        public string StandardError { get; private set; }
     }
 
     /// <summary>

@@ -4,7 +4,7 @@ MediaEmbedKit.Mpv 是獨立的 .NET libmpv 包裝器與桌面控制項專案。`
 
 ## 專案內容
 
-- `MediaEmbedKit.Mpv`：核心 libmpv P/Invoke 包裝、命令、具名命令、屬性、非同步屬性回覆、節點、typed 事件資料、命令/屬性/profile/解碼器/通訊協定/demuxer 清單探索、播放清單、播放軌、章節、版本、音訊裝置、字幕、OSD、截圖、濾鏡、輸入、外部處理序、stream callback、render API 進階參數、yt-dlp 選項與執行階段下載 helper。
+- `MediaEmbedKit.Mpv`：核心 libmpv P/Invoke 包裝、命令、具名命令、屬性、非同步屬性回覆、節點、typed 事件資料、命令/屬性/profile/解碼器/通訊協定/demuxer 清單探索、播放清單、播放軌、章節、版本、音訊裝置、字幕、OSD、截圖、濾鏡、輸入、外部處理序、stream callback、render API 進階參數、yt-dlp 選項、ytdl hook 結果讀取、yt-dlp/Deno 處理序執行器與執行階段下載 helper。
 - `MediaEmbedKit.Mpv.WinForms`：使用 HWND 嵌入的 `MpvPlayerControl`；這是 WinForms 目前的高效能預設後端。
 - `MediaEmbedKit.Mpv.Wpf`：使用 `HwndHost` 的 `MpvWpfPlayer`，並由控制項內建 `OverlayContent` AirSpace 覆蓋層。
 - `MediaEmbedKit.Mpv.Avalonia`：Windows x64 Avalonia OpenGL render API 預覽套件；尚未列入 HWND-only 完成範圍。
@@ -37,7 +37,7 @@ MpvWindowsRuntimeDownloadResult runtime = await MpvWindowsRuntimeInstaller.Insta
 MpvPlayerOptions options = MpvWindowsRuntimeInstaller.CreatePlayerOptions(runtime.RuntimeDirectory);
 ```
 
-此流程會把 `libmpv-2.dll`、`yt-dlp.exe` 與 `deno.exe` 放在同一個資料夾。若目前處理序已載入 libmpv，libmpv 更新會先暫存，並由結果物件提示需要重新啟動處理序。
+此流程會把 `libmpv-2.dll`、`yt-dlp.exe` 與 `deno.exe` 放在同一個資料夾。Deno 不是播放本機檔案時的必要條件，但 yt-dlp 官方已將外部 JavaScript runtime 列為完整 YouTube 支援的需求，且 Deno 是預設啟用與建議項目，因此 helper 預設一併準備。若目前處理序已載入 libmpv，libmpv 更新會先暫存，並由結果物件提示需要重新啟動處理序。
 
 共用入口可使用 `MpvRuntimeInstaller.InstallOrUpdateAsync(...)`。目前此入口只執行 Windows x64 安裝流程；不符合支援範圍時會傳回未列入 catalog 的狀態與提示訊息。
 
@@ -73,6 +73,15 @@ using MpvPlayer player = new MpvPlayer(options);
 player.Initialize();
 player.SetYtdlpFormat(MpvYtdlpFormatPreset.UpTo720p);
 player.LoadFile("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+```
+
+若要讀取 mpv ytdl hook 執行 yt-dlp JSON 子程序後留下的結果，可使用 `GetYtdlJsonSubprocessResult()`；若要接收 yt-dlp 或 Deno 自己的 stdout/stderr 事件流，使用 `YtDlpProcessRunner` 或 `DenoProcessRunner`。
+
+```csharp
+YtDlpProcessRunner runner = new YtDlpProcessRunner(Path.Combine(runtime.RuntimeDirectory, "yt-dlp.exe"));
+runner.WorkingDirectory = runtime.RuntimeDirectory;
+runner.OutputReceived += (sender, e) => Console.WriteLine(e.Stream + ": " + e.Line);
+ExternalToolProcessResult result = await runner.ListFormatsAsync("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
 ```
 
 自訂資料來源可使用 `RegisterStreamProtocol(...)` 註冊唯讀通訊協定，再用 `loadfile` 載入對應 URI：

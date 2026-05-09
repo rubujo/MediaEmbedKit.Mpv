@@ -67,6 +67,14 @@ _ReSharper*/
 native/
 downloads/
 mpv/
+!src/MediaEmbedKit.Mpv/Downloads/
+src/MediaEmbedKit.Mpv/Downloads/*
+!src/MediaEmbedKit.Mpv/Downloads/DenoProcessRunner.cs
+!src/MediaEmbedKit.Mpv/Downloads/ExternalToolOutputEventArgs.cs
+!src/MediaEmbedKit.Mpv/Downloads/ExternalToolOutputStream.cs
+!src/MediaEmbedKit.Mpv/Downloads/ExternalToolProcessResult.cs
+!src/MediaEmbedKit.Mpv/Downloads/ExternalToolProcessRunner.cs
+!src/MediaEmbedKit.Mpv/Downloads/YtDlpProcessRunner.cs
 *.7z
 *.zip
 *.dll

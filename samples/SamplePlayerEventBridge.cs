@@ -221,6 +221,7 @@ namespace MediaEmbedKit.Mpv.Samples
         private void PlayerFileLoaded(object? sender, MpvEventArgs e)
         {
             Append("file-loaded", "reply=" + e.ReplyUserData.ToString(CultureInfo.InvariantCulture));
+            WriteYtdlJsonSubprocessResult();
         }
 
         /// <summary>
@@ -291,6 +292,52 @@ namespace MediaEmbedKit.Mpv.Samples
         private void PlayerEventDispatchException(object? sender, MpvEventDispatchExceptionEventArgs e)
         {
             Append("dispatch-error", e.EventName + " | " + e.Exception.GetType().Name + ": " + e.Exception.Message);
+        }
+
+        /// <summary>
+        /// 將 mpv ytdl hook 的 yt-dlp JSON 子程序結果寫入事件清單。
+        /// </summary>
+        private void WriteYtdlJsonSubprocessResult()
+        {
+            MpvYtdlJsonSubprocessResult? result = _player.GetYtdlJsonSubprocessResult();
+            if (result == null)
+            {
+                return;
+            }
+
+            Append("ytdl-result", "status=" + result.Status.ToString(CultureInfo.InvariantCulture) + " error=" + (string.IsNullOrEmpty(result.ErrorString) ? "none" : result.ErrorString));
+            AppendYtdlOutput("ytdl:out", result.StandardOutput);
+            AppendYtdlOutput("ytdl:err", result.StandardError);
+        }
+
+        /// <summary>
+        /// 將 ytdl hook 輸出拆列並寫入事件清單。
+        /// </summary>
+        /// <param name="category">事件分類。</param>
+        /// <param name="text">ytdl hook 輸出文字。</param>
+        private void AppendYtdlOutput(string category, string text)
+        {
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return;
+            }
+
+            string[] lines = text.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
+            int count = 0;
+            for (int i = 0; i < lines.Length; i++)
+            {
+                if (string.IsNullOrWhiteSpace(lines[i]))
+                {
+                    continue;
+                }
+
+                Append(category, lines[i]);
+                count++;
+                if (count >= 8)
+                {
+                    break;
+                }
+            }
         }
 
         /// <summary>
