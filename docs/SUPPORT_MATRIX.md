@@ -36,7 +36,9 @@
 最近一次完整建置：
 
 ```powershell
-dotnet build .\MediaEmbedKit.Mpv.slnx --no-restore
+dotnet build .\MediaEmbedKit.Mpv.slnx
 ```
 
 結果：成功，0 warning，0 error。
+
+WinUI 3 與 MAUI Windows 範例使用未封裝 app 模式，並在 sample app 專案設定 Windows App SDK self-contained 部署與 `win-x64` RID。Library 專案不設定 self-contained，避免將應用程式部署策略誤套到 NuGet 套件。

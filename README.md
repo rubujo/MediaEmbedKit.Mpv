@@ -103,6 +103,8 @@ player.LoadFile("appmedia://sample");
 - `samples/WinUISample`
 - `samples/MauiSample`
 
+WinUI 3 與 MAUI Windows 範例是未封裝 app，範例專案會使用 Windows App SDK self-contained 部署設定與 `win-x64` RID，讓建置輸出帶著所需的 Windows App SDK 相依項目。此設定僅適用於範例 app，不套用到 class library 套件。
+
 ## 文件與註解規範
 
 所有 `.cs` 檔案的型別與成員註解需使用 C# XML 文件註解。註解文字只能使用正體中文，優先採用 Microsoft 在地化慣用詞，其次採用臺灣地區常見技術用語；不得使用簡體中文或中國大陸慣用詞。

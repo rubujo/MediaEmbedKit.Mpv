@@ -14,6 +14,8 @@
 
 WinForms、WPF、Avalonia、WinUI 3 與 MAUI 範例會在啟動時呼叫共用 `SampleRuntime.InstallOrUpdateAsync()`，再由該 helper 委派到 `MpvRuntimeInstaller.InstallOrUpdateAsync(...)`。目前範例支援範圍收斂為 Windows x64，會自動建立輸出資料夾下的 `runtime` 目錄，並將 `libmpv-2.dll`、`yt-dlp.exe` 與 `deno.exe` 放在同一層。下載的二進位檔不應簽入儲存庫。
 
+WinUI 3 與 MAUI Windows 範例採用 Windows App SDK self-contained 部署設定與 `win-x64` RID，讓範例輸出資料夾帶著 Windows App SDK 相依項目。這個設定只屬於範例 app 專案，不代表 class library 套件會強制使用同一種部署模式。
+
 ## 共用展示內容
 
 - 啟動階段先執行 `SampleRuntime.InstallOrUpdateAsync()`，再建立實際播放視窗或頁面。

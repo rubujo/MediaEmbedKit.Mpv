@@ -27,6 +27,8 @@
 - WinUI 3 `DesktopWindowXamlSource.Initialize`：https://learn.microsoft.com/windows/windows-app-sdk/api/winrt/microsoft.ui.xaml.hosting.desktopwindowxamlsource.initialize
 - WinUI 3 `DesktopWindowXamlSource.SiteBridge`：https://learn.microsoft.com/windows/windows-app-sdk/api/winrt/microsoft.ui.xaml.hosting.desktopwindowxamlsource.sitebridge
 - WinUI 3 `DesignMode`：https://learn.microsoft.com/uwp/api/windows.applicationmodel.designmode
+- Windows App SDK 部署總覽：https://learn.microsoft.com/windows/apps/package-and-deploy/deploy-overview
+- Windows App SDK self-contained 部署：https://learn.microsoft.com/windows/apps/package-and-deploy/self-contained-deploy/deploy-self-contained-apps
 - Win32 子視窗與裁切規則：https://learn.microsoft.com/windows/win32/winmsg/window-features
 - Win32 `CreateWindowExW`：https://learn.microsoft.com/windows/win32/api/winuser/nf-winuser-createwindowexw
 - Win32 `SetWindowPos`：https://learn.microsoft.com/windows/win32/api/winuser/nf-winuser-setwindowpos

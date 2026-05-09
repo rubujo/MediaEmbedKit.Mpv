@@ -12,6 +12,7 @@
 - 視窗關閉時會釋放 `SamplePlayerEventBridge`，示範取消事件訂閱與屬性觀察。
 - 功能列示範 yt-dlp 格式預設值切換、OSD、相對跳轉、音量、靜音、播放速度、外部字幕、播放軌、截圖、載入設定檔與載入 Lua 指令碼。
 - `yt-dlp`、`Deno`、`Update yt` 與 `Update Deno` 按鈕會呼叫共用 helper 執行診斷或自我更新命令；診斷命令會透過程式庫的處理序執行器接收標準輸出與標準錯誤事件，並寫入事件清單。
+- 範例 app 使用 Windows App SDK self-contained 部署設定與 `win-x64` RID，降低測試機缺少 Windows App Runtime 時的啟動失敗機率。
 
 ## 執行
 

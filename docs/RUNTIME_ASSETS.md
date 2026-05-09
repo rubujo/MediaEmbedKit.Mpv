@@ -68,6 +68,12 @@ Deno 官方下載 tuple 目前只採用本專案 Windows x64 範圍需要的發�
 
 瀏覽器標頭集中在 `BrowserRequestHeaders`。若下載提供者需要瀏覽器相容標頭，更新 Chrome Stable 桌面 `User-Agent`，並同步維護 `sec-ch-ua`、`sec-ch-ua-mobile` 與 `sec-ch-ua-platform`。
 
+`YtDlpProcessRunner` 與 `DenoProcessRunner` 的輸出事件由外部處理序輸出回呼執行緒引發。WinForms、WPF、Avalonia、WinUI 3 與 MAUI Windows 應用程式接收事件後，必須切換到各自 UI 執行緒再更新畫面。處理序結束後 helper 會等待標準輸出與標準錯誤完成關閉；若輸出資料流未正常關閉，會以逾時例外狀況避免呼叫端無限等待。
+
+## Windows App SDK 範例部署
+
+WinUI 3 與 MAUI Windows 範例是未封裝應用程式，並在範例 app 專案設定 `WindowsAppSDKSelfContained=true` 與 `RuntimeIdentifier=win-x64`。此設定只套用在範例應用程式，不套用在 class library，目標是讓範例輸出資料夾帶著 Windows App SDK 相依項目，降低測試機缺少 Windows App Runtime 時的啟動失敗機率。
+
 ## 授權
 
 受控原始碼採用 CC0-1.0。這不會改變 mpv、libmpv、yt-dlp、Deno 或其相依元件的授權。helper 預設保持授權中立，使用者可透過 `MpvWindowsBuildDownloadOptions.LicensePreference` 明確選擇 LGPL 或非 LGPL 偏好。

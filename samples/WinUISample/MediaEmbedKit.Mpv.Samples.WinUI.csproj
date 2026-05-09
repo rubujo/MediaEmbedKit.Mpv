@@ -4,6 +4,8 @@
     <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
     <UseWinUI>true</UseWinUI>
     <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AssemblyName>MediaEmbedKit.Mpv.Samples.WinUI</AssemblyName>
     <RootNamespace>MediaEmbedKit.Mpv.Samples.WinUI</RootNamespace>

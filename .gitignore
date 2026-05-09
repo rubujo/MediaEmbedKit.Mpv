@@ -64,17 +64,9 @@ _ReSharper*/
 !.vscode/launch.json
 
 # 使用者可能在本機下載的原生與執行階段檔案
-native/
-downloads/
-mpv/
-!src/MediaEmbedKit.Mpv/Downloads/
-src/MediaEmbedKit.Mpv/Downloads/*
-!src/MediaEmbedKit.Mpv/Downloads/DenoProcessRunner.cs
-!src/MediaEmbedKit.Mpv/Downloads/ExternalToolOutputEventArgs.cs
-!src/MediaEmbedKit.Mpv/Downloads/ExternalToolOutputStream.cs
-!src/MediaEmbedKit.Mpv/Downloads/ExternalToolProcessResult.cs
-!src/MediaEmbedKit.Mpv/Downloads/ExternalToolProcessRunner.cs
-!src/MediaEmbedKit.Mpv/Downloads/YtDlpProcessRunner.cs
+/native/
+/downloads/
+/mpv/
 *.7z
 *.zip
 *.dll

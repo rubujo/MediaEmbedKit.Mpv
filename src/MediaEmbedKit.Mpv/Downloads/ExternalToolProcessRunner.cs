@@ -17,6 +17,10 @@ namespace MediaEmbedKit.Mpv.Downloads
         /// </summary>
         private static readonly TimeSpan DefaultTimeoutValue = TimeSpan.FromMinutes(5);
         /// <summary>
+        /// 外部工具結束後等待輸出資料流關閉的時間。
+        /// </summary>
+        private static readonly TimeSpan OutputCloseTimeoutValue = TimeSpan.FromSeconds(10);
+        /// <summary>
         /// 已設定的環境變數。
         /// </summary>
         private readonly Dictionary<string, string> _environmentVariables;
@@ -40,6 +44,9 @@ namespace MediaEmbedKit.Mpv.Downloads
         /// <summary>
         /// 在外部工具輸出一列文字時發生。
         /// </summary>
+        /// <remarks>
+        /// 此事件由處理序輸出回呼執行緒引發。UI 應用程式接收後需自行切換到 UI 執行緒。
+        /// </remarks>
         public event EventHandler<ExternalToolOutputEventArgs>? OutputReceived;
 
         /// <summary>
@@ -134,8 +141,8 @@ namespace MediaEmbedKit.Mpv.Downloads
                 StringBuilder standardOutput = new StringBuilder();
                 StringBuilder standardError = new StringBuilder();
                 object outputGate = new object();
-                TaskCompletionSource<bool> outputClosed = new TaskCompletionSource<bool>();
-                TaskCompletionSource<bool> errorClosed = new TaskCompletionSource<bool>();
+                TaskCompletionSource<bool> outputClosed = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+                TaskCompletionSource<bool> errorClosed = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
                 process.StartInfo = startInfo;
                 process.EnableRaisingEvents = true;
@@ -174,8 +181,7 @@ namespace MediaEmbedKit.Mpv.Downloads
                     throw new TimeoutException(ExecutablePath + " 未在指定時間內結束。");
                 }
 
-                await outputClosed.Task.ConfigureAwait(false);
-                await errorClosed.Task.ConfigureAwait(false);
+                await WaitForOutputStreamsClosedAsync(outputClosed.Task, errorClosed.Task, cancellationToken).ConfigureAwait(false);
                 DateTimeOffset completedAt = DateTimeOffset.UtcNow;
                 return new ExternalToolProcessResult(
                     ExecutablePath,
@@ -268,6 +274,30 @@ namespace MediaEmbedKit.Mpv.Downloads
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// 等待標準輸出與標準錯誤資料流完成關閉。
+        /// </summary>
+        /// <param name="outputClosed">標準輸出完成關閉的工作。</param>
+        /// <param name="errorClosed">標準錯誤完成關閉的工作。</param>
+        /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
+        /// <returns>代表等待輸出資料流關閉流程的工作。</returns>
+        private static async Task WaitForOutputStreamsClosedAsync(
+            Task outputClosed,
+            Task errorClosed,
+            CancellationToken cancellationToken)
+        {
+            Task closedTask = Task.WhenAll(outputClosed, errorClosed);
+            Task delayTask = Task.Delay(OutputCloseTimeoutValue, cancellationToken);
+            Task completedTask = await Task.WhenAny(closedTask, delayTask).ConfigureAwait(false);
+            if (completedTask != closedTask)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                throw new TimeoutException("外部工具結束後，輸出資料流未在指定時間內關閉。");
+            }
+
+            await closedTask.ConfigureAwait(false);
         }
 
         /// <summary>
