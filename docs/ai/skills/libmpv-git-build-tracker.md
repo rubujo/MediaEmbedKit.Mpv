@@ -4,7 +4,7 @@
 
 ## 讀取順序
 
-- `docs/ai/AGENT_GUIDE.md`：專案共用規則。
+- `AGENTS.md`：跨 CLI 主要入口。
 - `docs/RUNTIME_ASSETS.md`：provider、下載與更新政策。
 - `docs/LIBMPV_C_API_TEST_MATRIX.md`：C API 覆蓋與驗證矩陣。
 - `docs/runtime/libmpv-git-builds.json`：最近一次對齊的 provider release 與 mpv commit。

@@ -5,11 +5,10 @@ description: 追蹤 shinchiro/mpv-winbuild-cmake 與 zhongfly/mpv-winbuild 最�
 
 # libmpv git build 追蹤
 
-此 skill 是跨 agent 工具的可攜入口。詳細規則一律使用儲存庫共用內容。
+此 skill 只作為工具發現與轉接用途。
 
 ## 指示
 
-- 先閱讀 `docs/ai/skills/libmpv-git-build-tracker.md`。
-- 再閱讀 `docs/ai/AGENT_GUIDE.md`。
+- 先閱讀根目錄 `AGENTS.md`。
+- 詳細流程使用 `docs/ai/skills/libmpv-git-build-tracker.md`。
 - 需要執行階段下載政策或 C API 覆蓋狀態時，閱讀 `docs/RUNTIME_ASSETS.md` 與 `docs/LIBMPV_C_API_TEST_MATRIX.md`。
-

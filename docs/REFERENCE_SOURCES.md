@@ -1,6 +1,6 @@
 # 參考來源
 
-本檔記錄目前專案規範採用的主要官方來源。最後查核日期：2026-05-09。
+本檔記錄目前專案規範採用的主要官方來源。最後查核日期：2026-05-10。
 
 ## libmpv 與 mpv
 
@@ -64,9 +64,12 @@
 
 - Codex `AGENTS.md` 文件：https://developers.openai.com/codex/guides/agents-md
 - Codex Agent Skills 文件：https://developers.openai.com/codex/skills
-- AGENTS.md 開放格式：https://github.com/agentsmd/agents.md
-- Claude Code Skills 文件：https://docs.claude.com/en/docs/claude-code/skills
-- Gemini CLI `GEMINI.md` 文件：https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/gemini-md.md
-- GitHub Copilot CLI custom instructions：https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-custom-instructions
+- AGENTS.md 開放格式：https://agents.md/
+- Agent Skills 規格：https://agentskills.io/specification
 - Microsoft Agent Skills 文件：https://learn.microsoft.com/agent-framework/agents/skills
+- Claude Code memory 與 `CLAUDE.md` 匯入：https://docs.claude.com/en/docs/claude-code/memory
+- Claude Code Skills 文件：https://docs.claude.com/en/docs/claude-code/skills
+- Gemini CLI `GEMINI.md` 文件：https://google-gemini.github.io/gemini-cli/docs/cli/gemini-md.html
+- GitHub Copilot repository custom instructions：https://docs.github.com/en/copilot/how-tos/configure-custom-instructions/add-repository-instructions
+- GitHub Copilot CLI custom instructions：https://docs.github.com/en/copilot/how-tos/copilot-cli/add-custom-instructions
 - 慣例式提交 1.0.0 繁體中文規範：https://www.conventionalcommits.org/zh-hant/v1.0.0/

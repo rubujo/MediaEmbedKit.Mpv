@@ -5,10 +5,10 @@ description: 編修 MediaEmbedKit.Mpv 專案。用於 libmpv C API 包裝、WinF
 
 # MediaEmbedKit.Mpv
 
-此 Claude Code skill 只負責發現與轉接。詳細規則一律使用儲存庫共用內容。
+此 skill 只作為工具發現與轉接用途。
 
 ## 指示
 
-- 先閱讀 `docs/ai/skills/mediaembedkit-mpv.md`。
-- 再閱讀 `docs/ai/AGENT_GUIDE.md`。
+- 先閱讀根目錄 `AGENTS.md`。
+- 詳細流程使用 `docs/ai/skills/mediaembedkit-mpv.md`。
 - 需要支援矩陣、UI 後端或執行階段政策時，依 `docs/PROJECT_SPEC.md` 的文件索引載入專責文件。

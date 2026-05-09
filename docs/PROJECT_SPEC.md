@@ -2,7 +2,7 @@
 
 ## 文件定位
 
-此檔案是專案規範入口，不放置所有細節。修改支援目標、平台狀態、原生執行階段政策、工程規則或 AI agent 指示時，請同步更新下列專責文件。
+此檔案是專案規範入口，不放置所有細節。修改支援目標、平台狀態、原生執行階段政策、工程規則或 AI agent 指示時，請同步更新下列專責文件。跨 CLI 主要入口一律使用根目錄 `AGENTS.md`。
 
 | 主題 | 權威文件 |
 | --- | --- |
@@ -13,7 +13,6 @@
 | 程式碼註解、文件、格式、提交、授權與驗證規則 | `docs/ENGINEERING_STANDARDS.md` |
 | AI agent、AGENTS.md 與 Agent Skills 結構 | `docs/AI_AGENT_INTEGRATION.md` |
 | 最新官方參考來源 | `docs/REFERENCE_SOURCES.md` |
-| 跨工具 AI agent 指示 | `docs/ai/AGENT_GUIDE.md` |
 
 ## 專案目標
 

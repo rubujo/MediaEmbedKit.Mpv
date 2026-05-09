@@ -1,22 +1,28 @@
 # AGENTS.md
 
-這是本儲存庫給 AI coding agent 使用的主要入口。請先閱讀並遵循 `docs/ai/AGENT_GUIDE.md`。
+這是本儲存庫給 AI coding agent 使用的唯一主要入口。`CLAUDE.md`、`GEMINI.md` 與 `.github/copilot-instructions.md` 只作為相容橋接，規則不得在那些檔案重複維護。
 
-## 文件入口
+## 先讀文件
 
-- 專案規範：`docs/PROJECT_SPEC.md`
-- 支援矩陣：`docs/SUPPORT_MATRIX.md`
-- UI 後端：`docs/UI_BACKENDS.md`
-- 執行階段資產：`docs/RUNTIME_ASSETS.md`
-- 工程規範：`docs/ENGINEERING_STANDARDS.md`
-- AI agent 整合：`docs/AI_AGENT_INTEGRATION.md`
-- 參考來源：`docs/REFERENCE_SOURCES.md`
+- 專案規範入口：`docs/PROJECT_SPEC.md`
+- 跨 CLI 與 skill 結構：`docs/AI_AGENT_INTEGRATION.md`
+- 需要最新依據時：`docs/REFERENCE_SOURCES.md`
+
+`docs/PROJECT_SPEC.md` 會索引支援矩陣、UI 後端、執行階段資產、工程規範與測試矩陣。請依任務載入專責文件，不要把所有規則複製到工具專屬入口。
 
 ## 共用 Skill
 
-編修 libmpv 包裝、UI 後端、下載 helper、範例或文件時，請使用 `docs/ai/skills/mediaembedkit-mpv.md` 作為共用 skill 內容。工具專屬 skill 檔只作為發現與轉接用途。
+- 編修 libmpv 包裝、UI 後端、下載 helper、範例或文件：使用 `docs/ai/skills/mediaembedkit-mpv.md`。
+- 追蹤 shinchiro/zhongfly mpv git build、比對 libmpv header 或更新 provider 紀錄：使用 `docs/ai/skills/libmpv-git-build-tracker.md`。
 
-追蹤 shinchiro 與 zhongfly 最新 mpv git build、比對 libmpv C API header 或更新 provider 對齊紀錄時，請使用 `docs/ai/skills/libmpv-git-build-tracker.md` 作為共用 skill 內容。
+`.agents` 與 `.claude` 下的 `SKILL.md` 僅供工具發現；實際流程以 `docs/ai/skills/*.md` 為準。
+
+## 工作規則
+
+- 保持修改範圍聚焦，避免重寫不相關檔案。
+- 變更支援平台、UI 後端、runtime 政策、授權、提交規則或驗證方式時，同步更新 `docs/PROJECT_SPEC.md` 與對應專責文件。
+- 所有文件使用正體中文；外部授權原文、產品名稱與 URL 除外。
+- 建立提交時遵循慣例式提交 1.0.0，提交訊息必須有主旨與正文，且使用正體中文與臺灣地區用語。
 
 ## 驗證
 

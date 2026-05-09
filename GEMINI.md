@@ -1,3 +1,3 @@
-# Gemini CLI 內容
+# Gemini CLI 指示
 
 @AGENTS.md

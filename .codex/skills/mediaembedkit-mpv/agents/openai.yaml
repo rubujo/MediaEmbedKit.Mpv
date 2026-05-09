@@ -1,4 +1,0 @@
-interface:
-  display_name: "MediaEmbedKit.Mpv"
-  short_description: "維護 libmpv 包裝、UI 後端與 runtime helper。"
-  default_prompt: "使用 $mediaembedkit-mpv 編修 MediaEmbedKit.Mpv 的 libmpv 包裝、UI 後端、runtime helper、範例或規範。"
