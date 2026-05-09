@@ -1,4 +1,5 @@
-﻿using Microsoft.Maui.Controls;
+﻿using System;
+using Microsoft.Maui.Controls;
 
 using MediaEmbedKit.Mpv.WinUI;
 
@@ -25,6 +26,11 @@ namespace MediaEmbedKit.Mpv.Maui
         private MpvLoadFileMode _pendingMode = MpvLoadFileMode.Replace;
 
         /// <summary>
+        /// 在平台 handler 建立 libmpv 播放器後發生。
+        /// </summary>
+        public event EventHandler? PlayerCreated;
+
+        /// <summary>
         /// 初始化 <see cref="MpvView"/> 類別的新執行個體。
         /// </summary>
         public MpvView()
@@ -42,7 +48,7 @@ namespace MediaEmbedKit.Mpv.Maui
         /// 取得目前平台 handler 建立的播放器。
         /// </summary>
         /// <value>目前播放器；尚未建立時為 <see langword="null"/>。</value>
-        public MpvPlayer? Player { get; internal set; }
+        public MpvPlayer? Player { get; private set; }
 
         /// <summary>
         /// 取得目前是否在 MAUI 設計工具中執行。
@@ -100,6 +106,24 @@ namespace MediaEmbedKit.Mpv.Maui
         }
 
         /// <summary>
+        /// 從平台 handler 同步目前播放器參考。
+        /// </summary>
+        /// <param name="player">平台 handler 建立的播放器；中斷連線時為 <see langword="null"/>。</param>
+        internal void SetPlayer(MpvPlayer? player)
+        {
+            if (ReferenceEquals(Player, player))
+            {
+                return;
+            }
+
+            Player = player;
+            if (player != null)
+            {
+                PlayerCreated?.Invoke(this, EventArgs.Empty);
+            }
+        }
+
+        /// <summary>
         /// 在 <see cref="Source"/> 屬性變更時載入新的媒體來源。
         /// </summary>
         /// <param name="bindable">屬性所屬的可繫結物件。</param>
@@ -114,6 +138,5 @@ namespace MediaEmbedKit.Mpv.Maui
                 view.LoadFile(source!);
             }
         }
-
     }
 }

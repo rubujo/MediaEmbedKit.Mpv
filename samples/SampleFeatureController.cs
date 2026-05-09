@@ -1,0 +1,569 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using MediaEmbedKit.Mpv.Downloads;
+
+namespace MediaEmbedKit.Mpv.Samples
+{
+    /// <summary>
+    /// 提供範例 UI 共用的進階功能展示動作。
+    /// </summary>
+    internal sealed class SampleFeatureController
+    {
+        /// <summary>
+        /// 外部工具診斷輸出的最大列數。
+        /// </summary>
+        private const int DiagnosticOutputLineLimit = 40;
+        /// <summary>
+        /// 取得目前播放器執行個體的委派。
+        /// </summary>
+        private readonly Func<MpvPlayer?> _getPlayer;
+        /// <summary>
+        /// 將診斷訊息送回 UI 的委派。
+        /// </summary>
+        private readonly Action<string> _appendLine;
+        /// <summary>
+        /// 目前使用的播放速度。
+        /// </summary>
+        private double _currentSpeed = 1.0;
+
+        /// <summary>
+        /// 初始化 <see cref="SampleFeatureController"/> 類別的新執行個體。
+        /// </summary>
+        /// <param name="getPlayer">取得目前播放器的委派。</param>
+        /// <param name="appendLine">接收診斷訊息的委派。</param>
+        public SampleFeatureController(Func<MpvPlayer?> getPlayer, Action<string> appendLine)
+        {
+            _getPlayer = getPlayer ?? throw new ArgumentNullException(nameof(getPlayer));
+            _appendLine = appendLine ?? throw new ArgumentNullException(nameof(appendLine));
+        }
+
+        /// <summary>
+        /// 建立範例預設的 yt-dlp 格式選項清單。
+        /// </summary>
+        /// <returns>可繫結到 UI 下拉選單的格式選項清單。</returns>
+        public static IReadOnlyList<SampleYtdlpFormatChoice> CreateYtdlpFormatChoices()
+        {
+            return new[]
+            {
+                new SampleYtdlpFormatChoice("預設", MpvYtdlpFormatPreset.Default),
+                new SampleYtdlpFormatChoice("最佳", MpvYtdlpFormatPreset.Best),
+                new SampleYtdlpFormatChoice("最高 1080p", MpvYtdlpFormatPreset.UpTo1080p),
+                new SampleYtdlpFormatChoice("最高 720p", MpvYtdlpFormatPreset.UpTo720p),
+                new SampleYtdlpFormatChoice("最高 480p", MpvYtdlpFormatPreset.UpTo480p),
+                new SampleYtdlpFormatChoice("只有音訊", MpvYtdlpFormatPreset.AudioOnly)
+            };
+        }
+
+        /// <summary>
+        /// 取得範例預設的 yt-dlp 格式選項。
+        /// </summary>
+        /// <returns>最高 720p 的格式選項。</returns>
+        public static SampleYtdlpFormatChoice CreateDefaultYtdlpFormatChoice()
+        {
+            return new SampleYtdlpFormatChoice("最高 720p", MpvYtdlpFormatPreset.UpTo720p);
+        }
+
+        /// <summary>
+        /// 將 yt-dlp 格式選項套用到播放器選項。
+        /// </summary>
+        /// <param name="options">要套用的播放器選項。</param>
+        /// <param name="choice">要套用的格式選項。</param>
+        public static void ApplyYtdlpFormat(MpvPlayerOptions options, SampleYtdlpFormatChoice choice)
+        {
+            if (options == null)
+            {
+                throw new ArgumentNullException(nameof(options));
+            }
+
+            if (choice == null)
+            {
+                throw new ArgumentNullException(nameof(choice));
+            }
+
+            options.YtdlpFormatPreset = choice.Preset;
+            options.YtdlpFormat = null;
+            options.InitialOptions["ytdl-format"] = choice.Selector;
+        }
+
+        /// <summary>
+        /// 將 yt-dlp 格式選項套用到目前播放器。
+        /// </summary>
+        /// <param name="choice">要套用的格式選項。</param>
+        public void ApplyYtdlpFormat(SampleYtdlpFormatChoice choice)
+        {
+            MpvPlayer player = RequirePlayer();
+            player.SetYtdlpFormat(choice.Preset);
+            Append("yt-dlp", "已套用格式：" + choice.DisplayName + " => " + choice.Selector + "。重新載入網址後會使用新格式。");
+            player.ShowText("yt-dlp format: " + choice.DisplayName, 1800, 1);
+        }
+
+        /// <summary>
+        /// 顯示 OSD 文字。
+        /// </summary>
+        public void ShowOsd()
+        {
+            MpvPlayer player = RequirePlayer();
+            player.ShowText("MediaEmbedKit.Mpv OSD 範例", 2200, 1);
+            Append("api", "已呼叫 ShowText。");
+        }
+
+        /// <summary>
+        /// 依指定秒數相對跳轉。
+        /// </summary>
+        /// <param name="seconds">要相對跳轉的秒數。</param>
+        public void SeekRelative(double seconds)
+        {
+            MpvPlayer player = RequirePlayer();
+            player.Seek(seconds);
+            Append("api", "已呼叫 Seek(" + seconds.ToString("0.###", CultureInfo.InvariantCulture) + ")。");
+        }
+
+        /// <summary>
+        /// 依指定差值調整音量。
+        /// </summary>
+        /// <param name="delta">音量差值。</param>
+        public void ChangeVolume(double delta)
+        {
+            MpvPlayer player = RequirePlayer();
+            double nextVolume = Math.Max(0, Math.Min(130, player.Volume + delta));
+            player.Volume = nextVolume;
+            Append("api", "Volume = " + nextVolume.ToString("0.#", CultureInfo.InvariantCulture));
+        }
+
+        /// <summary>
+        /// 切換靜音狀態。
+        /// </summary>
+        public void ToggleMute()
+        {
+            MpvPlayer player = RequirePlayer();
+            player.Mute = !player.Mute;
+            Append("api", "Mute = " + player.Mute);
+        }
+
+        /// <summary>
+        /// 在常用播放速度之間切換。
+        /// </summary>
+        public void CycleSpeed()
+        {
+            MpvPlayer player = RequirePlayer();
+            if (_currentSpeed < 1.25)
+            {
+                _currentSpeed = 1.25;
+            }
+            else if (_currentSpeed < 1.5)
+            {
+                _currentSpeed = 1.5;
+            }
+            else
+            {
+                _currentSpeed = 1.0;
+            }
+
+            player.Speed = _currentSpeed;
+            Append("api", "Speed = " + _currentSpeed.ToString("0.##", CultureInfo.InvariantCulture));
+        }
+
+        /// <summary>
+        /// 載入範例本機字幕。
+        /// </summary>
+        public void AddSampleSubtitle()
+        {
+            SampleRuntime.EnsureSampleFiles();
+            MpvPlayer player = RequirePlayer();
+            player.AddSubtitle(SampleRuntime.SampleSubtitlePath, MpvTrackLoadMode.Select, MpvTrackLoadFlags.Default, "範例字幕", "zh-TW");
+            Append("api", "已載入外部字幕：" + SampleRuntime.SampleSubtitlePath);
+        }
+
+        /// <summary>
+        /// 將目前播放軌清單輸出到事件清單。
+        /// </summary>
+        public void DumpTracks()
+        {
+            MpvPlayer player = RequirePlayer();
+            IReadOnlyList<MpvTrackInfo> tracks = player.GetTracks();
+            Append("tracks", "播放軌數量：" + tracks.Count.ToString(CultureInfo.InvariantCulture));
+            foreach (MpvTrackInfo track in tracks)
+            {
+                Append("tracks", "#" + track.Id.ToString(CultureInfo.InvariantCulture) + " " + track.Type + " codec=" + (track.Codec ?? "null") + " selected=" + track.Selected);
+            }
+        }
+
+        /// <summary>
+        /// 將目前畫面截圖到範例截圖資料夾。
+        /// </summary>
+        public void TakeScreenshot()
+        {
+            Directory.CreateDirectory(SampleRuntime.ScreenshotDirectory);
+            string fileName = Path.Combine(
+                SampleRuntime.ScreenshotDirectory,
+                "sample-" + DateTimeOffset.Now.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture) + ".png");
+            MpvPlayer player = RequirePlayer();
+            string actualPath = player.TakeScreenshotToFile(fileName, MpvScreenshotMode.Video);
+            Append("api", "已輸出截圖：" + actualPath);
+        }
+
+        /// <summary>
+        /// 載入範例 mpv 設定檔。
+        /// </summary>
+        public void LoadSampleConfig()
+        {
+            SampleRuntime.EnsureSampleFiles();
+            MpvPlayer player = RequirePlayer();
+            player.LoadConfigFile(SampleRuntime.SampleConfigFilePath);
+            player.ShowText("已載入範例 mpv.conf", 2000, 1);
+            Append("api", "已載入設定檔：" + SampleRuntime.SampleConfigFilePath);
+        }
+
+        /// <summary>
+        /// 載入範例 Lua 指令碼並送出訊息。
+        /// </summary>
+        public void LoadSampleLuaScript()
+        {
+            SampleRuntime.EnsureSampleFiles();
+            MpvPlayer player = RequirePlayer();
+            player.LoadScript(SampleRuntime.SampleLuaScriptPath);
+            player.SendScriptMessage("sample-ping", "Lua script 已載入");
+            Append("api", "已載入 Lua 指令碼：" + SampleRuntime.SampleLuaScriptPath);
+        }
+
+        /// <summary>
+        /// 執行 yt-dlp 診斷命令並輸出版本與格式清單摘要。
+        /// </summary>
+        /// <param name="url">要交給 yt-dlp 檢查的媒體網址。</param>
+        /// <returns>代表診斷流程的工作。</returns>
+        public async Task RunYtdlpDiagnosticsAsync(string url)
+        {
+            Append("yt-dlp", "版本：" + (YtDlpDownloader.GetInstalledVersion(SampleRuntime.YtDlpPath) ?? "無法讀取"));
+            SampleToolProcessResult result = await RunProcessAsync(
+                SampleRuntime.YtDlpPath,
+                new[] { "--no-warnings", "--list-formats", url },
+                TimeSpan.FromSeconds(90),
+                CancellationToken.None).ConfigureAwait(false);
+            AppendProcessResult("yt-dlp", result);
+        }
+
+        /// <summary>
+        /// 執行 Deno 診斷命令並輸出版本。
+        /// </summary>
+        /// <returns>代表診斷流程的工作。</returns>
+        public async Task RunDenoDiagnosticsAsync()
+        {
+            Append("deno", "版本：" + (DenoDownloader.GetInstalledVersion(SampleRuntime.DenoPath) ?? "無法讀取"));
+            SampleToolProcessResult result = await RunProcessAsync(
+                SampleRuntime.DenoPath,
+                new[] { "--version" },
+                TimeSpan.FromSeconds(30),
+                CancellationToken.None).ConfigureAwait(false);
+            AppendProcessResult("deno", result);
+        }
+
+        /// <summary>
+        /// 執行 yt-dlp 自我更新命令。
+        /// </summary>
+        /// <returns>代表更新流程的工作。</returns>
+        public async Task RunYtdlpSelfUpdateAsync()
+        {
+            ToolUpdateResult result = await YtDlpDownloader.RunSelfUpdateAsync(SampleRuntime.YtDlpPath).ConfigureAwait(false);
+            AppendProcessResult("yt-dlp-update", result);
+        }
+
+        /// <summary>
+        /// 執行 Deno 自我更新命令。
+        /// </summary>
+        /// <returns>代表更新流程的工作。</returns>
+        public async Task RunDenoSelfUpgradeAsync()
+        {
+            ToolUpdateResult result = await DenoDownloader.RunSelfUpgradeAsync(SampleRuntime.DenoPath).ConfigureAwait(false);
+            AppendProcessResult("deno-upgrade", result);
+        }
+
+        /// <summary>
+        /// 取得目前播放器狀態摘要。
+        /// </summary>
+        /// <returns>可顯示在狀態列的播放器狀態文字。</returns>
+        public string GetStatusText()
+        {
+            MpvPlayer? player = _getPlayer();
+            if (player == null || !player.IsInitialized)
+            {
+                return "播放器尚未初始化";
+            }
+
+            string timePosition = TryGetDouble(player, "time-pos");
+            string duration = TryGetDouble(player, "duration");
+            string volume = TryGetDouble(player, "volume");
+            string speed = TryGetDouble(player, "speed");
+            string mute = TryGetFlag(player, "mute");
+            return "time " + timePosition + " / " + duration + " | vol " + volume + " | mute " + mute + " | speed " + speed;
+        }
+
+        /// <summary>
+        /// 取得目前播放器，若尚未建立則擲回例外狀況。
+        /// </summary>
+        /// <returns>目前播放器。</returns>
+        private MpvPlayer RequirePlayer()
+        {
+            MpvPlayer? player = _getPlayer();
+            if (player == null || !player.IsInitialized)
+            {
+                throw new InvalidOperationException("播放器尚未初始化。");
+            }
+
+            return player;
+        }
+
+        /// <summary>
+        /// 將訊息送回事件清單。
+        /// </summary>
+        /// <param name="category">訊息分類。</param>
+        /// <param name="message">訊息內容。</param>
+        private void Append(string category, string message)
+        {
+            string line = DateTimeOffset.Now.ToString("HH:mm:ss.fff", CultureInfo.InvariantCulture) + " [" + category + "] " + message;
+            _appendLine(line);
+        }
+
+        /// <summary>
+        /// 讀取 double 屬性並格式化。
+        /// </summary>
+        /// <param name="player">要讀取的播放器。</param>
+        /// <param name="name">屬性名稱。</param>
+        /// <returns>格式化後的屬性值。</returns>
+        private static string TryGetDouble(MpvPlayer player, string name)
+        {
+            try
+            {
+                return player.GetPropertyDouble(name).ToString("0.##", CultureInfo.InvariantCulture);
+            }
+            catch (MpvException)
+            {
+                return "-";
+            }
+        }
+
+        /// <summary>
+        /// 讀取布林屬性並格式化。
+        /// </summary>
+        /// <param name="player">要讀取的播放器。</param>
+        /// <param name="name">屬性名稱。</param>
+        /// <returns>格式化後的屬性值。</returns>
+        private static string TryGetFlag(MpvPlayer player, string name)
+        {
+            try
+            {
+                return player.GetPropertyFlag(name).ToString(CultureInfo.InvariantCulture);
+            }
+            catch (MpvException)
+            {
+                return "-";
+            }
+        }
+
+        /// <summary>
+        /// 執行外部工具並收集輸出。
+        /// </summary>
+        /// <param name="fileName">工具可執行檔路徑。</param>
+        /// <param name="arguments">命令列引數。</param>
+        /// <param name="timeout">等待處理序完成的逾時時間。</param>
+        /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
+        /// <returns>外部工具執行結果。</returns>
+        private static async Task<SampleToolProcessResult> RunProcessAsync(
+            string fileName,
+            IEnumerable<string> arguments,
+            TimeSpan timeout,
+            CancellationToken cancellationToken)
+        {
+            if (arguments == null)
+            {
+                throw new ArgumentNullException(nameof(arguments));
+            }
+
+            List<string> argumentList = new List<string>(arguments);
+            ProcessStartInfo startInfo = new ProcessStartInfo
+            {
+                FileName = fileName,
+                CreateNoWindow = true,
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            };
+
+            foreach (string argument in argumentList)
+            {
+                startInfo.ArgumentList.Add(argument);
+            }
+
+            using (Process? process = Process.Start(startInfo))
+            {
+                if (process == null)
+                {
+                    throw new InvalidOperationException("無法啟動外部工具：" + fileName);
+                }
+
+                Task<string> stdoutTask = process.StandardOutput.ReadToEndAsync();
+                Task<string> stderrTask = process.StandardError.ReadToEndAsync();
+                DateTimeOffset deadline = DateTimeOffset.UtcNow.Add(timeout);
+                while (!process.HasExited)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    if (DateTimeOffset.UtcNow >= deadline)
+                    {
+                        process.Kill();
+                        throw new TimeoutException("外部工具逾時：" + fileName);
+                    }
+
+                    await Task.Delay(100, cancellationToken).ConfigureAwait(false);
+                }
+
+                string stdout = await stdoutTask.ConfigureAwait(false);
+                string stderr = await stderrTask.ConfigureAwait(false);
+                return new SampleToolProcessResult(fileName, string.Join(" ", argumentList), process.ExitCode, stdout, stderr);
+            }
+        }
+
+        /// <summary>
+        /// 將外部工具執行結果輸出到事件清單。
+        /// </summary>
+        /// <param name="category">訊息分類。</param>
+        /// <param name="result">工具執行結果。</param>
+        private void AppendProcessResult(string category, ToolUpdateResult result)
+        {
+            Append(category, Path.GetFileName(result.ExecutablePath) + " " + result.Arguments + " exit=" + result.ExitCode.ToString(CultureInfo.InvariantCulture));
+            AppendOutputLines(category + ":out", result.StandardOutput);
+            AppendOutputLines(category + ":err", result.StandardError);
+        }
+
+        /// <summary>
+        /// 將外部工具執行結果輸出到事件清單。
+        /// </summary>
+        /// <param name="category">訊息分類。</param>
+        /// <param name="result">工具執行結果。</param>
+        private void AppendProcessResult(string category, SampleToolProcessResult result)
+        {
+            Append(category, Path.GetFileName(result.ExecutablePath) + " " + result.Arguments + " exit=" + result.ExitCode.ToString(CultureInfo.InvariantCulture));
+            AppendOutputLines(category + ":out", result.StandardOutput);
+            AppendOutputLines(category + ":err", result.StandardError);
+        }
+
+        /// <summary>
+        /// 將外部工具輸出拆列並限制輸出數量。
+        /// </summary>
+        /// <param name="category">訊息分類。</param>
+        /// <param name="text">外部工具輸出文字。</param>
+        private void AppendOutputLines(string category, string text)
+        {
+            string[] lines = text.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None)
+                .Where(line => !string.IsNullOrWhiteSpace(line))
+                .Take(DiagnosticOutputLineLimit)
+                .ToArray();
+            foreach (string line in lines)
+            {
+                Append(category, line);
+            }
+        }
+    }
+
+    /// <summary>
+    /// 表示範例直接執行外部工具的結果。
+    /// </summary>
+    internal sealed class SampleToolProcessResult
+    {
+        /// <summary>
+        /// 初始化 <see cref="SampleToolProcessResult"/> 類別的新執行個體。
+        /// </summary>
+        /// <param name="executablePath">工具可執行檔路徑。</param>
+        /// <param name="arguments">命令列引數。</param>
+        /// <param name="exitCode">處理序結束代碼。</param>
+        /// <param name="standardOutput">標準輸出內容。</param>
+        /// <param name="standardError">標準錯誤內容。</param>
+        public SampleToolProcessResult(string executablePath, string arguments, int exitCode, string standardOutput, string standardError)
+        {
+            ExecutablePath = executablePath ?? throw new ArgumentNullException(nameof(executablePath));
+            Arguments = arguments ?? throw new ArgumentNullException(nameof(arguments));
+            ExitCode = exitCode;
+            StandardOutput = standardOutput ?? string.Empty;
+            StandardError = standardError ?? string.Empty;
+        }
+
+        /// <summary>
+        /// 取得工具可執行檔路徑。
+        /// </summary>
+        /// <value>工具可執行檔路徑。</value>
+        public string ExecutablePath { get; private set; }
+
+        /// <summary>
+        /// 取得命令列引數。
+        /// </summary>
+        /// <value>命令列引數文字。</value>
+        public string Arguments { get; private set; }
+
+        /// <summary>
+        /// 取得處理序結束代碼。
+        /// </summary>
+        /// <value>處理序結束代碼。</value>
+        public int ExitCode { get; private set; }
+
+        /// <summary>
+        /// 取得標準輸出內容。
+        /// </summary>
+        /// <value>標準輸出內容。</value>
+        public string StandardOutput { get; private set; }
+
+        /// <summary>
+        /// 取得標準錯誤內容。
+        /// </summary>
+        /// <value>標準錯誤內容。</value>
+        public string StandardError { get; private set; }
+    }
+
+    /// <summary>
+    /// 表示範例 UI 可選擇的 yt-dlp 格式選項。
+    /// </summary>
+    internal sealed class SampleYtdlpFormatChoice
+    {
+        /// <summary>
+        /// 初始化 <see cref="SampleYtdlpFormatChoice"/> 類別的新執行個體。
+        /// </summary>
+        /// <param name="displayName">顯示在 UI 的名稱。</param>
+        /// <param name="preset">對應的 yt-dlp 格式預設值。</param>
+        public SampleYtdlpFormatChoice(string displayName, MpvYtdlpFormatPreset preset)
+        {
+            DisplayName = displayName ?? throw new ArgumentNullException(nameof(displayName));
+            Preset = preset;
+            Selector = MpvYtdlpFormatSelector.FromPreset(preset);
+        }
+
+        /// <summary>
+        /// 取得顯示在 UI 的名稱。
+        /// </summary>
+        /// <value>格式選項顯示名稱。</value>
+        public string DisplayName { get; private set; }
+
+        /// <summary>
+        /// 取得對應的 yt-dlp 格式預設值。
+        /// </summary>
+        /// <value>yt-dlp 格式預設值。</value>
+        public MpvYtdlpFormatPreset Preset { get; private set; }
+
+        /// <summary>
+        /// 取得對應的 yt-dlp selector 字串。
+        /// </summary>
+        /// <value>yt-dlp selector 字串。</value>
+        public string Selector { get; private set; }
+
+        /// <summary>
+        /// 將格式選項轉成 UI 顯示文字。
+        /// </summary>
+        /// <returns>格式選項顯示名稱。</returns>
+        public override string ToString()
+        {
+            return DisplayName;
+        }
+    }
+}

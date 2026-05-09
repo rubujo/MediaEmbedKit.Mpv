@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using MediaEmbedKit.Mpv.Downloads;
@@ -69,6 +70,22 @@ namespace MediaEmbedKit.Mpv.Samples
         /// 範例播放時使用的 yt-dlp 格式選擇。
         /// </summary>
         private const string PlaybackYtdlpFormat = "bestvideo[height<=720]+bestaudio/best[height<=720]/best";
+        /// <summary>
+        /// 範例 Lua 指令碼的檔案名稱。
+        /// </summary>
+        private const string SampleLuaScriptFileName = "mediaembedkit-sample.lua";
+        /// <summary>
+        /// 範例字幕檔案的檔案名稱。
+        /// </summary>
+        private const string SampleSubtitleFileName = "mediaembedkit-sample.zh-TW.srt";
+        /// <summary>
+        /// 範例 mpv 設定檔的檔案名稱。
+        /// </summary>
+        private const string SampleConfigFileName = "mpv.conf";
+        /// <summary>
+        /// 寫入範例產生檔案時使用的 UTF-8 編碼。
+        /// </summary>
+        private static readonly Encoding SampleFileEncoding = new UTF8Encoding(false);
 
         /// <summary>
         /// 保存範例應用程式目前使用的播放器選項。
@@ -82,6 +99,69 @@ namespace MediaEmbedKit.Mpv.Samples
         internal static MpvPlayerOptions PlayerOptions
         {
             get { return _playerOptions; }
+        }
+
+        /// <summary>
+        /// 取得範例執行階段資料夾。
+        /// </summary>
+        /// <value>包含 libmpv、yt-dlp、Deno 與範例輔助檔案的資料夾。</value>
+        internal static string RuntimeDirectory
+        {
+            get { return Path.Combine(AppContext.BaseDirectory, "runtime"); }
+        }
+
+        /// <summary>
+        /// 取得範例使用的 yt-dlp 可執行檔路徑。
+        /// </summary>
+        /// <value>yt-dlp 可執行檔完整路徑。</value>
+        internal static string YtDlpPath
+        {
+            get { return Path.Combine(RuntimeDirectory, "yt-dlp.exe"); }
+        }
+
+        /// <summary>
+        /// 取得範例使用的 Deno 可執行檔路徑。
+        /// </summary>
+        /// <value>Deno 可執行檔完整路徑。</value>
+        internal static string DenoPath
+        {
+            get { return Path.Combine(RuntimeDirectory, "deno.exe"); }
+        }
+
+        /// <summary>
+        /// 取得範例 mpv 設定檔路徑。
+        /// </summary>
+        /// <value>範例 mpv 設定檔完整路徑。</value>
+        internal static string SampleConfigFilePath
+        {
+            get { return Path.Combine(RuntimeDirectory, SampleConfigFileName); }
+        }
+
+        /// <summary>
+        /// 取得範例 Lua 指令碼路徑。
+        /// </summary>
+        /// <value>範例 Lua 指令碼完整路徑。</value>
+        internal static string SampleLuaScriptPath
+        {
+            get { return Path.Combine(RuntimeDirectory, SampleLuaScriptFileName); }
+        }
+
+        /// <summary>
+        /// 取得範例字幕檔路徑。
+        /// </summary>
+        /// <value>範例字幕檔完整路徑。</value>
+        internal static string SampleSubtitlePath
+        {
+            get { return Path.Combine(RuntimeDirectory, SampleSubtitleFileName); }
+        }
+
+        /// <summary>
+        /// 取得範例截圖輸出資料夾。
+        /// </summary>
+        /// <value>截圖輸出資料夾完整路徑。</value>
+        internal static string ScreenshotDirectory
+        {
+            get { return Path.Combine(AppContext.BaseDirectory, "screenshots"); }
         }
 
         /// <summary>
@@ -107,10 +187,11 @@ namespace MediaEmbedKit.Mpv.Samples
         /// <returns>代表安裝或更新流程的工作。</returns>
         internal static async Task InstallOrUpdateAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
-            string runtimeDirectory = Path.Combine(AppContext.BaseDirectory, "runtime");
+            string runtimeDirectory = RuntimeDirectory;
             if (IsSmokeTestEnabled && HasCompleteRuntime(runtimeDirectory))
             {
                 ConfigurePlayerOptions(runtimeDirectory);
+                EnsureSampleFiles();
                 return;
             }
 
@@ -125,6 +206,7 @@ namespace MediaEmbedKit.Mpv.Samples
             if (result.IsSupported)
             {
                 ConfigurePlayerOptions(runtimeDirectory);
+                EnsureSampleFiles();
             }
         }
 
@@ -148,6 +230,18 @@ namespace MediaEmbedKit.Mpv.Samples
         {
             _playerOptions = MpvRuntimeInstaller.CreatePlayerOptions(runtimeDirectory);
             _playerOptions.InitialOptions["ytdl-format"] = PlaybackYtdlpFormat;
+        }
+
+        /// <summary>
+        /// 建立範例展示常用 API 所需的設定檔、指令碼、字幕與截圖資料夾。
+        /// </summary>
+        internal static void EnsureSampleFiles()
+        {
+            Directory.CreateDirectory(RuntimeDirectory);
+            Directory.CreateDirectory(ScreenshotDirectory);
+            File.WriteAllText(SampleConfigFilePath, CreateSampleConfigText(), SampleFileEncoding);
+            File.WriteAllText(SampleLuaScriptPath, CreateSampleLuaScriptText(), SampleFileEncoding);
+            File.WriteAllText(SampleSubtitlePath, CreateSampleSubtitleText(), SampleFileEncoding);
         }
 
         /// <summary>
@@ -199,6 +293,44 @@ namespace MediaEmbedKit.Mpv.Samples
             {
                 target.InitialOptions[option.Key] = option.Value;
             }
+        }
+
+        /// <summary>
+        /// 建立範例 mpv 設定檔內容。
+        /// </summary>
+        /// <returns>可寫入 mpv 設定檔的文字。</returns>
+        private static string CreateSampleConfigText()
+        {
+            return "osd-duration=2000" + Environment.NewLine
+                + "screenshot-format=png" + Environment.NewLine
+                + "screenshot-directory=" + ScreenshotDirectory.Replace("\\", "/") + Environment.NewLine;
+        }
+
+        /// <summary>
+        /// 建立範例 Lua 指令碼內容。
+        /// </summary>
+        /// <returns>可寫入 Lua 指令碼的文字。</returns>
+        private static string CreateSampleLuaScriptText()
+        {
+            return "local mp = require 'mp'" + Environment.NewLine
+                + "mp.register_script_message('sample-ping', function(text)" + Environment.NewLine
+                + "    mp.osd_message('MediaEmbedKit.Mpv Lua: ' .. (text or ''), 2)" + Environment.NewLine
+                + "end)" + Environment.NewLine;
+        }
+
+        /// <summary>
+        /// 建立範例字幕檔內容。
+        /// </summary>
+        /// <returns>可寫入 SRT 字幕檔的文字。</returns>
+        private static string CreateSampleSubtitleText()
+        {
+            return "1" + Environment.NewLine
+                + "00:00:00,000 --> 00:00:05,000" + Environment.NewLine
+                + "MediaEmbedKit.Mpv 範例字幕：外部字幕已載入。" + Environment.NewLine
+                + Environment.NewLine
+                + "2" + Environment.NewLine
+                + "00:00:05,000 --> 00:00:10,000" + Environment.NewLine
+                + "這段字幕由 SampleRuntime 產生。" + Environment.NewLine;
         }
 
         /// <summary>

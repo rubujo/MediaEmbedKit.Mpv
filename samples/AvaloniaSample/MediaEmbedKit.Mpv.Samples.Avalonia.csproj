@@ -10,6 +10,8 @@
 
   <ItemGroup>
     <Compile Include="..\SampleRuntime.cs" Link="SampleRuntime.cs" />
+    <Compile Include="..\SamplePlayerEventBridge.cs" Link="SamplePlayerEventBridge.cs" />
+    <Compile Include="..\SampleFeatureController.cs" Link="SampleFeatureController.cs" />
     <PackageReference Include="Avalonia.Desktop" />
     <PackageReference Include="Avalonia.Themes.Fluent" />
     <ProjectReference Include="..\..\src\MediaEmbedKit.Mpv.Avalonia\MediaEmbedKit.Mpv.Avalonia.csproj" />

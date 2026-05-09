@@ -5,10 +5,12 @@
         Title="MediaEmbedKit.Mpv WPF Sample"
         Width="960"
         Height="540">
-    <Grid>
+    <Grid Background="#111111">
         <Grid.RowDefinitions>
             <RowDefinition Height="48" />
+            <RowDefinition Height="92" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="152" />
         </Grid.RowDefinitions>
 
         <Grid Grid.Row="0"
@@ -44,19 +46,164 @@
                     Click="StopClick" />
         </Grid>
 
-        <mpv:MpvWpfPlayer x:Name="PlayerHost"
-                          Grid.Row="1">
-            <mpv:MpvWpfPlayer.OverlayContent>
-                <Grid IsHitTestVisible="False">
-                    <Border Width="64"
-                            Height="6"
-                            HorizontalAlignment="Right"
-                            VerticalAlignment="Bottom"
-                            Margin="12"
-                            Background="#CCFFFFFF"
-                            CornerRadius="2" />
-                </Grid>
-            </mpv:MpvWpfPlayer.OverlayContent>
-        </mpv:MpvWpfPlayer>
+        <Grid Grid.Row="1"
+              Background="#181818"
+              Margin="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="42" />
+                <RowDefinition Height="42" />
+            </Grid.RowDefinitions>
+
+            <WrapPanel Margin="8,4,8,0"
+                       VerticalAlignment="Center">
+                <ComboBox x:Name="FormatComboBox"
+                          Width="132"
+                          Height="32"
+                          Margin="0,0,8,0"
+                          SelectionChanged="FormatComboBoxSelectionChanged" />
+                <TextBlock x:Name="StatusTextBlock"
+                           Width="380"
+                           Height="32"
+                           Margin="0,0,8,0"
+                           Padding="8,0"
+                           VerticalAlignment="Center"
+                           Background="#222222"
+                           Foreground="#E6E6E6"
+                           Text="播放器尚未初始化"
+                           TextTrimming="CharacterEllipsis" />
+                <Button Width="76"
+                        Height="32"
+                        Margin="0,0,8,0"
+                        Content="OSD"
+                        Click="OsdClick" />
+                <Button Width="76"
+                        Height="32"
+                        Margin="0,0,8,0"
+                        Content="-10s"
+                        Click="SeekBackwardClick" />
+                <Button Width="76"
+                        Height="32"
+                        Margin="0,0,8,0"
+                        Content="+10s"
+                        Click="SeekForwardClick" />
+                <Button Width="76"
+                        Height="32"
+                        Margin="0,0,8,0"
+                        Content="Vol-"
+                        Click="VolumeDownClick" />
+                <Button Width="76"
+                        Height="32"
+                        Content="Vol+"
+                        Click="VolumeUpClick" />
+            </WrapPanel>
+
+            <WrapPanel Grid.Row="1"
+                       Margin="8,2,8,4"
+                       VerticalAlignment="Center">
+                <Button Width="76"
+                        Height="32"
+                        Margin="0,0,8,0"
+                        Content="Mute"
+                        Click="MuteClick" />
+                <Button Width="76"
+                        Height="32"
+                        Margin="0,0,8,0"
+                        Content="Speed"
+                        Click="SpeedClick" />
+                <Button Width="76"
+                        Height="32"
+                        Margin="0,0,8,0"
+                        Content="Sub"
+                        Click="SubtitleClick" />
+                <Button Width="76"
+                        Height="32"
+                        Margin="0,0,8,0"
+                        Content="Tracks"
+                        Click="TracksClick" />
+                <Button Width="76"
+                        Height="32"
+                        Margin="0,0,8,0"
+                        Content="Shot"
+                        Click="ScreenshotClick" />
+                <Button Width="76"
+                        Height="32"
+                        Margin="0,0,8,0"
+                        Content="Config"
+                        Click="ConfigClick" />
+                <Button Width="76"
+                        Height="32"
+                        Margin="0,0,8,0"
+                        Content="Lua"
+                        Click="LuaClick" />
+                <Button Width="76"
+                        Height="32"
+                        Margin="0,0,8,0"
+                        Content="yt-dlp"
+                        Click="YtdlpClick" />
+                <Button Width="76"
+                        Height="32"
+                        Margin="0,0,8,0"
+                        Content="Deno"
+                        Click="DenoClick" />
+                <Button Width="88"
+                        Height="32"
+                        Margin="0,0,8,0"
+                        Content="Update yt"
+                        Click="YtdlpUpdateClick" />
+                <Button Width="104"
+                        Height="32"
+                        Content="Update Deno"
+                        Click="DenoUpdateClick" />
+            </WrapPanel>
+        </Grid>
+
+        <Grid Grid.Row="2"
+              Background="Black">
+            <mpv:MpvWpfPlayer x:Name="PlayerHost">
+                <mpv:MpvWpfPlayer.OverlayContent>
+                    <Grid IsHitTestVisible="False">
+                        <Border Width="300"
+                                Height="32"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Top"
+                                Margin="16"
+                                Background="#DD0078D4"
+                                CornerRadius="4">
+                            <TextBlock HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"
+                                       Foreground="White"
+                                       FontWeight="SemiBold"
+                                       Text="OverlayContent：AirSpace 安全覆蓋層" />
+                        </Border>
+                    </Grid>
+                </mpv:MpvWpfPlayer.OverlayContent>
+            </mpv:MpvWpfPlayer>
+
+            <Border Width="360"
+                    Height="32"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
+                    Margin="16"
+                    Background="#DD5C2D91"
+                    CornerRadius="4"
+                    IsHitTestVisible="False">
+                <TextBlock HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           Foreground="White"
+                           FontWeight="SemiBold"
+                           Text="一般 WPF 覆蓋層：用來觀察 AirSpace" />
+            </Border>
+        </Grid>
+
+        <ListBox x:Name="EventListBox"
+                 Grid.Row="3"
+                 Margin="0"
+                 Background="#161616"
+                 BorderBrush="#333333"
+                 BorderThickness="1,1,1,0"
+                 FontFamily="Consolas"
+                 FontSize="12"
+                 Foreground="#E6E6E6"
+                 HorizontalContentAlignment="Stretch" />
     </Grid>
 </Window>

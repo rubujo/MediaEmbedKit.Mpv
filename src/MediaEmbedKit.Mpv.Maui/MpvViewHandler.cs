@@ -46,7 +46,7 @@ namespace MediaEmbedKit.Mpv.Maui
             }
 
             PlatformView.LoadFile(pathOrUrl, mode);
-            VirtualView.Player = PlatformView.Player;
+            VirtualView.SetPlayer(PlatformView.Player);
 #else
             throw new PlatformNotSupportedException("此平台尚未提供 MAUI libmpv handler。");
 #endif
@@ -88,7 +88,7 @@ namespace MediaEmbedKit.Mpv.Maui
             CopyPlayerOptions(platformView);
             AttachPlatformWindow(platformView);
             platformView.PlayerCreated += OnPlayerCreated;
-            VirtualView.Player = platformView.Player;
+            VirtualView.SetPlayer(platformView.Player);
 
             if (!string.IsNullOrWhiteSpace(VirtualView.PendingSource))
             {
@@ -109,6 +109,7 @@ namespace MediaEmbedKit.Mpv.Maui
         {
 #if WINDOWS
             platformView.PlayerCreated -= OnPlayerCreated;
+            VirtualView.SetPlayer(null);
             platformView.Dispose();
 #endif
             base.DisconnectHandler(platformView);
@@ -122,7 +123,7 @@ namespace MediaEmbedKit.Mpv.Maui
         private void OnPlayerCreated(object? sender, System.EventArgs e)
         {
 #if WINDOWS
-            VirtualView.Player = PlatformView.Player;
+            VirtualView.SetPlayer(PlatformView.Player);
 #endif
         }
 

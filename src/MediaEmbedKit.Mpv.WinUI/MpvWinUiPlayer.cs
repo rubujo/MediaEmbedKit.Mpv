@@ -153,7 +153,9 @@ namespace MediaEmbedKit.Mpv.WinUI
                 throw new ArgumentNullException(nameof(hostWindow));
             }
 
+            DetachHostWindowClosedHandler();
             _hostWindow = hostWindow;
+            _hostWindow.Closed += HostWindowClosed;
             Attach(WindowNative.GetWindowHandle(hostWindow));
         }
 
@@ -215,6 +217,7 @@ namespace MediaEmbedKit.Mpv.WinUI
 
             _disposed = true;
             Loaded -= OnLoaded;
+            DetachHostWindowClosedHandler();
             DisposeHwndBackend();
             Children.Clear();
         }
@@ -356,6 +359,16 @@ namespace MediaEmbedKit.Mpv.WinUI
         }
 
         /// <summary>
+        /// 在附加的 WinUI 視窗關閉時釋放控制項資源。
+        /// </summary>
+        /// <param name="sender">引發事件的物件。</param>
+        /// <param name="args">視窗關閉事件資料。</param>
+        private void HostWindowClosed(object sender, WindowEventArgs args)
+        {
+            Dispose();
+        }
+
+        /// <summary>
         /// 釋放 HWND 播放後端。
         /// </summary>
         private void DisposeHwndBackend()
@@ -370,6 +383,20 @@ namespace MediaEmbedKit.Mpv.WinUI
             Children.Remove(_hwndPlayer);
             _hwndPlayer.Dispose();
             _hwndPlayer = null;
+        }
+
+        /// <summary>
+        /// 移除附加視窗的關閉事件處理常式。
+        /// </summary>
+        private void DetachHostWindowClosedHandler()
+        {
+            if (_hostWindow == null)
+            {
+                return;
+            }
+
+            _hostWindow.Closed -= HostWindowClosed;
+            _hostWindow = null;
         }
 
         /// <summary>

@@ -13,6 +13,8 @@
 
   <ItemGroup>
     <Compile Include="..\SampleRuntime.cs" Link="SampleRuntime.cs" />
+    <Compile Include="..\SamplePlayerEventBridge.cs" Link="SamplePlayerEventBridge.cs" />
+    <Compile Include="..\SampleFeatureController.cs" Link="SampleFeatureController.cs" />
     <PackageReference Include="Microsoft.WindowsAppSDK" />
     <ProjectReference Include="..\..\src\MediaEmbedKit.Mpv.WinUI\MediaEmbedKit.Mpv.WinUI.csproj" />
   </ItemGroup>

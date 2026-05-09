@@ -50,7 +50,11 @@ namespace MediaEmbedKit.Mpv.WinUI
         /// </summary>
         private DesktopWindowXamlSource? _overlaySource;
         /// <summary>
-        /// 顯示 WinUI 覆蓋層內容的原生子視窗控制代碼。
+        /// 承載 WinUI 覆蓋層 XAML Island 的彈出視窗控制代碼。
+        /// </summary>
+        private IntPtr _overlayHostHwnd;
+        /// <summary>
+        /// 顯示 WinUI 覆蓋層內容的 XAML Island 視窗控制代碼。
         /// </summary>
         private IntPtr _overlayHwnd;
         /// <summary>
@@ -331,10 +335,10 @@ namespace MediaEmbedKit.Mpv.WinUI
             }
 
             _videoHwnd = NativeMethods.CreateWindowEx(
-                0,
+                NativeMethods.WS_EX_NOACTIVATE | NativeMethods.WS_EX_TOOLWINDOW,
                 "STATIC",
                 string.Empty,
-                NativeMethods.WS_CHILD | NativeMethods.WS_VISIBLE | NativeMethods.WS_CLIPSIBLINGS | NativeMethods.WS_CLIPCHILDREN,
+                NativeMethods.WS_POPUP | NativeMethods.WS_VISIBLE | NativeMethods.WS_CLIPSIBLINGS | NativeMethods.WS_CLIPCHILDREN,
                 0,
                 0,
                 1,
@@ -406,8 +410,16 @@ namespace MediaEmbedKit.Mpv.WinUI
             int y = (int)Math.Round(origin.Y * scale);
             int width = Math.Max(1, (int)Math.Round(ActualWidth * scale));
             int height = Math.Max(1, (int)Math.Round(ActualHeight * scale));
+            NativeMethods.Point parentClientOrigin = new NativeMethods.Point();
+            if (!NativeMethods.ClientToScreen(_parentHwnd, ref parentClientOrigin))
+            {
+                return;
+            }
 
-            if (x == _lastWindowX && y == _lastWindowY && width == _lastWindowWidth && height == _lastWindowHeight)
+            int screenX = parentClientOrigin.X + x;
+            int screenY = parentClientOrigin.Y + y;
+
+            if (screenX == _lastWindowX && screenY == _lastWindowY && width == _lastWindowWidth && height == _lastWindowHeight)
             {
                 return;
             }
@@ -415,14 +427,14 @@ namespace MediaEmbedKit.Mpv.WinUI
             NativeMethods.SetWindowPos(
                 _videoHwnd,
                 NativeMethods.HWND_TOP,
-                x,
-                y,
+                screenX,
+                screenY,
                 width,
                 height,
                 NativeMethods.SWP_NOACTIVATE | NativeMethods.SWP_SHOWWINDOW);
 
-            _lastWindowX = x;
-            _lastWindowY = y;
+            _lastWindowX = screenX;
+            _lastWindowY = screenY;
             _lastWindowWidth = width;
             _lastWindowHeight = height;
             UpdateOverlayWindowBounds();
@@ -480,8 +492,29 @@ namespace MediaEmbedKit.Mpv.WinUI
             }
 
             _overlaySource = new DesktopWindowXamlSource();
-            WindowId parentWindowId = Win32Interop.GetWindowIdFromWindow(_parentHwnd);
-            _overlaySource.Initialize(parentWindowId);
+            _overlayHostHwnd = NativeMethods.CreateWindowEx(
+                NativeMethods.WS_EX_NOACTIVATE | NativeMethods.WS_EX_TOOLWINDOW,
+                "STATIC",
+                string.Empty,
+                NativeMethods.WS_POPUP | NativeMethods.WS_VISIBLE | NativeMethods.WS_CLIPSIBLINGS | NativeMethods.WS_CLIPCHILDREN,
+                0,
+                0,
+                1,
+                1,
+                _parentHwnd,
+                IntPtr.Zero,
+                IntPtr.Zero,
+                IntPtr.Zero);
+
+            if (_overlayHostHwnd == IntPtr.Zero)
+            {
+                _overlaySource.Dispose();
+                _overlaySource = null;
+                throw new InvalidOperationException("無法建立 WinUI 覆蓋層彈出視窗。");
+            }
+
+            WindowId overlayWindowId = Win32Interop.GetWindowIdFromWindow(_overlayHostHwnd);
+            _overlaySource.Initialize(overlayWindowId);
             _overlaySource.Content = OverlayContent;
             _overlayHwnd = Win32Interop.GetWindowFromWindowId(_overlaySource.SiteBridge.WindowId);
             UpdateOverlayWindowBounds();
@@ -492,7 +525,7 @@ namespace MediaEmbedKit.Mpv.WinUI
         /// </summary>
         private void UpdateOverlayWindowBounds()
         {
-            if (_overlayHwnd == IntPtr.Zero)
+            if (_overlayHostHwnd == IntPtr.Zero || _overlayHwnd == IntPtr.Zero)
             {
                 EnsureOverlayWindow();
                 return;
@@ -512,14 +545,26 @@ namespace MediaEmbedKit.Mpv.WinUI
                 flags |= NativeMethods.SWP_HIDEWINDOW;
             }
 
-            NativeMethods.SetWindowPos(
-                _overlayHwnd,
+            bool hostMoved = NativeMethods.SetWindowPos(
+                _overlayHostHwnd,
                 NativeMethods.HWND_TOP,
                 x,
                 y,
                 width,
                 height,
                 flags);
+
+            if (hostMoved)
+            {
+                NativeMethods.SetWindowPos(
+                    _overlayHwnd,
+                    NativeMethods.HWND_TOP,
+                    0,
+                    0,
+                    width,
+                    height,
+                    NativeMethods.SWP_NOACTIVATE | NativeMethods.SWP_SHOWWINDOW);
+            }
         }
 
         /// <summary>
@@ -566,6 +611,11 @@ namespace MediaEmbedKit.Mpv.WinUI
             }
 
             _overlayHwnd = IntPtr.Zero;
+            if (_overlayHostHwnd != IntPtr.Zero)
+            {
+                NativeMethods.DestroyWindow(_overlayHostHwnd);
+                _overlayHostHwnd = IntPtr.Zero;
+            }
         }
 
         /// <summary>
@@ -601,6 +651,10 @@ namespace MediaEmbedKit.Mpv.WinUI
             /// </summary>
             internal static readonly IntPtr HWND_TOP = IntPtr.Zero;
             /// <summary>
+            /// 建立彈出視窗的 Win32 樣式。
+            /// </summary>
+            internal const int WS_POPUP = unchecked((int)0x80000000);
+            /// <summary>
             /// 建立子視窗的 Win32 樣式。
             /// </summary>
             internal const int WS_CHILD = 0x40000000;
@@ -632,6 +686,14 @@ namespace MediaEmbedKit.Mpv.WinUI
             /// 隱藏視窗的 SetWindowPos 旗標。
             /// </summary>
             internal const int SWP_HIDEWINDOW = 0x0080;
+            /// <summary>
+            /// 建立不啟用視窗的延伸 Win32 樣式。
+            /// </summary>
+            internal const int WS_EX_NOACTIVATE = 0x08000000;
+            /// <summary>
+            /// 建立工具視窗的延伸 Win32 樣式。
+            /// </summary>
+            internal const int WS_EX_TOOLWINDOW = 0x00000080;
 
             /// <summary>
             /// 建立 Win32 視窗。
@@ -692,6 +754,31 @@ namespace MediaEmbedKit.Mpv.WinUI
                 int cx,
                 int cy,
                 int flags);
+
+            /// <summary>
+            /// 將視窗用戶端座標轉換成螢幕座標。
+            /// </summary>
+            /// <param name="hwnd">座標所屬的視窗控制代碼。</param>
+            /// <param name="point">要轉換的座標。</param>
+            /// <returns>作業成功時為 <see langword="true"/>。</returns>
+            [DllImport("user32.dll", SetLastError = true)]
+            internal static extern bool ClientToScreen(IntPtr hwnd, ref Point point);
+
+            /// <summary>
+            /// 表示 Win32 點座標。
+            /// </summary>
+            [StructLayout(LayoutKind.Sequential)]
+            internal struct Point
+            {
+                /// <summary>
+                /// X 座標。
+                /// </summary>
+                internal int X;
+                /// <summary>
+                /// Y 座標。
+                /// </summary>
+                internal int Y;
+            }
         }
     }
 }

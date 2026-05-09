@@ -1,17 +1,95 @@
 ﻿<Solution>
-  <Folder Name="/samples/">
-    <Project Path="samples/AvaloniaSample/MediaEmbedKit.Mpv.Samples.Avalonia.csproj" />
-    <Project Path="samples/WinFormsSample/MediaEmbedKit.Mpv.Samples.WinForms.csproj" />
-    <Project Path="samples/WpfSample/MediaEmbedKit.Mpv.Samples.Wpf.csproj" />
-    <Project Path="samples/WinUISample/MediaEmbedKit.Mpv.Samples.WinUI.csproj" />
-    <Project Path="samples/MauiSample/MediaEmbedKit.Mpv.Samples.Maui.csproj" />
+  <Folder Name="/根目錄/">
+    <File Path=".editorconfig" />
+    <File Path=".gitignore" />
+    <File Path="AGENTS.md" />
+    <File Path="CLAUDE.md" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+    <File Path="GEMINI.md" />
+    <File Path="global.json" />
+    <File Path="LICENSE" />
+    <File Path="README.md" />
+    <File Path="THIRD_PARTY_NOTICES.md" />
   </Folder>
-  <Folder Name="/src/">
+  <Folder Name="/原始碼 (src)/">
+    <Project Path="src/MediaEmbedKit.Mpv/MediaEmbedKit.Mpv.csproj" />
     <Project Path="src/MediaEmbedKit.Mpv.WinForms/MediaEmbedKit.Mpv.WinForms.csproj" />
     <Project Path="src/MediaEmbedKit.Mpv.Wpf/MediaEmbedKit.Mpv.Wpf.csproj" />
     <Project Path="src/MediaEmbedKit.Mpv.Avalonia/MediaEmbedKit.Mpv.Avalonia.csproj" />
     <Project Path="src/MediaEmbedKit.Mpv.WinUI/MediaEmbedKit.Mpv.WinUI.csproj" />
     <Project Path="src/MediaEmbedKit.Mpv.Maui/MediaEmbedKit.Mpv.Maui.csproj" />
-    <Project Path="src/MediaEmbedKit.Mpv/MediaEmbedKit.Mpv.csproj" />
+  </Folder>
+  <Folder Name="/範例 (samples)/">
+    <File Path="samples/README.md" />
+    <File Path="samples/SampleFeatureController.cs" />
+    <File Path="samples/SamplePlayerEventBridge.cs" />
+    <File Path="samples/SampleRuntime.cs" />
+  </Folder>
+  <Folder Name="/範例 (samples)/AvaloniaSample/">
+    <Project Path="samples/AvaloniaSample/MediaEmbedKit.Mpv.Samples.Avalonia.csproj" />
+    <File Path="samples/AvaloniaSample/README.md" />
+  </Folder>
+  <Folder Name="/範例 (samples)/MauiSample/">
+    <Project Path="samples/MauiSample/MediaEmbedKit.Mpv.Samples.Maui.csproj" />
+    <File Path="samples/MauiSample/README.md" />
+  </Folder>
+  <Folder Name="/範例 (samples)/WinFormsSample/">
+    <Project Path="samples/WinFormsSample/MediaEmbedKit.Mpv.Samples.WinForms.csproj" />
+    <File Path="samples/WinFormsSample/README.md" />
+  </Folder>
+  <Folder Name="/範例 (samples)/WinUISample/">
+    <Project Path="samples/WinUISample/MediaEmbedKit.Mpv.Samples.WinUI.csproj" />
+    <File Path="samples/WinUISample/README.md" />
+  </Folder>
+  <Folder Name="/範例 (samples)/WpfSample/">
+    <Project Path="samples/WpfSample/MediaEmbedKit.Mpv.Samples.Wpf.csproj" />
+    <File Path="samples/WpfSample/README.md" />
+  </Folder>
+  <Folder Name="/文件 (docs)/">
+    <File Path="docs/AI_AGENT_INTEGRATION.md" />
+    <File Path="docs/ENGINEERING_STANDARDS.md" />
+    <File Path="docs/LIBMPV_C_API_TEST_MATRIX.md" />
+    <File Path="docs/PROJECT_SPEC.md" />
+    <File Path="docs/REFERENCE_SOURCES.md" />
+    <File Path="docs/RUNTIME_ASSETS.md" />
+    <File Path="docs/SUPPORT_MATRIX.md" />
+    <File Path="docs/UI_BACKENDS.md" />
+  </Folder>
+  <Folder Name="/文件 (docs)/AI Agent/">
+    <File Path="docs/ai/AGENT_GUIDE.md" />
+  </Folder>
+  <Folder Name="/文件 (docs)/AI Agent/共用 Skill/">
+    <File Path="docs/ai/skills/libmpv-git-build-tracker.md" />
+    <File Path="docs/ai/skills/mediaembedkit-mpv.md" />
+  </Folder>
+  <Folder Name="/文件 (docs)/執行階段/">
+    <File Path="docs/runtime/libmpv-git-builds.json" />
+  </Folder>
+  <Folder Name="/工具 (tools)/libmpv/">
+    <File Path="tools/libmpv/Compare-LibMpvHeaders.ps1" />
+    <File Path="tools/libmpv/Resolve-MpvGitBuild.ps1" />
+    <File Path="tools/libmpv/Update-LibMpvGitBuildManifest.ps1" />
+    <File Path="tools/libmpv/Verify-LibMpvArchive.ps1" />
+  </Folder>
+  <Folder Name="/AI Agent 整合/.agents/">
+    <File Path=".agents/skills/libmpv-git-build-tracker/SKILL.md" />
+    <File Path=".agents/skills/mediaembedkit-mpv/SKILL.md" />
+  </Folder>
+  <Folder Name="/AI Agent 整合/.claude/">
+    <File Path=".claude/skills/libmpv-git-build-tracker/SKILL.md" />
+    <File Path=".claude/skills/mediaembedkit-mpv/SKILL.md" />
+  </Folder>
+  <Folder Name="/AI Agent 整合/.codex/">
+    <File Path=".codex/skills/libmpv-git-build-tracker/SKILL.md" />
+    <File Path=".codex/skills/libmpv-git-build-tracker/agents/openai.yaml" />
+    <File Path=".codex/skills/mediaembedkit-mpv/SKILL.md" />
+    <File Path=".codex/skills/mediaembedkit-mpv/agents/openai.yaml" />
+  </Folder>
+  <Folder Name="/AI Agent 整合/.gemini/">
+    <File Path=".gemini/settings.json" />
+  </Folder>
+  <Folder Name="/AI Agent 整合/.github/">
+    <File Path=".github/copilot-instructions.md" />
   </Folder>
 </Solution>
