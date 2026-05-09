@@ -41,6 +41,10 @@
     <Project Path="tests/MediaEmbedKit.Mpv.Tests/MediaEmbedKit.Mpv.Tests.csproj" />
     <File Path="tests/MediaEmbedKit.Mpv.Tests/README.md" />
   </Folder>
+  <Folder Name="/測試 (tests)/原生整合/">
+    <Project Path="tests/MediaEmbedKit.Mpv.IntegrationTests/MediaEmbedKit.Mpv.IntegrationTests.csproj" />
+    <File Path="tests/MediaEmbedKit.Mpv.IntegrationTests/README.md" />
+  </Folder>
   <Folder Name="/測試 (tests)/播放冒煙測試/">
     <Project Path="tests/MediaEmbedKit.Mpv.PlaybackSmoke/MediaEmbedKit.Mpv.PlaybackSmoke.csproj" />
     <File Path="tests/MediaEmbedKit.Mpv.PlaybackSmoke/README.md" />

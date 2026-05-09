@@ -37,10 +37,11 @@
 
 ```powershell
 dotnet run --project .\tests\MediaEmbedKit.Mpv.Tests\MediaEmbedKit.Mpv.Tests.csproj
+dotnet run --project .\tests\MediaEmbedKit.Mpv.IntegrationTests\MediaEmbedKit.Mpv.IntegrationTests.csproj
 dotnet build .\MediaEmbedKit.Mpv.slnx
 ```
 
-結果：成功，0 warning，0 error。
+結果：核心 API 測試 7/7 通過，原生整合測試 3/3 通過，完整建置成功，0 warning，0 error。
 
 WinUI 3 與 MAUI Windows 範例使用未封裝 app 模式，並在 sample app 專案設定 Windows App SDK self-contained 部署與 `win-x64` RID。Library 專案不設定 self-contained，避免將應用程式部署策略誤套到 NuGet 套件。
 
@@ -49,3 +50,5 @@ WinUI 3 與 MAUI Windows 範例使用未封裝 app 模式，並在 sample app �
 ```powershell
 dotnet run --project .\tests\MediaEmbedKit.Mpv.PlaybackSmoke\MediaEmbedKit.Mpv.PlaybackSmoke.csproj -- --seconds 20
 ```
+
+最近一次播放冒煙測試結果：WinForms、WPF、Avalonia、WinUI 3 與 MAUI Windows 全部播放超過 20 秒並以結束代碼 0 關閉。

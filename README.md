@@ -113,6 +113,12 @@ WinUI 3 與 MAUI Windows 範例是未封裝 app，範例專案會使用 Windows 
 dotnet run --project .\tests\MediaEmbedKit.Mpv.Tests\MediaEmbedKit.Mpv.Tests.csproj
 ```
 
+需要 Windows x64 `libmpv-2.dll` 的原生整合測試：
+
+```powershell
+dotnet run --project .\tests\MediaEmbedKit.Mpv.IntegrationTests\MediaEmbedKit.Mpv.IntegrationTests.csproj
+```
+
 需要 GUI、網路與 Windows x64 執行階段的範例播放冒煙測試：
 
 ```powershell
@@ -144,5 +150,6 @@ dotnet run --project .\tests\MediaEmbedKit.Mpv.PlaybackSmoke\MediaEmbedKit.Mpv.P
 ```powershell
 dotnet format .\MediaEmbedKit.Mpv.slnx --no-restore
 dotnet run --project .\tests\MediaEmbedKit.Mpv.Tests\MediaEmbedKit.Mpv.Tests.csproj
+dotnet run --project .\tests\MediaEmbedKit.Mpv.IntegrationTests\MediaEmbedKit.Mpv.IntegrationTests.csproj
 dotnet build .\MediaEmbedKit.Mpv.slnx
 ```

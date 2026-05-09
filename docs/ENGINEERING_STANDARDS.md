@@ -79,6 +79,7 @@ Visual Studio 原始碼、MSBuild、XAML 與 manifest 相關檔案必須使用 U
 ```powershell
 dotnet format .\MediaEmbedKit.Mpv.slnx --no-restore
 dotnet run --project .\tests\MediaEmbedKit.Mpv.Tests\MediaEmbedKit.Mpv.Tests.csproj
+dotnet run --project .\tests\MediaEmbedKit.Mpv.IntegrationTests\MediaEmbedKit.Mpv.IntegrationTests.csproj
 dotnet build .\MediaEmbedKit.Mpv.slnx
 ```
 

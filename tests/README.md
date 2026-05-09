@@ -10,6 +10,14 @@ dotnet run --project .\tests\MediaEmbedKit.Mpv.Tests\MediaEmbedKit.Mpv.Tests.csp
 
 此測試不需要原生執行階段檔案，適合在每次程式碼變更後執行。
 
+## 原生整合測試
+
+```powershell
+dotnet run --project .\tests\MediaEmbedKit.Mpv.IntegrationTests\MediaEmbedKit.Mpv.IntegrationTests.csproj
+```
+
+此測試需要 Windows x64 `libmpv-2.dll`，會驗證初始化、屬性、錯誤路徑、本機 WAV 播放事件與自訂 stream callback。可用 `MEDIAEMBEDKIT_MPV_RUNTIME_DIR` 指向既有 runtime 資料夾。
+
 ## 播放冒煙測試
 
 ```powershell
