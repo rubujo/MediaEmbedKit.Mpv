@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <AssemblyName>MediaEmbedKit.Mpv.Samples.WinForms</AssemblyName>
+    <RootNamespace>MediaEmbedKit.Mpv.Samples.WinForms</RootNamespace>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\SampleRuntime.cs" Link="SampleRuntime.cs" />
+    <ProjectReference Include="..\..\src\MediaEmbedKit.Mpv.WinForms\MediaEmbedKit.Mpv.WinForms.csproj" />
+  </ItemGroup>
+</Project>

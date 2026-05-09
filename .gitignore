@@ -1,0 +1,75 @@
+# Visual Studio 2026 / MSBuild
+.vs/
+*.user
+*.rsuser
+*.suo
+*.userosscache
+*.sln.docstates
+*.slnx.user
+
+# 建置輸出
+bin/
+obj/
+artifacts/
+TestResults/
+.tmp/
+*.binlog
+
+# 範例專案輸出
+samples/**/bin/
+samples/**/obj/
+samples/**/AppPackages/
+samples/**/BundleArtifacts/
+samples/**/PackageLayout/
+samples/**/Generated Files/
+samples/**/TestResults/
+samples/**/runtime/
+samples/**/runtimes/
+samples/**/native/
+samples/**/downloads/
+samples/**/*.appx
+samples/**/*.appxbundle
+samples/**/*.appinstaller
+samples/**/*.msix
+samples/**/*.msixbundle
+samples/**/*.cer
+samples/**/*.pfx
+samples/**/*.nupkg
+samples/**/*.snupkg
+
+# NuGet
+packages/
+*.nupkg
+*.snupkg
+project.assets.json
+*.nuget.g.props
+*.nuget.g.targets
+
+# .NET 工具
+.dotnet/
+.ionide/
+coverage/
+coverage.*
+
+# Rider / ReSharper
+.idea/
+_ReSharper*/
+*.DotSettings.user
+
+# VS Code
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+
+# 使用者可能在本機下載的原生與執行階段檔案
+native/
+downloads/
+mpv/
+*.7z
+*.zip
+*.dll
+*.pdb
+*.lib
+*.exp

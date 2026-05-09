@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net8.0-windows;net10.0-windows</TargetFrameworks>
+    <AssemblyName>MediaEmbedKit.Mpv.Avalonia</AssemblyName>
+    <RootNamespace>MediaEmbedKit.Mpv.Avalonia</RootNamespace>
+    <Description>Avalonia native-host control for MediaEmbedKit.Mpv.</Description>
+    <PackageId>MediaEmbedKit.Mpv.Avalonia</PackageId>
+    <Title>MediaEmbedKit.Mpv.Avalonia</Title>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <ProjectReference Include="..\MediaEmbedKit.Mpv\MediaEmbedKit.Mpv.csproj" />
+  </ItemGroup>
+</Project>

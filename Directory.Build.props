@@ -1,0 +1,20 @@
+﻿<Project>
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>false</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Deterministic>true</Deterministic>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <Authors>MediaEmbedKit.Mpv contributors</Authors>
+    <Company>MediaEmbedKit.Mpv contributors</Company>
+    <Copyright>Copyright (c) 2026 MediaEmbedKit.Mpv contributors</Copyright>
+    <PackageLicenseExpression>CC0-1.0</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>mpv;libmpv;media;video;audio;winforms;wpf;yt-dlp</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(IsPackable)' != 'false'">
+    <None Include="$(MSBuildThisFileDirectory)README.md" Pack="true" PackagePath="\" Link="README.md" />
+    <None Include="$(MSBuildThisFileDirectory)THIRD_PARTY_NOTICES.md" Pack="true" PackagePath="\" Link="THIRD_PARTY_NOTICES.md" />
+  </ItemGroup>
+</Project>

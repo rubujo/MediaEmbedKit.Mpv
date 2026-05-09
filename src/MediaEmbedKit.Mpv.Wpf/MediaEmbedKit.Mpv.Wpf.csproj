@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net472;net48;net8.0-windows;net10.0-windows</TargetFrameworks>
+    <UseWPF>true</UseWPF>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <AssemblyName>MediaEmbedKit.Mpv.Wpf</AssemblyName>
+    <RootNamespace>MediaEmbedKit.Mpv.Wpf</RootNamespace>
+    <Description>WPF HwndHost control and airspace popup helpers for libmpv.</Description>
+    <PackageId>MediaEmbedKit.Mpv.Wpf</PackageId>
+    <Title>MediaEmbedKit.Mpv.Wpf</Title>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MediaEmbedKit.Mpv\MediaEmbedKit.Mpv.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <UseWinUI>true</UseWinUI>
+    <WindowsPackageType>None</WindowsPackageType>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AssemblyName>MediaEmbedKit.Mpv.Samples.WinUI</AssemblyName>
+    <RootNamespace>MediaEmbedKit.Mpv.Samples.WinUI</RootNamespace>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\SampleRuntime.cs" Link="SampleRuntime.cs" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" />
+    <ProjectReference Include="..\..\src\MediaEmbedKit.Mpv.WinUI\MediaEmbedKit.Mpv.WinUI.csproj" />
+  </ItemGroup>
+</Project>

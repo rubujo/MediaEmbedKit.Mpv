@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <UseWinUI>true</UseWinUI>
+    <WindowsPackageType>None</WindowsPackageType>
+    <AssemblyName>MediaEmbedKit.Mpv.WinUI</AssemblyName>
+    <RootNamespace>MediaEmbedKit.Mpv.WinUI</RootNamespace>
+    <Description>WinUI 3 HWND control for MediaEmbedKit.Mpv.</Description>
+    <PackageId>MediaEmbedKit.Mpv.WinUI</PackageId>
+    <Title>MediaEmbedKit.Mpv.WinUI</Title>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" />
+    <ProjectReference Include="..\MediaEmbedKit.Mpv\MediaEmbedKit.Mpv.csproj" />
+  </ItemGroup>
+</Project>

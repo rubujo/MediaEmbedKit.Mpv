@@ -1,0 +1,36 @@
+﻿<Window
+    x:Class="MediaEmbedKit.Mpv.Samples.WinUI.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:mpv="using:MediaEmbedKit.Mpv.WinUI"
+    Title="MediaEmbedKit.Mpv WinUI 3 Sample">
+    <Grid RowDefinitions="48,*" Background="#111111">
+        <Grid ColumnDefinitions="*,96,96,88" Padding="8">
+            <TextBox x:Name="SourceBox"
+                     Text="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+                     Height="32"
+                     Margin="0,0,8,0"
+                     VerticalAlignment="Center"
+                     VerticalContentAlignment="Center" />
+            <Button Grid.Column="1"
+                    Width="88"
+                    Height="32"
+                    Margin="0,0,8,0"
+                    Content="Load"
+                    Click="OnLoadClicked" />
+            <Button Grid.Column="2"
+                    Width="88"
+                    Height="32"
+                    Margin="0,0,8,0"
+                    Content="Pause"
+                    Click="OnPauseClicked" />
+            <Button Grid.Column="3"
+                    Width="88"
+                    Height="32"
+                    Content="Stop"
+                    Click="OnStopClicked" />
+        </Grid>
+
+        <mpv:MpvWinUiPlayer x:Name="PlayerHost" Grid.Row="1" />
+    </Grid>
+</Window>

@@ -1,0 +1,5 @@
+interface:
+  display_name: "libmpv git build 追蹤"
+  short_description: "追蹤 shinchiro 與 zhongfly 最新 mpv git build。"
+  default_prompt: "使用 $libmpv-git-build-tracker 查核最新 shinchiro 與 zhongfly release，並對齊 MediaEmbedKit.Mpv 的 libmpv C API。"
+
