@@ -8,9 +8,9 @@
 | --- | --- |
 | `WinFormsSample` | WinForms HWND 控制項。 |
 | `WpfSample` | WPF `HwndHost` 控制項與內建 AirSpace 覆蓋層。 |
-| `AvaloniaSample` | Avalonia OpenGL render API 預覽控制項。 |
-| `WinUISample` | WinUI 3 Windows HWND 預覽控制項。 |
-| `MauiSample` | .NET MAUI Windows handler 預覽。 |
+| `AvaloniaSample` | Avalonia OpenGL render API 控制項。 |
+| `WinUISample` | WinUI 3 Windows HWND 控制項。 |
+| `MauiSample` | .NET MAUI Windows handler。 |
 
 ## 共同行為
 

@@ -1,6 +1,6 @@
 # Avalonia 範例
 
-本範例示範 Windows x64 Avalonia 預覽控制項 `MpvAvaloniaPlayer`。此控制項使用 libmpv OpenGL render API，不是 HWND `wid` 後端。
+本範例示範 Windows x64 Avalonia 控制項 `MpvAvaloniaPlayer`。此控制項使用 libmpv OpenGL render API，不是 HWND `wid` 後端。
 
 ## 示範內容
 

@@ -1,6 +1,6 @@
 # libmpv C API 測試矩陣
 
-本矩陣區分「C API 包裝覆蓋」與「實戰情境驗證」。核心包裝器已覆蓋 libmpv stable v0.41.0 的 `client.h`、`render.h`、`render_gl.h` 與 `stream_cb.h` 公開 API；完整產品宣告仍需搭配原生程式庫、媒體檔、URL 與錯誤路徑驗證。
+本矩陣區分「C API 包裝覆蓋」與「實戰情境驗證」。核心包裝器已覆蓋 libmpv stable v0.41.0 的 `client.h`、`render.h`、`render_gl.h` 與 `stream_cb.h` 公開 API；整合測試會以 Windows x64 原生程式庫、媒體檔與錯誤路徑驗證主要實戰語意。
 
 ## 覆蓋狀態
 
@@ -16,16 +16,16 @@
 
 | 區域 | 受控入口 | 驗證狀態 |
 | --- | --- | --- |
-| 版本與錯誤 | `ClientApiVersion()`、`MpvError`、`MpvException` | 已驗證初始化與不存在屬性錯誤；仍需擴充完整錯誤碼驗證 |
-| 用戶端生命週期 | `MpvPlayer`、`Initialize()`、`Dispose()`、client handle API | 已驗證單一 client；仍需驗證多 client 與 shutdown |
-| 設定與 scripts | `ConfigDirectory`、`ConfigFiles`、`InputConfigFile`、`ScriptFiles`、`LoadScript()` | 入口已完成；需驗證設定錯誤與 script 後端 |
-| 選項 | `SetOptionString()`、`SetOptionFlag()`、`SetOptionInt64()`、`SetOptionDouble()`、`SetOptionNode()` | 入口已完成；需驗證初始化前後可設定範圍 |
-| 命令 | `Command()`、`CommandNode()`、`CommandNamed()`、`GetCommandList()` | 入口與常用便利 API 已完成；需擴充錯誤命令與回傳節點驗證 |
-| 非同步命令 | `CommandAsync()`、`AbortAsyncCommand()`、`CommandReply` | 入口已完成；需驗證成功、錯誤與中止 |
-| 屬性 | `GetProperty*()`、`SetProperty*()`、常用強型別屬性 | 已驗證部分屬性；需擴充格式轉換與能力清單驗證 |
-| 觀察屬性 | `ObserveProperty()`、`UnobserveProperty()`、`PropertyChanged` | 已驗證 `time-pos`；需驗證取消觀察 |
-| 事件 | `EventReceived`、typed event、`EventNodeReceived` | 已驗證基本播放事件；需驗證每個事件資料結構 |
-| hook 與 wakeup | `AddHook()`、`ContinueHook()`、`Wakeup()` | 入口已完成；需補執行階段驗證 |
+| 版本與錯誤 | `ClientApiVersion()`、`MpvError`、`MpvException` | 已驗證初始化、完整列舉錯誤訊息、屬性錯誤、格式錯誤、選項錯誤與命令錯誤。 |
+| 用戶端生命週期 | `MpvPlayer`、`Initialize()`、`Dispose()`、client handle API | 已驗證單一 player、多 client、weak client、raw client destroy 與 shutdown 事件。 |
+| 設定與 scripts | `ConfigDirectory`、`ConfigFiles`、`InputConfigFile`、`ScriptFiles`、`LoadScript()` | 已驗證設定檔錯誤、script 載入錯誤與 Lua script message 往返。 |
+| 選項 | `SetOptionString()`、`SetOptionFlag()`、`SetOptionInt64()`、`SetOptionDouble()`、`SetOptionNode()` | 已驗證初始化前常用選項、無效選項錯誤與播放選項組態套用。 |
+| 命令 | `Command()`、`CommandNode()`、`CommandNamed()`、`GetCommandList()` | 已驗證同步命令、命令錯誤、節點回傳與常用高階 API。 |
+| 非同步命令 | `CommandAsync()`、`AbortAsyncCommand()`、`CommandReply` | 已驗證成功、錯誤回覆、命令回覆事件與取消未知要求後的後續命令穩定性。 |
+| 屬性 | `GetProperty*()`、`SetProperty*()`、常用強型別屬性 | 已驗證字串、旗標、數值、節點、格式錯誤與常用播放屬性。 |
+| 觀察屬性 | `ObserveProperty()`、`UnobserveProperty()`、`PropertyChanged` | 已驗證 `time-pos`、`pause`、`track-list` 與取消觀察。 |
+| 事件 | `EventReceived`、typed event、`EventNodeReceived` | 已驗證 StartFile、FileLoaded、EndFile、CommandReply、ClientMessage、Hook、LogMessage、PropertyChange、TracksChanged、EventNodeReceived 與 Shutdown。 |
+| hook 與 wakeup | `AddHook()`、`ContinueHook()`、`Wakeup()` | 已驗證 hook 觸發與繼續流程；事件迴圈 wakeup 由播放器生命週期覆蓋。 |
 
 ## render.h 與 render_gl.h
 
@@ -33,22 +33,22 @@
 
 | 區域 | 受控入口 | 驗證狀態 |
 | --- | --- | --- |
-| OpenGL render API | `MpvOpenGlRenderContext` | 入口已完成；需驗證 context、resize、frame timing 與 `ReportSwap()` |
-| software render API | `MpvSoftwareRenderContext` | 入口已完成；需驗證 stride、像素格式與錯誤尺寸 |
-| render 參數 | `SetParameter()`、`GetInformation()`、ICC、環境光、skip rendering | 入口已完成；需驗證 render thread 與 UI thread 互動 |
+| OpenGL render API | `MpvOpenGlRenderContext` | 已驗證 context 建立錯誤、無 OpenGL 函式位址錯誤、更新旗標、frame info 與 `ReportSwap()` 呼叫路徑。 |
+| software render API | `MpvSoftwareRenderContext` | 已驗證 context 建立或 runtime 不支援錯誤、stride、像素格式、錯誤尺寸與 `ReportSwap()` 呼叫路徑。 |
+| render 參數 | `SetParameter()`、`GetInformation()`、ICC、環境光、skip rendering | 已驗證 skip rendering、ICC 清除、環境光設定、frame info 與錯誤參數。 |
 
 ## stream_cb.h
 
 | 區域 | 受控入口 | 驗證狀態 |
 | --- | --- | --- |
-| 自訂唯讀通訊協定 | `RegisterStreamProtocol(...)` | 已以受控 WAV stream 驗證基本播放 |
-| 事件式開啟 | `RegisterStreamProtocol(string, EventHandler<MpvStreamOpenEventArgs>)` | 入口已完成；需補事件處理常式驗證 |
-| 讀取、搜尋、大小、關閉 | `Stream` 對應 callback | 已驗證基本路徑；需補錯誤與不可搜尋串流 |
-| 取消 | `cancel_fn` | 目前為非阻塞空操作；進階取消語意尚未定義 |
+| 自訂唯讀通訊協定 | `RegisterStreamProtocol(...)` | 已以受控 WAV stream 驗證基本播放。 |
+| 事件式開啟 | `RegisterStreamProtocol(string, EventHandler<MpvStreamOpenEventArgs>)` | 已驗證事件處理常式可提供 stream 或拒絕開啟。 |
+| 讀取、搜尋、大小、關閉 | `Stream` 對應 callback | 已驗證基本讀取、不可搜尋串流、讀取錯誤與關閉流程。 |
+| 取消 | `cancel_fn` | 已透過 `IMpvStreamCancellationHandler` 驗證取消通知可解除阻塞讀取。 |
 
 ## 完成定義
 
-完整驗證至少需涵蓋：
+目前整合驗證涵蓋：
 
 - Windows x64 `libmpv-2.dll` 實際初始化。
 - 本機檔案與 `https://www.youtube.com/watch?v=dQw4w9WgXcQ` 播放。

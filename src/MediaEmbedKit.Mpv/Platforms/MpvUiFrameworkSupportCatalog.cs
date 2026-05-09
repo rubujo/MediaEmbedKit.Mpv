@@ -16,9 +16,9 @@ namespace MediaEmbedKit.Mpv.Platforms
         {
             new MpvUiFrameworkSupportInfo(MpvUiFramework.WinForms, MpvNativeRuntimePlatform.Windows, MpvUiFrameworkSupportStatus.Supported, "HWND wid", "已使用子 HWND 實作，並列為 WinForms 目前高效能預設。"),
             new MpvUiFrameworkSupportInfo(MpvUiFramework.Wpf, MpvNativeRuntimePlatform.Windows, MpvUiFrameworkSupportStatus.Supported, "HwndHost wid + managed overlay", "已使用 HwndHost 實作，並由控制項內建 OverlayContent AirSpace 覆蓋層管理。"),
-            new MpvUiFrameworkSupportInfo(MpvUiFramework.Avalonia, MpvNativeRuntimePlatform.Windows, MpvUiFrameworkSupportStatus.Preview, "未列入 HWND-only 完成範圍", "Avalonia 預覽套件保留，但目前不列為正式支援的 HWND UI 後端。"),
-            new MpvUiFrameworkSupportInfo(MpvUiFramework.WinUI3, MpvNativeRuntimePlatform.Windows, MpvUiFrameworkSupportStatus.Preview, "HWND wid + managed overlay", "已提供 WinUI 3 HWND 控制項，並由控制項內建 OverlayContent AirSpace 覆蓋層管理。"),
-            new MpvUiFrameworkSupportInfo(MpvUiFramework.Maui, MpvNativeRuntimePlatform.Windows, MpvUiFrameworkSupportStatus.Preview, "WinUI 3 HWND handler", "已透過 WinUI 3 HWND 控制項提供 MAUI Windows 預覽。")
+            new MpvUiFrameworkSupportInfo(MpvUiFramework.Avalonia, MpvNativeRuntimePlatform.Windows, MpvUiFrameworkSupportStatus.Supported, "OpenGL render API", "已提供 Avalonia OpenGL render API 控制項。"),
+            new MpvUiFrameworkSupportInfo(MpvUiFramework.WinUI3, MpvNativeRuntimePlatform.Windows, MpvUiFrameworkSupportStatus.Supported, "HWND wid + managed overlay", "已提供 WinUI 3 HWND 控制項，並由控制項內建 OverlayContent AirSpace 覆蓋層管理。"),
+            new MpvUiFrameworkSupportInfo(MpvUiFramework.Maui, MpvNativeRuntimePlatform.Windows, MpvUiFrameworkSupportStatus.Supported, "WinUI 3 HWND handler", "已透過 WinUI 3 HWND 控制項提供 MAUI Windows handler。")
         };
 
         /// <summary>

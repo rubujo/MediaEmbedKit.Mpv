@@ -6,7 +6,7 @@ using MediaEmbedKit.Mpv.WinUI;
 namespace MediaEmbedKit.Mpv.Maui
 {
     /// <summary>
-    /// 提供 .NET MAUI Windows 預覽用的 libmpv 播放檢視。
+    /// 提供 .NET MAUI Windows 使用的 libmpv 播放檢視。
     /// </summary>
     public class MpvView : View
     {

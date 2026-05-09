@@ -24,9 +24,9 @@ AI 產製內容可能包含缺漏、錯誤假設或未涵蓋的邊界情境。�
 | `MediaEmbedKit.Mpv` | 核心 API，支援 `netstandard2.0;net472;net48;net8.0;net10.0`。 |
 | `MediaEmbedKit.Mpv.WinForms` | Windows HWND 控制項。 |
 | `MediaEmbedKit.Mpv.Wpf` | `HwndHost` 控制項，內建 AirSpace 覆蓋層。 |
-| `MediaEmbedKit.Mpv.Avalonia` | Windows x64 OpenGL render API 預覽。 |
-| `MediaEmbedKit.Mpv.WinUI` | WinUI 3 Windows HWND 預覽控制項。 |
-| `MediaEmbedKit.Mpv.Maui` | .NET MAUI Windows 預覽 handler。 |
+| `MediaEmbedKit.Mpv.Avalonia` | Windows x64 OpenGL render API 控制項。 |
+| `MediaEmbedKit.Mpv.WinUI` | WinUI 3 Windows HWND 控制項。 |
+| `MediaEmbedKit.Mpv.Maui` | .NET MAUI Windows handler。 |
 
 未列入支援矩陣的平台、處理器架構與 UI 後端不提供支援承諾。詳細狀態請參閱 `docs/SUPPORT_MATRIX.md` 與 `docs/UI_BACKENDS.md`。
 

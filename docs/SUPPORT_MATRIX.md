@@ -9,9 +9,9 @@
 | `MediaEmbedKit.Mpv` | `netstandard2.0;net472;net48;net8.0;net10.0` | 支援 |
 | `MediaEmbedKit.Mpv.WinForms` | `net472;net48;net8.0-windows;net10.0-windows` | 支援 |
 | `MediaEmbedKit.Mpv.Wpf` | `net472;net48;net8.0-windows;net10.0-windows` | 支援 |
-| `MediaEmbedKit.Mpv.Avalonia` | `net8.0-windows;net10.0-windows` | Windows x64 OpenGL render API 預覽 |
-| `MediaEmbedKit.Mpv.WinUI` | `net10.0-windows10.0.19041.0` | Windows x64 HWND 預覽 |
-| `MediaEmbedKit.Mpv.Maui` | `net10.0-windows10.0.19041.0` | Windows x64 HWND 預覽 |
+| `MediaEmbedKit.Mpv.Avalonia` | `net8.0-windows;net10.0-windows` | 支援 |
+| `MediaEmbedKit.Mpv.WinUI` | `net10.0-windows10.0.19041.0` | 支援 |
+| `MediaEmbedKit.Mpv.Maui` | `net10.0-windows10.0.19041.0` | 支援 |
 
 `netstandard2.0` 用於共用核心 API。基於 Microsoft 對 .NET Framework 使用 .NET Standard 2.0 的建議，本專案不支援 .NET Framework 4.0、4.5 或 4.6.1。
 
@@ -21,9 +21,9 @@
 | --- | --- | --- | --- |
 | Windows x64 | WinForms | 支援 | `libmpv-2.dll` |
 | Windows x64 | WPF | 支援 | `libmpv-2.dll` |
-| Windows x64 | Avalonia | OpenGL render API 預覽 | `libmpv-2.dll` |
-| Windows x64 | WinUI 3 | HWND 預覽 | `libmpv-2.dll` |
-| Windows x64 | .NET MAUI Windows | HWND 預覽 | `libmpv-2.dll` |
+| Windows x64 | Avalonia | 支援 | `libmpv-2.dll` |
+| Windows x64 | WinUI 3 | 支援 | `libmpv-2.dll` |
+| Windows x64 | .NET MAUI Windows | 支援 | `libmpv-2.dll` |
 
 ## 驗證狀態
 

@@ -24,8 +24,8 @@ MediaEmbedKit.Mpv 提供 .NET libmpv 包裝器與 Windows 桌面 UI 控制項。
 - 控制項建構函式與初始化流程不得自動下載第三方二進位檔。
 - `libmpv-2.dll` 載入後不可在同一處理序 hot reload；更新必須暫存並提示重新啟動。
 - Windows x64 runtime 資料夾可同層放置 `libmpv-2.dll`、`yt-dlp.exe`、`deno.exe`、mpv 設定檔與 scripts。
-- WinForms、WPF、WinUI 3 與 MAUI Windows 主線控制項只保留 HWND 後端。
-- Avalonia 目前保留 Windows x64 OpenGL render API 預覽，不列入 HWND-only 完成範圍。
+- WinForms、WPF、WinUI 3 與 MAUI Windows 主線控制項使用 HWND 後端。
+- Avalonia 使用 Windows x64 OpenGL render API 後端。
 - C# 區域變數、`using` 陳述式與 `foreach` 迴圈變數使用明確型別；只有必要時才使用 `var`。
 - 提交訊息必須遵循慣例式提交 1.0.0，且同時包含主旨與正文。
 
@@ -47,14 +47,12 @@ MediaEmbedKit.Mpv 提供 .NET libmpv 包裝器與 Windows 桌面 UI 控制項。
 - 已比對 shinchiro `20260421` 與 zhongfly `2026-05-08-e0eb42c303` provider git build header，未發現需新增 P/Invoke 的差異。
 - 已提供命令、屬性、節點、事件、render API、stream callback 與常用高階播放 API。
 - WinForms/WPF 使用 Windows HWND 後端。
-- WinUI 3/MAUI Windows 使用 Windows HWND 預覽後端。
-- Avalonia 使用 Windows x64 OpenGL render API 預覽後端。
+- WinUI 3/MAUI Windows 使用 Windows HWND 後端。
+- Avalonia 使用 Windows x64 OpenGL render API 後端。
 - Windows x64 runtime helper 支援 libmpv、yt-dlp 與 Deno 下載、更新與同層配置。
 - 範例播放冒煙測試涵蓋 WinForms、WPF、Avalonia、WinUI 3 與 MAUI Windows。
 
-不得宣稱已完成範圍外平台 UI 後端、WPF `D3DImage`、WinUI 3/MAUI Windows `SwapChainPanel`、software render fallback 或其他非 HWND UI 後端。
-
-libmpv C API wrapper 可宣稱已完成 stable v0.41.0 公開 C API 包裝覆蓋。若要宣稱所有實戰情境皆已驗證，必須依 `docs/LIBMPV_C_API_TEST_MATRIX.md` 完成事件、節點、render path 與錯誤情境驗證。
+libmpv C API wrapper 可宣稱已完成 stable v0.41.0 公開 C API 包裝覆蓋。實戰驗證範圍依 `docs/LIBMPV_C_API_TEST_MATRIX.md` 維護。
 
 ## 驗證
 

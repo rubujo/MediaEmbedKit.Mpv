@@ -21,8 +21,8 @@
 
 - 目前產品支援範圍為 Windows x64。
 - 核心 libmpv 包裝需維持 stable v0.41.0 公開 C API 覆蓋。
-- WinForms、WPF、WinUI 3 與 MAUI Windows UI 控制項只保留 HWND 後端。
-- Avalonia 僅保留 Windows x64 OpenGL render API 預覽。
+- WinForms、WPF、WinUI 3 與 MAUI Windows UI 控制項使用 HWND 後端。
+- Avalonia 使用 Windows x64 OpenGL render API 後端。
 - 控制項建構函式不得下載 runtime asset。
 - libmpv 更新需在已載入時暫存並提示重新啟動，不得實作處理序內 hot reload。
 - runtime helper 可同層管理 `libmpv-2.dll`、`yt-dlp.exe` 與 `deno.exe`。

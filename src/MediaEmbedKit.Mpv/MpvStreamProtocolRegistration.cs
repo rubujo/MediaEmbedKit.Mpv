@@ -322,6 +322,17 @@ namespace MediaEmbedKit.Mpv
         /// <param name="cookie">串流執行個體的 GC 控制代碼指標。</param>
         private static void Cancel(IntPtr cookie)
         {
+            try
+            {
+                Stream? stream = GetStream(cookie);
+                if (stream is IMpvStreamCancellationHandler cancellationHandler)
+                {
+                    cancellationHandler.CancelPendingRead();
+                }
+            }
+            catch
+            {
+            }
         }
 
         /// <summary>

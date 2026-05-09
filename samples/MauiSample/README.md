@@ -1,6 +1,6 @@
 # .NET MAUI 範例
 
-本範例示範 MAUI Windows 預覽 handler `MpvView`。Windows handler 以 WinUI 3 `MpvWinUiPlayer` 作為平台控制項。
+本範例示範 MAUI Windows handler `MpvView`。Windows handler 以 WinUI 3 `MpvWinUiPlayer` 作為平台控制項。
 
 ## 示範內容
 

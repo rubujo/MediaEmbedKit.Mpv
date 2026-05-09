@@ -26,7 +26,7 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
         private const int EventLogLimit = 200;
 
         /// <summary>
-        /// 顯示 libmpv 視訊內容的 Avalonia OpenGL 預覽控制項。
+        /// 顯示 libmpv 視訊內容的 Avalonia OpenGL 控制項。
         /// </summary>
         private readonly MpvAvaloniaPlayer _player;
         /// <summary>

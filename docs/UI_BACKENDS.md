@@ -1,27 +1,17 @@
 # UI 後端規範
 
-本文件定義 UI 套件可宣稱支援的播放後端。核心 `MediaEmbedKit.Mpv` 仍保留 libmpv render API 包裝；該包裝不代表所有 UI 框架皆提供對應控制項後端。
+本文件定義 UI 套件可宣稱支援的播放後端。核心 `MediaEmbedKit.Mpv` 保留 libmpv render API 包裝；UI 控制項支援範圍則以本文件列出的後端為準。
 
 ## 後端策略
 
-WinForms、WPF、WinUI 3 與 .NET MAUI Windows 只保留 HWND `wid` 後端。此路線在 Windows x64 範圍內最直接，且維護成本最低。
-
-不提供下列 UI 控制項後端：
-
-- WPF `D3DImage`。
-- WinUI 3 或 MAUI Windows `SwapChainPanel`。
-- software render fallback。
-- 其他 GPU composition 候選後端。
-
-Avalonia 目前保留 Windows x64 OpenGL render API 預覽，不列入 HWND-only 完成範圍。
+WinForms、WPF、WinUI 3 與 .NET MAUI Windows 使用 HWND `wid` 後端。Avalonia 使用 Windows x64 OpenGL render API 後端。
 
 ## 後端差異
 
 | 後端 | 定位 | 本專案狀態 |
 | --- | --- | --- |
-| HWND | 將 libmpv 輸出接到原生視窗控制代碼。 | UI 主線後端。 |
-| software render | 將影格寫入 CPU 記憶體後由 UI framework 繪製。 | 僅保留核心 C API 包裝。 |
-| GPU composition | 透過圖形互通放入 framework GPU surface。 | 不列入 UI 控制項支援範圍。 |
+| HWND | 將 libmpv 輸出接到原生視窗控制代碼。 | WinForms、WPF、WinUI 3 與 .NET MAUI Windows 使用。 |
+| OpenGL render API | 由 UI framework 提供 OpenGL surface，再交由 libmpv render API 繪製。 | Avalonia 使用。 |
 
 ## WinForms
 
@@ -35,9 +25,7 @@ Avalonia 目前保留 Windows x64 OpenGL render API 預覽，不列入 HWND-only
 
 ## Avalonia
 
-`MpvAvaloniaPlayer` 目前為 Windows x64 預覽控制項，使用 Avalonia `OpenGlControlBase` 與 libmpv OpenGL render API。它不是 HWND `wid` 嵌入後端。
-
-若未來正式支援 Avalonia HWND，需另行完成 Windows 原生控制項生命週期、大小同步、Z 順序與覆蓋層策略。
+`MpvAvaloniaPlayer` 使用 Avalonia `OpenGlControlBase` 與 libmpv OpenGL render API。它不是 HWND `wid` 嵌入後端。
 
 ## WinUI 3
 
