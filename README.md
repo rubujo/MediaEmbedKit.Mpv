@@ -111,6 +111,14 @@ dotnet run --project .\tests\MediaEmbedKit.Mpv.PlaybackSmoke\MediaEmbedKit.Mpv.P
 
 整合測試與播放冒煙測試需要 Windows x64 原生執行階段。URL 播放需要 `yt-dlp.exe` 可被 mpv 找到，或透過 `MpvPlayerOptions.YtdlpPath` 指定。
 
+發佈前可執行本機驗證腳本：
+
+```powershell
+.\tools\Invoke-PreReleaseValidation.ps1
+```
+
+此腳本會執行格式檢查、測試、建置與 NuGet 套件內容驗證。CI 工作流程尚未建立，需等待平台與 runner 策略確認。
+
 ## 文件
 
 - `docs/PROJECT_SPEC.md`：專案規範入口。
@@ -118,6 +126,7 @@ dotnet run --project .\tests\MediaEmbedKit.Mpv.PlaybackSmoke\MediaEmbedKit.Mpv.P
 - `docs/UI_BACKENDS.md`：UI 後端與 AirSpace 限制。
 - `docs/RUNTIME_ASSETS.md`：runtime 下載與更新政策。
 - `docs/LIBMPV_C_API_TEST_MATRIX.md`：C API 覆蓋與驗證矩陣。
+- `docs/RELEASE_CHECKLIST.md`：發佈前本機檢查。
 - `docs/ENGINEERING_STANDARDS.md`：工程、文件、提交與格式規範。
 - `docs/AI_AGENT_INTEGRATION.md`：AI agent 入口與 skill 結構。
 

@@ -37,6 +37,7 @@ Markdown 文件應使用正式、精煉且一致的正體中文。英文授權�
 - `docs/SUPPORT_MATRIX.md`：支援狀態。
 - `docs/UI_BACKENDS.md`：UI 後端。
 - `docs/RUNTIME_ASSETS.md`：runtime 政策。
+- `docs/RELEASE_CHECKLIST.md`：發佈前本機檢查。
 - `docs/AI_AGENT_INTEGRATION.md`：AI agent 與 skills 結構。
 
 ## 方案結構
@@ -82,4 +83,16 @@ dotnet build .\MediaEmbedKit.Mpv.slnx
 
 ```powershell
 dotnet run --project .\tests\MediaEmbedKit.Mpv.PlaybackSmoke\MediaEmbedKit.Mpv.PlaybackSmoke.csproj -- --seconds 20
+```
+
+發佈前本機驗證使用：
+
+```powershell
+.\tools\Invoke-PreReleaseValidation.ps1
+```
+
+NuGet 套件內容驗證使用：
+
+```powershell
+.\tools\Invoke-PackageValidation.ps1
 ```

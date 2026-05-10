@@ -5,12 +5,18 @@
     <Nullable>enable</Nullable>
     <Deterministic>true</Deterministic>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <Authors>MediaEmbedKit.Mpv contributors</Authors>
     <Company>MediaEmbedKit.Mpv contributors</Company>
     <Copyright>Copyright (c) 2026 MediaEmbedKit.Mpv contributors</Copyright>
+    <PackageVersion>0.1.0-alpha.1</PackageVersion>
     <PackageLicenseExpression>CC0-1.0</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageTags>mpv;libmpv;media;video;audio;winforms;wpf;yt-dlp</PackageTags>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <PackageTags>mpv;libmpv;media;video;audio;winforms;wpf;avalonia;winui;maui;yt-dlp</PackageTags>
+    <PackageReleaseNotes>初始 alpha 套件。支援 Windows x64 libmpv wrapper、runtime helper 與 Windows 桌面 UI 控制項。</PackageReleaseNotes>
+    <RepositoryType>git</RepositoryType>
+    <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(IsPackable)' != 'false'">

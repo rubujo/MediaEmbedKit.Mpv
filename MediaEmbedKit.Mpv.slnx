@@ -50,6 +50,7 @@
     <File Path="docs/LIBMPV_C_API_TEST_MATRIX.md" />
     <File Path="docs/PROJECT_SPEC.md" />
     <File Path="docs/REFERENCE_SOURCES.md" />
+    <File Path="docs/RELEASE_CHECKLIST.md" />
     <File Path="docs/RUNTIME_ASSETS.md" />
     <File Path="docs/SUPPORT_MATRIX.md" />
     <File Path="docs/UI_BACKENDS.md" />
@@ -69,5 +70,9 @@
     <File Path="tools/libmpv/Resolve-MpvGitBuild.ps1" />
     <File Path="tools/libmpv/Update-LibMpvGitBuildManifest.ps1" />
     <File Path="tools/libmpv/Verify-LibMpvArchive.ps1" />
+  </Folder>
+  <Folder Name="/方案項目/tools/">
+    <File Path="tools/Invoke-PackageValidation.ps1" />
+    <File Path="tools/Invoke-PreReleaseValidation.ps1" />
   </Folder>
 </Solution>
