@@ -117,7 +117,7 @@ dotnet run --project .\tests\MediaEmbedKit.Mpv.PlaybackSmoke\MediaEmbedKit.Mpv.P
 .\tools\Invoke-PreReleaseValidation.ps1
 ```
 
-此腳本會執行格式檢查、測試、建置與 NuGet 套件內容驗證。CI 工作流程尚未建立，需等待平台與 runner 策略確認。
+此腳本會執行格式檢查、測試、建置、NuGet 套件內容驗證與乾淨 consumer 專案驗證。若要一併執行第一階段壓力測試，可加入 `-IncludeStressTests`。CI 工作流程尚未建立，需等待平台與 runner 策略確認。
 
 ## 文件
 

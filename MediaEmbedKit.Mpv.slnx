@@ -16,6 +16,7 @@
     <Project Path="tests/MediaEmbedKit.Mpv.Tests/MediaEmbedKit.Mpv.Tests.csproj" />
     <Project Path="tests/MediaEmbedKit.Mpv.IntegrationTests/MediaEmbedKit.Mpv.IntegrationTests.csproj" />
     <Project Path="tests/MediaEmbedKit.Mpv.PlaybackSmoke/MediaEmbedKit.Mpv.PlaybackSmoke.csproj" />
+    <Project Path="tests/MediaEmbedKit.Mpv.StressTests/MediaEmbedKit.Mpv.StressTests.csproj" />
   </Folder>
   <Folder Name="/方案項目/">
     <File Path=".editorconfig" />
@@ -72,6 +73,7 @@
     <File Path="tools/libmpv/Verify-LibMpvArchive.ps1" />
   </Folder>
   <Folder Name="/方案項目/tools/">
+    <File Path="tools/Invoke-ConsumerPackageValidation.ps1" />
     <File Path="tools/Invoke-PackageValidation.ps1" />
     <File Path="tools/Invoke-PreReleaseValidation.ps1" />
   </Folder>

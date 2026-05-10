@@ -96,3 +96,15 @@ NuGet 套件內容驗證使用：
 ```powershell
 .\tools\Invoke-PackageValidation.ps1
 ```
+
+乾淨 consumer package 驗證使用：
+
+```powershell
+.\tools\Invoke-ConsumerPackageValidation.ps1
+```
+
+第一階段壓力測試使用：
+
+```powershell
+dotnet run --project .\tests\MediaEmbedKit.Mpv.StressTests\MediaEmbedKit.Mpv.StressTests.csproj
+```
