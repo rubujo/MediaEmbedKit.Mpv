@@ -21,7 +21,9 @@ namespace MediaEmbedKit.Mpv.Maui
         public static readonly IPropertyMapper<MpvView, MpvViewHandler> Mapper =
             new PropertyMapper<MpvView, MpvViewHandler>(ViewMapper)
             {
-                [nameof(MpvView.Source)] = MapSource
+                [nameof(MpvView.Source)] = MapSource,
+                [nameof(MpvView.OverlayContent)] = MapOverlayContent,
+                [nameof(MpvView.IsOverlayOpen)] = MapIsOverlayOpen
             };
 
         /// <summary>
@@ -49,6 +51,22 @@ namespace MediaEmbedKit.Mpv.Maui
             VirtualView.SetPlayer(PlatformView.Player);
 #else
             throw new PlatformNotSupportedException("此平台尚未提供 MAUI libmpv handler。");
+#endif
+        }
+
+        /// <summary>
+        /// 將 MAUI 覆蓋層內容同步到 Windows 平台控制項。
+        /// </summary>
+        public void UpdateOverlayContent()
+        {
+#if WINDOWS
+            if (Microsoft.Maui.Controls.DesignMode.IsDesignModeEnabled)
+            {
+                return;
+            }
+
+            PlatformView.OverlayContent = VirtualView.OverlayContent;
+            PlatformView.IsOverlayOpen = VirtualView.IsOverlayOpen;
 #endif
         }
 
@@ -87,6 +105,7 @@ namespace MediaEmbedKit.Mpv.Maui
 
             CopyPlayerOptions(platformView);
             AttachPlatformWindow(platformView);
+            UpdateOverlayContent();
             platformView.PlayerCreated += OnPlayerCreated;
             VirtualView.SetPlayer(platformView.Player);
 
@@ -140,6 +159,26 @@ namespace MediaEmbedKit.Mpv.Maui
                 handler.LoadFile(view.Source!);
             }
 #endif
+        }
+
+        /// <summary>
+        /// 將 <see cref="MpvView.OverlayContent"/> 屬性變更套用到平台控制項。
+        /// </summary>
+        /// <param name="handler">正在處理屬性對應的 MAUI handler。</param>
+        /// <param name="view">來源屬性變更的 MAUI mpv 檢視。</param>
+        private static void MapOverlayContent(MpvViewHandler handler, MpvView view)
+        {
+            handler.UpdateOverlayContent();
+        }
+
+        /// <summary>
+        /// 將 <see cref="MpvView.IsOverlayOpen"/> 屬性變更套用到平台控制項。
+        /// </summary>
+        /// <param name="handler">正在處理屬性對應的 MAUI handler。</param>
+        /// <param name="view">來源屬性變更的 MAUI mpv 檢視。</param>
+        private static void MapIsOverlayOpen(MpvViewHandler handler, MpvView view)
+        {
+            handler.UpdateOverlayContent();
         }
 
 #if WINDOWS

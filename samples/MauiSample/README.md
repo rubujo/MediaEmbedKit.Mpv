@@ -7,7 +7,6 @@
 - 透過 `UseMediaEmbedKitMpv()` 註冊 MAUI handler。
 - 啟動時準備 Windows x64 runtime 資料夾。
 - 使用 Windows HWND 後端播放。
-- 顯示一般 MAUI 覆蓋層與 HWND 播放區域的疊放關係。
 - 透過 `SamplePlayerEventBridge` 輸出 libmpv 事件、記錄訊息與屬性變更。
 - 示範播放控制、字幕、截圖、OSD、yt-dlp 格式、yt-dlp/Deno 診斷與自我更新命令。
 - 範例 app 使用 Windows App SDK self-contained 部署與 `win-x64` RID。

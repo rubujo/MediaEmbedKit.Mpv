@@ -1,5 +1,6 @@
 ﻿using System;
 using Microsoft.Maui.Controls;
+using Microsoft.UI.Xaml;
 
 using MediaEmbedKit.Mpv.WinUI;
 
@@ -19,6 +20,26 @@ namespace MediaEmbedKit.Mpv.Maui
             typeof(MpvView),
             default(string),
             propertyChanged: OnSourceChanged);
+
+        /// <summary>
+        /// 識別 <see cref="OverlayContent"/> 可繫結屬性。
+        /// </summary>
+        public static readonly BindableProperty OverlayContentProperty = BindableProperty.Create(
+            nameof(OverlayContent),
+            typeof(UIElement),
+            typeof(MpvView),
+            default(UIElement),
+            propertyChanged: OnOverlayContentChanged);
+
+        /// <summary>
+        /// 識別 <see cref="IsOverlayOpen"/> 可繫結屬性。
+        /// </summary>
+        public static readonly BindableProperty IsOverlayOpenProperty = BindableProperty.Create(
+            nameof(IsOverlayOpen),
+            typeof(bool),
+            typeof(MpvView),
+            true,
+            propertyChanged: OnIsOverlayOpenChanged);
 
         /// <summary>
         /// 保存尚未交給平台 handler 的載入模式。
@@ -67,6 +88,26 @@ namespace MediaEmbedKit.Mpv.Maui
         {
             get { return (string?)GetValue(SourceProperty); }
             set { SetValue(SourceProperty, value); }
+        }
+
+        /// <summary>
+        /// 取得或設定 Windows 平台控制項管理的 AirSpace 覆蓋層內容。
+        /// </summary>
+        /// <value>顯示在視訊上方的 WinUI 元素；未設定時為 <see langword="null"/>。</value>
+        public UIElement? OverlayContent
+        {
+            get { return (UIElement?)GetValue(OverlayContentProperty); }
+            set { SetValue(OverlayContentProperty, value); }
+        }
+
+        /// <summary>
+        /// 取得或設定 Windows 平台控制項管理的 AirSpace 覆蓋層是否開啟。
+        /// </summary>
+        /// <value>覆蓋層應保持開啟時為 <see langword="true"/>。</value>
+        public bool IsOverlayOpen
+        {
+            get { return (bool)GetValue(IsOverlayOpenProperty); }
+            set { SetValue(IsOverlayOpenProperty, value); }
         }
 
         /// <summary>
@@ -136,6 +177,36 @@ namespace MediaEmbedKit.Mpv.Maui
             if (!string.IsNullOrWhiteSpace(source))
             {
                 view.LoadFile(source!);
+            }
+        }
+
+        /// <summary>
+        /// 在 <see cref="OverlayContent"/> 屬性變更時同步平台控制項。
+        /// </summary>
+        /// <param name="bindable">屬性所屬的可繫結物件。</param>
+        /// <param name="oldValue">屬性先前的值。</param>
+        /// <param name="newValue">屬性新的值。</param>
+        private static void OnOverlayContentChanged(BindableObject bindable, object oldValue, object newValue)
+        {
+            MpvView view = (MpvView)bindable;
+            if (view.Handler is MpvViewHandler handler)
+            {
+                handler.UpdateOverlayContent();
+            }
+        }
+
+        /// <summary>
+        /// 在 <see cref="IsOverlayOpen"/> 屬性變更時同步平台控制項。
+        /// </summary>
+        /// <param name="bindable">屬性所屬的可繫結物件。</param>
+        /// <param name="oldValue">屬性先前的值。</param>
+        /// <param name="newValue">屬性新的值。</param>
+        private static void OnIsOverlayOpenChanged(BindableObject bindable, object oldValue, object newValue)
+        {
+            MpvView view = (MpvView)bindable;
+            if (view.Handler is MpvViewHandler handler)
+            {
+                handler.UpdateOverlayContent();
             }
         }
     }

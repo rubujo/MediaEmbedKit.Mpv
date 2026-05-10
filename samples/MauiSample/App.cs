@@ -16,6 +16,7 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
         {
             return new Window(new MainPage())
             {
+                Title = "MediaEmbedKit.Mpv MAUI Sample",
                 Width = SampleRuntime.SampleWindowWidth,
                 Height = SampleRuntime.SampleWindowHeight
             };

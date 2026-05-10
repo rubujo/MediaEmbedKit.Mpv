@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Windows;
 using System.Windows.Controls.Primitives;
+using System.Windows.Threading;
 
 namespace MediaEmbedKit.Mpv.Wpf
 {
@@ -17,6 +18,10 @@ namespace MediaEmbedKit.Mpv.Wpf
         /// 目前附加事件的 WPF 視窗。
         /// </summary>
         private Window? _window;
+        /// <summary>
+        /// 表示目前是否已排入 Popup 邊界同步。
+        /// </summary>
+        private bool _boundsUpdateQueued;
         /// <summary>
         /// 表示輔助類別是否已釋放。
         /// </summary>
@@ -84,6 +89,7 @@ namespace MediaEmbedKit.Mpv.Wpf
             }
 
             _disposed = true;
+            _boundsUpdateQueued = false;
             Detach();
             Popup.IsOpen = false;
             Popup.Child = null;
@@ -160,7 +166,7 @@ namespace MediaEmbedKit.Mpv.Wpf
         /// <param name="e">大小變更事件資料。</param>
         private void TargetChanged(object sender, SizeChangedEventArgs e)
         {
-            UpdateBounds();
+            RequestUpdateBounds();
         }
 
         /// <summary>
@@ -185,7 +191,7 @@ namespace MediaEmbedKit.Mpv.Wpf
         {
             if (Popup.IsOpen)
             {
-                UpdateBounds();
+                RequestUpdateBounds();
             }
         }
 
@@ -219,7 +225,33 @@ namespace MediaEmbedKit.Mpv.Wpf
         /// <param name="e">事件資料。</param>
         private void WindowChanged(object? sender, EventArgs e)
         {
-            UpdateBounds();
+            RequestUpdateBounds();
+        }
+
+        /// <summary>
+        /// 將 Popup 邊界同步排入 WPF UI 執行緒背景佇列。
+        /// </summary>
+        private void RequestUpdateBounds()
+        {
+            if (_disposed || _boundsUpdateQueued)
+            {
+                return;
+            }
+
+            _boundsUpdateQueued = true;
+            _ = _target.Dispatcher.BeginInvoke(new Action(ProcessQueuedUpdateBounds), DispatcherPriority.Background);
+        }
+
+        /// <summary>
+        /// 執行已排程的 Popup 邊界同步。
+        /// </summary>
+        private void ProcessQueuedUpdateBounds()
+        {
+            _boundsUpdateQueued = false;
+            if (!_disposed)
+            {
+                UpdateBounds();
+            }
         }
     }
 }

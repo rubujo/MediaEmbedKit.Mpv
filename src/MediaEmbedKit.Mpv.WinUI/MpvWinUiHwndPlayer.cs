@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using Microsoft.UI;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Hosting;
@@ -50,13 +51,25 @@ namespace MediaEmbedKit.Mpv.WinUI
         /// </summary>
         private DesktopWindowXamlSource? _overlaySource;
         /// <summary>
-        /// 承載 WinUI 覆蓋層 XAML Island 的彈出視窗控制代碼。
+        /// 承載 WinUI 覆蓋層 XAML Island 的子視窗控制代碼。
         /// </summary>
         private IntPtr _overlayHostHwnd;
         /// <summary>
         /// 顯示 WinUI 覆蓋層內容的 XAML Island 視窗控制代碼。
         /// </summary>
         private IntPtr _overlayHwnd;
+        /// <summary>
+        /// 目前被暫時轉換 Margin 的覆蓋層元素。
+        /// </summary>
+        private FrameworkElement? _overlayMarginElement;
+        /// <summary>
+        /// 覆蓋層元素原本的 Margin。
+        /// </summary>
+        private Thickness _overlayOriginalMargin = new Thickness(0);
+        /// <summary>
+        /// 由覆蓋層元素 Margin 轉換出的原生子視窗位移。
+        /// </summary>
+        private Thickness _overlayWindowMargin = new Thickness(0);
         /// <summary>
         /// 目前控制項持有的 mpv 播放器執行個體。
         /// </summary>
@@ -85,6 +98,10 @@ namespace MediaEmbedKit.Mpv.WinUI
         /// 最近一次套用到原生子視窗的高度。
         /// </summary>
         private int _lastWindowHeight = int.MinValue;
+        /// <summary>
+        /// 表示目前是否已排入原生視窗邊界同步。
+        /// </summary>
+        private bool _boundsUpdateQueued;
         /// <summary>
         /// 表示目前控制項是否已釋放。
         /// </summary>
@@ -301,7 +318,7 @@ namespace MediaEmbedKit.Mpv.WinUI
         /// <param name="e">大小變更事件資料。</param>
         private void OnSizeChanged(object sender, SizeChangedEventArgs e)
         {
-            UpdateVideoWindowBounds();
+            ScheduleWindowBoundsUpdate();
         }
 
         /// <summary>
@@ -311,7 +328,7 @@ namespace MediaEmbedKit.Mpv.WinUI
         /// <param name="e">事件資料。</param>
         private void OnLayoutUpdated(object? sender, object e)
         {
-            UpdateVideoWindowBounds();
+            ScheduleWindowBoundsUpdate();
         }
 
         /// <summary>
@@ -335,10 +352,10 @@ namespace MediaEmbedKit.Mpv.WinUI
             }
 
             _videoHwnd = NativeMethods.CreateWindowEx(
-                NativeMethods.WS_EX_NOACTIVATE | NativeMethods.WS_EX_TOOLWINDOW,
+                0,
                 "STATIC",
                 string.Empty,
-                NativeMethods.WS_POPUP | NativeMethods.WS_VISIBLE | NativeMethods.WS_CLIPSIBLINGS | NativeMethods.WS_CLIPCHILDREN,
+                NativeMethods.WS_CHILD | NativeMethods.WS_VISIBLE | NativeMethods.WS_CLIPSIBLINGS | NativeMethods.WS_CLIPCHILDREN,
                 0,
                 0,
                 1,
@@ -410,16 +427,8 @@ namespace MediaEmbedKit.Mpv.WinUI
             int y = (int)Math.Round(origin.Y * scale);
             int width = Math.Max(1, (int)Math.Round(ActualWidth * scale));
             int height = Math.Max(1, (int)Math.Round(ActualHeight * scale));
-            NativeMethods.Point parentClientOrigin = new NativeMethods.Point();
-            if (!NativeMethods.ClientToScreen(_parentHwnd, ref parentClientOrigin))
-            {
-                return;
-            }
 
-            int screenX = parentClientOrigin.X + x;
-            int screenY = parentClientOrigin.Y + y;
-
-            if (screenX == _lastWindowX && screenY == _lastWindowY && width == _lastWindowWidth && height == _lastWindowHeight)
+            if (x == _lastWindowX && y == _lastWindowY && width == _lastWindowWidth && height == _lastWindowHeight)
             {
                 return;
             }
@@ -427,17 +436,44 @@ namespace MediaEmbedKit.Mpv.WinUI
             NativeMethods.SetWindowPos(
                 _videoHwnd,
                 NativeMethods.HWND_TOP,
-                screenX,
-                screenY,
+                x,
+                y,
                 width,
                 height,
                 NativeMethods.SWP_NOACTIVATE | NativeMethods.SWP_SHOWWINDOW);
 
-            _lastWindowX = screenX;
-            _lastWindowY = screenY;
+            _lastWindowX = x;
+            _lastWindowY = y;
             _lastWindowWidth = width;
             _lastWindowHeight = height;
             UpdateOverlayWindowBounds();
+        }
+
+        /// <summary>
+        /// 合併排程原生子視窗邊界同步，避免版面配置與拖曳期間過度更新。
+        /// </summary>
+        private void ScheduleWindowBoundsUpdate()
+        {
+            if (_disposed || _boundsUpdateQueued)
+            {
+                return;
+            }
+
+            _boundsUpdateQueued = true;
+            if (!DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, ProcessQueuedWindowBoundsUpdate))
+            {
+                _boundsUpdateQueued = false;
+                UpdateVideoWindowBounds();
+            }
+        }
+
+        /// <summary>
+        /// 執行已排程的原生子視窗邊界同步。
+        /// </summary>
+        private void ProcessQueuedWindowBoundsUpdate()
+        {
+            _boundsUpdateQueued = false;
+            UpdateVideoWindowBounds();
         }
 
         /// <summary>
@@ -468,16 +504,19 @@ namespace MediaEmbedKit.Mpv.WinUI
         /// <param name="content">新的 WinUI 覆蓋層內容。</param>
         private void ApplyOverlayContent(UIElement? content)
         {
+            RestoreOverlayContentMargin();
             if (content == null)
             {
                 DestroyOverlayWindow();
                 return;
             }
 
+            CaptureOverlayContentMargin(content);
             EnsureOverlayWindow();
             if (_overlaySource != null)
             {
                 _overlaySource.Content = content;
+                UpdateOverlayWindowBounds();
             }
         }
 
@@ -491,12 +530,13 @@ namespace MediaEmbedKit.Mpv.WinUI
                 return;
             }
 
+            CaptureOverlayContentMargin(OverlayContent);
             _overlaySource = new DesktopWindowXamlSource();
             _overlayHostHwnd = NativeMethods.CreateWindowEx(
-                NativeMethods.WS_EX_NOACTIVATE | NativeMethods.WS_EX_TOOLWINDOW,
+                0,
                 "STATIC",
                 string.Empty,
-                NativeMethods.WS_POPUP | NativeMethods.WS_VISIBLE | NativeMethods.WS_CLIPSIBLINGS | NativeMethods.WS_CLIPCHILDREN,
+                NativeMethods.WS_CHILD | NativeMethods.WS_VISIBLE | NativeMethods.WS_CLIPSIBLINGS | NativeMethods.WS_CLIPCHILDREN,
                 0,
                 0,
                 1,
@@ -510,7 +550,7 @@ namespace MediaEmbedKit.Mpv.WinUI
             {
                 _overlaySource.Dispose();
                 _overlaySource = null;
-                throw new InvalidOperationException("無法建立 WinUI 覆蓋層彈出視窗。");
+                throw new InvalidOperationException("無法建立 WinUI 覆蓋層子視窗。");
             }
 
             WindowId overlayWindowId = Win32Interop.GetWindowIdFromWindow(_overlayHostHwnd);
@@ -535,6 +575,14 @@ namespace MediaEmbedKit.Mpv.WinUI
             int y = _lastWindowY == int.MinValue ? 0 : _lastWindowY;
             int width = _lastWindowWidth <= 0 ? 1 : _lastWindowWidth;
             int height = _lastWindowHeight <= 0 ? 1 : _lastWindowHeight;
+            double scale = XamlRoot == null ? 1 : XamlRoot.RasterizationScale;
+            int leftMargin = ConvertDeviceIndependentPixel(_overlayWindowMargin.Left, scale);
+            int topMargin = ConvertDeviceIndependentPixel(_overlayWindowMargin.Top, scale);
+            int rightMargin = ConvertDeviceIndependentPixel(_overlayWindowMargin.Right, scale);
+            int bottomMargin = ConvertDeviceIndependentPixel(_overlayWindowMargin.Bottom, scale);
+            int overlayMaximumWidth = Math.Max(1, width - Math.Max(0, leftMargin) - Math.Max(0, rightMargin));
+            int overlayMaximumHeight = Math.Max(1, height - Math.Max(0, topMargin) - Math.Max(0, bottomMargin));
+            ResolveOverlayContentSize(overlayMaximumWidth, overlayMaximumHeight, out int overlayWidth, out int overlayHeight);
             int flags = NativeMethods.SWP_NOACTIVATE;
             if (IsOverlayOpen && OverlayContent != null && IsLoaded)
             {
@@ -548,10 +596,10 @@ namespace MediaEmbedKit.Mpv.WinUI
             bool hostMoved = NativeMethods.SetWindowPos(
                 _overlayHostHwnd,
                 NativeMethods.HWND_TOP,
-                x,
-                y,
-                width,
-                height,
+                x + leftMargin,
+                y + topMargin,
+                overlayWidth,
+                overlayHeight,
                 flags);
 
             if (hostMoved)
@@ -561,10 +609,103 @@ namespace MediaEmbedKit.Mpv.WinUI
                     NativeMethods.HWND_TOP,
                     0,
                     0,
-                    width,
-                    height,
+                    overlayWidth,
+                    overlayHeight,
                     NativeMethods.SWP_NOACTIVATE | NativeMethods.SWP_SHOWWINDOW);
             }
+        }
+
+        /// <summary>
+        /// 將最上層覆蓋層元素的 Margin 轉成原生子視窗位移，避免 XAML Island 透明留白顯示成黑底。
+        /// </summary>
+        /// <param name="content">覆蓋層內容。</param>
+        private void CaptureOverlayContentMargin(UIElement content)
+        {
+            FrameworkElement? element = content as FrameworkElement;
+            if (element == null)
+            {
+                _overlayWindowMargin = new Thickness(0);
+                return;
+            }
+
+            if (_overlayMarginElement == element)
+            {
+                _overlayWindowMargin = _overlayOriginalMargin;
+                return;
+            }
+
+            RestoreOverlayContentMargin();
+            Thickness margin = element.Margin;
+            _overlayWindowMargin = margin;
+            if (margin.Left == 0 && margin.Top == 0 && margin.Right == 0 && margin.Bottom == 0)
+            {
+                return;
+            }
+
+            _overlayMarginElement = element;
+            _overlayOriginalMargin = margin;
+            element.Margin = new Thickness(0);
+        }
+
+        /// <summary>
+        /// 還原先前為了原生子視窗定位而暫時清除的覆蓋層 Margin。
+        /// </summary>
+        private void RestoreOverlayContentMargin()
+        {
+            if (_overlayMarginElement != null)
+            {
+                _overlayMarginElement.Margin = _overlayOriginalMargin;
+                _overlayMarginElement = null;
+            }
+
+            _overlayOriginalMargin = new Thickness(0);
+            _overlayWindowMargin = new Thickness(0);
+        }
+
+        /// <summary>
+        /// 將裝置獨立像素轉成實際像素。
+        /// </summary>
+        /// <param name="value">裝置獨立像素值。</param>
+        /// <param name="scale">目前 XAML rasterization scale。</param>
+        /// <returns>四捨五入後的實際像素值。</returns>
+        private static int ConvertDeviceIndependentPixel(double value, double scale)
+        {
+            return (int)Math.Round(value * scale);
+        }
+
+        /// <summary>
+        /// 解析覆蓋層內容所需的原生子視窗大小。
+        /// </summary>
+        /// <param name="maximumWidth">覆蓋層可用的最大寬度。</param>
+        /// <param name="maximumHeight">覆蓋層可用的最大高度。</param>
+        /// <param name="width">解析後的覆蓋層寬度。</param>
+        /// <param name="height">解析後的覆蓋層高度。</param>
+        private void ResolveOverlayContentSize(int maximumWidth, int maximumHeight, out int width, out int height)
+        {
+            width = maximumWidth;
+            height = maximumHeight;
+            if (OverlayContent is not FrameworkElement element || XamlRoot == null)
+            {
+                return;
+            }
+
+            double scale = XamlRoot.RasterizationScale;
+            Size availableSize = new Size(maximumWidth / scale, maximumHeight / scale);
+            element.Measure(availableSize);
+            double desiredWidth = element.DesiredSize.Width;
+            double desiredHeight = element.DesiredSize.Height;
+            if (double.IsNaN(desiredWidth)
+                || double.IsNaN(desiredHeight)
+                || double.IsInfinity(desiredWidth)
+                || double.IsInfinity(desiredHeight)
+                || desiredWidth <= 0
+                || desiredHeight <= 0)
+            {
+                return;
+            }
+
+            width = Math.Min(maximumWidth, Math.Max(1, (int)Math.Ceiling(desiredWidth * scale)));
+            height = Math.Min(maximumHeight, Math.Max(1, (int)Math.Ceiling(desiredHeight * scale)));
         }
 
         /// <summary>
@@ -596,6 +737,7 @@ namespace MediaEmbedKit.Mpv.WinUI
             _lastWindowY = int.MinValue;
             _lastWindowWidth = int.MinValue;
             _lastWindowHeight = int.MinValue;
+            _boundsUpdateQueued = false;
         }
 
         /// <summary>
@@ -603,6 +745,7 @@ namespace MediaEmbedKit.Mpv.WinUI
         /// </summary>
         private void DestroyOverlayWindow()
         {
+            RestoreOverlayContentMargin();
             if (_overlaySource != null)
             {
                 _overlaySource.Content = null;
@@ -651,10 +794,6 @@ namespace MediaEmbedKit.Mpv.WinUI
             /// </summary>
             internal static readonly IntPtr HWND_TOP = IntPtr.Zero;
             /// <summary>
-            /// 建立彈出視窗的 Win32 樣式。
-            /// </summary>
-            internal const int WS_POPUP = unchecked((int)0x80000000);
-            /// <summary>
             /// 建立子視窗的 Win32 樣式。
             /// </summary>
             internal const int WS_CHILD = 0x40000000;
@@ -686,15 +825,6 @@ namespace MediaEmbedKit.Mpv.WinUI
             /// 隱藏視窗的 SetWindowPos 旗標。
             /// </summary>
             internal const int SWP_HIDEWINDOW = 0x0080;
-            /// <summary>
-            /// 建立不啟用視窗的延伸 Win32 樣式。
-            /// </summary>
-            internal const int WS_EX_NOACTIVATE = 0x08000000;
-            /// <summary>
-            /// 建立工具視窗的延伸 Win32 樣式。
-            /// </summary>
-            internal const int WS_EX_TOOLWINDOW = 0x00000080;
-
             /// <summary>
             /// 建立 Win32 視窗。
             /// </summary>
@@ -755,30 +885,6 @@ namespace MediaEmbedKit.Mpv.WinUI
                 int cy,
                 int flags);
 
-            /// <summary>
-            /// 將視窗用戶端座標轉換成螢幕座標。
-            /// </summary>
-            /// <param name="hwnd">座標所屬的視窗控制代碼。</param>
-            /// <param name="point">要轉換的座標。</param>
-            /// <returns>作業成功時為 <see langword="true"/>。</returns>
-            [DllImport("user32.dll", SetLastError = true)]
-            internal static extern bool ClientToScreen(IntPtr hwnd, ref Point point);
-
-            /// <summary>
-            /// 表示 Win32 點座標。
-            /// </summary>
-            [StructLayout(LayoutKind.Sequential)]
-            internal struct Point
-            {
-                /// <summary>
-                /// X 座標。
-                /// </summary>
-                internal int X;
-                /// <summary>
-                /// Y 座標。
-                /// </summary>
-                internal int Y;
-            }
         }
     }
 }

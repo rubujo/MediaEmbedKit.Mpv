@@ -21,15 +21,27 @@ namespace MediaEmbedKit.Mpv.Samples
         /// <summary>
         /// 範例視窗的標準寬度。
         /// </summary>
-        internal const int SampleWindowWidth = 960;
+        internal const int SampleWindowWidth = 1200;
         /// <summary>
         /// 範例視窗的標準高度。
         /// </summary>
-        internal const int SampleWindowHeight = 540;
+        internal const int SampleWindowHeight = 720;
         /// <summary>
         /// 範例工具列的標準高度。
         /// </summary>
         internal const int SampleToolbarHeight = 48;
+        /// <summary>
+        /// 範例進階功能列的標準高度。
+        /// </summary>
+        internal const int SampleFeaturePanelHeight = 88;
+        /// <summary>
+        /// 範例事件清單的標準高度。
+        /// </summary>
+        internal const int SampleEventLogHeight = 168;
+        /// <summary>
+        /// 範例 AirSpace 對比列的標準高度。
+        /// </summary>
+        internal const int SampleAirspaceComparisonHeight = 40;
         /// <summary>
         /// 範例命令按鈕的標準寬度。
         /// </summary>
@@ -46,6 +58,26 @@ namespace MediaEmbedKit.Mpv.Samples
         /// 範例控制項之間的標準間距。
         /// </summary>
         internal const int SampleControlSpacing = 8;
+        /// <summary>
+        /// 範例功能按鈕的標準寬度。
+        /// </summary>
+        internal const int SampleFeatureButtonWidth = 76;
+        /// <summary>
+        /// 範例 yt-dlp 更新按鈕的標準寬度。
+        /// </summary>
+        internal const int SampleYtdlpUpdateButtonWidth = 88;
+        /// <summary>
+        /// 範例 Deno 更新按鈕的標準寬度。
+        /// </summary>
+        internal const int SampleDenoUpdateButtonWidth = 120;
+        /// <summary>
+        /// 範例覆蓋層標籤的標準寬度。
+        /// </summary>
+        internal const int SampleOverlayBadgeWidth = 340;
+        /// <summary>
+        /// 範例覆蓋層標籤的標準高度。
+        /// </summary>
+        internal const int SampleOverlayBadgeHeight = 32;
         /// <summary>
         /// 啟用範例播放冒煙測試的環境變數名稱。
         /// </summary>
@@ -95,6 +127,10 @@ namespace MediaEmbedKit.Mpv.Samples
         /// 保存範例應用程式目前使用的播放器選項。
         /// </summary>
         private static MpvPlayerOptions _playerOptions = new MpvPlayerOptions();
+        /// <summary>
+        /// 保存範例應用程式本次啟動選用的執行階段資料夾。
+        /// </summary>
+        private static string? _activeRuntimeDirectory;
 
         /// <summary>
         /// 取得範例應用程式目前使用的播放器選項。
@@ -113,6 +149,11 @@ namespace MediaEmbedKit.Mpv.Samples
         {
             get
             {
+                if (!string.IsNullOrWhiteSpace(_activeRuntimeDirectory))
+                {
+                    return Path.GetFullPath(_activeRuntimeDirectory);
+                }
+
                 string? runtimeDirectory = Environment.GetEnvironmentVariable(RuntimeDirectoryEnvironmentVariable);
                 if (!string.IsNullOrWhiteSpace(runtimeDirectory))
                 {
@@ -201,10 +242,14 @@ namespace MediaEmbedKit.Mpv.Samples
         internal static async Task InstallOrUpdateAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             string runtimeDirectory = RuntimeDirectory;
-            if (IsSmokeTestEnabled && HasCompleteRuntime(runtimeDirectory))
+            if (TryUseExistingRuntime(runtimeDirectory))
             {
-                ConfigurePlayerOptions(runtimeDirectory);
-                EnsureSampleFiles();
+                return;
+            }
+
+            string? repositoryRuntimeDirectory = FindRepositoryRuntimeDirectory();
+            if (repositoryRuntimeDirectory != null && TryUseExistingRuntime(repositoryRuntimeDirectory))
+            {
                 return;
             }
 
@@ -218,6 +263,7 @@ namespace MediaEmbedKit.Mpv.Samples
 
             if (result.IsSupported)
             {
+                _activeRuntimeDirectory = Path.GetFullPath(runtimeDirectory);
                 ConfigurePlayerOptions(runtimeDirectory);
                 EnsureSampleFiles();
             }
@@ -236,6 +282,45 @@ namespace MediaEmbedKit.Mpv.Samples
         }
 
         /// <summary>
+        /// 嘗試使用已存在且完整的執行階段資料夾。
+        /// </summary>
+        /// <param name="runtimeDirectory">要檢查並套用的執行階段資料夾。</param>
+        /// <returns>資料夾可直接用於播放範例時為 <see langword="true"/>。</returns>
+        private static bool TryUseExistingRuntime(string runtimeDirectory)
+        {
+            if (!HasCompleteRuntime(runtimeDirectory))
+            {
+                return false;
+            }
+
+            _activeRuntimeDirectory = Path.GetFullPath(runtimeDirectory);
+            ConfigurePlayerOptions(_activeRuntimeDirectory);
+            EnsureSampleFiles();
+            return true;
+        }
+
+        /// <summary>
+        /// 從建置輸出往上尋找儲存庫共用的範例執行階段資料夾。
+        /// </summary>
+        /// <returns>找到完整共用執行階段資料夾時傳回其完整路徑；否則傳回 <see langword="null"/>。</returns>
+        private static string? FindRepositoryRuntimeDirectory()
+        {
+            DirectoryInfo? directory = new DirectoryInfo(AppContext.BaseDirectory);
+            for (int depth = 0; directory != null && depth < 12; depth++)
+            {
+                string candidate = Path.Combine(directory.FullName, ".tmp", "gui-playback-runtime");
+                if (HasCompleteRuntime(candidate))
+                {
+                    return Path.GetFullPath(candidate);
+                }
+
+                directory = directory.Parent;
+            }
+
+            return null;
+        }
+
+        /// <summary>
         /// 依指定的執行階段資料夾建立範例播放器選項。
         /// </summary>
         /// <param name="runtimeDirectory">包含原生執行階段與外部工具的資料夾。</param>
@@ -243,6 +328,8 @@ namespace MediaEmbedKit.Mpv.Samples
         {
             _playerOptions = MpvRuntimeInstaller.CreatePlayerOptions(runtimeDirectory);
             _playerOptions.InitialOptions["ytdl-format"] = PlaybackYtdlpFormat;
+            _playerOptions.InitialOptions["panscan"] = "1.0";
+            _playerOptions.InitialOptions["keepaspect"] = "no";
         }
 
         /// <summary>

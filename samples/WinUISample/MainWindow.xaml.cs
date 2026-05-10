@@ -10,6 +10,7 @@ using Microsoft.UI.Dispatching;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 using Windows.Graphics;
 using WinRT.Interop;
 
@@ -23,7 +24,7 @@ namespace MediaEmbedKit.Mpv.Samples.WinUI
         /// <summary>
         /// 範例事件輸出的最大保留列數。
         /// </summary>
-        private const int EventLogLimit = 200;
+        private const int EventLogLimit = 120;
 
         /// <summary>
         /// 顯示在 UI 的事件文字列集合。
@@ -34,13 +35,21 @@ namespace MediaEmbedKit.Mpv.Samples.WinUI
         /// </summary>
         private readonly SampleFeatureController _features;
         /// <summary>
-        /// 週期性更新狀態列的計時器。
+        /// 背景讀取並批次套用狀態列文字的分派器。
         /// </summary>
-        private readonly DispatcherQueueTimer _statusTimer;
+        private readonly SampleStatusUpdateDispatcher _statusDispatcher;
         /// <summary>
         /// 將播放器事件轉接到範例事件清單。
         /// </summary>
         private SamplePlayerEventBridge? _eventBridge;
+        /// <summary>
+        /// 目前已建立的播放器。
+        /// </summary>
+        private MpvPlayer? _currentPlayer;
+        /// <summary>
+        /// 批次轉送事件文字到 UI 執行緒的分派器。
+        /// </summary>
+        private readonly SampleEventLogDispatcher _eventLogDispatcher;
         /// <summary>
         /// 表示預設媒體載入是否已排程。
         /// </summary>
@@ -56,21 +65,21 @@ namespace MediaEmbedKit.Mpv.Samples.WinUI
         public MainWindow()
         {
             InitializeComponent();
+            ApplyButtonStyles();
             ResizeWindow();
             EventList.ItemsSource = _eventLines;
             SourceBox.Text = SampleRuntime.PlaybackUrl;
             SampleRuntime.CopyTo(SampleRuntime.PlayerOptions, PlayerHost.PlayerOptions);
-            _features = new SampleFeatureController(() => PlayerHost.Player, AppendEventLine);
+            _features = new SampleFeatureController(() => _currentPlayer, AppendEventLine);
             ConfigureFormatComboBox();
-            _statusTimer = DispatcherQueue.CreateTimer();
-            _statusTimer.Interval = TimeSpan.FromSeconds(1);
-            _statusTimer.Tick += StatusTimerTick;
-            _statusTimer.Start();
+            _eventLogDispatcher = new SampleEventLogDispatcher(AppendEventLines, ScheduleEventLogFlush);
+            _statusDispatcher = new SampleStatusUpdateDispatcher(() => _features.GetStatusText(), SetStatusText, ScheduleUiUpdate);
             PlayerHost.Attach(this);
             PlayerHost.PlayerCreated += PlayerCreated;
             PlayerHost.Loaded += PlayerHostLoaded;
             Closed += WindowClosed;
             AppendEventLine(CreateLifecycleLine("WindowCreated", "WinUI 視窗已建立，等待 HWND 後端建立播放器。"));
+            _ = DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, StartPlayback);
         }
 
         /// <summary>
@@ -80,11 +89,12 @@ namespace MediaEmbedKit.Mpv.Samples.WinUI
         /// <param name="args">視窗事件資料。</param>
         private void WindowClosed(object sender, WindowEventArgs args)
         {
-            _statusTimer.Stop();
-            _statusTimer.Tick -= StatusTimerTick;
+            _statusDispatcher.Dispose();
             _eventBridge?.WriteLifecycle("WindowClosed", "視窗已關閉，準備取消事件訂閱。");
             _eventBridge?.Dispose();
+            _eventLogDispatcher.Dispose();
             PlayerHost.PlayerCreated -= PlayerCreated;
+            _currentPlayer = null;
         }
 
         /// <summary>
@@ -97,7 +107,9 @@ namespace MediaEmbedKit.Mpv.Samples.WinUI
             _eventBridge?.Dispose();
             if (PlayerHost.Player != null)
             {
+                _currentPlayer = PlayerHost.Player;
                 _eventBridge = new SamplePlayerEventBridge(PlayerHost.Player, AppendEventLine);
+                _statusDispatcher.RequestUpdate();
             }
         }
 
@@ -235,16 +247,6 @@ namespace MediaEmbedKit.Mpv.Samples.WinUI
             {
                 AppendEventLine(CreateLifecycleLine("FormatError", ex.Message));
             }
-        }
-
-        /// <summary>
-        /// 更新播放狀態列。
-        /// </summary>
-        /// <param name="sender">引發事件的計時器。</param>
-        /// <param name="args">事件資料。</param>
-        private void StatusTimerTick(DispatcherQueueTimer sender, object args)
-        {
-            StatusTextBlock.Text = _features.GetStatusText();
         }
 
         /// <summary>
@@ -416,7 +418,7 @@ namespace MediaEmbedKit.Mpv.Samples.WinUI
             try
             {
                 action();
-                StatusTextBlock.Text = _features.GetStatusText();
+                _statusDispatcher.RequestUpdate();
             }
             catch (Exception ex)
             {
@@ -434,7 +436,7 @@ namespace MediaEmbedKit.Mpv.Samples.WinUI
             try
             {
                 await action().ConfigureAwait(true);
-                StatusTextBlock.Text = _features.GetStatusText();
+                _statusDispatcher.RequestUpdate();
             }
             catch (Exception ex)
             {
@@ -448,19 +450,56 @@ namespace MediaEmbedKit.Mpv.Samples.WinUI
         /// <param name="line">要加入事件清單的文字列。</param>
         private void AppendEventLine(string line)
         {
-            if (!DispatcherQueue.HasThreadAccess)
+            _eventLogDispatcher.Enqueue(line);
+        }
+
+        /// <summary>
+        /// 批次加入事件文字列到 UI 清單。
+        /// </summary>
+        /// <param name="lines">要加入事件清單的文字列集合。</param>
+        private void AppendEventLines(IReadOnlyList<string> lines)
+        {
+            foreach (string line in lines)
             {
-                _ = DispatcherQueue.TryEnqueue(() => AppendEventLine(line));
-                return;
+                _eventLines.Add(line);
             }
 
-            _eventLines.Add(line);
             while (_eventLines.Count > EventLogLimit)
             {
                 _eventLines.RemoveAt(0);
             }
 
-            EventList.ScrollIntoView(line);
+            if (_eventLines.Count > 0)
+            {
+                EventList.ScrollIntoView(_eventLines[_eventLines.Count - 1]);
+            }
+        }
+
+        /// <summary>
+        /// 將事件清單更新排入 WinUI UI 執行緒。
+        /// </summary>
+        /// <param name="action">要在 UI 執行緒執行的更新。</param>
+        private void ScheduleEventLogFlush(Action action)
+        {
+            ScheduleUiUpdate(action);
+        }
+
+        /// <summary>
+        /// 將指定動作排入 WinUI UI 執行緒。
+        /// </summary>
+        /// <param name="action">要在 UI 執行緒執行的動作。</param>
+        private void ScheduleUiUpdate(Action action)
+        {
+            _ = DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, () => action());
+        }
+
+        /// <summary>
+        /// 套用背景輪詢取得的狀態列文字。
+        /// </summary>
+        /// <param name="text">要顯示的狀態列文字。</param>
+        private void SetStatusText(string text)
+        {
+            StatusTextBlock.Text = text;
         }
 
         /// <summary>
@@ -497,6 +536,50 @@ namespace MediaEmbedKit.Mpv.Samples.WinUI
             {
                 SampleFeatureController.ApplyYtdlpFormat(PlayerHost.PlayerOptions, selectedChoice);
             }
+        }
+
+        /// <summary>
+        /// 對視窗內所有按鈕套用固定深色外觀。
+        /// </summary>
+        private void ApplyButtonStyles()
+        {
+            DependencyObject? root = Content as DependencyObject;
+            if (root != null)
+            {
+                ApplyButtonStyles(root);
+            }
+        }
+
+        /// <summary>
+        /// 遞迴套用按鈕外觀。
+        /// </summary>
+        /// <param name="root">要掃描的視覺樹節點。</param>
+        private static void ApplyButtonStyles(DependencyObject root)
+        {
+            Button? button = root as Button;
+            if (button != null)
+            {
+                ApplyButtonStyle(button);
+            }
+
+            int childCount = VisualTreeHelper.GetChildrenCount(root);
+            for (int index = 0; index < childCount; index++)
+            {
+                DependencyObject child = VisualTreeHelper.GetChild(root, index);
+                ApplyButtonStyles(child);
+            }
+        }
+
+        /// <summary>
+        /// 套用單一按鈕的固定深色外觀。
+        /// </summary>
+        /// <param name="button">要套用外觀的按鈕。</param>
+        private static void ApplyButtonStyle(Button button)
+        {
+            button.Background = new SolidColorBrush(ColorHelper.FromArgb(255, 48, 48, 48));
+            button.BorderBrush = new SolidColorBrush(ColorHelper.FromArgb(255, 224, 224, 224));
+            button.BorderThickness = new Thickness(1);
+            button.Foreground = new SolidColorBrush(Colors.White);
         }
 
         /// <summary>

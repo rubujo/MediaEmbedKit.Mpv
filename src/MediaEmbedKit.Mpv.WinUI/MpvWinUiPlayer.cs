@@ -294,7 +294,7 @@ namespace MediaEmbedKit.Mpv.WinUI
 
                 _hwndPlayer.Attach(_parentHwnd);
                 LastBackendError = null;
-                if (!string.IsNullOrWhiteSpace(_pendingSource) && _hwndPlayer.Player != null)
+                if (!string.IsNullOrWhiteSpace(_pendingSource))
                 {
                     _hwndPlayer.LoadFile(_pendingSource!, _pendingMode);
                 }

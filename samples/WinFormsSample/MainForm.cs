@@ -17,7 +17,7 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
         /// <summary>
         /// 範例事件輸出的最大保留列數。
         /// </summary>
-        private const int EventLogLimit = 200;
+        private const int EventLogLimit = 120;
 
         /// <summary>
         /// 顯示 libmpv 視訊內容的 WinForms 控制項。
@@ -52,9 +52,9 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
         /// </summary>
         private readonly ListBox _eventListBox;
         /// <summary>
-        /// 週期性更新狀態列的計時器。
+        /// 背景讀取並批次套用狀態列文字的分派器。
         /// </summary>
-        private readonly Timer _statusTimer;
+        private readonly SampleStatusUpdateDispatcher _statusDispatcher;
         /// <summary>
         /// 範例進階功能控制器。
         /// </summary>
@@ -63,6 +63,14 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
         /// 將播放器事件轉接到範例事件清單。
         /// </summary>
         private SamplePlayerEventBridge? _eventBridge;
+        /// <summary>
+        /// 目前已建立的播放器。
+        /// </summary>
+        private MpvPlayer? _currentPlayer;
+        /// <summary>
+        /// 批次轉送事件文字到 UI 執行緒的分派器。
+        /// </summary>
+        private readonly SampleEventLogDispatcher _eventLogDispatcher;
 
         /// <summary>
         /// 初始化 <see cref="MainForm"/> 類別的新執行個體。
@@ -97,13 +105,14 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
             _player.PlayerCreated += PlayerCreated;
             SampleRuntime.CopyTo(SampleRuntime.PlayerOptions, _player.PlayerOptions);
 
-            _features = new SampleFeatureController(() => _player.Player, AppendEventLine);
+            _features = new SampleFeatureController(() => _currentPlayer, AppendEventLine);
             _formatComboBox = CreateFormatComboBox();
             _statusLabel = new Label
             {
                 AutoSize = false,
                 Width = 380,
                 Height = SampleRuntime.SampleButtonHeight,
+                Text = "播放器尚未初始化",
                 TextAlign = ContentAlignment.MiddleLeft,
                 ForeColor = Color.Gainsboro,
                 BackColor = Color.FromArgb(28, 28, 28),
@@ -120,15 +129,11 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
                 IntegralHeight = false
             };
 
-            _statusTimer = new Timer
-            {
-                Interval = 1000
-            };
-            _statusTimer.Tick += StatusTimerTick;
+            _eventLogDispatcher = new SampleEventLogDispatcher(AppendEventLines, ScheduleEventLogFlush);
+            _statusDispatcher = new SampleStatusUpdateDispatcher(() => _features.GetStatusText(), SetStatusText, ScheduleUiUpdate);
 
             Controls.Add(CreateRootLayout());
             Shown += MainFormShown;
-            _statusTimer.Start();
             AppendEventLine(CreateLifecycleLine("FormCreated", "範例視窗已建立，等待 WinForms Handle 建立播放器。"));
         }
 
@@ -140,11 +145,12 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
         {
             if (disposing)
             {
-                _statusTimer.Stop();
-                _statusTimer.Tick -= StatusTimerTick;
+                _statusDispatcher.Dispose();
                 _eventBridge?.WriteLifecycle("FormDispose", "視窗正在釋放，準備取消事件訂閱。");
                 _eventBridge?.Dispose();
+                _eventLogDispatcher.Dispose();
                 _player.PlayerCreated -= PlayerCreated;
+                _currentPlayer = null;
             }
 
             base.Dispose(disposing);
@@ -184,7 +190,9 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
             _eventBridge?.Dispose();
             if (_player.Player != null)
             {
+                _currentPlayer = _player.Player;
                 _eventBridge = new SamplePlayerEventBridge(_player.Player, AppendEventLine);
+                _statusDispatcher.RequestUpdate();
             }
         }
 
@@ -252,16 +260,6 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
         }
 
         /// <summary>
-        /// 更新播放狀態列。
-        /// </summary>
-        /// <param name="sender">引發事件的物件。</param>
-        /// <param name="e">事件資料。</param>
-        private void StatusTimerTick(object? sender, EventArgs e)
-        {
-            _statusLabel.Text = _features.GetStatusText();
-        }
-
-        /// <summary>
         /// 載入目前輸入的媒體來源。
         /// </summary>
         private void LoadCurrentSource()
@@ -291,9 +289,9 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
                 RowCount = 4
             };
             root.RowStyles.Add(new RowStyle(SizeType.Absolute, SampleRuntime.SampleToolbarHeight));
-            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 92));
+            root.RowStyles.Add(new RowStyle(SizeType.Absolute, SampleRuntime.SampleFeaturePanelHeight));
             root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 152));
+            root.RowStyles.Add(new RowStyle(SizeType.Absolute, SampleRuntime.SampleEventLogHeight));
             root.Controls.Add(CreateToolbar(), 0, 0);
             root.Controls.Add(CreateFeaturePanel(), 0, 1);
             root.Controls.Add(CreatePlayerSurface(), 0, 2);
@@ -312,6 +310,7 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
                 Dock = DockStyle.Top,
                 Height = SampleRuntime.SampleToolbarHeight,
                 Padding = new Padding(SampleRuntime.SampleControlPadding),
+                BackColor = Color.FromArgb(17, 17, 17),
                 ColumnCount = 4,
                 RowCount = 1
             };
@@ -358,16 +357,56 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
             panel.Controls.Add(CreateFeatureButton("Lua", () => _features.LoadSampleLuaScript()));
             panel.Controls.Add(CreateAsyncFeatureButton("yt-dlp", () => _features.RunYtdlpDiagnosticsAsync(_urlTextBox.Text)));
             panel.Controls.Add(CreateAsyncFeatureButton("Deno", () => _features.RunDenoDiagnosticsAsync()));
-            panel.Controls.Add(CreateAsyncFeatureButton("Update yt", () => _features.RunYtdlpSelfUpdateAsync()));
-            panel.Controls.Add(CreateAsyncFeatureButton("Update Deno", () => _features.RunDenoSelfUpgradeAsync()));
+            panel.Controls.Add(CreateAsyncFeatureButton("Update yt", () => _features.RunYtdlpSelfUpdateAsync(), SampleRuntime.SampleYtdlpUpdateButtonWidth));
+            panel.Controls.Add(CreateAsyncFeatureButton("Update Deno", () => _features.RunDenoSelfUpgradeAsync(), SampleRuntime.SampleDenoUpdateButtonWidth));
             return panel;
         }
 
         /// <summary>
         /// 建立播放區域與覆蓋層展示。
         /// </summary>
-        /// <returns>包含播放器與 WinForms 覆蓋層的面板。</returns>
+        /// <returns>包含安全播放器與一般覆蓋層對照區域的面板。</returns>
         private Control CreatePlayerSurface()
+        {
+            TableLayoutPanel surface = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = Color.Black,
+                ColumnCount = 1,
+                RowCount = 2
+            };
+            surface.RowStyles.Add(new RowStyle(SizeType.Absolute, SampleRuntime.SampleAirspaceComparisonHeight));
+            surface.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+            surface.Controls.Add(CreateHeaderPanel(), 0, 0);
+            surface.Controls.Add(CreateVideoPanel(), 0, 1);
+            return surface;
+        }
+
+        /// <summary>
+        /// 建立左右對照標題列。
+        /// </summary>
+        /// <returns>包含安全覆蓋層與一般覆蓋層標題的面板。</returns>
+        private static Control CreateHeaderPanel()
+        {
+            TableLayoutPanel panel = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = Color.FromArgb(16, 16, 16),
+                ColumnCount = 2,
+                RowCount = 1
+            };
+            panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            panel.Controls.Add(CreateHeaderBadge("控制項覆蓋層：同一 HWND 家族，可顯示", Color.FromArgb(0, 120, 212), new Padding(16, 6, 8, 6)), 0, 0);
+            panel.Controls.Add(CreateHeaderBadge("一般 WinForms Overlay 嘗試覆蓋同一個 HWND", Color.FromArgb(92, 45, 145), new Padding(8, 6, 16, 6)), 1, 0);
+            return panel;
+        }
+
+        /// <summary>
+        /// 建立播放視訊與安全覆蓋層面板。
+        /// </summary>
+        /// <returns>包含播放器、安全覆蓋層與一般覆蓋層對照標籤的播放面板。</returns>
+        private Control CreateVideoPanel()
         {
             Panel panel = new Panel
             {
@@ -378,20 +417,70 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
             Label overlayLabel = new Label
             {
                 AutoSize = false,
-                Text = "WinForms 同一 HWND 家族覆蓋層",
+                Text = "控制項覆蓋層：同一 HWND 家族",
                 TextAlign = ContentAlignment.MiddleCenter,
                 BackColor = Color.FromArgb(0, 120, 212),
                 ForeColor = Color.White,
-                Width = 260,
-                Height = 32,
+                Width = SampleRuntime.SampleOverlayBadgeWidth,
+                Height = SampleRuntime.SampleOverlayBadgeHeight,
                 Left = 16,
                 Top = 16
             };
 
-            panel.Controls.Add(_player);
+            Label normalOverlayLabel = new Label
+            {
+                AutoSize = false,
+                Text = "一般 WinForms Overlay：同一播放區對照",
+                TextAlign = ContentAlignment.MiddleCenter,
+                BackColor = Color.FromArgb(92, 45, 145),
+                ForeColor = Color.White,
+                Width = SampleRuntime.SampleOverlayBadgeWidth,
+                Height = SampleRuntime.SampleOverlayBadgeHeight,
+                Left = 16,
+                Top = 16,
+                Anchor = AnchorStyles.Top | AnchorStyles.Right
+            };
+
             panel.Controls.Add(overlayLabel);
+            panel.Controls.Add(_player);
+            panel.Controls.Add(normalOverlayLabel);
+            panel.Resize += (sender, e) => PositionRightOverlay(panel, normalOverlayLabel);
+            PositionRightOverlay(panel, normalOverlayLabel);
             overlayLabel.BringToFront();
+            normalOverlayLabel.BringToFront();
             return panel;
+        }
+
+        /// <summary>
+        /// 將一般覆蓋層標籤固定在播放面板右上角。
+        /// </summary>
+        /// <param name="panel">播放面板。</param>
+        /// <param name="label">要定位的標籤。</param>
+        private static void PositionRightOverlay(Panel panel, Label label)
+        {
+            label.Left = Math.Max(16, panel.ClientSize.Width - label.Width - 16);
+        }
+
+        /// <summary>
+        /// 建立 AirSpace 對照區標題列。
+        /// </summary>
+        /// <param name="text">要顯示的標籤文字。</param>
+        /// <param name="backColor">標籤背景色彩。</param>
+        /// <param name="margin">標籤外距。</param>
+        /// <returns>已套用固定尺寸與色彩的對照標籤。</returns>
+        private static Control CreateHeaderBadge(string text, Color backColor, Padding margin)
+        {
+            Label label = new Label
+            {
+                AutoSize = false,
+                Text = text,
+                TextAlign = ContentAlignment.MiddleCenter,
+                BackColor = backColor,
+                ForeColor = Color.White,
+                Dock = DockStyle.Fill,
+                Margin = margin
+            };
+            return label;
         }
 
         /// <summary>
@@ -403,7 +492,7 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
             try
             {
                 action();
-                _statusLabel.Text = _features.GetStatusText();
+                _statusDispatcher.RequestUpdate();
             }
             catch (Exception ex)
             {
@@ -421,6 +510,7 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
             try
             {
                 await action().ConfigureAwait(true);
+                _statusDispatcher.RequestUpdate();
             }
             catch (Exception ex)
             {
@@ -434,24 +524,95 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
         /// <param name="line">要加入事件清單的文字列。</param>
         private void AppendEventLine(string line)
         {
+            _eventLogDispatcher.Enqueue(line);
+        }
+
+        /// <summary>
+        /// 批次加入事件文字列到 UI 清單。
+        /// </summary>
+        /// <param name="lines">要加入事件清單的文字列集合。</param>
+        private void AppendEventLines(IReadOnlyList<string> lines)
+        {
+            if (IsDisposed || lines.Count == 0)
+            {
+                return;
+            }
+
+            _eventListBox.BeginUpdate();
+            try
+            {
+                foreach (string line in lines)
+                {
+                    _eventListBox.Items.Add(line);
+                }
+
+                while (_eventListBox.Items.Count > EventLogLimit)
+                {
+                    _eventListBox.Items.RemoveAt(0);
+                }
+            }
+            finally
+            {
+                _eventListBox.EndUpdate();
+            }
+
+            if (_eventListBox.Items.Count > 0)
+            {
+                _eventListBox.TopIndex = _eventListBox.Items.Count - 1;
+            }
+        }
+
+        /// <summary>
+        /// 將事件清單更新排入 WinForms UI 執行緒。
+        /// </summary>
+        /// <param name="action">要在 UI 執行緒執行的更新。</param>
+        private void ScheduleEventLogFlush(Action action)
+        {
+            ScheduleUiUpdate(action);
+        }
+
+        /// <summary>
+        /// 將指定動作排入 WinForms UI 執行緒。
+        /// </summary>
+        /// <param name="action">要在 UI 執行緒執行的動作。</param>
+        private void ScheduleUiUpdate(Action action)
+        {
             if (IsDisposed)
             {
                 return;
             }
 
-            if (InvokeRequired)
+            if (!IsHandleCreated)
             {
-                _ = BeginInvoke(new Action<string>(AppendEventLine), line);
+                _ = Task.Delay(250).ContinueWith(task => ScheduleUiUpdate(action), TaskScheduler.Default);
                 return;
             }
 
-            _eventListBox.Items.Add(line);
-            while (_eventListBox.Items.Count > EventLogLimit)
+            try
             {
-                _eventListBox.Items.RemoveAt(0);
-            }
+                if (InvokeRequired)
+                {
+                    _ = BeginInvoke(action);
+                    return;
+                }
 
-            _eventListBox.TopIndex = _eventListBox.Items.Count - 1;
+                action();
+            }
+            catch (InvalidOperationException)
+            {
+            }
+        }
+
+        /// <summary>
+        /// 套用背景輪詢取得的狀態列文字。
+        /// </summary>
+        /// <param name="text">要顯示的狀態列文字。</param>
+        private void SetStatusText(string text)
+        {
+            if (!IsDisposed)
+            {
+                _statusLabel.Text = text;
+            }
         }
 
         /// <summary>
@@ -502,7 +663,7 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
         /// <returns>已套用範例標準尺寸的按鈕。</returns>
         private static Button CreateCommandButton(string text)
         {
-            return new Button
+            Button button = new Button
             {
                 Text = text,
                 Dock = DockStyle.Fill,
@@ -510,6 +671,8 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
                 Height = SampleRuntime.SampleButtonHeight,
                 Margin = new Padding(0, 0, SampleRuntime.SampleControlSpacing, 0)
             };
+            ApplyButtonStyle(button);
+            return button;
         }
 
         /// <summary>
@@ -520,7 +683,7 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
         /// <returns>已建立的功能按鈕。</returns>
         private Button CreateFeatureButton(string text, Action action)
         {
-            Button button = CreateFeatureButtonCore(text);
+            Button button = CreateFeatureButtonCore(text, SampleRuntime.SampleFeatureButtonWidth);
             button.Click += (sender, e) => RunFeature(action);
             return button;
         }
@@ -530,10 +693,11 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
         /// </summary>
         /// <param name="text">按鈕文字。</param>
         /// <param name="action">點選時要執行的非同步功能。</param>
+        /// <param name="width">按鈕寬度。</param>
         /// <returns>已建立的功能按鈕。</returns>
-        private Button CreateAsyncFeatureButton(string text, Func<Task> action)
+        private Button CreateAsyncFeatureButton(string text, Func<Task> action, int width = SampleRuntime.SampleFeatureButtonWidth)
         {
-            Button button = CreateFeatureButtonCore(text);
+            Button button = CreateFeatureButtonCore(text, width);
             button.Click += async (sender, e) => await RunFeatureAsync(action).ConfigureAwait(true);
             return button;
         }
@@ -542,16 +706,33 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
         /// 建立功能按鈕共用外觀。
         /// </summary>
         /// <param name="text">按鈕文字。</param>
+        /// <param name="width">按鈕寬度。</param>
         /// <returns>已套用共用外觀的按鈕。</returns>
-        private static Button CreateFeatureButtonCore(string text)
+        private static Button CreateFeatureButtonCore(string text, int width)
         {
-            return new Button
+            Button button = new Button
             {
                 Text = text,
-                Width = 76,
+                Width = width,
                 Height = SampleRuntime.SampleButtonHeight,
                 Margin = new Padding(0, 0, SampleRuntime.SampleControlSpacing, 4)
             };
+            ApplyButtonStyle(button);
+            return button;
+        }
+
+        /// <summary>
+        /// 套用範例按鈕的固定深色外觀。
+        /// </summary>
+        /// <param name="button">要套用外觀的按鈕。</param>
+        private static void ApplyButtonStyle(Button button)
+        {
+            button.UseVisualStyleBackColor = false;
+            button.FlatStyle = FlatStyle.Flat;
+            button.BackColor = Color.FromArgb(48, 48, 48);
+            button.ForeColor = Color.White;
+            button.FlatAppearance.BorderColor = Color.FromArgb(224, 224, 224);
+            button.FlatAppearance.BorderSize = 1;
         }
     }
 }

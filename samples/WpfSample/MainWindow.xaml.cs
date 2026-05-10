@@ -18,20 +18,32 @@ namespace MediaEmbedKit.Mpv.Samples.Wpf
         /// <summary>
         /// 範例事件輸出的最大保留列數。
         /// </summary>
-        private const int EventLogLimit = 200;
+        private const int EventLogLimit = 120;
 
         /// <summary>
         /// 範例進階功能控制器。
         /// </summary>
         private readonly SampleFeatureController _features;
         /// <summary>
-        /// 週期性更新狀態列的計時器。
+        /// 顯示在 UI 的事件文字列集合。
         /// </summary>
-        private readonly DispatcherTimer _statusTimer;
+        private readonly List<string> _eventLines = new List<string>();
+        /// <summary>
+        /// 背景讀取並批次套用狀態列文字的分派器。
+        /// </summary>
+        private readonly SampleStatusUpdateDispatcher _statusDispatcher;
         /// <summary>
         /// 將播放器事件轉接到範例事件清單。
         /// </summary>
         private SamplePlayerEventBridge? _eventBridge;
+        /// <summary>
+        /// 目前已建立的播放器。
+        /// </summary>
+        private MpvPlayer? _currentPlayer;
+        /// <summary>
+        /// 批次轉送事件文字到 UI 執行緒的分派器。
+        /// </summary>
+        private readonly SampleEventLogDispatcher _eventLogDispatcher;
 
         /// <summary>
         /// 初始化 <see cref="MainWindow"/> 類別的新執行個體。
@@ -41,14 +53,10 @@ namespace MediaEmbedKit.Mpv.Samples.Wpf
             InitializeComponent();
             UrlTextBox.Text = SampleRuntime.PlaybackUrl;
             SampleRuntime.CopyTo(SampleRuntime.PlayerOptions, PlayerHost.PlayerOptions);
-            _features = new SampleFeatureController(() => PlayerHost.Player, AppendEventLine);
+            _features = new SampleFeatureController(() => _currentPlayer, AppendEventLine);
             ConfigureFormatComboBox();
-            _statusTimer = new DispatcherTimer(DispatcherPriority.Background, Dispatcher)
-            {
-                Interval = TimeSpan.FromSeconds(1)
-            };
-            _statusTimer.Tick += StatusTimerTick;
-            _statusTimer.Start();
+            _eventLogDispatcher = new SampleEventLogDispatcher(AppendEventLines, ScheduleEventLogFlush);
+            _statusDispatcher = new SampleStatusUpdateDispatcher(() => _features.GetStatusText(), SetStatusText, ScheduleUiUpdate);
             PlayerHost.PlayerCreated += PlayerCreated;
             Loaded += WindowLoaded;
             AppendEventLine(CreateLifecycleLine("WindowCreated", "WPF 視窗已建立，等待 HwndHost 建立播放器。"));
@@ -60,11 +68,12 @@ namespace MediaEmbedKit.Mpv.Samples.Wpf
         /// <param name="e">事件資料。</param>
         protected override void OnClosed(EventArgs e)
         {
-            _statusTimer.Stop();
-            _statusTimer.Tick -= StatusTimerTick;
+            _statusDispatcher.Dispose();
             _eventBridge?.WriteLifecycle("WindowClosed", "視窗已關閉，準備取消事件訂閱。");
             _eventBridge?.Dispose();
+            _eventLogDispatcher.Dispose();
             PlayerHost.PlayerCreated -= PlayerCreated;
+            _currentPlayer = null;
             base.OnClosed(e);
         }
 
@@ -102,7 +111,9 @@ namespace MediaEmbedKit.Mpv.Samples.Wpf
             _eventBridge?.Dispose();
             if (PlayerHost.Player != null)
             {
+                _currentPlayer = PlayerHost.Player;
                 _eventBridge = new SamplePlayerEventBridge(PlayerHost.Player, AppendEventLine);
+                _statusDispatcher.RequestUpdate();
             }
         }
 
@@ -183,16 +194,6 @@ namespace MediaEmbedKit.Mpv.Samples.Wpf
             {
                 AppendEventLine(CreateLifecycleLine("FormatError", ex.Message));
             }
-        }
-
-        /// <summary>
-        /// 更新播放狀態列。
-        /// </summary>
-        /// <param name="sender">引發事件的物件。</param>
-        /// <param name="e">事件資料。</param>
-        private void StatusTimerTick(object? sender, EventArgs e)
-        {
-            StatusTextBlock.Text = _features.GetStatusText();
         }
 
         /// <summary>
@@ -364,7 +365,7 @@ namespace MediaEmbedKit.Mpv.Samples.Wpf
             try
             {
                 action();
-                StatusTextBlock.Text = _features.GetStatusText();
+                _statusDispatcher.RequestUpdate();
             }
             catch (Exception ex)
             {
@@ -382,7 +383,7 @@ namespace MediaEmbedKit.Mpv.Samples.Wpf
             try
             {
                 await action().ConfigureAwait(true);
-                StatusTextBlock.Text = _features.GetStatusText();
+                _statusDispatcher.RequestUpdate();
             }
             catch (Exception ex)
             {
@@ -396,19 +397,51 @@ namespace MediaEmbedKit.Mpv.Samples.Wpf
         /// <param name="line">要加入事件清單的文字列。</param>
         private void AppendEventLine(string line)
         {
-            if (!Dispatcher.CheckAccess())
+            _eventLogDispatcher.Enqueue(line);
+        }
+
+        /// <summary>
+        /// 批次加入事件文字列到 UI 文字框。
+        /// </summary>
+        /// <param name="lines">要加入事件清單的文字列集合。</param>
+        private void AppendEventLines(IReadOnlyList<string> lines)
+        {
+            _eventLines.AddRange(lines);
+            while (_eventLines.Count > EventLogLimit)
             {
-                _ = Dispatcher.BeginInvoke(new Action<string>(AppendEventLine), line);
-                return;
+                _eventLines.RemoveAt(0);
             }
 
-            EventListBox.Items.Add(line);
-            while (EventListBox.Items.Count > EventLogLimit)
-            {
-                EventListBox.Items.RemoveAt(0);
-            }
+            EventTextBox.Text = string.Join(Environment.NewLine, _eventLines);
+            EventTextBox.CaretIndex = EventTextBox.Text.Length;
+            EventTextBox.ScrollToEnd();
+        }
 
-            EventListBox.ScrollIntoView(line);
+        /// <summary>
+        /// 將事件清單更新排入 WPF UI 執行緒。
+        /// </summary>
+        /// <param name="action">要在 UI 執行緒執行的更新。</param>
+        private void ScheduleEventLogFlush(Action action)
+        {
+            ScheduleUiUpdate(action);
+        }
+
+        /// <summary>
+        /// 將指定動作排入 WPF UI 執行緒。
+        /// </summary>
+        /// <param name="action">要在 UI 執行緒執行的動作。</param>
+        private void ScheduleUiUpdate(Action action)
+        {
+            _ = Dispatcher.BeginInvoke(action, DispatcherPriority.Background);
+        }
+
+        /// <summary>
+        /// 套用背景輪詢取得的狀態列文字。
+        /// </summary>
+        /// <param name="text">要顯示的狀態列文字。</param>
+        private void SetStatusText(string text)
+        {
+            StatusTextBlock.Text = text;
         }
 
         /// <summary>

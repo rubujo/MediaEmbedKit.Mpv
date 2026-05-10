@@ -3,14 +3,24 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:mpv="clr-namespace:MediaEmbedKit.Mpv.Wpf;assembly=MediaEmbedKit.Mpv.Wpf"
         Title="MediaEmbedKit.Mpv WPF Sample"
-        Width="960"
-        Height="540">
+        Width="1200"
+        Height="720"
+        MinWidth="1200"
+        MinHeight="720">
+    <Window.Resources>
+        <Style TargetType="{x:Type Button}">
+            <Setter Property="Background" Value="#303030" />
+            <Setter Property="BorderBrush" Value="#E0E0E0" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+    </Window.Resources>
     <Grid Background="#111111">
         <Grid.RowDefinitions>
             <RowDefinition Height="48" />
-            <RowDefinition Height="92" />
+            <RowDefinition Height="88" />
             <RowDefinition Height="*" />
-            <RowDefinition Height="152" />
+            <RowDefinition Height="168" />
         </Grid.RowDefinitions>
 
         <Grid Grid.Row="0"
@@ -50,8 +60,8 @@
               Background="#181818"
               Margin="0">
             <Grid.RowDefinitions>
-                <RowDefinition Height="42" />
-                <RowDefinition Height="42" />
+                <RowDefinition Height="40" />
+                <RowDefinition Height="40" />
             </Grid.RowDefinitions>
 
             <WrapPanel Margin="8,4,8,0"
@@ -93,13 +103,9 @@
                         Click="VolumeDownClick" />
                 <Button Width="76"
                         Height="32"
+                        Margin="0,0,8,0"
                         Content="Vol+"
                         Click="VolumeUpClick" />
-            </WrapPanel>
-
-            <WrapPanel Grid.Row="1"
-                       Margin="8,2,8,4"
-                       VerticalAlignment="Center">
                 <Button Width="76"
                         Height="32"
                         Margin="0,0,8,0"
@@ -107,9 +113,13 @@
                         Click="MuteClick" />
                 <Button Width="76"
                         Height="32"
-                        Margin="0,0,8,0"
                         Content="Speed"
                         Click="SpeedClick" />
+            </WrapPanel>
+
+            <WrapPanel Grid.Row="1"
+                       Margin="8,2,8,4"
+                       VerticalAlignment="Center">
                 <Button Width="76"
                         Height="32"
                         Margin="0,0,8,0"
@@ -150,7 +160,7 @@
                         Margin="0,0,8,0"
                         Content="Update yt"
                         Click="YtdlpUpdateClick" />
-                <Button Width="104"
+                <Button Width="120"
                         Height="32"
                         Content="Update Deno"
                         Click="DenoUpdateClick" />
@@ -159,51 +169,93 @@
 
         <Grid Grid.Row="2"
               Background="Black">
-            <mpv:MpvWpfPlayer x:Name="PlayerHost">
-                <mpv:MpvWpfPlayer.OverlayContent>
-                    <Grid IsHitTestVisible="False">
-                        <Border Width="300"
-                                Height="32"
-                                HorizontalAlignment="Left"
-                                VerticalAlignment="Top"
-                                Margin="16"
-                                Background="#DD0078D4"
-                                CornerRadius="4">
-                            <TextBlock HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"
-                                       Foreground="White"
-                                       FontWeight="SemiBold"
-                                       Text="OverlayContent：AirSpace 安全覆蓋層" />
-                        </Border>
-                    </Grid>
-                </mpv:MpvWpfPlayer.OverlayContent>
-            </mpv:MpvWpfPlayer>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="40" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
 
-            <Border Width="360"
-                    Height="32"
-                    HorizontalAlignment="Right"
-                    VerticalAlignment="Top"
-                    Margin="16"
-                    Background="#DD5C2D91"
-                    CornerRadius="4"
-                    IsHitTestVisible="False">
-                <TextBlock HorizontalAlignment="Center"
-                           VerticalAlignment="Center"
-                           Foreground="White"
-                           FontWeight="SemiBold"
-                           Text="一般 WPF 覆蓋層：用來觀察 AirSpace" />
-            </Border>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border Margin="16,6,8,6"
+                        Background="#DD0078D4"
+                        CornerRadius="4">
+                    <TextBlock HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               Foreground="White"
+                               FontWeight="SemiBold"
+                               Text="控制項 OverlayContent：可覆蓋 HWND" />
+                </Border>
+
+                <Border Grid.Column="1"
+                        Margin="8,6,16,6"
+                        Background="#DD5C2D91"
+                        CornerRadius="4">
+                    <TextBlock HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               Foreground="White"
+                               FontWeight="SemiBold"
+                               Text="一般 WPF Overlay 嘗試覆蓋同一個 HWND" />
+                </Border>
+            </Grid>
+
+            <Grid Grid.Row="1"
+                  ClipToBounds="True"
+                  Background="Black">
+                <mpv:MpvWpfPlayer x:Name="PlayerHost">
+                    <mpv:MpvWpfPlayer.OverlayContent>
+                        <Grid IsHitTestVisible="False">
+                            <Border Width="340"
+                                    Height="32"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Top"
+                                    Margin="16"
+                                    Background="#DD0078D4"
+                                    CornerRadius="4">
+                                <TextBlock HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           Foreground="White"
+                                           FontWeight="SemiBold"
+                                           Text="OverlayContent：AirSpace 安全覆蓋層" />
+                            </Border>
+                        </Grid>
+                    </mpv:MpvWpfPlayer.OverlayContent>
+                </mpv:MpvWpfPlayer>
+
+                <Border Width="340"
+                        Height="32"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Top"
+                        Margin="16"
+                        Background="#DD5C2D91"
+                        CornerRadius="4"
+                        IsHitTestVisible="False">
+                    <TextBlock HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               Foreground="White"
+                               FontWeight="SemiBold"
+                               Text="一般 WPF Overlay：AirSpace 對照" />
+                </Border>
+            </Grid>
         </Grid>
 
-        <ListBox x:Name="EventListBox"
+        <TextBox x:Name="EventTextBox"
                  Grid.Row="3"
                  Margin="0"
+                 AcceptsReturn="True"
+                 AcceptsTab="False"
                  Background="#161616"
                  BorderBrush="#333333"
                  BorderThickness="1,1,1,0"
                  FontFamily="Consolas"
                  FontSize="12"
                  Foreground="#E6E6E6"
-                 HorizontalContentAlignment="Stretch" />
+                 HorizontalScrollBarVisibility="Auto"
+                 IsReadOnly="True"
+                 TextWrapping="NoWrap"
+                 VerticalScrollBarVisibility="Auto" />
     </Grid>
 </Window>

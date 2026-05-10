@@ -8,9 +8,19 @@ using MediaEmbedKit.Mpv.Maui;
 using MediaEmbedKit.Mpv.Samples;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
-using Microsoft.Maui.Dispatching;
 using Microsoft.Maui.Graphics;
 using Microsoft.Maui.Layouts;
+using WinUiBorder = Microsoft.UI.Xaml.Controls.Border;
+using WinUiColorHelper = Microsoft.UI.ColorHelper;
+using WinUiColors = Microsoft.UI.Colors;
+using WinUiCornerRadius = Microsoft.UI.Xaml.CornerRadius;
+using WinUiElement = Microsoft.UI.Xaml.UIElement;
+using WinUiFontWeights = Microsoft.UI.Text.FontWeights;
+using WinUiHorizontalAlignment = Microsoft.UI.Xaml.HorizontalAlignment;
+using WinUiSolidColorBrush = Microsoft.UI.Xaml.Media.SolidColorBrush;
+using WinUiTextBlock = Microsoft.UI.Xaml.Controls.TextBlock;
+using WinUiThickness = Microsoft.UI.Xaml.Thickness;
+using WinUiVerticalAlignment = Microsoft.UI.Xaml.VerticalAlignment;
 
 namespace MediaEmbedKit.Mpv.Samples.Maui
 {
@@ -22,7 +32,7 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
         /// <summary>
         /// 範例事件輸出的最大保留列數。
         /// </summary>
-        private const int EventLogLimit = 200;
+        private const int EventLogLimit = 120;
 
         /// <summary>
         /// 顯示 libmpv 視訊內容的 MAUI 檢視。
@@ -69,13 +79,21 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
         /// </summary>
         private readonly SampleFeatureController _features;
         /// <summary>
-        /// 週期性更新狀態列的計時器。
+        /// 背景讀取並批次套用狀態列文字的分派器。
         /// </summary>
-        private readonly IDispatcherTimer _statusTimer;
+        private readonly SampleStatusUpdateDispatcher _statusDispatcher;
         /// <summary>
         /// 將播放器事件轉接到範例事件清單。
         /// </summary>
         private SamplePlayerEventBridge? _eventBridge;
+        /// <summary>
+        /// 目前已建立的播放器。
+        /// </summary>
+        private MpvPlayer? _currentPlayer;
+        /// <summary>
+        /// 批次轉送事件文字到 UI 執行緒的分派器。
+        /// </summary>
+        private readonly SampleEventLogDispatcher _eventLogDispatcher;
         /// <summary>
         /// 表示預設媒體是否已載入。
         /// </summary>
@@ -104,12 +122,14 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
             _player = new MpvView
             {
                 HorizontalOptions = LayoutOptions.Fill,
-                VerticalOptions = LayoutOptions.Fill
+                VerticalOptions = LayoutOptions.Fill,
+                OverlayContent = CreateWinUiOverlayContent(),
+                IsOverlayOpen = true
             };
             _player.PlayerCreated += PlayerCreated;
             SampleRuntime.CopyTo(SampleRuntime.PlayerOptions, _player.PlayerOptions);
 
-            _features = new SampleFeatureController(() => _player.Player, AppendEventLine);
+            _features = new SampleFeatureController(() => _currentPlayer, AppendEventLine);
             _formatChoices = SampleFeatureController.CreateYtdlpFormatChoices();
             _formatPicker = CreateFormatPicker();
             _statusLabel = new Label
@@ -138,9 +158,8 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
                 BackgroundColor = Color.FromArgb("#161616")
             };
 
-            _statusTimer = Dispatcher.CreateTimer();
-            _statusTimer.Interval = TimeSpan.FromSeconds(1);
-            _statusTimer.Tick += StatusTimerTick;
+            _eventLogDispatcher = new SampleEventLogDispatcher(AppendEventLines, ScheduleEventLogFlush);
+            _statusDispatcher = new SampleStatusUpdateDispatcher(() => _features.GetStatusText(), SetStatusText, ScheduleUiUpdate);
 
             Content = CreateLayout();
             AppendEventLine(CreateLifecycleLine("PageCreated", "MAUI 頁面已建立，等待 Windows handler 建立播放器。"));
@@ -152,7 +171,6 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
         protected override async void OnAppearing()
         {
             base.OnAppearing();
-            _statusTimer.Start();
             if (_player.Player != null && _eventBridge == null)
             {
                 AttachPlayerEvents(_player.Player);
@@ -177,10 +195,11 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
         /// </summary>
         protected override void OnDisappearing()
         {
-            _statusTimer.Stop();
+            _statusDispatcher.Dispose();
             _eventBridge?.WriteLifecycle("Disappearing", "頁面即將離開畫面，準備取消事件訂閱。");
             _eventBridge?.Dispose();
             _eventBridge = null;
+            _currentPlayer = null;
             base.OnDisappearing();
         }
 
@@ -276,16 +295,6 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
         }
 
         /// <summary>
-        /// 更新播放狀態列。
-        /// </summary>
-        /// <param name="sender">引發事件的物件。</param>
-        /// <param name="e">事件資料。</param>
-        private void StatusTimerTick(object? sender, EventArgs e)
-        {
-            _statusLabel.Text = _features.GetStatusText();
-        }
-
-        /// <summary>
         /// 載入目前輸入的媒體來源。
         /// </summary>
         private void LoadCurrentSource()
@@ -309,9 +318,9 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
                 RowDefinitions =
                 {
                     new RowDefinition(GridLength.Auto),
-                    new RowDefinition(new GridLength(92)),
+                    new RowDefinition(new GridLength(SampleRuntime.SampleFeaturePanelHeight)),
                     new RowDefinition(GridLength.Star),
-                    new RowDefinition(new GridLength(152))
+                    new RowDefinition(new GridLength(SampleRuntime.SampleEventLogHeight))
                 }
             };
 
@@ -380,42 +389,144 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
             panel.Children.Add(CreateFeatureButton("Lua", () => _features.LoadSampleLuaScript()));
             panel.Children.Add(CreateAsyncFeatureButton("yt-dlp", () => _features.RunYtdlpDiagnosticsAsync(_sourceEntry.Text ?? string.Empty)));
             panel.Children.Add(CreateAsyncFeatureButton("Deno", () => _features.RunDenoDiagnosticsAsync()));
-            panel.Children.Add(CreateAsyncFeatureButton("Update yt", () => _features.RunYtdlpSelfUpdateAsync(), 88));
-            panel.Children.Add(CreateAsyncFeatureButton("Update Deno", () => _features.RunDenoSelfUpgradeAsync(), 104));
+            panel.Children.Add(CreateAsyncFeatureButton("Update yt", () => _features.RunYtdlpSelfUpdateAsync(), SampleRuntime.SampleYtdlpUpdateButtonWidth));
+            panel.Children.Add(CreateAsyncFeatureButton("Update Deno", () => _features.RunDenoSelfUpgradeAsync(), SampleRuntime.SampleDenoUpdateButtonWidth));
             return panel;
         }
 
         /// <summary>
-        /// 建立播放區域與 MAUI 覆蓋層展示。
+        /// 建立播放區域。
         /// </summary>
-        /// <returns>包含播放器與覆蓋層的播放區域。</returns>
+        /// <returns>包含單一播放器、安全覆蓋層與一般覆蓋層對照的播放區域。</returns>
         private Grid CreatePlayerSurface()
         {
             Grid playerSurface = new Grid
             {
+                BackgroundColor = Colors.Black,
+                RowDefinitions =
+                {
+                    new RowDefinition(new GridLength(SampleRuntime.SampleAirspaceComparisonHeight)),
+                    new RowDefinition(GridLength.Star)
+                }
+            };
+
+            playerSurface.Add(CreateHeaderPanel(), 0, 0);
+            playerSurface.Add(CreateVideoSurface(), 0, 1);
+            return playerSurface;
+        }
+
+        /// <summary>
+        /// 建立左右對照標題列。
+        /// </summary>
+        /// <returns>包含安全覆蓋層與一般覆蓋層標題的面板。</returns>
+        private static Grid CreateHeaderPanel()
+        {
+            Grid header = new Grid
+            {
+                BackgroundColor = Color.FromArgb("#101010"),
+                ColumnDefinitions =
+                {
+                    new ColumnDefinition(GridLength.Star),
+                    new ColumnDefinition(GridLength.Star)
+                }
+            };
+
+            header.Add(CreateHeaderBadge("控制項 OverlayContent：可覆蓋 HWND", Color.FromArgb("#DD0078D4"), new Thickness(16, 6, 8, 6)), 0, 0);
+            header.Add(CreateHeaderBadge("一般 MAUI Overlay 嘗試覆蓋同一個 HWND", Color.FromArgb("#DD5C2D91"), new Thickness(8, 6, 16, 6)), 1, 0);
+            return header;
+        }
+
+        /// <summary>
+        /// 建立播放視訊與覆蓋層對照面板。
+        /// </summary>
+        /// <returns>包含播放器與一般 MAUI 覆蓋層的播放面板。</returns>
+        private Grid CreateVideoSurface()
+        {
+            Grid surface = new Grid
+            {
                 BackgroundColor = Colors.Black
             };
 
-            Label overlayLabel = new Label
+            Label normalOverlay = CreateOverlayBadge("一般 MAUI Overlay：AirSpace 對照", Color.FromArgb("#DD5C2D91"));
+            normalOverlay.ZIndex = 10;
+            surface.Add(_player, 0, 0);
+            surface.Add(normalOverlay, 0, 0);
+            return surface;
+        }
+
+        /// <summary>
+        /// 建立播放區中的覆蓋層標籤。
+        /// </summary>
+        /// <param name="text">要顯示的標籤文字。</param>
+        /// <param name="backgroundColor">標籤背景色彩。</param>
+        /// <returns>已套用固定尺寸與色彩的覆蓋層標籤。</returns>
+        private static Label CreateOverlayBadge(string text, Color backgroundColor)
+        {
+            return new Label
             {
-                Text = "一般 MAUI 覆蓋層：用來觀察 HWND AirSpace",
-                BackgroundColor = Color.FromArgb("#DD5C2D91"),
+                Text = text,
+                WidthRequest = SampleRuntime.SampleOverlayBadgeWidth,
+                HeightRequest = SampleRuntime.SampleOverlayBadgeHeight,
+                Margin = new Thickness(16),
+                BackgroundColor = backgroundColor,
                 TextColor = Colors.White,
                 FontAttributes = FontAttributes.Bold,
-                HorizontalTextAlignment = TextAlignment.Center,
-                VerticalTextAlignment = TextAlignment.Center,
-                HeightRequest = 32,
-                WidthRequest = 360,
-                Margin = new Thickness(16),
                 HorizontalOptions = LayoutOptions.End,
                 VerticalOptions = LayoutOptions.Start,
-                InputTransparent = true,
-                ZIndex = 10
+                HorizontalTextAlignment = TextAlignment.Center,
+                VerticalTextAlignment = TextAlignment.Center,
+                LineBreakMode = LineBreakMode.TailTruncation
             };
+        }
 
-            playerSurface.Add(_player, 0, 0);
-            playerSurface.Add(overlayLabel, 0, 0);
-            return playerSurface;
+        /// <summary>
+        /// 建立 AirSpace 對照區標題列。
+        /// </summary>
+        /// <param name="text">要顯示的標題文字。</param>
+        /// <param name="backgroundColor">標題背景色彩。</param>
+        /// <param name="margin">標題外距。</param>
+        /// <returns>已套用固定色彩與邊界的標題。</returns>
+        private static Label CreateHeaderBadge(string text, Color backgroundColor, Thickness margin)
+        {
+            return new Label
+            {
+                Text = text,
+                Margin = margin,
+                BackgroundColor = backgroundColor,
+                TextColor = Colors.White,
+                FontAttributes = FontAttributes.Bold,
+                HorizontalOptions = LayoutOptions.Fill,
+                VerticalOptions = LayoutOptions.Fill,
+                HorizontalTextAlignment = TextAlignment.Center,
+                VerticalTextAlignment = TextAlignment.Center,
+                LineBreakMode = LineBreakMode.TailTruncation
+            };
+        }
+
+        /// <summary>
+        /// 建立 Windows 平台控制項管理的安全覆蓋層內容。
+        /// </summary>
+        /// <returns>可交給 Windows handler 顯示的 WinUI 覆蓋層元素。</returns>
+        private static WinUiElement CreateWinUiOverlayContent()
+        {
+            WinUiBorder border = new WinUiBorder
+            {
+                Width = SampleRuntime.SampleOverlayBadgeWidth,
+                Height = SampleRuntime.SampleOverlayBadgeHeight,
+                Margin = new WinUiThickness(16),
+                Background = new WinUiSolidColorBrush(WinUiColorHelper.FromArgb(221, 0, 120, 212)),
+                CornerRadius = new WinUiCornerRadius(4),
+                IsHitTestVisible = false
+            };
+            border.Child = new WinUiTextBlock
+            {
+                Text = "OverlayContent：AirSpace 安全覆蓋層",
+                Foreground = new WinUiSolidColorBrush(WinUiColors.White),
+                FontWeight = WinUiFontWeights.SemiBold,
+                HorizontalAlignment = WinUiHorizontalAlignment.Center,
+                VerticalAlignment = WinUiVerticalAlignment.Center
+            };
+            return border;
         }
 
         /// <summary>
@@ -425,7 +536,9 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
         private void AttachPlayerEvents(MpvPlayer player)
         {
             _eventBridge?.Dispose();
+            _currentPlayer = player;
             _eventBridge = new SamplePlayerEventBridge(player, AppendEventLine);
+            _statusDispatcher.RequestUpdate();
         }
 
         /// <summary>
@@ -437,7 +550,7 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
             try
             {
                 action();
-                _statusLabel.Text = _features.GetStatusText();
+                _statusDispatcher.RequestUpdate();
             }
             catch (Exception ex)
             {
@@ -455,7 +568,7 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
             try
             {
                 await action().ConfigureAwait(true);
-                _statusLabel.Text = _features.GetStatusText();
+                _statusDispatcher.RequestUpdate();
             }
             catch (Exception ex)
             {
@@ -469,19 +582,56 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
         /// <param name="line">要加入事件清單的文字列。</param>
         private void AppendEventLine(string line)
         {
-            if (!MainThread.IsMainThread)
+            _eventLogDispatcher.Enqueue(line);
+        }
+
+        /// <summary>
+        /// 批次加入事件文字列到 UI 清單。
+        /// </summary>
+        /// <param name="lines">要加入事件清單的文字列集合。</param>
+        private void AppendEventLines(IReadOnlyList<string> lines)
+        {
+            foreach (string line in lines)
             {
-                MainThread.BeginInvokeOnMainThread(() => AppendEventLine(line));
-                return;
+                _eventLines.Add(line);
             }
 
-            _eventLines.Add(line);
             while (_eventLines.Count > EventLogLimit)
             {
                 _eventLines.RemoveAt(0);
             }
 
-            _eventList.ScrollTo(line, position: ScrollToPosition.End, animate: false);
+            if (_eventLines.Count > 0)
+            {
+                _eventList.ScrollTo(_eventLines[_eventLines.Count - 1], position: ScrollToPosition.End, animate: false);
+            }
+        }
+
+        /// <summary>
+        /// 將事件清單更新排入 MAUI UI 執行緒。
+        /// </summary>
+        /// <param name="action">要在 UI 執行緒執行的更新。</param>
+        private static void ScheduleEventLogFlush(Action action)
+        {
+            ScheduleUiUpdate(action);
+        }
+
+        /// <summary>
+        /// 將指定動作排入 MAUI UI 執行緒。
+        /// </summary>
+        /// <param name="action">要在 UI 執行緒執行的動作。</param>
+        private static void ScheduleUiUpdate(Action action)
+        {
+            MainThread.BeginInvokeOnMainThread(action);
+        }
+
+        /// <summary>
+        /// 套用背景輪詢取得的狀態列文字。
+        /// </summary>
+        /// <param name="text">要顯示的狀態列文字。</param>
+        private void SetStatusText(string text)
+        {
+            _statusLabel.Text = text;
         }
 
         /// <summary>
@@ -564,6 +714,10 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
                 Text = text,
                 WidthRequest = SampleRuntime.SampleButtonWidth,
                 HeightRequest = SampleRuntime.SampleButtonHeight,
+                BackgroundColor = Color.FromArgb("#303030"),
+                BorderColor = Color.FromArgb("#E0E0E0"),
+                BorderWidth = 1,
+                TextColor = Colors.White,
                 HorizontalOptions = LayoutOptions.Fill,
                 VerticalOptions = LayoutOptions.Center
             };
@@ -577,7 +731,7 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
         /// <returns>已建立的功能按鈕。</returns>
         private Button CreateFeatureButton(string text, Action action)
         {
-            Button button = CreateFeatureButtonCore(text, 76);
+            Button button = CreateFeatureButtonCore(text, SampleRuntime.SampleFeatureButtonWidth);
             button.Clicked += (sender, e) => RunFeature(action);
             return button;
         }
@@ -589,7 +743,7 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
         /// <param name="action">點選時要執行的非同步功能。</param>
         /// <param name="width">按鈕寬度。</param>
         /// <returns>已建立的功能按鈕。</returns>
-        private Button CreateAsyncFeatureButton(string text, Func<Task> action, double width = 76)
+        private Button CreateAsyncFeatureButton(string text, Func<Task> action, double width = SampleRuntime.SampleFeatureButtonWidth)
         {
             Button button = CreateFeatureButtonCore(text, width);
             button.Clicked += async (sender, e) => await RunFeatureAsync(action).ConfigureAwait(true);
@@ -609,6 +763,10 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
                 Text = text,
                 WidthRequest = width,
                 HeightRequest = SampleRuntime.SampleButtonHeight,
+                BackgroundColor = Color.FromArgb("#303030"),
+                BorderColor = Color.FromArgb("#E0E0E0"),
+                BorderWidth = 1,
+                TextColor = Colors.White,
                 Margin = new Thickness(0, 0, SampleRuntime.SampleControlSpacing, 4),
                 HorizontalOptions = LayoutOptions.Start,
                 VerticalOptions = LayoutOptions.Center

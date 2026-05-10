@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Threading.Tasks;
 using Avalonia;
@@ -23,7 +22,7 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
         /// <summary>
         /// 範例事件輸出的最大保留列數。
         /// </summary>
-        private const int EventLogLimit = 200;
+        private const int EventLogLimit = 120;
 
         /// <summary>
         /// 顯示 libmpv 視訊內容的 Avalonia OpenGL 控制項。
@@ -60,19 +59,27 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
         /// <summary>
         /// 顯示在 UI 的事件文字列集合。
         /// </summary>
-        private readonly ObservableCollection<string> _eventLines = new ObservableCollection<string>();
+        private readonly List<string> _eventLines = new List<string>();
         /// <summary>
         /// 範例進階功能控制器。
         /// </summary>
         private readonly SampleFeatureController _features;
         /// <summary>
-        /// 週期性更新狀態列的計時器。
+        /// 背景讀取並批次套用狀態列文字的分派器。
         /// </summary>
-        private readonly DispatcherTimer _statusTimer;
+        private readonly SampleStatusUpdateDispatcher _statusDispatcher;
         /// <summary>
         /// 將播放器事件轉接到範例事件清單。
         /// </summary>
         private SamplePlayerEventBridge? _eventBridge;
+        /// <summary>
+        /// 目前已建立的播放器。
+        /// </summary>
+        private MpvPlayer? _currentPlayer;
+        /// <summary>
+        /// 批次轉送事件文字到 UI 執行緒的分派器。
+        /// </summary>
+        private readonly SampleEventLogDispatcher _eventLogDispatcher;
         /// <summary>
         /// 表示預設媒體載入是否已排程。
         /// </summary>
@@ -119,7 +126,7 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
             _player.PlayerCreated += PlayerCreated;
             SampleRuntime.CopyTo(SampleRuntime.PlayerOptions, _player.PlayerOptions);
 
-            _features = new SampleFeatureController(() => _player.Player, AppendEventLine);
+            _features = new SampleFeatureController(() => _currentPlayer, AppendEventLine);
             _formatComboBox = CreateFormatComboBox();
             _statusTextBlock = new TextBlock
             {
@@ -145,12 +152,8 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
                 TextWrapping = TextWrapping.NoWrap
             };
 
-            _statusTimer = new DispatcherTimer
-            {
-                Interval = TimeSpan.FromSeconds(1)
-            };
-            _statusTimer.Tick += StatusTimerTick;
-            _statusTimer.Start();
+            _eventLogDispatcher = new SampleEventLogDispatcher(AppendEventLines, ScheduleEventLogFlush);
+            _statusDispatcher = new SampleStatusUpdateDispatcher(() => _features.GetStatusText(), SetStatusText, ScheduleUiUpdate);
 
             Content = CreateLayout();
             Opened += WindowOpened;
@@ -163,11 +166,12 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
         /// <param name="e">事件資料。</param>
         protected override void OnClosed(EventArgs e)
         {
-            _statusTimer.Stop();
-            _statusTimer.Tick -= StatusTimerTick;
+            _statusDispatcher.Dispose();
             _eventBridge?.WriteLifecycle("WindowClosed", "視窗已關閉，準備取消事件訂閱。");
             _eventBridge?.Dispose();
+            _eventLogDispatcher.Dispose();
             _player.PlayerCreated -= PlayerCreated;
+            _currentPlayer = null;
             base.OnClosed(e);
         }
 
@@ -197,7 +201,9 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
             _eventBridge?.Dispose();
             if (_player.Player != null)
             {
+                _currentPlayer = _player.Player;
                 _eventBridge = new SamplePlayerEventBridge(_player.Player, AppendEventLine);
+                _statusDispatcher.RequestUpdate();
             }
         }
 
@@ -265,16 +271,6 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
         }
 
         /// <summary>
-        /// 更新播放狀態列。
-        /// </summary>
-        /// <param name="sender">引發事件的物件。</param>
-        /// <param name="e">事件資料。</param>
-        private void StatusTimerTick(object? sender, EventArgs e)
-        {
-            _statusTextBlock.Text = _features.GetStatusText();
-        }
-
-        /// <summary>
         /// 載入預設媒體來源。
         /// </summary>
         private void StartPlayback()
@@ -321,9 +317,9 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
                 RowDefinitions =
                 {
                     new RowDefinition(new GridLength(SampleRuntime.SampleToolbarHeight, GridUnitType.Pixel)),
-                    new RowDefinition(new GridLength(92, GridUnitType.Pixel)),
+                    new RowDefinition(new GridLength(SampleRuntime.SampleFeaturePanelHeight, GridUnitType.Pixel)),
                     new RowDefinition(new GridLength(1, GridUnitType.Star)),
-                    new RowDefinition(new GridLength(152, GridUnitType.Pixel))
+                    new RowDefinition(new GridLength(SampleRuntime.SampleEventLogHeight, GridUnitType.Pixel))
                 }
             };
 
@@ -402,44 +398,130 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
             panel.Children.Add(CreateFeatureButton("Lua", () => _features.LoadSampleLuaScript()));
             panel.Children.Add(CreateAsyncFeatureButton("yt-dlp", () => _features.RunYtdlpDiagnosticsAsync(_sourceBox.Text ?? string.Empty)));
             panel.Children.Add(CreateAsyncFeatureButton("Deno", () => _features.RunDenoDiagnosticsAsync()));
-            panel.Children.Add(CreateAsyncFeatureButton("Update yt", () => _features.RunYtdlpSelfUpdateAsync(), 88));
-            panel.Children.Add(CreateAsyncFeatureButton("Update Deno", () => _features.RunDenoSelfUpgradeAsync(), 104));
+            panel.Children.Add(CreateAsyncFeatureButton("Update yt", () => _features.RunYtdlpSelfUpdateAsync(), SampleRuntime.SampleYtdlpUpdateButtonWidth));
+            panel.Children.Add(CreateAsyncFeatureButton("Update Deno", () => _features.RunDenoSelfUpgradeAsync(), SampleRuntime.SampleDenoUpdateButtonWidth));
             return panel;
         }
 
         /// <summary>
         /// 建立播放區域與 Avalonia 覆蓋層展示。
         /// </summary>
-        /// <returns>包含播放器與覆蓋層的播放區域。</returns>
+        /// <returns>包含單一播放器、安全覆蓋層與一般覆蓋層對照的播放區域。</returns>
         private Grid CreatePlayerSurface()
         {
             Grid playerSurface = new Grid
             {
+                Background = Brushes.Black,
+                RowDefinitions =
+                {
+                    new RowDefinition(new GridLength(SampleRuntime.SampleAirspaceComparisonHeight, GridUnitType.Pixel)),
+                    new RowDefinition(new GridLength(1, GridUnitType.Star))
+                }
+            };
+
+            Grid header = CreateHeaderPanel();
+            Grid videoSurface = CreateVideoSurface();
+            Grid.SetRow(videoSurface, 1);
+            playerSurface.Children.Add(header);
+            playerSurface.Children.Add(videoSurface);
+            return playerSurface;
+        }
+
+        /// <summary>
+        /// 建立左右對照標題列。
+        /// </summary>
+        /// <returns>包含安全覆蓋層與一般覆蓋層標題的面板。</returns>
+        private static Grid CreateHeaderPanel()
+        {
+            Grid header = new Grid
+            {
+                Background = new SolidColorBrush(Color.Parse("#101010")),
+                ColumnDefinitions =
+                {
+                    new ColumnDefinition(new GridLength(1, GridUnitType.Star)),
+                    new ColumnDefinition(new GridLength(1, GridUnitType.Star))
+                }
+            };
+
+            Border safeHeader = CreateHeaderBadge("Avalonia OpenGL 覆蓋層：同層組合", "#DD0078D4", new Thickness(16, 6, 8, 6));
+            Border normalHeader = CreateHeaderBadge("一般 Avalonia Overlay 嘗試覆蓋同一個 OpenGL 控制項", "#DD5C2D91", new Thickness(8, 6, 16, 6));
+            header.Children.Add(safeHeader);
+            Grid.SetColumn(normalHeader, 1);
+            header.Children.Add(normalHeader);
+            return header;
+        }
+
+        /// <summary>
+        /// 建立播放視訊與覆蓋層對照面板。
+        /// </summary>
+        /// <returns>包含播放器、安全覆蓋層與一般覆蓋層的播放面板。</returns>
+        private Grid CreateVideoSurface()
+        {
+            Grid videoSurface = new Grid
+            {
                 Background = Brushes.Black
             };
 
-            Border overlay = new Border
+            Border safeOverlay = CreateOverlayBadge("Avalonia OpenGL render API 覆蓋層", "#DD0078D4", HorizontalAlignment.Left);
+            Border normalOverlay = CreateOverlayBadge("一般 Avalonia Overlay：同一播放區對照", "#DD5C2D91", HorizontalAlignment.Right);
+            videoSurface.Children.Add(_player);
+            videoSurface.Children.Add(safeOverlay);
+            videoSurface.Children.Add(normalOverlay);
+            return videoSurface;
+        }
+
+        /// <summary>
+        /// 建立播放區中的覆蓋層標籤。
+        /// </summary>
+        /// <param name="text">要顯示的標籤文字。</param>
+        /// <param name="background">標籤背景色彩。</param>
+        /// <param name="alignment">標籤水平對齊方式。</param>
+        /// <returns>已套用固定尺寸與色彩的覆蓋層標籤。</returns>
+        private static Border CreateOverlayBadge(string text, string background, HorizontalAlignment alignment)
+        {
+            return new Border
             {
-                Width = 360,
-                Height = 32,
+                Width = SampleRuntime.SampleOverlayBadgeWidth,
+                Height = SampleRuntime.SampleOverlayBadgeHeight,
                 Margin = new Thickness(16),
-                HorizontalAlignment = HorizontalAlignment.Left,
+                HorizontalAlignment = alignment,
                 VerticalAlignment = VerticalAlignment.Top,
                 CornerRadius = new CornerRadius(4),
-                Background = new SolidColorBrush(Color.Parse("#DD0078D4")),
+                Background = new SolidColorBrush(Color.Parse(background)),
                 Child = new TextBlock
                 {
-                    Text = "Avalonia OpenGL render API 覆蓋層",
+                    Text = text,
                     Foreground = Brushes.White,
                     FontWeight = FontWeight.SemiBold,
                     HorizontalAlignment = HorizontalAlignment.Center,
                     VerticalAlignment = VerticalAlignment.Center
                 }
             };
+        }
 
-            playerSurface.Children.Add(_player);
-            playerSurface.Children.Add(overlay);
-            return playerSurface;
+        /// <summary>
+        /// 建立 AirSpace 對照區標題列。
+        /// </summary>
+        /// <param name="text">要顯示的標題文字。</param>
+        /// <param name="background">標題背景色彩。</param>
+        /// <param name="margin">標題外距。</param>
+        /// <returns>已套用固定色彩與邊界的標題。</returns>
+        private static Border CreateHeaderBadge(string text, string background, Thickness margin)
+        {
+            return new Border
+            {
+                Margin = margin,
+                CornerRadius = new CornerRadius(4),
+                Background = new SolidColorBrush(Color.Parse(background)),
+                Child = new TextBlock
+                {
+                    Text = text,
+                    Foreground = Brushes.White,
+                    FontWeight = FontWeight.SemiBold,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center
+                }
+            };
         }
 
         /// <summary>
@@ -451,7 +533,7 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
             try
             {
                 action();
-                _statusTextBlock.Text = _features.GetStatusText();
+                _statusDispatcher.RequestUpdate();
             }
             catch (Exception ex)
             {
@@ -469,7 +551,7 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
             try
             {
                 await action().ConfigureAwait(true);
-                _statusTextBlock.Text = _features.GetStatusText();
+                _statusDispatcher.RequestUpdate();
             }
             catch (Exception ex)
             {
@@ -483,13 +565,16 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
         /// <param name="line">要加入事件清單的文字列。</param>
         private void AppendEventLine(string line)
         {
-            if (!Dispatcher.UIThread.CheckAccess())
-            {
-                Dispatcher.UIThread.Post(() => AppendEventLine(line));
-                return;
-            }
+            _eventLogDispatcher.Enqueue(line);
+        }
 
-            _eventLines.Add(line);
+        /// <summary>
+        /// 批次加入事件文字列到 UI 文字框。
+        /// </summary>
+        /// <param name="lines">要加入事件清單的文字列集合。</param>
+        private void AppendEventLines(IReadOnlyList<string> lines)
+        {
+            _eventLines.AddRange(lines);
             while (_eventLines.Count > EventLogLimit)
             {
                 _eventLines.RemoveAt(0);
@@ -498,6 +583,33 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
             string text = string.Join(Environment.NewLine, _eventLines);
             _eventTextBox.Text = text;
             _eventTextBox.CaretIndex = text.Length;
+        }
+
+        /// <summary>
+        /// 將事件清單更新排入 Avalonia UI 執行緒。
+        /// </summary>
+        /// <param name="action">要在 UI 執行緒執行的更新。</param>
+        private static void ScheduleEventLogFlush(Action action)
+        {
+            ScheduleUiUpdate(action);
+        }
+
+        /// <summary>
+        /// 將指定動作排入 Avalonia UI 執行緒。
+        /// </summary>
+        /// <param name="action">要在 UI 執行緒執行的動作。</param>
+        private static void ScheduleUiUpdate(Action action)
+        {
+            Dispatcher.UIThread.Post(action, DispatcherPriority.Background);
+        }
+
+        /// <summary>
+        /// 套用背景輪詢取得的狀態列文字。
+        /// </summary>
+        /// <param name="text">要顯示的狀態列文字。</param>
+        private void SetStatusText(string text)
+        {
+            _statusTextBlock.Text = text;
         }
 
         /// <summary>
@@ -558,6 +670,10 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
                 Content = text,
                 MinWidth = SampleRuntime.SampleButtonWidth,
                 MinHeight = SampleRuntime.SampleButtonHeight,
+                Background = new SolidColorBrush(Color.Parse("#303030")),
+                BorderBrush = new SolidColorBrush(Color.Parse("#E0E0E0")),
+                BorderThickness = new Thickness(1),
+                Foreground = Brushes.White,
                 HorizontalContentAlignment = HorizontalAlignment.Center,
                 VerticalContentAlignment = VerticalAlignment.Center
             };
@@ -571,7 +687,7 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
         /// <returns>已建立的功能按鈕。</returns>
         private Button CreateFeatureButton(string text, Action action)
         {
-            Button button = CreateFeatureButtonCore(text, 76);
+            Button button = CreateFeatureButtonCore(text, SampleRuntime.SampleFeatureButtonWidth);
             button.Click += (sender, e) => RunFeature(action);
             return button;
         }
@@ -583,7 +699,7 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
         /// <param name="action">點選時要執行的非同步功能。</param>
         /// <param name="width">按鈕寬度。</param>
         /// <returns>已建立的功能按鈕。</returns>
-        private Button CreateAsyncFeatureButton(string text, Func<Task> action, double width = 76)
+        private Button CreateAsyncFeatureButton(string text, Func<Task> action, double width = SampleRuntime.SampleFeatureButtonWidth)
         {
             Button button = CreateFeatureButtonCore(text, width);
             button.Click += async (sender, e) => await RunFeatureAsync(action).ConfigureAwait(true);
@@ -603,6 +719,10 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
                 Content = text,
                 Width = width,
                 Height = SampleRuntime.SampleButtonHeight,
+                Background = new SolidColorBrush(Color.Parse("#303030")),
+                BorderBrush = new SolidColorBrush(Color.Parse("#E0E0E0")),
+                BorderThickness = new Thickness(1),
+                Foreground = Brushes.White,
                 Margin = new Thickness(0, 4, SampleRuntime.SampleControlSpacing, 4),
                 HorizontalContentAlignment = HorizontalAlignment.Center,
                 VerticalContentAlignment = VerticalAlignment.Center

@@ -11,6 +11,8 @@
 
   <ItemGroup>
     <Compile Include="..\SampleRuntime.cs" Link="SampleRuntime.cs" />
+    <Compile Include="..\SampleEventLogDispatcher.cs" Link="SampleEventLogDispatcher.cs" />
+    <Compile Include="..\SampleStatusUpdateDispatcher.cs" Link="SampleStatusUpdateDispatcher.cs" />
     <Compile Include="..\SamplePlayerEventBridge.cs" Link="SamplePlayerEventBridge.cs" />
     <Compile Include="..\SampleFeatureController.cs" Link="SampleFeatureController.cs" />
     <ProjectReference Include="..\..\src\MediaEmbedKit.Mpv.WinForms\MediaEmbedKit.Mpv.WinForms.csproj" />

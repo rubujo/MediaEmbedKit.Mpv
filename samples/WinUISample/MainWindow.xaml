@@ -4,7 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:mpv="using:MediaEmbedKit.Mpv.WinUI"
     Title="MediaEmbedKit.Mpv WinUI 3 Sample">
-    <Grid RowDefinitions="48,92,*,152" Background="#111111">
+    <Grid RowDefinitions="48,88,*,168" Background="#111111">
         <Grid ColumnDefinitions="*,96,96,88" Padding="8">
             <TextBox x:Name="SourceBox"
                      Text="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
@@ -32,7 +32,7 @@
         </Grid>
 
         <Grid Grid.Row="1"
-              RowDefinitions="42,42"
+              RowDefinitions="40,40"
               Padding="8,4"
               Background="#181818">
             <StackPanel Orientation="Horizontal"
@@ -72,12 +72,6 @@
                         Height="32"
                         Content="Vol+"
                         Click="OnVolumeUpClicked" />
-            </StackPanel>
-
-            <StackPanel Grid.Row="1"
-                        Orientation="Horizontal"
-                        Spacing="8"
-                        VerticalAlignment="Center">
                 <Button Width="76"
                         Height="32"
                         Content="Mute"
@@ -86,6 +80,12 @@
                         Height="32"
                         Content="Speed"
                         Click="OnSpeedClicked" />
+            </StackPanel>
+
+            <StackPanel Grid.Row="1"
+                        Orientation="Horizontal"
+                        Spacing="8"
+                        VerticalAlignment="Center">
                 <Button Width="76"
                         Height="32"
                         Content="Sub"
@@ -118,48 +118,71 @@
                         Height="32"
                         Content="Update yt"
                         Click="OnYtdlpUpdateClicked" />
-                <Button Width="104"
+                <Button Width="120"
                         Height="32"
                         Content="Update Deno"
                         Click="OnDenoUpdateClicked" />
             </StackPanel>
         </Grid>
 
-        <Grid Grid.Row="2" Background="Black">
-            <mpv:MpvWinUiPlayer x:Name="PlayerHost">
-                <mpv:MpvWinUiPlayer.OverlayContent>
-                    <Grid IsHitTestVisible="False">
-                        <Border Width="300"
+        <Grid Grid.Row="2" RowDefinitions="40,*" Background="Black">
+            <Grid ColumnDefinitions="*,*">
+                <Border Margin="16,6,8,6"
+                        Background="#DD0078D4"
+                        CornerRadius="4">
+                    <TextBlock HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               Foreground="White"
+                               FontWeight="SemiBold"
+                               Text="控制項 OverlayContent：可覆蓋 HWND" />
+                </Border>
+
+                <Border Grid.Column="1"
+                        Margin="8,6,16,6"
+                        Background="#DD5C2D91"
+                        CornerRadius="4">
+                    <TextBlock HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               Foreground="White"
+                               FontWeight="SemiBold"
+                               Text="一般 WinUI Overlay 嘗試覆蓋同一個 HWND" />
+                </Border>
+            </Grid>
+
+            <Grid Grid.Row="1"
+                  Background="Black">
+                <mpv:MpvWinUiPlayer x:Name="PlayerHost">
+                    <mpv:MpvWinUiPlayer.OverlayContent>
+                        <Border Width="340"
                                 Height="32"
-                                HorizontalAlignment="Left"
-                                VerticalAlignment="Top"
                                 Margin="16"
                                 Background="#DD0078D4"
-                                CornerRadius="4">
+                                CornerRadius="4"
+                                IsHitTestVisible="False">
                             <TextBlock HorizontalAlignment="Center"
                                        VerticalAlignment="Center"
                                        Foreground="White"
                                        FontWeight="SemiBold"
                                        Text="OverlayContent：AirSpace 安全覆蓋層" />
                         </Border>
-                    </Grid>
-                </mpv:MpvWinUiPlayer.OverlayContent>
-            </mpv:MpvWinUiPlayer>
+                    </mpv:MpvWinUiPlayer.OverlayContent>
+                </mpv:MpvWinUiPlayer>
 
-            <Border Width="360"
-                    Height="32"
-                    HorizontalAlignment="Right"
-                    VerticalAlignment="Top"
-                    Margin="16"
-                    Background="#DD5C2D91"
-                    CornerRadius="4"
-                    IsHitTestVisible="False">
-                <TextBlock HorizontalAlignment="Center"
-                           VerticalAlignment="Center"
-                           Foreground="White"
-                           FontWeight="SemiBold"
-                           Text="一般 WinUI 覆蓋層：用來觀察 AirSpace" />
-            </Border>
+                <Border Width="340"
+                        Height="32"
+                        Margin="16"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Top"
+                        Background="#DD5C2D91"
+                        CornerRadius="4"
+                        IsHitTestVisible="False">
+                        <TextBlock HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   Foreground="White"
+                                   FontWeight="SemiBold"
+                                   Text="一般 WinUI Overlay：AirSpace 對照" />
+                </Border>
+            </Grid>
         </Grid>
 
         <ListView x:Name="EventList"
