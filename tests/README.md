@@ -1,6 +1,6 @@
 # 測試
 
-本資料夾包含核心 API 測試、原生整合測試與範例播放冒煙測試。
+本資料夾包含核心 API 測試、原生整合測試、範例播放冒煙測試與第一階段壓力測試。
 
 ## 核心 API 測試
 
@@ -25,3 +25,11 @@ dotnet run --project .\tests\MediaEmbedKit.Mpv.PlaybackSmoke\MediaEmbedKit.Mpv.P
 ```
 
 此測試會啟動範例應用程式，並等待影片播放到指定秒數後關閉。
+
+## 第一階段壓力測試
+
+```powershell
+dotnet run --project .\tests\MediaEmbedKit.Mpv.StressTests\MediaEmbedKit.Mpv.StressTests.csproj
+```
+
+此測試涵蓋播放器生命週期、多 client、stream callback、外部工具輸出與 runtime helper 失敗路徑。長時間 GUI 播放壓力測試由 `tools/Invoke-GuiPlaybackStress.ps1` 執行。

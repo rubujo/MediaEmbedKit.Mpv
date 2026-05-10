@@ -85,10 +85,28 @@ dotnet build .\MediaEmbedKit.Mpv.slnx
 dotnet run --project .\tests\MediaEmbedKit.Mpv.PlaybackSmoke\MediaEmbedKit.Mpv.PlaybackSmoke.csproj -- --seconds 20
 ```
 
+GUI consumer 實際播放驗證使用：
+
+```powershell
+.\tools\Invoke-GuiConsumerPlaybackValidation.ps1 -Seconds 20
+```
+
+長時間 GUI 播放壓力測試使用：
+
+```powershell
+.\tools\Invoke-GuiPlaybackStress.ps1 -Seconds 120 -Iterations 2
+```
+
 發佈前本機驗證使用：
 
 ```powershell
 .\tools\Invoke-PreReleaseValidation.ps1
+```
+
+若要在發佈前流程一併執行 GUI 驗證，可使用：
+
+```powershell
+.\tools\Invoke-PreReleaseValidation.ps1 -IncludeGuiConsumerPlaybackValidation -IncludeGuiPlaybackStress -GuiPlaybackSeconds 20
 ```
 
 NuGet 套件內容驗證使用：

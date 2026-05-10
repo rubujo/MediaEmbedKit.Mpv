@@ -7,4 +7,8 @@
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\MediaEmbedKit.Mpv\MediaEmbedKit.Mpv.csproj" />
+  </ItemGroup>
 </Project>

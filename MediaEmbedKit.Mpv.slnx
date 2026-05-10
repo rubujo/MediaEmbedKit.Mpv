@@ -74,6 +74,8 @@
   </Folder>
   <Folder Name="/方案項目/tools/">
     <File Path="tools/Invoke-ConsumerPackageValidation.ps1" />
+    <File Path="tools/Invoke-GuiConsumerPlaybackValidation.ps1" />
+    <File Path="tools/Invoke-GuiPlaybackStress.ps1" />
     <File Path="tools/Invoke-PackageValidation.ps1" />
     <File Path="tools/Invoke-PreReleaseValidation.ps1" />
   </Folder>

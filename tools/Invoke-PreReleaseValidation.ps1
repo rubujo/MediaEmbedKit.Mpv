@@ -2,7 +2,11 @@
     [switch] $SkipIntegrationTests,
     [switch] $SkipPackageValidation,
     [switch] $SkipConsumerValidation,
-    [switch] $IncludeStressTests
+    [switch] $IncludeStressTests,
+    [switch] $IncludeGuiConsumerPlaybackValidation,
+    [switch] $IncludeGuiPlaybackStress,
+    [double] $GuiPlaybackSeconds = 20,
+    [int] $GuiPlaybackIterations = 1
 )
 
 Set-StrictMode -Version Latest
@@ -49,6 +53,14 @@ if (-not $SkipConsumerValidation) {
 
 if ($IncludeStressTests) {
     Invoke-Step "第一階段壓力測試" { dotnet run --project .\tests\MediaEmbedKit.Mpv.StressTests\MediaEmbedKit.Mpv.StressTests.csproj --no-restore }
+}
+
+if ($IncludeGuiConsumerPlaybackValidation) {
+    Invoke-Step "GUI consumer 實際播放驗證" { & .\tools\Invoke-GuiConsumerPlaybackValidation.ps1 -SkipPackageValidation -Seconds $GuiPlaybackSeconds -Iterations $GuiPlaybackIterations }
+}
+
+if ($IncludeGuiPlaybackStress) {
+    Invoke-Step "GUI 播放壓力測試" { & .\tools\Invoke-GuiPlaybackStress.ps1 -Seconds $GuiPlaybackSeconds -Iterations $GuiPlaybackIterations }
 }
 
 Write-Host "發佈前本機驗證完成。"

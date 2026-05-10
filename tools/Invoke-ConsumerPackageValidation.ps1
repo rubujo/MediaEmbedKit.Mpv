@@ -33,6 +33,7 @@ if (Test-Path -LiteralPath $resolvedWorkDirectory) {
 }
 
 New-Item -ItemType Directory -Path $resolvedWorkDirectory | Out-Null
+$env:NUGET_PACKAGES = Join-Path $resolvedWorkDirectory ".nuget-packages"
 
 $versionMatch = @(Select-String -Path (Join-Path $rootDirectory "Directory.Build.props") -Pattern "<PackageVersion>([^<]+)</PackageVersion>")
 if ($versionMatch.Count -ne 1) {

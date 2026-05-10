@@ -55,6 +55,10 @@ namespace MediaEmbedKit.Mpv.Samples
         /// </summary>
         private const string SmokeTestMinimumSecondsEnvironmentVariable = "MEDIAEMBEDKIT_MPV_SAMPLE_SMOKE_SECONDS";
         /// <summary>
+        /// 指定範例共用 runtime 資料夾的環境變數名稱。
+        /// </summary>
+        private const string RuntimeDirectoryEnvironmentVariable = "MEDIAEMBEDKIT_MPV_RUNTIME_DIR";
+        /// <summary>
         /// 啟用範例播放冒煙測試的本機哨兵檔名稱。
         /// </summary>
         private const string SmokeTestRequestFileName = "sample-smoke.request";
@@ -107,7 +111,16 @@ namespace MediaEmbedKit.Mpv.Samples
         /// <value>包含 libmpv、yt-dlp、Deno 與範例輔助檔案的資料夾。</value>
         internal static string RuntimeDirectory
         {
-            get { return Path.Combine(AppContext.BaseDirectory, "runtime"); }
+            get
+            {
+                string? runtimeDirectory = Environment.GetEnvironmentVariable(RuntimeDirectoryEnvironmentVariable);
+                if (!string.IsNullOrWhiteSpace(runtimeDirectory))
+                {
+                    return Path.GetFullPath(runtimeDirectory);
+                }
+
+                return Path.Combine(AppContext.BaseDirectory, "runtime");
+            }
         }
 
         /// <summary>

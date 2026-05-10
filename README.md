@@ -107,6 +107,7 @@ dotnet run --project .\samples\MauiSample\MediaEmbedKit.Mpv.Samples.Maui.csproj
 dotnet run --project .\tests\MediaEmbedKit.Mpv.Tests\MediaEmbedKit.Mpv.Tests.csproj
 dotnet run --project .\tests\MediaEmbedKit.Mpv.IntegrationTests\MediaEmbedKit.Mpv.IntegrationTests.csproj
 dotnet run --project .\tests\MediaEmbedKit.Mpv.PlaybackSmoke\MediaEmbedKit.Mpv.PlaybackSmoke.csproj -- --seconds 20
+.\tools\Invoke-GuiConsumerPlaybackValidation.ps1 -Seconds 20
 ```
 
 整合測試與播放冒煙測試需要 Windows x64 原生執行階段。URL 播放需要 `yt-dlp.exe` 可被 mpv 找到，或透過 `MpvPlayerOptions.YtdlpPath` 指定。
@@ -118,6 +119,12 @@ dotnet run --project .\tests\MediaEmbedKit.Mpv.PlaybackSmoke\MediaEmbedKit.Mpv.P
 ```
 
 此腳本會執行格式檢查、測試、建置、NuGet 套件內容驗證與乾淨 consumer 專案驗證。若要一併執行第一階段壓力測試，可加入 `-IncludeStressTests`。CI 工作流程尚未建立，需等待平台與 runner 策略確認。
+
+GUI consumer 實際播放驗證會以本機 NuGet 套件建立臨時 consumer sample，並播放到指定秒數後關閉。長時間 GUI 播放壓力測試可使用：
+
+```powershell
+.\tools\Invoke-GuiPlaybackStress.ps1 -Seconds 120 -Iterations 2
+```
 
 ## 文件
 

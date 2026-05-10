@@ -24,6 +24,12 @@
 .\tools\Invoke-PreReleaseValidation.ps1 -IncludeStressTests
 ```
 
+若要一併執行 GUI consumer 實際播放驗證與 GUI 播放壓力測試：
+
+```powershell
+.\tools\Invoke-PreReleaseValidation.ps1 -IncludeGuiConsumerPlaybackValidation -IncludeGuiPlaybackStress -GuiPlaybackSeconds 20
+```
+
 ## NuGet 套件檢查
 
 單獨產生並驗證 NuGet 套件：
@@ -56,6 +62,16 @@
 - `MediaEmbedKit.Mpv.WinUI` WinUI 3 consumer。
 - `MediaEmbedKit.Mpv.Maui` MAUI Windows consumer。
 
+## GUI consumer 播放檢查
+
+單獨建立乾淨 GUI consumer sample，並以本機 NuGet 套件實際播放到指定秒數：
+
+```powershell
+.\tools\Invoke-GuiConsumerPlaybackValidation.ps1 -Seconds 20
+```
+
+此腳本會將範例專案複製到臨時工作資料夾，移除 `ProjectReference`，改用本機 `.nupkg`，再啟動 WinForms、WPF、Avalonia、WinUI 3 與 MAUI Windows sample 進行實際播放驗證。
+
 ## 第一階段壓力測試
 
 單獨執行第一階段自動化壓力測試：
@@ -66,10 +82,21 @@ dotnet run --project .\tests\MediaEmbedKit.Mpv.StressTests\MediaEmbedKit.Mpv.Str
 
 測試範圍包含播放器重複建立與釋放、多 client 生命週期、自訂 stream callback 重複播放、stream 取消、外部工具大量輸出與逾時，以及 runtime helper 失敗路徑。
 
+## 長時間 GUI 播放壓力測試
+
+單獨執行長時間 GUI 播放壓力測試：
+
+```powershell
+.\tools\Invoke-GuiPlaybackStress.ps1 -Seconds 120 -Iterations 2
+```
+
+此腳本會重複啟動支援的 GUI sample，要求每次播放到指定秒數後關閉，用於觀察開關視窗、初始化、播放與釋放流程的穩定性。
+
+GUI 播放相關腳本會在啟動視窗前先準備共用 runtime 資料夾，避免下載失敗以 sample 視窗訊息框中斷自動化流程。
+
 ## 發佈前人工確認
 
 - 確認 package version 與 release notes。
 - 確認第三方授權與散發義務。
-- 以實際 GUI 執行乾淨 consumer 專案，驗證基本播放。
 - 在 Visual Studio 設計工具中確認 WinForms、WPF、WinUI 3 與 MAUI Windows 設計階段行為。
 - 若要啟用 CI，先確認支援平台、runner 映像、runtime asset 取得方式與 secrets 管理策略。

@@ -5,6 +5,7 @@
     <SingleProject>true</SingleProject>
     <ImplicitUsings>enable</ImplicitUsings>
     <WindowsPackageType>None</WindowsPackageType>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <AssemblyName>MediaEmbedKit.Mpv.Maui</AssemblyName>
     <RootNamespace>MediaEmbedKit.Mpv.Maui</RootNamespace>
     <Description>.NET MAUI Windows handler for MediaEmbedKit.Mpv.</Description>
