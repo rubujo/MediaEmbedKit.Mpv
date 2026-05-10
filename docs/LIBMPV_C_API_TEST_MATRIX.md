@@ -19,7 +19,7 @@
 | 版本與錯誤 | `ClientApiVersion()`、`MpvError`、`MpvException` | 已驗證初始化、完整列舉錯誤訊息、屬性錯誤、格式錯誤、選項錯誤與命令錯誤。 |
 | 用戶端生命週期 | `MpvPlayer`、`Initialize()`、`Dispose()`、client handle API | 已驗證單一 player、多 client、weak client、raw client destroy 與 shutdown 事件。 |
 | 設定與 scripts | `ConfigDirectory`、`ConfigFiles`、`InputConfigFile`、`ScriptFiles`、`LoadScript()` | 已驗證設定檔錯誤、script 載入錯誤與 Lua script message 往返。 |
-| 選項 | `SetOptionString()`、`SetOptionFlag()`、`SetOptionInt64()`、`SetOptionDouble()`、`SetOptionNode()` | 已驗證初始化前常用選項、無效選項錯誤與播放選項組態套用。 |
+| 選項 | `SetOptionString()`、`SetOptionFlag()`、`SetOptionInt64()`、`SetOptionDouble()`、`SetOptionNode()`、`MpvPlayerOptions` fluent helper、`MpvEncodingOptions` | 已驗證初始化前常用選項、無效選項錯誤、播放選項組態、fluent helper 與 encoding mode 選項套用。 |
 | 命令 | `Command()`、`CommandNode()`、`CommandNamed()`、`GetCommandList()` | 已驗證同步命令、命令錯誤、節點回傳與常用高階 API。 |
 | 非同步命令 | `CommandAsync()`、`AbortAsyncCommand()`、`CommandReply` | 已驗證成功、錯誤回覆、命令回覆事件與取消未知要求後的後續命令穩定性。 |
 | 屬性 | `GetProperty*()`、`SetProperty*()`、常用強型別屬性 | 已驗證字串、旗標、數值、節點、格式錯誤與常用播放屬性。 |

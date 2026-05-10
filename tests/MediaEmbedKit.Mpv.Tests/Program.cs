@@ -22,6 +22,8 @@ namespace MediaEmbedKit.Mpv.Tests
             TestRunner runner = new TestRunner();
             runner.Add("yt-dlp 格式預設值對應", VerifyYtdlpFormatPresets);
             runner.Add("yt-dlp 格式參數驗證", VerifyYtdlpFormatValidation);
+            runner.Add("mpv encoding mode 選項", VerifyEncodingOptions);
+            runner.Add("播放器選項 fluent helper", VerifyPlayerOptionFluentHelpers);
             runner.Add("外部工具命令列引數格式化", VerifyExternalToolArgumentFormatting);
             runner.Add("播放器選項預設值", VerifyPlayerOptionDefaults);
             runner.Add("執行階段來源 catalog 收斂", VerifyRuntimeCatalogs);
@@ -65,6 +67,136 @@ namespace MediaEmbedKit.Mpv.Tests
                     MpvYtdlpFormatSelector.FromPreset((MpvYtdlpFormatPreset)999);
                 },
                 "FromPreset 應拒絕未知列舉值。");
+
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// 驗證 mpv encoding mode 高階選項會轉換成固定 mpv 選項。
+        /// </summary>
+        /// <returns>代表測試流程的工作。</returns>
+        private static Task VerifyEncodingOptions()
+        {
+            MpvEncodingOptions encodingOptions = new MpvEncodingOptions("output file.mp4")
+            {
+                ContainerFormat = "mp4",
+                ContainerFormatOptions = "movflags=faststart",
+                VideoCodec = "libx264",
+                VideoCodecOptions = "crf=23",
+                AudioCodec = "aac",
+                AudioCodecOptions = "b=128000",
+                CopyRawTimestamps = true,
+                CopyMetadata = false,
+                Metadata = "title=輸出標題",
+                RemovedMetadata = "comment"
+            };
+            encodingOptions.AdditionalOptions["omaxfps"] = "30";
+
+            IReadOnlyDictionary<string, string> options = encodingOptions.ToOptionDictionary();
+            AssertEx.Equal("output file.mp4", options["o"], "輸出檔案選項");
+            AssertEx.Equal("mp4", options["of"], "輸出容器選項");
+            AssertEx.Equal("movflags=faststart", options["ofopts"], "輸出容器參數");
+            AssertEx.Equal("libx264", options["ovc"], "視訊編碼器選項");
+            AssertEx.Equal("crf=23", options["ovcopts"], "視訊編碼器參數");
+            AssertEx.Equal("aac", options["oac"], "音訊編碼器選項");
+            AssertEx.Equal("b=128000", options["oacopts"], "音訊編碼器參數");
+            AssertEx.Equal("yes", options["orawts"], "保留時間戳記選項");
+            AssertEx.Equal("no", options["ocopy-metadata"], "複製中繼資料選項");
+            AssertEx.Equal("title=輸出標題", options["oset-metadata"], "設定中繼資料選項");
+            AssertEx.Equal("comment", options["oremove-metadata"], "移除中繼資料選項");
+            AssertEx.Equal("30", options["omaxfps"], "額外 encoding 選項");
+
+            MpvPlayerOptions playerOptions = new MpvPlayerOptions();
+            playerOptions.ConfigureEncoding(encodingOptions);
+            AssertEx.Equal("output file.mp4", playerOptions.InitialOptions["o"], "播放器輸出檔案選項");
+            AssertEx.Equal("libx264", playerOptions.InitialOptions["ovc"], "播放器視訊編碼器選項");
+
+            MpvEncodingOptions fluentEncoding = MpvEncodingOptions.ToFile("fluent.mp4")
+                .AsMp4()
+                .WithContainerOptions("movflags=faststart")
+                .WithVideoCodec("libx264", "crf=20")
+                .WithAudioCodec("aac", "b=96000")
+                .CopyInputTimestamps()
+                .CopyInputMetadata(false)
+                .WithMetadata("title=鏈式輸出")
+                .RemoveMetadata("comment")
+                .WithOption("omaxfps", "24");
+            IReadOnlyDictionary<string, string> fluentOptions = fluentEncoding.ToOptionDictionary();
+            AssertEx.Equal("fluent.mp4", fluentOptions["o"], "鏈式輸出檔案選項");
+            AssertEx.Equal("mp4", fluentOptions["of"], "鏈式輸出容器選項");
+            AssertEx.Equal("crf=20", fluentOptions["ovcopts"], "鏈式視訊編碼器參數");
+            AssertEx.Equal("b=96000", fluentOptions["oacopts"], "鏈式音訊編碼器參數");
+            AssertEx.Equal("yes", fluentOptions["orawts"], "鏈式保留時間戳記選項");
+            AssertEx.Equal("no", fluentOptions["ocopy-metadata"], "鏈式複製中繼資料選項");
+            AssertEx.Equal("title=鏈式輸出", fluentOptions["oset-metadata"], "鏈式設定中繼資料選項");
+            AssertEx.Equal("comment", fluentOptions["oremove-metadata"], "鏈式移除中繼資料選項");
+            AssertEx.Equal("24", fluentOptions["omaxfps"], "鏈式額外 encoding 選項");
+
+            AssertEx.Throws<InvalidOperationException>(
+                delegate
+                {
+                    new MpvEncodingOptions(" ").ToOptionDictionary();
+                },
+                "空白輸出路徑應被拒絕。");
+
+            AssertEx.Throws<InvalidOperationException>(
+                delegate
+                {
+                    MpvEncodingOptions invalidOptions = new MpvEncodingOptions("output.mp4");
+                    invalidOptions.AdditionalOptions[string.Empty] = "value";
+                    invalidOptions.ToOptionDictionary();
+                },
+                "空白額外選項名稱應被拒絕。");
+
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// 驗證播放器選項 fluent helper 會維持原選項物件並設定預期值。
+        /// </summary>
+        /// <returns>代表測試流程的工作。</returns>
+        private static Task VerifyPlayerOptionFluentHelpers()
+        {
+            MpvEncodingOptions encodingOptions = MpvEncodingOptions.ToFile("encoded.mp4").AsMp4();
+            MpvPlayerOptions options = new MpvPlayerOptions();
+            MpvPlayerOptions returnedOptions = options
+                .UseMpvLibraryPath("runtime\\libmpv-2.dll")
+                .UseToolDirectory("runtime")
+                .UseRuntimeConfiguration("runtime")
+                .UseYtdlpFormat(MpvYtdlpFormatPreset.UpTo720p)
+                .UseYtdlpFormat("bestvideo*+bestaudio/best")
+                .UseYtdlpMaximumHeight(480)
+                .AddConfigFile("mpv.conf")
+                .AddScriptFile("scripts\\demo.lua")
+                .WithInitialOption("terminal", "no")
+                .UseEncoding(encodingOptions);
+
+            AssertEx.True(object.ReferenceEquals(options, returnedOptions), "fluent helper 應傳回原本的播放器選項。");
+            AssertEx.Equal("runtime\\libmpv-2.dll", options.MpvLibraryPath, "鏈式 libmpv 路徑");
+            AssertEx.Equal("runtime", options.ToolDirectory, "鏈式工具資料夾");
+            AssertEx.Equal("runtime", options.ConfigDirectory, "鏈式設定資料夾");
+            AssertEx.True(options.LoadUserConfig, "鏈式設定載入應啟用。");
+            AssertEx.Equal("bestvideo*[height<=480]+bestaudio/best[height<=480]", options.YtdlpFormat, "鏈式 yt-dlp 最高高度格式");
+            AssertEx.Equal(MpvYtdlpFormatPreset.Default, options.YtdlpFormatPreset, "鏈式自訂格式應重設預設值");
+            AssertEx.Equal("mpv.conf", options.ConfigFiles[0], "鏈式設定檔");
+            AssertEx.Equal("scripts\\demo.lua", options.ScriptFiles[0], "鏈式腳本檔");
+            AssertEx.Equal("no", options.InitialOptions["terminal"], "鏈式初始選項");
+            AssertEx.Equal("encoded.mp4", options.InitialOptions["o"], "鏈式 encoding 輸出選項");
+            AssertEx.Equal("mp4", options.InitialOptions["of"], "鏈式 encoding 容器選項");
+
+            AssertEx.Throws<ArgumentException>(
+                delegate
+                {
+                    new MpvPlayerOptions().UseMpvLibraryPath(" ");
+                },
+                "空白 libmpv 路徑應被拒絕。");
+
+            AssertEx.Throws<ArgumentException>(
+                delegate
+                {
+                    new MpvPlayerOptions().WithInitialOption(string.Empty, "value");
+                },
+                "空白初始選項名稱應被拒絕。");
 
             return Task.CompletedTask;
         }

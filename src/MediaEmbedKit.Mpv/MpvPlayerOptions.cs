@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace MediaEmbedKit.Mpv
 {
@@ -35,6 +36,176 @@ namespace MediaEmbedKit.Mpv
         /// </summary>
         /// <value>以 libmpv 選項名稱為索引鍵的初始選項集合。</value>
         public IDictionary<string, string> InitialOptions { get; private set; }
+
+        /// <summary>
+        /// 指定要使用的 libmpv 原生程式庫路徑。
+        /// </summary>
+        /// <param name="mpvLibraryPath">libmpv 檔案路徑或包含 libmpv 的資料夾。</param>
+        /// <returns>目前的播放器選項。</returns>
+        public MpvPlayerOptions UseMpvLibraryPath(string mpvLibraryPath)
+        {
+            if (string.IsNullOrWhiteSpace(mpvLibraryPath))
+            {
+                throw new ArgumentException("libmpv 路徑不可為空白。", nameof(mpvLibraryPath));
+            }
+
+            MpvLibraryPath = mpvLibraryPath;
+            return this;
+        }
+
+        /// <summary>
+        /// 指定外部工具所在的資料夾。
+        /// </summary>
+        /// <param name="toolDirectory">包含 yt-dlp 或 Deno 等工具的資料夾。</param>
+        /// <returns>目前的播放器選項。</returns>
+        public MpvPlayerOptions UseToolDirectory(string toolDirectory)
+        {
+            if (string.IsNullOrWhiteSpace(toolDirectory))
+            {
+                throw new ArgumentException("外部工具資料夾不可為空白。", nameof(toolDirectory));
+            }
+
+            ToolDirectory = toolDirectory;
+            return this;
+        }
+
+        /// <summary>
+        /// 指定 mpv 使用者設定資料夾並啟用設定載入。
+        /// </summary>
+        /// <param name="configDirectory">mpv 設定資料夾路徑。</param>
+        /// <returns>目前的播放器選項。</returns>
+        public MpvPlayerOptions UseRuntimeConfiguration(string configDirectory)
+        {
+            if (string.IsNullOrWhiteSpace(configDirectory))
+            {
+                throw new ArgumentException("mpv 設定資料夾不可為空白。", nameof(configDirectory));
+            }
+
+            ConfigDirectory = configDirectory;
+            LoadUserConfig = true;
+            return this;
+        }
+
+        /// <summary>
+        /// 加入初始化時要設定的 mpv 選項。
+        /// </summary>
+        /// <param name="name">mpv 選項名稱。</param>
+        /// <param name="value">mpv 選項值。</param>
+        /// <returns>目前的播放器選項。</returns>
+        public MpvPlayerOptions WithInitialOption(string name, string value)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                throw new ArgumentException("mpv 選項名稱不可為空白。", nameof(name));
+            }
+
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
+            InitialOptions[name] = value;
+            return this;
+        }
+
+        /// <summary>
+        /// 加入初始化前要明確載入的 mpv 設定檔。
+        /// </summary>
+        /// <param name="configFile">mpv 設定檔路徑。</param>
+        /// <returns>目前的播放器選項。</returns>
+        public MpvPlayerOptions AddConfigFile(string configFile)
+        {
+            if (string.IsNullOrWhiteSpace(configFile))
+            {
+                throw new ArgumentException("mpv 設定檔路徑不可為空白。", nameof(configFile));
+            }
+
+            ConfigFiles.Add(configFile);
+            return this;
+        }
+
+        /// <summary>
+        /// 加入初始化前要明確載入的 mpv 腳本檔。
+        /// </summary>
+        /// <param name="scriptFile">Lua 或 JavaScript 腳本檔案路徑。</param>
+        /// <returns>目前的播放器選項。</returns>
+        public MpvPlayerOptions AddScriptFile(string scriptFile)
+        {
+            if (string.IsNullOrWhiteSpace(scriptFile))
+            {
+                throw new ArgumentException("mpv 腳本檔案路徑不可為空白。", nameof(scriptFile));
+            }
+
+            ScriptFiles.Add(scriptFile);
+            return this;
+        }
+
+        /// <summary>
+        /// 使用常用預設值指定 yt-dlp 格式選擇。
+        /// </summary>
+        /// <param name="preset">要套用的 yt-dlp 格式選擇預設值。</param>
+        /// <returns>目前的播放器選項。</returns>
+        public MpvPlayerOptions UseYtdlpFormat(MpvYtdlpFormatPreset preset)
+        {
+            MpvYtdlpFormatSelector.FromPreset(preset);
+            YtdlpFormatPreset = preset;
+            YtdlpFormat = null;
+            return this;
+        }
+
+        /// <summary>
+        /// 使用自訂 selector 指定 yt-dlp 格式選擇。
+        /// </summary>
+        /// <param name="formatSelector">要傳給 mpv <c>ytdl-format</c> 選項的 selector 字串。</param>
+        /// <returns>目前的播放器選項。</returns>
+        public MpvPlayerOptions UseYtdlpFormat(string formatSelector)
+        {
+            if (formatSelector == null)
+            {
+                throw new ArgumentNullException(nameof(formatSelector));
+            }
+
+            YtdlpFormatPreset = MpvYtdlpFormatPreset.Default;
+            YtdlpFormat = string.IsNullOrWhiteSpace(formatSelector) ? null : formatSelector;
+            return this;
+        }
+
+        /// <summary>
+        /// 以最高視訊高度建立 yt-dlp 格式選擇。
+        /// </summary>
+        /// <param name="maximumHeight">允許的最大視訊高度。</param>
+        /// <returns>目前的播放器選項。</returns>
+        public MpvPlayerOptions UseYtdlpMaximumHeight(int maximumHeight)
+        {
+            YtdlpFormatPreset = MpvYtdlpFormatPreset.Default;
+            YtdlpFormat = MpvYtdlpFormatSelector.MaxHeight(maximumHeight);
+            return this;
+        }
+
+        /// <summary>
+        /// 將 mpv encoding mode 選項加入初始選項集合並傳回目前選項。
+        /// </summary>
+        /// <param name="encodingOptions">要套用的 encoding mode 選項。</param>
+        /// <returns>目前的播放器選項。</returns>
+        public MpvPlayerOptions UseEncoding(MpvEncodingOptions encodingOptions)
+        {
+            ConfigureEncoding(encodingOptions);
+            return this;
+        }
+
+        /// <summary>
+        /// 將 mpv encoding mode 選項加入初始選項集合。
+        /// </summary>
+        /// <param name="encodingOptions">要套用的 encoding mode 選項。</param>
+        public void ConfigureEncoding(MpvEncodingOptions encodingOptions)
+        {
+            if (encodingOptions == null)
+            {
+                throw new ArgumentNullException(nameof(encodingOptions));
+            }
+
+            encodingOptions.ApplyTo(this);
+        }
 
         /// <summary>
         /// 取得或設定是否啟用 libmpv 預設輸入繫結。

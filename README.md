@@ -34,7 +34,7 @@ AI 產製內容可能包含缺漏、錯誤假設或未涵蓋的邊界情境。�
 
 - libmpv stable v0.41.0 公開 C API 包裝。
 - 通用 command、property、node 與 event 入口。
-- 常用高階播放 API：播放狀態、音量、速度、播放清單、章節、軌道、字幕、OSD、截圖、濾鏡、輸入事件與 script message。
+- 常用高階播放 API：播放狀態、音量、速度、播放清單、章節、軌道、字幕、OSD、截圖、濾鏡、輸入事件、script message、薄型 fluent options API 與 mpv encoding mode 附帶輸出。
 - OpenGL render API、software render API 與 stream callback 的核心包裝。
 - Windows x64 runtime helper，可由使用者明確下載或更新 `libmpv-2.dll`、`yt-dlp.exe` 與 `deno.exe`。
 - yt-dlp 格式預設值與自訂 selector。
@@ -65,6 +65,27 @@ MpvPlayerOptions options =
         runtime.RuntimeDirectory,
         loadRuntimeConfiguration: true);
 ```
+
+若要使用 mpv encoding mode 進行簡單輸出，可在初始化前套用 `MpvEncodingOptions`：
+
+```csharp
+MpvEncodingOptions encoding = MpvEncodingOptions.ToFile(outputPath)
+    .AsMp4()
+    .WithVideoCodec("libx264", "crf=23")
+    .WithAudioCodec("aac");
+
+MpvPlayerOptions options = new MpvPlayerOptions()
+    .UseYtdlpFormat(MpvYtdlpFormatPreset.UpTo1080p)
+    .UseEncoding(encoding);
+
+using MpvPlayer player = new MpvPlayer(options);
+player.Initialize();
+player.LoadFile(inputPath);
+```
+
+encoding mode 屬於 mpv 的附帶能力。本專案只包裝 mpv 相關選項，不提供正式轉檔佇列、硬體編碼策略、批次重試或完整轉檔診斷。
+
+高階 API 採薄型 helper 設計：常用設定可用 fluent 方式組合，但播放器初始化、runtime 下載與資源釋放仍由應用程式明確控制。
 
 ## 範例
 

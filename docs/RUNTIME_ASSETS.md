@@ -37,6 +37,8 @@ yt-dlp helper 支援 Windows x64 `yt-dlp.exe` 下載、自我更新與路徑回�
 
 - `MpvPlayerOptions.YtdlpFormatPreset`
 - `MpvPlayerOptions.YtdlpFormat`
+- `MpvPlayerOptions.UseYtdlpFormat(...)`
+- `MpvPlayerOptions.UseYtdlpMaximumHeight(...)`
 - `MpvPlayer.SetYtdlpFormat(...)`
 - `MpvPlayer.SetYtdlpMaximumHeight(...)`
 
@@ -57,7 +59,7 @@ MpvPlayerOptions options =
         loadRuntimeConfiguration: true);
 ```
 
-若只需指定特定檔案，使用 `MpvPlayerOptions.ConfigFiles`、`InputConfigFile`、`ScriptFiles` 或 `MpvPlayer.LoadScript(...)`。
+若只需指定特定檔案，使用 `MpvPlayerOptions.ConfigFiles`、`InputConfigFile`、`ScriptFiles`、`AddConfigFile(...)`、`AddScriptFile(...)` 或 `MpvPlayer.LoadScript(...)`。
 
 ## HTTP 要求
 

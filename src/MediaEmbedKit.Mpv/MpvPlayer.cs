@@ -525,6 +525,20 @@ namespace MediaEmbedKit.Mpv
         }
 
         /// <summary>
+        /// 設定 mpv encoding mode 選項。
+        /// </summary>
+        /// <param name="encodingOptions">要套用的 encoding mode 選項。</param>
+        public void ConfigureEncoding(MpvEncodingOptions encodingOptions)
+        {
+            if (encodingOptions == null)
+            {
+                throw new ArgumentNullException(nameof(encodingOptions));
+            }
+
+            encodingOptions.ApplyTo(this);
+        }
+
+        /// <summary>
         /// 取得 mpv ytdl hook 找到的外部工具路徑。
         /// </summary>
         /// <returns>ytdl hook 找到的外部工具路徑；尚未解析或找不到時為 <see langword="null"/>。</returns>
