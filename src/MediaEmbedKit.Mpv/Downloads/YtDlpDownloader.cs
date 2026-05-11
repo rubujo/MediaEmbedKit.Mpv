@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -31,12 +32,22 @@ namespace MediaEmbedKit.Mpv.Downloads
             options = options ?? new YtDlpDownloadOptions();
             Directory.CreateDirectory(downloadDirectory);
 
+            Uri defaultApiUri = GetReleaseApiUri(options.Channel);
+            Uri apiUri = options.ReleaseApiUriOverride ?? defaultApiUri;
             GitHubRelease release = await DownloadUtility.GetLatestReleaseAsync(
-                options.ReleaseApiUriOverride ?? GetReleaseApiUri(options.Channel),
+                apiUri,
                 options.UserAgent,
                 cancellationToken).ConfigureAwait(false);
 
             GitHubReleaseAsset asset = SelectAsset(release, options.Architecture);
+            DownloadUtility.ValidateLockedGitHubSource(
+                apiUri,
+                defaultApiUri,
+                asset.BrowserDownloadUrl,
+                "yt-dlp",
+                GetRepositoryName(options.Channel),
+                options.LockReleaseSource);
+
             string executablePath = Path.Combine(downloadDirectory, asset.Name);
             bool existed = File.Exists(executablePath);
 
@@ -47,10 +58,14 @@ namespace MediaEmbedKit.Mpv.Downloads
                 options.OverwriteExisting,
                 cancellationToken).ConfigureAwait(false);
 
-            if (options.VerifyDigest)
-            {
-                DownloadUtility.VerifyDigestIfAvailable(executablePath, asset.Digest);
-            }
+            DownloadUtility.VerifyDownloadedAsset(
+                executablePath,
+                asset.Digest,
+                options.VerifyDigest,
+                options.VerificationPolicy,
+                options.ExpectedSha256,
+                asset.Name);
+            await VerifyProviderChecksumIfRequiredAsync(release, asset, executablePath, options, cancellationToken).ConfigureAwait(false);
 
             return new YtDlpDownloadResult(
                 options.Channel,
@@ -83,16 +98,34 @@ namespace MediaEmbedKit.Mpv.Downloads
             string directory = Path.GetDirectoryName(Path.GetFullPath(executablePath))!;
             Directory.CreateDirectory(directory);
 
+            Uri defaultApiUri = GetReleaseApiUri(options.Channel);
+            Uri apiUri = options.ReleaseApiUriOverride ?? defaultApiUri;
             GitHubRelease release = await DownloadUtility.GetLatestReleaseAsync(
-                options.ReleaseApiUriOverride ?? GetReleaseApiUri(options.Channel),
+                apiUri,
                 options.UserAgent,
                 cancellationToken).ConfigureAwait(false);
 
             string? currentVersion = File.Exists(executablePath) ? GetInstalledVersion(executablePath) : null;
             GitHubReleaseAsset asset = SelectAsset(release, options.Architecture);
+            DownloadUtility.ValidateLockedGitHubSource(
+                apiUri,
+                defaultApiUri,
+                asset.BrowserDownloadUrl,
+                "yt-dlp",
+                GetRepositoryName(options.Channel),
+                options.LockReleaseSource);
 
             if (string.Equals(currentVersion, release.TagName, StringComparison.OrdinalIgnoreCase))
             {
+                DownloadUtility.VerifyDownloadedAsset(
+                    executablePath,
+                    asset.Digest,
+                    options.VerifyDigest,
+                    options.VerificationPolicy,
+                    options.ExpectedSha256,
+                    asset.Name);
+                await VerifyProviderChecksumIfRequiredAsync(release, asset, executablePath, options, cancellationToken).ConfigureAwait(false);
+
                 return new YtDlpDownloadResult(
                     options.Channel,
                     release.TagName,
@@ -111,10 +144,14 @@ namespace MediaEmbedKit.Mpv.Downloads
                 true,
                 cancellationToken).ConfigureAwait(false);
 
-            if (options.VerifyDigest)
-            {
-                DownloadUtility.VerifyDigestIfAvailable(tempPath, asset.Digest);
-            }
+            DownloadUtility.VerifyDownloadedAsset(
+                tempPath,
+                asset.Digest,
+                options.VerifyDigest,
+                options.VerificationPolicy,
+                options.ExpectedSha256,
+                asset.Name);
+            await VerifyProviderChecksumIfRequiredAsync(release, asset, tempPath, options, cancellationToken).ConfigureAwait(false);
 
             DownloadUtility.ReplaceFile(tempPath, executablePath);
 
@@ -202,6 +239,24 @@ namespace MediaEmbedKit.Mpv.Downloads
         }
 
         /// <summary>
+        /// 取得指定 yt-dlp 發行通道對應的 GitHub repository 名稱。
+        /// </summary>
+        /// <param name="channel">要查詢的 yt-dlp 發行通道。</param>
+        /// <returns>對應通道的 GitHub repository 名稱。</returns>
+        private static string GetRepositoryName(YtDlpReleaseChannel channel)
+        {
+            switch (channel)
+            {
+                case YtDlpReleaseChannel.Nightly:
+                    return "yt-dlp-nightly-builds";
+                case YtDlpReleaseChannel.Master:
+                    return "yt-dlp-master-builds";
+                default:
+                    return "yt-dlp";
+            }
+        }
+
+        /// <summary>
         /// 從 GitHub 發行資料選取符合架構的 yt-dlp 發行資產。
         /// </summary>
         /// <param name="release">GitHub 發行資料。</param>
@@ -214,6 +269,56 @@ namespace MediaEmbedKit.Mpv.Downloads
             if (asset == null)
             {
                 throw new InvalidOperationException("GitHub 發行資料中找不到符合 " + architecture + " 的 yt-dlp Windows 資產：" + release.TagName);
+            }
+
+            return asset;
+        }
+
+        /// <summary>
+        /// 在策略要求時使用 yt-dlp 發行的 SHA2-256SUMS 驗證下載檔案。
+        /// </summary>
+        /// <param name="release">GitHub 發行資料。</param>
+        /// <param name="asset">已下載的 yt-dlp 發行資產。</param>
+        /// <param name="filePath">已下載檔案路徑。</param>
+        /// <param name="options">yt-dlp 下載選項。</param>
+        /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
+        /// <returns>表示驗證流程的工作。</returns>
+        private static async Task VerifyProviderChecksumIfRequiredAsync(
+            GitHubRelease release,
+            GitHubReleaseAsset asset,
+            string filePath,
+            YtDlpDownloadOptions options,
+            CancellationToken cancellationToken)
+        {
+            if (options.VerificationPolicy != MpvNativeAssetVerificationPolicy.RequireProviderChecksum)
+            {
+                return;
+            }
+
+            GitHubReleaseAsset checksumAsset = SelectChecksumAsset(release, "SHA2-256SUMS");
+            byte[] checksumBytes = await DownloadUtility.DownloadBytesAsync(
+                checksumAsset.BrowserDownloadUrl,
+                options.UserAgent,
+                cancellationToken).ConfigureAwait(false);
+            DownloadUtility.VerifyDownloadedBytes(checksumBytes, checksumAsset.Digest, true, checksumAsset.Name);
+
+            string checksumText = Encoding.UTF8.GetString(checksumBytes);
+            string expectedSha256 = DownloadUtility.FindSha256InChecksumText(checksumText, asset.Name);
+            DownloadUtility.VerifySha256(filePath, expectedSha256, asset.Name);
+        }
+
+        /// <summary>
+        /// 從 GitHub 發行資料選取指定名稱的 checksum 資產。
+        /// </summary>
+        /// <param name="release">GitHub 發行資料。</param>
+        /// <param name="assetName">要選取的 checksum 資產名稱。</param>
+        /// <returns>符合名稱的 GitHub 發行資產。</returns>
+        private static GitHubReleaseAsset SelectChecksumAsset(GitHubRelease release, string assetName)
+        {
+            GitHubReleaseAsset? asset = release.Assets.FirstOrDefault(item => string.Equals(item.Name, assetName, StringComparison.OrdinalIgnoreCase));
+            if (asset == null)
+            {
+                throw new InvalidOperationException("GitHub 發行資料中找不到 " + assetName + " checksum 資產：" + release.TagName);
             }
 
             return asset;

@@ -17,6 +17,7 @@ namespace MediaEmbedKit.Mpv.Downloads
             UserAgent = BrowserRequestHeaders.ChromeStableUserAgent;
             OverwriteExisting = false;
             VerifyDigest = true;
+            VerificationPolicy = MpvNativeAssetVerificationPolicy.BestEffort;
         }
 
         /// <summary>
@@ -42,6 +43,24 @@ namespace MediaEmbedKit.Mpv.Downloads
         /// </summary>
         /// <value>驗證可用的 SHA-256 摘要時為 <see langword="true"/>。</value>
         public bool VerifyDigest { get; set; }
+
+        /// <summary>
+        /// 取得或設定下載資產的完整性驗證策略。
+        /// </summary>
+        /// <value>下載 yt-dlp 發行資產時採用的驗證策略。</value>
+        public MpvNativeAssetVerificationPolicy VerificationPolicy { get; set; }
+
+        /// <summary>
+        /// 取得或設定預期的 yt-dlp 可執行檔 SHA-256 值。
+        /// </summary>
+        /// <value>呼叫端釘選的 SHA-256 十六進位文字；未指定時不進行釘選驗證。</value>
+        public string? ExpectedSha256 { get; set; }
+
+        /// <summary>
+        /// 取得或設定是否鎖定為專案內建的官方 GitHub 發行來源。
+        /// </summary>
+        /// <value>拒絕非預設 GitHub Releases API 或下載 URL 時為 <see langword="true"/>。</value>
+        public bool LockReleaseSource { get; set; }
 
         /// <summary>
         /// 取得或設定下載要求使用的使用者代理字串。

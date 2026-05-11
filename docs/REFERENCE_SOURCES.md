@@ -1,6 +1,6 @@
 # 參考來源
 
-本文件列出專案規範採用的主要來源。最後查核日期：2026-05-10。
+本文件列出專案規範採用的主要來源。最後查核日期：2026-05-12。
 
 ## libmpv 與 mpv
 
@@ -35,7 +35,9 @@
 - yt-dlp EJS：https://github.com/yt-dlp/yt-dlp/wiki/EJS
 - yt-dlp 外部 JavaScript runtime：https://github.com/yt-dlp/yt-dlp/issues/15012
 - Deno 安裝：https://docs.deno.com/runtime/getting_started/installation/
+- Deno upgrade checksum：https://docs.deno.com/runtime/reference/cli/upgrade/#checksum-verification
 - Deno releases：https://github.com/denoland/deno/releases
+- GitHub release asset digest：https://github.blog/changelog/2025-06-03-releases-now-expose-digests-for-release-assets/
 
 ## AI Agent 與提交規範
 

@@ -25,6 +25,11 @@ namespace MediaEmbedKit.Mpv.Tests
             runner.Add("mpv encoding mode 選項", VerifyEncodingOptions);
             runner.Add("播放器選項 fluent helper", VerifyPlayerOptionFluentHelpers);
             runner.Add("外部工具命令列引數格式化", VerifyExternalToolArgumentFormatting);
+            runner.Add("native asset digest 強制驗證", VerifyNativeAssetDigestValidation);
+            runner.Add("native asset 釘選 SHA-256 驗證", VerifyNativeAssetPinnedSha256Validation);
+            runner.Add("native asset checksum 解析", VerifyNativeAssetChecksumParsing);
+            runner.Add("native asset 來源鎖定驗證", VerifyNativeAssetSourceLockValidation);
+            runner.Add("runtime 下載驗證策略預設值", VerifyRuntimeVerificationOptionDefaults);
             runner.Add("播放器選項預設值", VerifyPlayerOptionDefaults);
             runner.Add("執行階段來源 catalog 收斂", VerifyRuntimeCatalogs);
             runner.Add("未知平台安裝不觸發下載", VerifyUnknownPlatformInstallAsync);
@@ -209,6 +214,194 @@ namespace MediaEmbedKit.Mpv.Tests
         {
             string formatted = ExternalToolProcessRunner.FormatArguments(new[] { "--flag", "hello world", string.Empty, "a\"b" });
             AssertEx.Equal("--flag \"hello world\" \"\" \"a\\\"b\"", formatted, "格式化後的命令列引數");
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// 驗證強制 GitHub digest 策略會拒絕缺漏或不相符的 SHA-256 值。
+        /// </summary>
+        /// <returns>代表測試流程的工作。</returns>
+        private static Task VerifyNativeAssetDigestValidation()
+        {
+            string tempFile = Path.GetTempFileName();
+            try
+            {
+                File.WriteAllText(tempFile, "native asset digest");
+                string sha256 = DownloadUtility.ComputeSha256Hex(tempFile);
+                DownloadUtility.VerifyDownloadedAsset(
+                    tempFile,
+                    "sha256:" + sha256,
+                    true,
+                    MpvNativeAssetVerificationPolicy.RequireGitHubDigest,
+                    null,
+                    "asset.bin");
+
+                AssertEx.Throws<InvalidOperationException>(
+                    delegate
+                    {
+                        DownloadUtility.VerifyDownloadedAsset(
+                            tempFile,
+                            null,
+                            true,
+                            MpvNativeAssetVerificationPolicy.RequireGitHubDigest,
+                            null,
+                            "asset.bin");
+                    },
+                    "強制 digest 策略應拒絕缺漏的 GitHub digest。");
+
+                AssertEx.Throws<InvalidOperationException>(
+                    delegate
+                    {
+                        DownloadUtility.VerifyDownloadedAsset(
+                            tempFile,
+                            "sha256:" + new string('0', 64),
+                            true,
+                            MpvNativeAssetVerificationPolicy.RequireGitHubDigest,
+                            null,
+                            "asset.bin");
+                    },
+                    "強制 digest 策略應拒絕不相符的 GitHub digest。");
+            }
+            finally
+            {
+                File.Delete(tempFile);
+            }
+
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// 驗證釘選 SHA-256 策略會要求呼叫端提供預期值並比對下載內容。
+        /// </summary>
+        /// <returns>代表測試流程的工作。</returns>
+        private static Task VerifyNativeAssetPinnedSha256Validation()
+        {
+            string tempFile = Path.GetTempFileName();
+            try
+            {
+                File.WriteAllText(tempFile, "native asset pinned sha256");
+                string sha256 = DownloadUtility.ComputeSha256Hex(tempFile);
+                DownloadUtility.VerifyDownloadedAsset(
+                    tempFile,
+                    null,
+                    false,
+                    MpvNativeAssetVerificationPolicy.RequirePinnedSha256,
+                    sha256,
+                    "asset.bin");
+
+                AssertEx.Throws<InvalidOperationException>(
+                    delegate
+                    {
+                        DownloadUtility.VerifyDownloadedAsset(
+                            tempFile,
+                            null,
+                            false,
+                            MpvNativeAssetVerificationPolicy.RequirePinnedSha256,
+                            null,
+                            "asset.bin");
+                    },
+                    "釘選 SHA-256 策略應要求預期值。");
+            }
+            finally
+            {
+                File.Delete(tempFile);
+            }
+
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// 驗證 GNU 風格 checksum 檔案解析支援 yt-dlp 與 Deno 常見格式。
+        /// </summary>
+        /// <returns>代表測試流程的工作。</returns>
+        private static Task VerifyNativeAssetChecksumParsing()
+        {
+            string expected = new string('a', 64);
+            string other = new string('b', 64);
+            string checksumText = "# comment" + Environment.NewLine +
+                other + "  other.exe" + Environment.NewLine +
+                expected + " *yt-dlp.exe" + Environment.NewLine;
+            AssertEx.Equal(expected, DownloadUtility.FindSha256InChecksumText(checksumText, "yt-dlp.exe"), "yt-dlp checksum 解析");
+
+            string denoChecksumText = expected + "  deno-x86_64-pc-windows-msvc.zip";
+            AssertEx.Equal(expected, DownloadUtility.FindSha256InChecksumText(denoChecksumText, "deno-x86_64-pc-windows-msvc.zip"), "Deno checksum 解析");
+
+            string singleChecksumText = expected;
+            AssertEx.Equal(expected, DownloadUtility.FindSha256InChecksumText(singleChecksumText, "asset.zip"), "單一 checksum 解析");
+
+            AssertEx.Throws<InvalidOperationException>(
+                delegate
+                {
+                    DownloadUtility.FindSha256InChecksumText(checksumText, "missing.exe");
+                },
+                "checksum 應拒絕不存在的資產名稱。");
+
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// 驗證來源鎖定會接受預設 GitHub 來源並拒絕非預期來源。
+        /// </summary>
+        /// <returns>代表測試流程的工作。</returns>
+        private static Task VerifyNativeAssetSourceLockValidation()
+        {
+            Uri expectedApiUri = new Uri("https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest");
+            DownloadUtility.ValidateLockedGitHubSource(
+                expectedApiUri,
+                expectedApiUri,
+                "https://github.com/yt-dlp/yt-dlp/releases/download/2026.03.17/yt-dlp.exe",
+                "yt-dlp",
+                "yt-dlp",
+                true);
+
+            AssertEx.Throws<InvalidOperationException>(
+                delegate
+                {
+                    DownloadUtility.ValidateLockedGitHubSource(
+                        new Uri("https://api.github.com/repos/example/fork/releases/latest"),
+                        expectedApiUri,
+                        "https://github.com/yt-dlp/yt-dlp/releases/download/2026.03.17/yt-dlp.exe",
+                        "yt-dlp",
+                        "yt-dlp",
+                        true);
+                },
+                "來源鎖定應拒絕非預設 API。");
+
+            AssertEx.Throws<InvalidOperationException>(
+                delegate
+                {
+                    DownloadUtility.ValidateLockedGitHubSource(
+                        expectedApiUri,
+                        expectedApiUri,
+                        "https://github.com/example/fork/releases/download/2026.03.17/yt-dlp.exe",
+                        "yt-dlp",
+                        "yt-dlp",
+                        true);
+                },
+                "來源鎖定應拒絕非預期下載 URL。");
+
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// 驗證 runtime 下載選項的驗證策略預設值保持相容。
+        /// </summary>
+        /// <returns>代表測試流程的工作。</returns>
+        private static Task VerifyRuntimeVerificationOptionDefaults()
+        {
+            YtDlpDownloadOptions ytDlp = new YtDlpDownloadOptions();
+            DenoDownloadOptions deno = new DenoDownloadOptions();
+            MpvWindowsBuildDownloadOptions libMpv = new MpvWindowsBuildDownloadOptions();
+
+            AssertEx.Equal(MpvNativeAssetVerificationPolicy.BestEffort, ytDlp.VerificationPolicy, "yt-dlp 驗證策略預設值");
+            AssertEx.Equal(MpvNativeAssetVerificationPolicy.BestEffort, deno.VerificationPolicy, "Deno 驗證策略預設值");
+            AssertEx.Equal(MpvNativeAssetVerificationPolicy.BestEffort, libMpv.VerificationPolicy, "libmpv 驗證策略預設值");
+            AssertEx.True(ytDlp.VerifyDigest, "yt-dlp 應預設驗證可用 digest。");
+            AssertEx.True(deno.VerifyDigest, "Deno 應預設驗證可用 digest。");
+            AssertEx.True(libMpv.VerifyDigest, "libmpv 應預設驗證可用 digest。");
+            AssertEx.False(ytDlp.LockReleaseSource, "yt-dlp 不應預設鎖定來源。");
+            AssertEx.False(deno.LockReleaseSource, "Deno 不應預設鎖定來源。");
+            AssertEx.False(libMpv.LockReleaseSource, "libmpv 不應預設鎖定來源。");
             return Task.CompletedTask;
         }
 

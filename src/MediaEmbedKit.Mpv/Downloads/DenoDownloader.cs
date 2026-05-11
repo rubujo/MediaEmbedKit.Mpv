@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -31,17 +32,29 @@ namespace MediaEmbedKit.Mpv.Downloads
             options = options ?? new DenoDownloadOptions();
             Directory.CreateDirectory(installDirectory);
 
+            Uri defaultApiUri = new Uri("https://api.github.com/repos/denoland/deno/releases/latest");
+            Uri apiUri = options.ReleaseApiUriOverride ?? defaultApiUri;
             GitHubRelease release = await DownloadUtility.GetLatestReleaseAsync(
-                options.ReleaseApiUriOverride ?? new Uri("https://api.github.com/repos/denoland/deno/releases/latest"),
+                apiUri,
                 options.UserAgent,
                 cancellationToken).ConfigureAwait(false);
 
             GitHubReleaseAsset asset = SelectAsset(release, options.Architecture);
+            DownloadUtility.ValidateLockedGitHubSource(
+                apiUri,
+                defaultApiUri,
+                asset.BrowserDownloadUrl,
+                "denoland",
+                "deno",
+                options.LockReleaseSource);
+
             string archivePath = Path.Combine(installDirectory, asset.Name);
             string executablePath = Path.Combine(installDirectory, "deno.exe");
             string? currentVersion = File.Exists(executablePath) ? GetInstalledVersion(executablePath) : null;
 
-            if (string.Equals(NormalizeVersion(currentVersion), NormalizeVersion(release.TagName), StringComparison.OrdinalIgnoreCase))
+            bool canSkipExisting = options.VerificationPolicy == MpvNativeAssetVerificationPolicy.BestEffort &&
+                string.IsNullOrWhiteSpace(options.ExpectedSha256);
+            if (canSkipExisting && string.Equals(NormalizeVersion(currentVersion), NormalizeVersion(release.TagName), StringComparison.OrdinalIgnoreCase))
             {
                 return new DenoDownloadResult(
                     release.TagName,
@@ -60,10 +73,14 @@ namespace MediaEmbedKit.Mpv.Downloads
                 options.OverwriteExisting || !File.Exists(archivePath),
                 cancellationToken).ConfigureAwait(false);
 
-            if (options.VerifyDigest)
-            {
-                DownloadUtility.VerifyDigestIfAvailable(archivePath, asset.Digest);
-            }
+            DownloadUtility.VerifyDownloadedAsset(
+                archivePath,
+                asset.Digest,
+                options.VerifyDigest,
+                options.VerificationPolicy,
+                options.ExpectedSha256,
+                asset.Name);
+            await VerifyProviderChecksumIfRequiredAsync(release, asset, archivePath, options, cancellationToken).ConfigureAwait(false);
 
             DownloadUtility.ExtractZipToDirectory(archivePath, installDirectory, true);
 
@@ -143,6 +160,43 @@ namespace MediaEmbedKit.Mpv.Downloads
         }
 
         /// <summary>
+        /// 執行 Deno 內建的自我升級命令，並要求 Deno 使用指定 SHA-256 checksum 驗證下載內容。
+        /// </summary>
+        /// <param name="executablePath">Deno 可執行檔路徑。</param>
+        /// <param name="checksum">Deno 升級壓縮檔的預期 SHA-256 值。</param>
+        /// <param name="version">要升級到的 Deno 版本；未指定時升級到最新版本。</param>
+        /// <param name="timeout">等待升級命令完成的逾時時間。</param>
+        /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
+        /// <returns>表示 Deno 自我升級命令結果的工作。</returns>
+        public static Task<ToolUpdateResult> RunSelfUpgradeWithChecksumAsync(
+            string executablePath,
+            string checksum,
+            string? version = null,
+            TimeSpan? timeout = null,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (string.IsNullOrWhiteSpace(executablePath) || !File.Exists(executablePath))
+            {
+                throw new FileNotFoundException("找不到 Deno 可執行檔。", executablePath);
+            }
+
+            if (string.IsNullOrWhiteSpace(checksum))
+            {
+                throw new ArgumentException("checksum 不可為空白。", nameof(checksum));
+            }
+
+            string arguments = string.IsNullOrWhiteSpace(version)
+                ? "upgrade --checksum=" + checksum.Trim()
+                : "upgrade --checksum=" + checksum.Trim() + " " + Quote(version!);
+
+            return DownloadUtility.RunProcessAsync(
+                executablePath,
+                arguments,
+                timeout ?? TimeSpan.FromMinutes(5),
+                cancellationToken);
+        }
+
+        /// <summary>
         /// 將命令列引數值加上引號並逸出內含引號。
         /// </summary>
         /// <param name="value">要加入命令列的原始值。</param>
@@ -165,6 +219,56 @@ namespace MediaEmbedKit.Mpv.Downloads
             if (asset == null)
             {
                 throw new InvalidOperationException("GitHub 發行資料中找不到符合 " + architecture + " 的 Deno Windows 資產：" + release.TagName);
+            }
+
+            return asset;
+        }
+
+        /// <summary>
+        /// 在策略要求時使用 Deno 發行的 sha256sum 檔案驗證下載檔案。
+        /// </summary>
+        /// <param name="release">GitHub 發行資料。</param>
+        /// <param name="asset">已下載的 Deno 發行資產。</param>
+        /// <param name="filePath">已下載壓縮檔路徑。</param>
+        /// <param name="options">Deno 下載選項。</param>
+        /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
+        /// <returns>表示驗證流程的工作。</returns>
+        private static async Task VerifyProviderChecksumIfRequiredAsync(
+            GitHubRelease release,
+            GitHubReleaseAsset asset,
+            string filePath,
+            DenoDownloadOptions options,
+            CancellationToken cancellationToken)
+        {
+            if (options.VerificationPolicy != MpvNativeAssetVerificationPolicy.RequireProviderChecksum)
+            {
+                return;
+            }
+
+            GitHubReleaseAsset checksumAsset = SelectChecksumAsset(release, asset.Name + ".sha256sum");
+            byte[] checksumBytes = await DownloadUtility.DownloadBytesAsync(
+                checksumAsset.BrowserDownloadUrl,
+                options.UserAgent,
+                cancellationToken).ConfigureAwait(false);
+            DownloadUtility.VerifyDownloadedBytes(checksumBytes, checksumAsset.Digest, true, checksumAsset.Name);
+
+            string checksumText = Encoding.UTF8.GetString(checksumBytes);
+            string expectedSha256 = DownloadUtility.FindSha256InChecksumText(checksumText, asset.Name);
+            DownloadUtility.VerifySha256(filePath, expectedSha256, asset.Name);
+        }
+
+        /// <summary>
+        /// 從 GitHub 發行資料選取指定名稱的 checksum 資產。
+        /// </summary>
+        /// <param name="release">GitHub 發行資料。</param>
+        /// <param name="assetName">要選取的 checksum 資產名稱。</param>
+        /// <returns>符合名稱的 GitHub 發行資產。</returns>
+        private static GitHubReleaseAsset SelectChecksumAsset(GitHubRelease release, string assetName)
+        {
+            GitHubReleaseAsset? asset = release.Assets.FirstOrDefault(item => string.Equals(item.Name, assetName, StringComparison.OrdinalIgnoreCase));
+            if (asset == null)
+            {
+                throw new InvalidOperationException("GitHub 發行資料中找不到 " + assetName + " checksum 資產：" + release.TagName);
             }
 
             return asset;

@@ -101,6 +101,32 @@ namespace MediaEmbedKit.Mpv.Downloads
         }
 
         /// <summary>
+        /// 將指定 URL 的內容下載為位元組陣列。
+        /// </summary>
+        /// <param name="url">要下載的檔案 URL。</param>
+        /// <param name="userAgent">下載要求使用的使用者代理字串。</param>
+        /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
+        /// <returns>表示已下載位元組內容的工作。</returns>
+        public static async Task<byte[]> DownloadBytesAsync(string url, string? userAgent, CancellationToken cancellationToken)
+        {
+            using (HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, new Uri(url)))
+            {
+                BrowserRequestHeaders.Apply(request.Headers, userAgent);
+
+                using (HttpResponseMessage response = await SharedHttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false))
+                {
+                    response.EnsureSuccessStatusCode();
+                    using (Stream remote = await response.Content.ReadAsStreamAsync().ConfigureAwait(false))
+                    using (MemoryStream local = new MemoryStream())
+                    {
+                        await remote.CopyToAsync(local).ConfigureAwait(false);
+                        return local.ToArray();
+                    }
+                }
+            }
+        }
+
+        /// <summary>
         /// 建立專案共用的 HTTP 用戶端執行個體。
         /// </summary>
         /// <returns>可重複使用的 HTTP 用戶端。</returns>
@@ -136,16 +162,307 @@ namespace MediaEmbedKit.Mpv.Downloads
                 return;
             }
 
-            string expected = digest.Substring("sha256:".Length);
+            VerifySha256(filePath, digest.Substring("sha256:".Length), Path.GetFileName(filePath));
+        }
+
+        /// <summary>
+        /// 依指定策略驗證 GitHub 發行資產摘要與呼叫端釘選的 SHA-256 值。
+        /// </summary>
+        /// <param name="filePath">要驗證的下載檔案路徑。</param>
+        /// <param name="digest">GitHub 發行資產提供的摘要值。</param>
+        /// <param name="verifyDigestWhenAvailable">是否在摘要存在時進行 best-effort 驗證。</param>
+        /// <param name="policy">下載資產的完整性驗證策略。</param>
+        /// <param name="expectedSha256">呼叫端釘選的預期 SHA-256 值。</param>
+        /// <param name="assetName">驗證訊息使用的資產名稱。</param>
+        public static void VerifyDownloadedAsset(
+            string filePath,
+            string? digest,
+            bool verifyDigestWhenAvailable,
+            MpvNativeAssetVerificationPolicy policy,
+            string? expectedSha256,
+            string assetName)
+        {
+            if (policy == MpvNativeAssetVerificationPolicy.RequirePinnedSha256 && string.IsNullOrWhiteSpace(expectedSha256))
+            {
+                throw new InvalidOperationException("已要求釘選 SHA-256 驗證，但未提供 " + assetName + " 的預期 SHA-256 值。");
+            }
+
+            bool requireGitHubDigest = policy == MpvNativeAssetVerificationPolicy.RequireGitHubDigest ||
+                policy == MpvNativeAssetVerificationPolicy.RequireProviderChecksum;
+            if (requireGitHubDigest)
+            {
+                VerifyGitHubDigest(filePath, digest, true, assetName);
+            }
+            else if (verifyDigestWhenAvailable)
+            {
+                VerifyGitHubDigest(filePath, digest, false, assetName);
+            }
+
+            if (!string.IsNullOrWhiteSpace(expectedSha256))
+            {
+                VerifySha256(filePath, expectedSha256!, assetName);
+            }
+        }
+
+        /// <summary>
+        /// 依指定策略驗證下載到記憶體中的 GitHub 發行資產摘要。
+        /// </summary>
+        /// <param name="content">要驗證的下載內容。</param>
+        /// <param name="digest">GitHub 發行資產提供的摘要值。</param>
+        /// <param name="requireDigest">是否要求摘要必須存在。</param>
+        /// <param name="assetName">驗證訊息使用的資產名稱。</param>
+        public static void VerifyDownloadedBytes(byte[] content, string? digest, bool requireDigest, string assetName)
+        {
+            string? expected = NormalizeGitHubSha256Digest(digest);
+            if (string.IsNullOrWhiteSpace(expected))
+            {
+                if (requireDigest)
+                {
+                    throw new InvalidOperationException("GitHub 發行資產未提供 SHA-256 摘要：" + assetName);
+                }
+
+                return;
+            }
+
+            string actual = ComputeSha256Hex(content);
+            if (!string.Equals(expected, actual, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("下載內容的 SHA-256 值不符：" + assetName);
+            }
+        }
+
+        /// <summary>
+        /// 驗證下載檔案符合預期 SHA-256 值。
+        /// </summary>
+        /// <param name="filePath">要驗證的下載檔案路徑。</param>
+        /// <param name="expectedSha256">預期的 SHA-256 十六進位文字。</param>
+        /// <param name="assetName">驗證訊息使用的資產名稱。</param>
+        public static void VerifySha256(string filePath, string expectedSha256, string assetName)
+        {
+            string normalized = NormalizeSha256(expectedSha256, "預期 SHA-256 值");
+            string actual = ComputeSha256Hex(filePath);
+            if (!string.Equals(normalized, actual, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("下載檔案的 SHA-256 值不符：" + assetName);
+            }
+        }
+
+        /// <summary>
+        /// 從 GNU 風格 checksum 內容中找出指定資產的 SHA-256 值。
+        /// </summary>
+        /// <param name="checksumText">checksum 檔案內容。</param>
+        /// <param name="assetName">要比對的資產檔名。</param>
+        /// <returns>符合資產名稱的 SHA-256 十六進位文字。</returns>
+        public static string FindSha256InChecksumText(string checksumText, string assetName)
+        {
+            if (string.IsNullOrWhiteSpace(checksumText))
+            {
+                throw new InvalidOperationException("checksum 檔案內容不可為空白。");
+            }
+
+            using (StringReader reader = new StringReader(checksumText))
+            {
+                string? line;
+                while ((line = reader.ReadLine()) != null)
+                {
+                    string trimmed = line.Trim();
+                    if (trimmed.Length == 0 || trimmed.StartsWith("#", StringComparison.Ordinal))
+                    {
+                        continue;
+                    }
+
+                    string? checksum = TryReadChecksumLine(trimmed, assetName);
+                    if (checksum != null)
+                    {
+                        return checksum;
+                    }
+                }
+            }
+
+            throw new InvalidOperationException("checksum 檔案未包含指定資產的 SHA-256 值：" + assetName);
+        }
+
+        /// <summary>
+        /// 在啟用來源鎖定時驗證 GitHub Releases API URI 與下載 URL。
+        /// </summary>
+        /// <param name="apiUri">實際使用的 GitHub Releases API URI。</param>
+        /// <param name="expectedApiUri">預期的 GitHub Releases API URI。</param>
+        /// <param name="assetUrl">發行資產的下載 URL。</param>
+        /// <param name="owner">預期的 GitHub repository 擁有者。</param>
+        /// <param name="repository">預期的 GitHub repository 名稱。</param>
+        /// <param name="lockReleaseSource">是否啟用來源鎖定。</param>
+        public static void ValidateLockedGitHubSource(
+            Uri apiUri,
+            Uri expectedApiUri,
+            string assetUrl,
+            string owner,
+            string repository,
+            bool lockReleaseSource)
+        {
+            if (!lockReleaseSource)
+            {
+                return;
+            }
+
+            if (!UriEquals(apiUri, expectedApiUri))
+            {
+                throw new InvalidOperationException("來源鎖定已啟用，不能使用非預設 GitHub Releases API：" + apiUri);
+            }
+
+            Uri downloadUri = new Uri(assetUrl);
+            string expectedPrefix = "/" + owner + "/" + repository + "/releases/download/";
+            if (!string.Equals(downloadUri.Host, "github.com", StringComparison.OrdinalIgnoreCase) ||
+                !downloadUri.AbsolutePath.StartsWith(expectedPrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("來源鎖定已啟用，下載 URL 不屬於預期的 GitHub repository：" + assetUrl);
+            }
+        }
+
+        /// <summary>
+        /// 計算檔案內容的 SHA-256 十六進位文字。
+        /// </summary>
+        /// <param name="filePath">要計算雜湊值的檔案路徑。</param>
+        /// <returns>小寫 SHA-256 十六進位文字。</returns>
+        public static string ComputeSha256Hex(string filePath)
+        {
             using (SHA256 sha256 = SHA256.Create())
             using (FileStream stream = File.OpenRead(filePath))
             {
-                string actual = ToHex(sha256.ComputeHash(stream));
-                if (!string.Equals(expected, actual, StringComparison.OrdinalIgnoreCase))
+                return ToHex(sha256.ComputeHash(stream));
+            }
+        }
+
+        /// <summary>
+        /// 計算位元組內容的 SHA-256 十六進位文字。
+        /// </summary>
+        /// <param name="content">要計算雜湊值的位元組內容。</param>
+        /// <returns>小寫 SHA-256 十六進位文字。</returns>
+        public static string ComputeSha256Hex(byte[] content)
+        {
+            using (SHA256 sha256 = SHA256.Create())
+            {
+                return ToHex(sha256.ComputeHash(content));
+            }
+        }
+
+        /// <summary>
+        /// 驗證 GitHub 發行資產摘要。
+        /// </summary>
+        /// <param name="filePath">要驗證的下載檔案路徑。</param>
+        /// <param name="digest">GitHub 發行資產提供的摘要值。</param>
+        /// <param name="requireDigest">是否要求摘要必須存在。</param>
+        /// <param name="assetName">驗證訊息使用的資產名稱。</param>
+        private static void VerifyGitHubDigest(string filePath, string? digest, bool requireDigest, string assetName)
+        {
+            string? expected = NormalizeGitHubSha256Digest(digest);
+            if (string.IsNullOrWhiteSpace(expected))
+            {
+                if (requireDigest)
                 {
-                    throw new InvalidOperationException("下載檔案的總和檢查碼不符：" + Path.GetFileName(filePath));
+                    throw new InvalidOperationException("GitHub 發行資產未提供 SHA-256 摘要：" + assetName);
+                }
+
+                return;
+            }
+
+            VerifySha256(filePath, expected!, assetName);
+        }
+
+        /// <summary>
+        /// 從 GitHub digest 欄位擷取 SHA-256 十六進位文字。
+        /// </summary>
+        /// <param name="digest">GitHub 發行資產摘要值。</param>
+        /// <returns>SHA-256 十六進位文字；摘要不存在時為 <see langword="null"/>。</returns>
+        private static string? NormalizeGitHubSha256Digest(string? digest)
+        {
+            if (string.IsNullOrWhiteSpace(digest))
+            {
+                return null;
+            }
+
+            const string prefix = "sha256:";
+            if (!digest!.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            {
+                return null;
+            }
+
+            return NormalizeSha256(digest.Substring(prefix.Length), "GitHub SHA-256 摘要");
+        }
+
+        /// <summary>
+        /// 將 SHA-256 十六進位文字正規化。
+        /// </summary>
+        /// <param name="value">要正規化的 SHA-256 十六進位文字。</param>
+        /// <param name="description">錯誤訊息使用的值描述。</param>
+        /// <returns>小寫 SHA-256 十六進位文字。</returns>
+        private static string NormalizeSha256(string value, string description)
+        {
+            string normalized = value.Trim();
+            if (normalized.Length != 64)
+            {
+                throw new InvalidOperationException(description + " 長度不是 64 個十六進位字元。");
+            }
+
+            for (int i = 0; i < normalized.Length; i++)
+            {
+                char character = normalized[i];
+                bool isHex = (character >= '0' && character <= '9') ||
+                    (character >= 'a' && character <= 'f') ||
+                    (character >= 'A' && character <= 'F');
+                if (!isHex)
+                {
+                    throw new InvalidOperationException(description + " 包含非十六進位字元。");
                 }
             }
+
+            return normalized.ToLowerInvariant();
+        }
+
+        /// <summary>
+        /// 嘗試解析單行 checksum 內容。
+        /// </summary>
+        /// <param name="line">單行 checksum 內容。</param>
+        /// <param name="assetName">要比對的資產檔名。</param>
+        /// <returns>符合資產名稱的 SHA-256 十六進位文字；不符合時為 <see langword="null"/>。</returns>
+        private static string? TryReadChecksumLine(string line, string assetName)
+        {
+            int separatorIndex = line.IndexOfAny(new[] { ' ', '\t' });
+            string checksum = separatorIndex < 0 ? line : line.Substring(0, separatorIndex);
+            if (checksum.Length != 64)
+            {
+                return null;
+            }
+
+            string normalized = NormalizeSha256(checksum, "checksum SHA-256 值");
+            if (separatorIndex < 0)
+            {
+                return normalized;
+            }
+
+            string fileName = line.Substring(separatorIndex).Trim();
+            if (fileName.StartsWith("*", StringComparison.Ordinal))
+            {
+                fileName = fileName.Substring(1).Trim();
+            }
+
+            if (string.Equals(fileName, assetName, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(Path.GetFileName(fileName), assetName, StringComparison.OrdinalIgnoreCase))
+            {
+                return normalized;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// 判斷兩個 URI 是否代表相同位置。
+        /// </summary>
+        /// <param name="left">第一個 URI。</param>
+        /// <param name="right">第二個 URI。</param>
+        /// <returns>兩個 URI 相同時為 <see langword="true"/>。</returns>
+        private static bool UriEquals(Uri left, Uri right)
+        {
+            return string.Equals(left.AbsoluteUri.TrimEnd('/'), right.AbsoluteUri.TrimEnd('/'), StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>

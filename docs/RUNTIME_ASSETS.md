@@ -18,6 +18,18 @@ runtime/
 
 控制項建構函式、XAML 載入與播放器初始化流程不得自動下載任何二進位檔。
 
+## 完整性驗證與來源鎖定
+
+runtime helper 預設保持相容模式：GitHub Releases API 提供 SHA-256 digest 時會驗證，未提供時不阻擋下載。生產環境應明確設定驗證政策：
+
+- `MpvNativeAssetVerificationPolicy.RequireGitHubDigest`：要求 GitHub 發行資產必須提供 `sha256:` digest。
+- `MpvNativeAssetVerificationPolicy.RequireProviderChecksum`：要求 GitHub digest 與 provider 發行的 checksum 檔案同時通過驗證。
+- `MpvNativeAssetVerificationPolicy.RequirePinnedSha256`：要求呼叫端提供 `ExpectedSha256`，以下載內容的 SHA-256 值作為鎖定紀錄。
+
+`LockReleaseSource = true` 會鎖定內建 GitHub repository 與下載 URL。啟用後，helper 會拒絕非預設 GitHub Releases API 或非預期 repository 的資產 URL。
+
+`yt-dlp` 支援使用 `SHA2-256SUMS` 驗證發行檔。Deno 支援使用發行資產同層的 `.sha256sum` 檔案驗證壓縮檔。shinchiro 與 zhongfly 目前未提供獨立 checksum 資產，因此 libmpv 生產下載應使用 `RequirePinnedSha256`、`ExpectedSha256` 與 `LockReleaseSource`。
+
 ## libmpv
 
 Windows x64 helper 可從 shinchiro `mpv-winbuild-cmake` 與 zhongfly `mpv-winbuild` 下載 x64 `mpv-dev*.7z` 資產。這些來源是 mpv Windows git build，不是 mpv stable release。
@@ -44,9 +56,13 @@ yt-dlp helper 支援 Windows x64 `yt-dlp.exe` 下載、自我更新與路徑回�
 
 若需要 yt-dlp 自身 stdout/stderr、格式清單、JSON 或下載進度，請直接使用 `YtDlpProcessRunner`。mpv ytdl hook 的 JSON 子程序結果則由 `MpvPlayer.GetYtdlJsonSubprocessResult()` 讀取，不應解析 `log-message`。
 
+若需要可稽核的供應鏈驗證，應優先使用 `YtDlpDownloader.InstallOrUpdateLatestExecutableAsync(...)` 搭配驗證政策。`YtDlpDownloader.RunSelfUpdateAsync(...)` 是 yt-dlp 內建更新命令的薄型包裝，適合手動維護，不取代 helper 的 SHA-256 驗證流程。
+
 ## Deno
 
 Deno helper 支援 Windows x64 `deno.exe` 下載、自我更新與外部處理序輸出事件。Deno 不是本機檔案播放的必要條件，但 yt-dlp YouTube EJS 情境可能需要外部 JavaScript runtime，因此 helper 預設與 `yt-dlp.exe` 同層準備 `deno.exe`。
+
+需要使用 Deno 內建升級流程且要求 checksum 時，使用 `DenoDownloader.RunSelfUpgradeWithChecksumAsync(...)`。若要維持完整下載紀錄與來源鎖定，應使用 `DenoDownloader.DownloadAndExtractLatestAsync(...)` 搭配驗證政策。
 
 ## mpv 設定與 scripts
 

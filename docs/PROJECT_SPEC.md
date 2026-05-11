@@ -25,6 +25,7 @@ MediaEmbedKit.Mpv 提供 .NET libmpv 包裝器與 Windows 桌面 UI 控制項。
 - 控制項建構函式與初始化流程不得自動下載第三方二進位檔。
 - `libmpv-2.dll` 載入後不可在同一處理序 hot reload；更新必須暫存並提示重新啟動。
 - Windows x64 runtime 資料夾可同層放置 `libmpv-2.dll`、`yt-dlp.exe`、`deno.exe`、mpv 設定檔與 scripts。
+- runtime helper 必須提供 SHA-256 驗證、來源鎖定與可由使用者選擇的驗證策略；生產環境不得只依賴未鎖定的 latest 下載。
 - 高階 API 可提供薄型 fluent helper，但不得引入會隱藏下載、初始化或釋放責任的 pipeline/flow 引擎。
 - WinForms、WPF、WinUI 3 與 MAUI Windows 主線控制項使用 HWND 後端。
 - Avalonia 使用 Windows x64 OpenGL render API 後端。

@@ -39,8 +39,18 @@ namespace MediaEmbedKit.Mpv.Downloads
             options = options ?? new MpvWindowsBuildDownloadOptions();
             Directory.CreateDirectory(downloadDirectory);
 
-            GitHubRelease release = await GetLatestReleaseAsync(options, cancellationToken).ConfigureAwait(false);
+            Uri defaultApiUri = GetReleaseApiUri(options.Provider);
+            Uri apiUri = options.ReleaseApiUriOverride ?? defaultApiUri;
+            GitHubRelease release = await GetLatestReleaseAsync(options, apiUri, cancellationToken).ConfigureAwait(false);
             GitHubReleaseAsset asset = SelectLibMpvAsset(release, options);
+            DownloadUtility.ValidateLockedGitHubSource(
+                apiUri,
+                defaultApiUri,
+                asset.BrowserDownloadUrl,
+                GetRepositoryOwner(options.Provider),
+                GetRepositoryName(options.Provider),
+                options.LockReleaseSource);
+
             string archivePath = Path.Combine(downloadDirectory, asset.Name);
 
             if (!File.Exists(archivePath) || options.OverwriteExisting)
@@ -48,7 +58,18 @@ namespace MediaEmbedKit.Mpv.Downloads
                 await DownloadUtility.DownloadFileAsync(asset.BrowserDownloadUrl, archivePath, options.UserAgent, true, cancellationToken).ConfigureAwait(false);
             }
 
-            DownloadUtility.VerifyDigestIfAvailable(archivePath, asset.Digest);
+            if (options.VerificationPolicy == MpvNativeAssetVerificationPolicy.RequireProviderChecksum)
+            {
+                throw new InvalidOperationException("目前 Windows libmpv provider 未提供獨立 checksum 資產；請改用 RequirePinnedSha256 並提供 ExpectedSha256。");
+            }
+
+            DownloadUtility.VerifyDownloadedAsset(
+                archivePath,
+                asset.Digest,
+                options.VerifyDigest,
+                options.VerificationPolicy,
+                options.ExpectedSha256,
+                asset.Name);
 
             return new MpvWindowsBuildDownloadResult(
                 options.Provider,
@@ -120,12 +141,12 @@ namespace MediaEmbedKit.Mpv.Downloads
         /// 從設定的提供者取得最新 GitHub 發行資料。
         /// </summary>
         /// <param name="options">Windows libmpv 建置下載選項。</param>
+        /// <param name="apiUri">要查詢的 GitHub Releases API URI。</param>
         /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
         /// <returns>表示 GitHub 發行資料的工作。</returns>
-        private static async Task<GitHubRelease> GetLatestReleaseAsync(MpvWindowsBuildDownloadOptions options, CancellationToken cancellationToken)
+        private static async Task<GitHubRelease> GetLatestReleaseAsync(MpvWindowsBuildDownloadOptions options, Uri apiUri, CancellationToken cancellationToken)
         {
             ValidateProviderArchitecture(options.Provider, options.Architecture);
-            Uri apiUri = options.ReleaseApiUriOverride ?? GetReleaseApiUri(options.Provider);
 
             return await DownloadUtility.GetLatestReleaseAsync(apiUri, options.UserAgent, cancellationToken).ConfigureAwait(false);
         }
@@ -154,6 +175,38 @@ namespace MediaEmbedKit.Mpv.Downloads
                     return new Uri("https://api.github.com/repos/zhongfly/mpv-winbuild/releases/latest");
                 default:
                     return new Uri("https://api.github.com/repos/shinchiro/mpv-winbuild-cmake/releases/latest");
+            }
+        }
+
+        /// <summary>
+        /// 取得指定 Windows libmpv provider 對應的 GitHub repository 擁有者。
+        /// </summary>
+        /// <param name="provider">Windows libmpv 建置提供者。</param>
+        /// <returns>對應 provider 的 GitHub repository 擁有者。</returns>
+        private static string GetRepositoryOwner(MpvWindowsBuildProvider provider)
+        {
+            switch (provider)
+            {
+                case MpvWindowsBuildProvider.Zhongfly:
+                    return "zhongfly";
+                default:
+                    return "shinchiro";
+            }
+        }
+
+        /// <summary>
+        /// 取得指定 Windows libmpv provider 對應的 GitHub repository 名稱。
+        /// </summary>
+        /// <param name="provider">Windows libmpv 建置提供者。</param>
+        /// <returns>對應 provider 的 GitHub repository 名稱。</returns>
+        private static string GetRepositoryName(MpvWindowsBuildProvider provider)
+        {
+            switch (provider)
+            {
+                case MpvWindowsBuildProvider.Zhongfly:
+                    return "mpv-winbuild";
+                default:
+                    return "mpv-winbuild-cmake";
             }
         }
 
