@@ -32,7 +32,7 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
         /// <summary>
         /// 範例事件輸出的最大保留列數。
         /// </summary>
-        private const int EventLogLimit = 120;
+        private const int EventLogLimit = 60;
 
         /// <summary>
         /// 顯示 libmpv 視訊內容的 MAUI 檢視。
@@ -386,7 +386,7 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
             panel.Children.Add(CreateFeatureButton("Tracks", () => _features.DumpTracks()));
             panel.Children.Add(CreateFeatureButton("Shot", () => _features.TakeScreenshot()));
             panel.Children.Add(CreateFeatureButton("Config", () => _features.LoadSampleConfig()));
-            panel.Children.Add(CreateFeatureButton("Lua", () => _features.LoadSampleLuaScript()));
+            panel.Children.Add(CreateAsyncFeatureButton("Lua", () => _features.LoadSampleLuaScriptAsync()));
             panel.Children.Add(CreateAsyncFeatureButton("yt-dlp", () => _features.RunYtdlpDiagnosticsAsync(_sourceEntry.Text ?? string.Empty)));
             panel.Children.Add(CreateAsyncFeatureButton("Deno", () => _features.RunDenoDiagnosticsAsync()));
             panel.Children.Add(CreateAsyncFeatureButton("Update yt", () => _features.RunYtdlpSelfUpdateAsync(), SampleRuntime.SampleYtdlpUpdateButtonWidth));
@@ -666,7 +666,7 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
             {
                 SampleYtdlpFormatChoice choice = _formatChoices[index];
                 picker.Items.Add(choice.DisplayName);
-                if (choice.Preset == defaultChoice.Preset)
+                if (string.Equals(choice.Selector, defaultChoice.Selector, StringComparison.Ordinal))
                 {
                     selectedIndex = index;
                 }

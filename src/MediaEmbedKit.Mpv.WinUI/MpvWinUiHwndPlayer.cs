@@ -122,7 +122,6 @@ namespace MediaEmbedKit.Mpv.WinUI
             Loaded += OnLoaded;
             Unloaded += OnUnloaded;
             SizeChanged += OnSizeChanged;
-            LayoutUpdated += OnLayoutUpdated;
         }
 
         /// <summary>
@@ -275,7 +274,6 @@ namespace MediaEmbedKit.Mpv.WinUI
             Loaded -= OnLoaded;
             Unloaded -= OnUnloaded;
             SizeChanged -= OnSizeChanged;
-            LayoutUpdated -= OnLayoutUpdated;
             DetachWindowClosedHandler();
             ReleasePlayer();
             DestroyOverlayWindow();
@@ -317,16 +315,6 @@ namespace MediaEmbedKit.Mpv.WinUI
         /// <param name="sender">引發事件的物件。</param>
         /// <param name="e">大小變更事件資料。</param>
         private void OnSizeChanged(object sender, SizeChangedEventArgs e)
-        {
-            ScheduleWindowBoundsUpdate();
-        }
-
-        /// <summary>
-        /// 在版面配置更新時同步原生子視窗位置與大小。
-        /// </summary>
-        /// <param name="sender">引發事件的物件。</param>
-        /// <param name="e">事件資料。</param>
-        private void OnLayoutUpdated(object? sender, object e)
         {
             ScheduleWindowBoundsUpdate();
         }

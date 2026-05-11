@@ -44,6 +44,14 @@ namespace MediaEmbedKit.Mpv.WinForms
         public MpvPlayerOptions PlayerOptions { get; private set; }
 
         /// <summary>
+        /// 取得或設定控制項是否在 WinForms Handle 建立後自動初始化播放器。
+        /// </summary>
+        /// <value>自動初始化播放器時為 <see langword="true"/>。</value>
+        [Category("MediaEmbedKit.Mpv")]
+        [DefaultValue(true)]
+        public bool AutoInitialize { get; set; } = true;
+
+        /// <summary>
         /// 取得控制項目前建立的播放器。
         /// </summary>
         /// <value>目前播放器；尚未建立時為 <see langword="null"/>。</value>
@@ -52,6 +60,19 @@ namespace MediaEmbedKit.Mpv.WinForms
         public MpvPlayer? Player
         {
             get { return _player; }
+        }
+
+        /// <summary>
+        /// 依目前的播放器選項明確初始化播放器。
+        /// </summary>
+        public void InitializePlayer()
+        {
+            if (IsInDesignMode())
+            {
+                return;
+            }
+
+            EnsurePlayer();
         }
 
         /// <summary>
@@ -66,7 +87,7 @@ namespace MediaEmbedKit.Mpv.WinForms
                 return;
             }
 
-            EnsurePlayer();
+            InitializePlayer();
             _player!.LoadFile(pathOrUrl, mode);
         }
 
@@ -77,7 +98,7 @@ namespace MediaEmbedKit.Mpv.WinForms
         protected override void OnHandleCreated(EventArgs e)
         {
             base.OnHandleCreated(e);
-            if (!IsInDesignMode())
+            if (!IsInDesignMode() && AutoInitialize)
             {
                 EnsurePlayer();
             }

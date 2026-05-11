@@ -22,7 +22,7 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
         /// <summary>
         /// 範例事件輸出的最大保留列數。
         /// </summary>
-        private const int EventLogLimit = 120;
+        private const int EventLogLimit = 60;
 
         /// <summary>
         /// 顯示 libmpv 視訊內容的 Avalonia OpenGL 控制項。
@@ -395,7 +395,7 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
             panel.Children.Add(CreateFeatureButton("Tracks", () => _features.DumpTracks()));
             panel.Children.Add(CreateFeatureButton("Shot", () => _features.TakeScreenshot()));
             panel.Children.Add(CreateFeatureButton("Config", () => _features.LoadSampleConfig()));
-            panel.Children.Add(CreateFeatureButton("Lua", () => _features.LoadSampleLuaScript()));
+            panel.Children.Add(CreateAsyncFeatureButton("Lua", () => _features.LoadSampleLuaScriptAsync()));
             panel.Children.Add(CreateAsyncFeatureButton("yt-dlp", () => _features.RunYtdlpDiagnosticsAsync(_sourceBox.Text ?? string.Empty)));
             panel.Children.Add(CreateAsyncFeatureButton("Deno", () => _features.RunDenoDiagnosticsAsync()));
             panel.Children.Add(CreateAsyncFeatureButton("Update yt", () => _features.RunYtdlpSelfUpdateAsync(), SampleRuntime.SampleYtdlpUpdateButtonWidth));
@@ -642,7 +642,7 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
 
             for (int index = 0; index < choices.Count; index++)
             {
-                if (choices[index].Preset == defaultChoice.Preset)
+                if (string.Equals(choices[index].Selector, defaultChoice.Selector, StringComparison.Ordinal))
                 {
                     selectedIndex = index;
                 }

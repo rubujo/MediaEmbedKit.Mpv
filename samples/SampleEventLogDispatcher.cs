@@ -12,17 +12,17 @@ namespace MediaEmbedKit.Mpv.Samples
         /// <summary>
         /// 批次送出事件列的間隔。
         /// </summary>
-        private static readonly TimeSpan FlushInterval = TimeSpan.FromSeconds(2);
+        private static readonly TimeSpan FlushInterval = TimeSpan.FromSeconds(3);
 
         /// <summary>
         /// 單次送往 UI 執行緒的最大事件列數。
         /// </summary>
-        private const int MaxLinesPerFlush = 24;
+        private const int MaxLinesPerFlush = 12;
 
         /// <summary>
         /// 背景佇列允許暫存的最大事件列數。
         /// </summary>
-        private const int MaxPendingLines = 160;
+        private const int MaxPendingLines = 80;
 
         /// <summary>
         /// 保護事件佇列的同步物件。

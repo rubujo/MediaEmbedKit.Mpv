@@ -75,6 +75,11 @@ namespace MediaEmbedKit.Mpv.PlaybackSmoke
             sample.AddRunArguments(startInfo.ArgumentList, options, projectPath);
             startInfo.Environment["MEDIAEMBEDKIT_MPV_SAMPLE_SMOKE"] = "1";
             startInfo.Environment["MEDIAEMBEDKIT_MPV_SAMPLE_SMOKE_SECONDS"] = options.Seconds.ToString("0.###", CultureInfo.InvariantCulture);
+            if (options.FeatureSmoke)
+            {
+                startInfo.Environment["MEDIAEMBEDKIT_MPV_SAMPLE_FEATURE_SMOKE"] = "1";
+            }
+
             if (!string.IsNullOrWhiteSpace(options.RuntimeDirectory))
             {
                 startInfo.Environment["MEDIAEMBEDKIT_MPV_RUNTIME_DIR"] = Path.GetFullPath(options.RuntimeDirectory!);
@@ -289,6 +294,12 @@ namespace MediaEmbedKit.Mpv.PlaybackSmoke
         public int Iterations { get; set; }
 
         /// <summary>
+        /// 取得或設定是否啟用範例功能冒煙測試。
+        /// </summary>
+        /// <value>啟用範例功能冒煙測試時為 <see langword="true"/>。</value>
+        public bool FeatureSmoke { get; set; }
+
+        /// <summary>
         /// 解析命令列引數。
         /// </summary>
         /// <param name="args">命令列引數。</param>
@@ -321,6 +332,9 @@ namespace MediaEmbedKit.Mpv.PlaybackSmoke
                         break;
                     case "--iterations":
                         options.Iterations = ParseInt(ReadValue(args, ref index, argument), argument);
+                        break;
+                    case "--feature-smoke":
+                        options.FeatureSmoke = true;
                         break;
                     case "--no-build":
                         options.NoBuild = true;

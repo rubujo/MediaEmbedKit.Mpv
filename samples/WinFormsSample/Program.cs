@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Windows.Forms;
-using MediaEmbedKit.Mpv.Samples;
 
 namespace MediaEmbedKit.Mpv.Samples.WinForms
 {
@@ -17,16 +16,6 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            try
-            {
-                SampleRuntime.InstallOrUpdateAsync().GetAwaiter().GetResult();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message, "mpv runtime", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
-
             Application.Run(new MainForm());
         }
     }

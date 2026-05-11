@@ -10,11 +10,6 @@ namespace MediaEmbedKit.Mpv.Samples
     internal sealed class SamplePlayerEventBridge : IDisposable
     {
         /// <summary>
-        /// 高頻屬性輸出的最短間隔。
-        /// </summary>
-        private static readonly TimeSpan HighFrequencyPropertyInterval = TimeSpan.FromSeconds(2);
-
-        /// <summary>
         /// 由專屬事件處理常式輸出的 libmpv 事件。
         /// </summary>
         private static readonly HashSet<MpvEventId> SpecializedEvents = new HashSet<MpvEventId>
@@ -31,20 +26,11 @@ namespace MediaEmbedKit.Mpv.Samples
         };
 
         /// <summary>
-        /// 需要節流輸出的高頻 libmpv 屬性名稱。
-        /// </summary>
-        private static readonly HashSet<string> HighFrequencyProperties = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            "time-pos"
-        };
-
-        /// <summary>
         /// 範例需要觀察的常用 libmpv 屬性。
         /// </summary>
         private static readonly SampleObservedProperty[] ObservedProperties =
         {
             new SampleObservedProperty("pause", MpvFormat.Flag),
-            new SampleObservedProperty("time-pos", MpvFormat.Double),
             new SampleObservedProperty("duration", MpvFormat.Double),
             new SampleObservedProperty("media-title", MpvFormat.String),
             new SampleObservedProperty("path", MpvFormat.String),
@@ -63,10 +49,6 @@ namespace MediaEmbedKit.Mpv.Samples
         /// 目前已註冊的屬性觀察識別碼。
         /// </summary>
         private readonly List<ulong> _observeIds = new List<ulong>();
-        /// <summary>
-        /// 記錄高頻屬性的最後輸出時間。
-        /// </summary>
-        private readonly Dictionary<string, DateTimeOffset> _lastPropertyWriteTimes = new Dictionary<string, DateTimeOffset>(StringComparer.OrdinalIgnoreCase);
         /// <summary>
         /// 表示目前事件橋接器是否已釋放。
         /// </summary>
@@ -158,7 +140,7 @@ namespace MediaEmbedKit.Mpv.Samples
         {
             try
             {
-                _player.RequestLogMessages("info");
+                _player.RequestLogMessages("warn");
             }
             catch (MpvException ex)
             {
@@ -238,11 +220,6 @@ namespace MediaEmbedKit.Mpv.Samples
         /// <param name="e">屬性變更事件資料。</param>
         private void PlayerPropertyChanged(object? sender, MpvPropertyChangedEventArgs e)
         {
-            if (!ShouldAppendProperty(e.Name))
-            {
-                return;
-            }
-
             Append("property", e.Name + " = " + FormatValue(e.Value) + " (" + e.Format + ")");
         }
 
@@ -392,29 +369,6 @@ namespace MediaEmbedKit.Mpv.Samples
         {
             string line = DateTimeOffset.Now.ToString("HH:mm:ss.fff", CultureInfo.InvariantCulture) + " [" + category + "] " + message;
             _appendLine(line);
-        }
-
-        /// <summary>
-        /// 判斷指定屬性是否應立即寫入事件清單。
-        /// </summary>
-        /// <param name="name">libmpv 屬性名稱。</param>
-        /// <returns>屬性可以寫入事件清單時為 <see langword="true"/>。</returns>
-        private bool ShouldAppendProperty(string name)
-        {
-            if (!HighFrequencyProperties.Contains(name))
-            {
-                return true;
-            }
-
-            DateTimeOffset now = DateTimeOffset.UtcNow;
-            if (_lastPropertyWriteTimes.TryGetValue(name, out DateTimeOffset lastWriteTime)
-                && now - lastWriteTime < HighFrequencyPropertyInterval)
-            {
-                return false;
-            }
-
-            _lastPropertyWriteTimes[name] = now;
-            return true;
         }
 
         /// <summary>

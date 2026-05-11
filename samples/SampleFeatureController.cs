@@ -30,6 +30,10 @@ namespace MediaEmbedKit.Mpv.Samples
         /// 目前使用的播放速度。
         /// </summary>
         private double _currentSpeed = 1.0;
+        /// <summary>
+        /// 紀錄範例 Lua 指令碼是否已經要求載入。
+        /// </summary>
+        private bool _sampleLuaScriptLoaded;
 
         /// <summary>
         /// 初始化 <see cref="SampleFeatureController"/> 類別的新執行個體。
@@ -50,6 +54,7 @@ namespace MediaEmbedKit.Mpv.Samples
         {
             return new[]
             {
+                new SampleYtdlpFormatChoice("流暢 720p", SampleRuntime.SmoothPlaybackYtdlpFormat),
                 new SampleYtdlpFormatChoice("預設", MpvYtdlpFormatPreset.Default),
                 new SampleYtdlpFormatChoice("最佳", MpvYtdlpFormatPreset.Best),
                 new SampleYtdlpFormatChoice("最高 1080p", MpvYtdlpFormatPreset.UpTo1080p),
@@ -62,10 +67,10 @@ namespace MediaEmbedKit.Mpv.Samples
         /// <summary>
         /// 取得範例預設的 yt-dlp 格式選項。
         /// </summary>
-        /// <returns>最高 720p 的格式選項。</returns>
+        /// <returns>以播放順暢度優先的 720p 格式選項。</returns>
         public static SampleYtdlpFormatChoice CreateDefaultYtdlpFormatChoice()
         {
-            return new SampleYtdlpFormatChoice("最高 720p", MpvYtdlpFormatPreset.UpTo720p);
+            return new SampleYtdlpFormatChoice("流暢 720p", SampleRuntime.SmoothPlaybackYtdlpFormat);
         }
 
         /// <summary>
@@ -86,7 +91,7 @@ namespace MediaEmbedKit.Mpv.Samples
             }
 
             options.YtdlpFormatPreset = choice.Preset;
-            options.YtdlpFormat = null;
+            options.YtdlpFormat = choice.UsesPreset ? null : choice.Selector;
             options.InitialOptions["ytdl-format"] = choice.Selector;
         }
 
@@ -97,7 +102,7 @@ namespace MediaEmbedKit.Mpv.Samples
         public void ApplyYtdlpFormat(SampleYtdlpFormatChoice choice)
         {
             MpvPlayer player = RequirePlayer();
-            player.SetYtdlpFormat(choice.Preset);
+            player.SetYtdlpFormat(choice.Selector);
             Append("yt-dlp", "已套用格式：" + choice.DisplayName + " => " + choice.Selector + "。重新載入網址後會使用新格式。");
             player.ShowText("yt-dlp format: " + choice.DisplayName, 1800, 1);
         }
@@ -220,15 +225,66 @@ namespace MediaEmbedKit.Mpv.Samples
         }
 
         /// <summary>
-        /// 載入範例 Lua 指令碼並送出訊息。
+        /// 載入範例 Lua 指令碼並確認指令碼可接收訊息。
         /// </summary>
-        public void LoadSampleLuaScript()
+        /// <returns>代表 Lua 指令碼載入與確認流程的工作。</returns>
+        public async Task LoadSampleLuaScriptAsync()
         {
             SampleRuntime.EnsureSampleFiles();
             MpvPlayer player = RequirePlayer();
-            player.LoadScript(SampleRuntime.SampleLuaScriptPath);
-            player.SendScriptMessage("sample-ping", "Lua script 已載入");
-            Append("api", "已載入 Lua 指令碼：" + SampleRuntime.SampleLuaScriptPath);
+            TaskCompletionSource<MpvClientMessageEventArgs> reply =
+                new TaskCompletionSource<MpvClientMessageEventArgs>(TaskCreationOptions.RunContinuationsAsynchronously);
+            EventHandler<MpvClientMessageEventArgs> handler = delegate (object? sender, MpvClientMessageEventArgs e)
+            {
+                if (e.Arguments.Count > 0 && string.Equals(e.Arguments[0], "sample-pong", StringComparison.Ordinal))
+                {
+                    reply.TrySetResult(e);
+                }
+            };
+
+            player.ClientMessage += handler;
+            try
+            {
+                if (!_sampleLuaScriptLoaded)
+                {
+                    player.LoadScript(SampleRuntime.SampleLuaScriptPath);
+                    _sampleLuaScriptLoaded = true;
+                    Append("api", "已載入 Lua 指令碼：" + SampleRuntime.SampleLuaScriptPath);
+                }
+
+                MpvClientMessageEventArgs message = await WaitForLuaScriptReplyAsync(player, reply.Task).ConfigureAwait(false);
+                string detail = message.Arguments.Count > 1 ? message.Arguments[1] : "sample-pong";
+                Append("api", "Lua 指令碼已回覆：" + detail);
+            }
+            finally
+            {
+                player.ClientMessage -= handler;
+            }
+        }
+
+        /// <summary>
+        /// 等待範例 Lua 指令碼回覆。
+        /// </summary>
+        /// <param name="player">要送出指令碼訊息的播放器。</param>
+        /// <param name="replyTask">等待指令碼回覆的工作。</param>
+        /// <returns>代表 Lua 指令碼回覆的事件資料。</returns>
+        private static async Task<MpvClientMessageEventArgs> WaitForLuaScriptReplyAsync(MpvPlayer player, Task<MpvClientMessageEventArgs> replyTask)
+        {
+            using (CancellationTokenSource timeout = new CancellationTokenSource(TimeSpan.FromSeconds(4)))
+            {
+                while (!replyTask.IsCompleted && !timeout.IsCancellationRequested)
+                {
+                    player.SendScriptMessage("sample-ping", "Lua script 已載入");
+                    Task delayTask = Task.Delay(TimeSpan.FromMilliseconds(200), timeout.Token);
+                    Task completedTask = await Task.WhenAny(replyTask, delayTask).ConfigureAwait(false);
+                    if (completedTask == replyTask)
+                    {
+                        return await replyTask.ConfigureAwait(false);
+                    }
+                }
+            }
+
+            throw new TimeoutException("等待 Lua 指令碼回覆逾時。");
         }
 
         /// <summary>
@@ -473,6 +529,20 @@ namespace MediaEmbedKit.Mpv.Samples
             DisplayName = displayName ?? throw new ArgumentNullException(nameof(displayName));
             Preset = preset;
             Selector = MpvYtdlpFormatSelector.FromPreset(preset);
+            UsesPreset = true;
+        }
+
+        /// <summary>
+        /// 初始化 <see cref="SampleYtdlpFormatChoice"/> 類別的新執行個體。
+        /// </summary>
+        /// <param name="displayName">顯示在 UI 的名稱。</param>
+        /// <param name="selector">對應的 yt-dlp selector 字串。</param>
+        public SampleYtdlpFormatChoice(string displayName, string selector)
+        {
+            DisplayName = displayName ?? throw new ArgumentNullException(nameof(displayName));
+            Preset = MpvYtdlpFormatPreset.Default;
+            Selector = string.IsNullOrWhiteSpace(selector) ? throw new ArgumentException("yt-dlp selector 不可為空白。", nameof(selector)) : selector;
+            UsesPreset = false;
         }
 
         /// <summary>
@@ -492,6 +562,12 @@ namespace MediaEmbedKit.Mpv.Samples
         /// </summary>
         /// <value>yt-dlp selector 字串。</value>
         public string Selector { get; private set; }
+
+        /// <summary>
+        /// 取得格式選項是否直接對應到內建預設值。
+        /// </summary>
+        /// <value>格式選項使用內建預設值時為 <see langword="true"/>。</value>
+        public bool UsesPreset { get; private set; }
 
         /// <summary>
         /// 將格式選項轉成 UI 顯示文字。

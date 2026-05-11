@@ -120,7 +120,6 @@ namespace MediaEmbedKit.Mpv.Wpf
             _target.Unloaded += TargetUnloaded;
             _target.SizeChanged += TargetChanged;
             _target.IsVisibleChanged += TargetIsVisibleChanged;
-            _target.LayoutUpdated += TargetLayoutUpdated;
 
             AttachWindow(Window.GetWindow(_target));
         }
@@ -134,7 +133,6 @@ namespace MediaEmbedKit.Mpv.Wpf
             _target.Unloaded -= TargetUnloaded;
             _target.SizeChanged -= TargetChanged;
             _target.IsVisibleChanged -= TargetIsVisibleChanged;
-            _target.LayoutUpdated -= TargetLayoutUpdated;
             AttachWindow(null);
         }
 
@@ -179,19 +177,6 @@ namespace MediaEmbedKit.Mpv.Wpf
             if (!_target.IsVisible)
             {
                 Popup.IsOpen = false;
-            }
-        }
-
-        /// <summary>
-        /// 在目標元素版面配置更新時同步 Popup 邊界。
-        /// </summary>
-        /// <param name="sender">引發事件的物件。</param>
-        /// <param name="e">事件資料。</param>
-        private void TargetLayoutUpdated(object? sender, EventArgs e)
-        {
-            if (Popup.IsOpen)
-            {
-                RequestUpdateBounds();
             }
         }
 

@@ -17,7 +17,7 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
         /// <summary>
         /// 範例事件輸出的最大保留列數。
         /// </summary>
-        private const int EventLogLimit = 120;
+        private const int EventLogLimit = 60;
 
         /// <summary>
         /// 顯示 libmpv 視訊內容的 WinForms 控制項。
@@ -71,6 +71,18 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
         /// 批次轉送事件文字到 UI 執行緒的分派器。
         /// </summary>
         private readonly SampleEventLogDispatcher _eventLogDispatcher;
+        /// <summary>
+        /// 需要在 runtime 就緒後才可使用的功能按鈕清單。
+        /// </summary>
+        private readonly List<Button> _featureButtons = new List<Button>();
+        /// <summary>
+        /// 紀錄範例 runtime 是否已完成初始化。
+        /// </summary>
+        private bool _runtimeReady;
+        /// <summary>
+        /// 紀錄目前是否有非同步功能正在執行。
+        /// </summary>
+        private bool _asyncFeatureRunning;
 
         /// <summary>
         /// 初始化 <see cref="MainForm"/> 類別的新執行個體。
@@ -100,10 +112,10 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
 
             _player = new MpvPlayerControl
             {
-                Dock = DockStyle.Fill
+                Dock = DockStyle.Fill,
+                AutoInitialize = false
             };
             _player.PlayerCreated += PlayerCreated;
-            SampleRuntime.CopyTo(SampleRuntime.PlayerOptions, _player.PlayerOptions);
 
             _features = new SampleFeatureController(() => _currentPlayer, AppendEventLine);
             _formatComboBox = CreateFormatComboBox();
@@ -133,8 +145,9 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
             _statusDispatcher = new SampleStatusUpdateDispatcher(() => _features.GetStatusText(), SetStatusText, ScheduleUiUpdate);
 
             Controls.Add(CreateRootLayout());
+            SetPlaybackControlsEnabled(false);
             Shown += MainFormShown;
-            AppendEventLine(CreateLifecycleLine("FormCreated", "範例視窗已建立，等待 WinForms Handle 建立播放器。"));
+            AppendEventLine(CreateLifecycleLine("FormCreated", "範例視窗已建立，等待 runtime 初始化。"));
         }
 
         /// <summary>
@@ -163,11 +176,59 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
         /// <param name="e">事件資料。</param>
         private async void MainFormShown(object? sender, EventArgs e)
         {
-            AppendEventLine(CreateLifecycleLine("Shown", "視窗已顯示，準備載入預設媒體來源。"));
+            AppendEventLine(CreateLifecycleLine("Shown", "視窗已顯示，準備初始化範例 runtime。"));
+            bool initialized = await InitializeRuntimeAsync().ConfigureAwait(true);
+            if (!initialized)
+            {
+                return;
+            }
+
+            AppendEventLine(CreateLifecycleLine("Shown", "runtime 已完成，準備載入預設媒體來源。"));
             LoadCurrentSource();
-            if (SampleRuntime.IsSmokeTestEnabled)
+            if (SampleRuntime.IsFeatureSmokeTestEnabled)
+            {
+                await RunFeatureSmokeAsync().ConfigureAwait(true);
+            }
+            else if (SampleRuntime.IsSmokeTestEnabled)
             {
                 await RunSmokeAsync().ConfigureAwait(true);
+            }
+        }
+
+        /// <summary>
+        /// 非同步初始化範例 runtime 與播放器控制項。
+        /// </summary>
+        /// <returns>初始化成功時為 <see langword="true"/>。</returns>
+        private async Task<bool> InitializeRuntimeAsync()
+        {
+            SetStatusText("正在準備 runtime...");
+            try
+            {
+                await Task.Run(async () => await SampleRuntime.InstallOrUpdateAsync().ConfigureAwait(false)).ConfigureAwait(true);
+                SampleRuntime.CopyTo(SampleRuntime.PlayerOptions, _player.PlayerOptions);
+                ApplySelectedYtdlpFormatToPlayerOptions();
+                _player.InitializePlayer();
+                _runtimeReady = true;
+                SetPlaybackControlsEnabled(true);
+                SetStatusText("播放器已初始化");
+                AppendEventLine(CreateLifecycleLine("RuntimeReady", SampleRuntime.RuntimeDirectory));
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Environment.ExitCode = 1;
+                SetStatusText("runtime 初始化失敗");
+                AppendEventLine(CreateLifecycleLine("RuntimeError", ex.Message));
+                if (SampleRuntime.IsSmokeTestEnabled || SampleRuntime.IsFeatureSmokeTestEnabled)
+                {
+                    SampleRuntime.WriteSmokeLine("WinFormsSample", "FAILED Runtime: " + ex.Message);
+                    Close();
+                    await Task.Delay(1000).ConfigureAwait(true);
+                    Environment.Exit(Environment.ExitCode);
+                }
+
+                MessageBox.Show(this, ex.Message, "mpv runtime", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
             }
         }
 
@@ -178,6 +239,46 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
         private Task RunSmokeAsync()
         {
             return SampleRuntime.RunSmokeUntilPlaybackAsync("WinFormsSample", () => _player.Player, Close);
+        }
+
+        /// <summary>
+        /// 執行 WinForms 範例進階功能冒煙測試。
+        /// </summary>
+        /// <returns>代表冒煙測試流程的工作。</returns>
+        private async Task RunFeatureSmokeAsync()
+        {
+            try
+            {
+                await SampleRuntime.WaitForPlaybackAsync("WinFormsSample", () => _player.Player).ConfigureAwait(true);
+                _features.ShowOsd();
+                _features.SeekRelative(1);
+                _features.ChangeVolume(-5);
+                _features.ChangeVolume(5);
+                _features.ToggleMute();
+                _features.ToggleMute();
+                _features.CycleSpeed();
+                _features.CycleSpeed();
+                _features.CycleSpeed();
+                _features.AddSampleSubtitle();
+                _features.DumpTracks();
+                _features.LoadSampleConfig();
+                await _features.LoadSampleLuaScriptAsync().ConfigureAwait(true);
+                await _features.RunDenoDiagnosticsAsync().ConfigureAwait(true);
+                _features.TakeScreenshot();
+                Environment.ExitCode = 0;
+                SampleRuntime.WriteSmokeLine("WinFormsSample", "FEATURES OK");
+            }
+            catch (Exception ex)
+            {
+                Environment.ExitCode = 1;
+                SampleRuntime.WriteSmokeLine("WinFormsSample", "FAILED Features: " + ex.GetType().Name + ": " + ex.Message);
+            }
+            finally
+            {
+                Close();
+                await Task.Delay(1000).ConfigureAwait(true);
+                Environment.Exit(Environment.ExitCode);
+            }
         }
 
         /// <summary>
@@ -213,6 +314,11 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
         /// <param name="e">事件資料。</param>
         private void PauseButtonClick(object? sender, EventArgs e)
         {
+            if (!EnsureRuntimeReady())
+            {
+                return;
+            }
+
             if (_player.Player != null)
             {
                 _eventBridge?.WriteLifecycle("Pause", "切換播放器暫停狀態。");
@@ -227,6 +333,11 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
         /// <param name="e">事件資料。</param>
         private void StopButtonClick(object? sender, EventArgs e)
         {
+            if (!EnsureRuntimeReady())
+            {
+                return;
+            }
+
             _eventBridge?.WriteLifecycle("Stop", "停止目前播放項目。");
             _player.Player?.Stop();
         }
@@ -247,8 +358,8 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
 
             try
             {
-                SampleFeatureController.ApplyYtdlpFormat(_player.PlayerOptions, choice);
-                if (_player.Player != null)
+                ApplySelectedYtdlpFormatToPlayerOptions();
+                if (_runtimeReady && _player.Player != null)
                 {
                     _features.ApplyYtdlpFormat(choice);
                 }
@@ -264,6 +375,11 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
         /// </summary>
         private void LoadCurrentSource()
         {
+            if (!EnsureRuntimeReady())
+            {
+                return;
+            }
+
             try
             {
                 _eventBridge?.WriteLifecycle("LoadFile", _urlTextBox.Text);
@@ -354,7 +470,7 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
             panel.Controls.Add(CreateFeatureButton("Tracks", () => _features.DumpTracks()));
             panel.Controls.Add(CreateFeatureButton("Shot", () => _features.TakeScreenshot()));
             panel.Controls.Add(CreateFeatureButton("Config", () => _features.LoadSampleConfig()));
-            panel.Controls.Add(CreateFeatureButton("Lua", () => _features.LoadSampleLuaScript()));
+            panel.Controls.Add(CreateAsyncFeatureButton("Lua", () => _features.LoadSampleLuaScriptAsync()));
             panel.Controls.Add(CreateAsyncFeatureButton("yt-dlp", () => _features.RunYtdlpDiagnosticsAsync(_urlTextBox.Text)));
             panel.Controls.Add(CreateAsyncFeatureButton("Deno", () => _features.RunDenoDiagnosticsAsync()));
             panel.Controls.Add(CreateAsyncFeatureButton("Update yt", () => _features.RunYtdlpSelfUpdateAsync(), SampleRuntime.SampleYtdlpUpdateButtonWidth));
@@ -397,8 +513,8 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
             };
             panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
             panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
-            panel.Controls.Add(CreateHeaderBadge("控制項覆蓋層：同一 HWND 家族，可顯示", Color.FromArgb(0, 120, 212), new Padding(16, 6, 8, 6)), 0, 0);
-            panel.Controls.Add(CreateHeaderBadge("一般 WinForms Overlay 嘗試覆蓋同一個 HWND", Color.FromArgb(92, 45, 145), new Padding(8, 6, 16, 6)), 1, 0);
+            panel.Controls.Add(CreateHeaderBadge("WinForms HWND 播放區：控制項同層展示", Color.FromArgb(0, 120, 212), new Padding(16, 6, 8, 6)), 0, 0);
+            panel.Controls.Add(CreateHeaderBadge("WinForms Z-order 對照：一般 Label 覆蓋", Color.FromArgb(92, 45, 145), new Padding(8, 6, 16, 6)), 1, 0);
             return panel;
         }
 
@@ -417,7 +533,7 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
             Label overlayLabel = new Label
             {
                 AutoSize = false,
-                Text = "控制項覆蓋層：同一 HWND 家族",
+                Text = "WinForms HWND 控制項覆蓋",
                 TextAlign = ContentAlignment.MiddleCenter,
                 BackColor = Color.FromArgb(0, 120, 212),
                 ForeColor = Color.White,
@@ -430,7 +546,7 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
             Label normalOverlayLabel = new Label
             {
                 AutoSize = false,
-                Text = "一般 WinForms Overlay：同一播放區對照",
+                Text = "WinForms Label Z-order 對照",
                 TextAlign = ContentAlignment.MiddleCenter,
                 BackColor = Color.FromArgb(92, 45, 145),
                 ForeColor = Color.White,
@@ -462,7 +578,7 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
         }
 
         /// <summary>
-        /// 建立 AirSpace 對照區標題列。
+        /// 建立播放區對照標題列。
         /// </summary>
         /// <param name="text">要顯示的標籤文字。</param>
         /// <param name="backColor">標籤背景色彩。</param>
@@ -489,6 +605,11 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
         /// <param name="action">要執行的功能。</param>
         private void RunFeature(Action action)
         {
+            if (!EnsureRuntimeReady())
+            {
+                return;
+            }
+
             try
             {
                 action();
@@ -507,6 +628,11 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
         /// <returns>代表功能執行流程的工作。</returns>
         private async Task RunFeatureAsync(Func<Task> action)
         {
+            if (!TryBeginAsyncFeature())
+            {
+                return;
+            }
+
             try
             {
                 await action().ConfigureAwait(true);
@@ -516,6 +642,56 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
             {
                 AppendEventLine(CreateLifecycleLine("FeatureError", ex.Message));
             }
+            finally
+            {
+                EndAsyncFeature();
+            }
+        }
+
+        /// <summary>
+        /// 確認 runtime 已完成初始化。
+        /// </summary>
+        /// <returns>runtime 已就緒時為 <see langword="true"/>。</returns>
+        private bool EnsureRuntimeReady()
+        {
+            if (_runtimeReady)
+            {
+                return true;
+            }
+
+            AppendEventLine(CreateLifecycleLine("RuntimePending", "runtime 尚未初始化完成。"));
+            return false;
+        }
+
+        /// <summary>
+        /// 嘗試開始執行非同步功能。
+        /// </summary>
+        /// <returns>可執行非同步功能時為 <see langword="true"/>。</returns>
+        private bool TryBeginAsyncFeature()
+        {
+            if (!EnsureRuntimeReady())
+            {
+                return false;
+            }
+
+            if (_asyncFeatureRunning)
+            {
+                AppendEventLine(CreateLifecycleLine("FeatureBusy", "已有非同步功能正在執行。"));
+                return false;
+            }
+
+            _asyncFeatureRunning = true;
+            SetFeatureButtonsEnabled(false);
+            return true;
+        }
+
+        /// <summary>
+        /// 結束非同步功能執行狀態。
+        /// </summary>
+        private void EndAsyncFeature()
+        {
+            _asyncFeatureRunning = false;
+            SetFeatureButtonsEnabled(_runtimeReady);
         }
 
         /// <summary>
@@ -604,6 +780,43 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
         }
 
         /// <summary>
+        /// 設定播放與功能控制項是否可操作。
+        /// </summary>
+        /// <param name="enabled">控制項可操作時為 <see langword="true"/>。</param>
+        private void SetPlaybackControlsEnabled(bool enabled)
+        {
+            SetButtonEnabled(_loadButton, enabled);
+            SetButtonEnabled(_pauseButton, enabled);
+            SetButtonEnabled(_stopButton, enabled);
+            _formatComboBox.Enabled = enabled;
+            SetFeatureButtonsEnabled(enabled && !_asyncFeatureRunning);
+        }
+
+        /// <summary>
+        /// 設定進階功能按鈕是否可操作。
+        /// </summary>
+        /// <param name="enabled">按鈕可操作時為 <see langword="true"/>。</param>
+        private void SetFeatureButtonsEnabled(bool enabled)
+        {
+            foreach (Button button in _featureButtons)
+            {
+                SetButtonEnabled(button, enabled);
+            }
+        }
+
+        /// <summary>
+        /// 將目前選擇的 yt-dlp 格式套用到播放器選項。
+        /// </summary>
+        private void ApplySelectedYtdlpFormatToPlayerOptions()
+        {
+            SampleYtdlpFormatChoice? selectedChoice = _formatComboBox.SelectedItem as SampleYtdlpFormatChoice;
+            if (selectedChoice != null)
+            {
+                SampleFeatureController.ApplyYtdlpFormat(_player.PlayerOptions, selectedChoice);
+            }
+        }
+
+        /// <summary>
         /// 套用背景輪詢取得的狀態列文字。
         /// </summary>
         /// <param name="text">要顯示的狀態列文字。</param>
@@ -641,12 +854,18 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
             };
 
             IReadOnlyList<SampleYtdlpFormatChoice> choices = SampleFeatureController.CreateYtdlpFormatChoices();
+            SampleYtdlpFormatChoice defaultChoice = SampleFeatureController.CreateDefaultYtdlpFormatChoice();
+            int selectedIndex = 0;
             foreach (SampleYtdlpFormatChoice choice in choices)
             {
                 comboBox.Items.Add(choice);
+                if (string.Equals(choice.Selector, defaultChoice.Selector, StringComparison.Ordinal))
+                {
+                    selectedIndex = comboBox.Items.Count - 1;
+                }
             }
 
-            comboBox.SelectedIndex = 3;
+            comboBox.SelectedIndex = selectedIndex;
             if (comboBox.SelectedItem is SampleYtdlpFormatChoice selectedChoice)
             {
                 SampleFeatureController.ApplyYtdlpFormat(_player.PlayerOptions, selectedChoice);
@@ -708,7 +927,7 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
         /// <param name="text">按鈕文字。</param>
         /// <param name="width">按鈕寬度。</param>
         /// <returns>已套用共用外觀的按鈕。</returns>
-        private static Button CreateFeatureButtonCore(string text, int width)
+        private Button CreateFeatureButtonCore(string text, int width)
         {
             Button button = new Button
             {
@@ -718,6 +937,7 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
                 Margin = new Padding(0, 0, SampleRuntime.SampleControlSpacing, 4)
             };
             ApplyButtonStyle(button);
+            _featureButtons.Add(button);
             return button;
         }
 
@@ -733,6 +953,18 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
             button.ForeColor = Color.White;
             button.FlatAppearance.BorderColor = Color.FromArgb(224, 224, 224);
             button.FlatAppearance.BorderSize = 1;
+        }
+
+        /// <summary>
+        /// 設定按鈕可用狀態並維持深色介面的可讀性。
+        /// </summary>
+        /// <param name="button">要設定的按鈕。</param>
+        /// <param name="enabled">按鈕可操作時為 <see langword="true"/>。</param>
+        private static void SetButtonEnabled(Button button, bool enabled)
+        {
+            button.Enabled = enabled;
+            button.BackColor = enabled ? Color.FromArgb(48, 48, 48) : Color.FromArgb(96, 96, 96);
+            button.ForeColor = Color.White;
         }
     }
 }

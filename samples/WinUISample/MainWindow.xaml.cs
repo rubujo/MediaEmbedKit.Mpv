@@ -24,7 +24,7 @@ namespace MediaEmbedKit.Mpv.Samples.WinUI
         /// <summary>
         /// 範例事件輸出的最大保留列數。
         /// </summary>
-        private const int EventLogLimit = 120;
+        private const int EventLogLimit = 60;
 
         /// <summary>
         /// 顯示在 UI 的事件文字列集合。
@@ -364,9 +364,9 @@ namespace MediaEmbedKit.Mpv.Samples.WinUI
         /// </summary>
         /// <param name="sender">引發事件的物件。</param>
         /// <param name="e">事件資料。</param>
-        private void OnLuaClicked(object sender, RoutedEventArgs e)
+        private async void OnLuaClicked(object sender, RoutedEventArgs e)
         {
-            RunFeature(() => _features.LoadSampleLuaScript());
+            await RunFeatureAsync(() => _features.LoadSampleLuaScriptAsync()).ConfigureAwait(true);
         }
 
         /// <summary>
@@ -525,7 +525,7 @@ namespace MediaEmbedKit.Mpv.Samples.WinUI
             {
                 SampleYtdlpFormatChoice choice = choices[index];
                 FormatComboBox.Items.Add(choice);
-                if (choice.Preset == defaultChoice.Preset)
+                if (string.Equals(choice.Selector, defaultChoice.Selector, StringComparison.Ordinal))
                 {
                     selectedIndex = index;
                 }

@@ -87,6 +87,10 @@ namespace MediaEmbedKit.Mpv.Samples
         /// </summary>
         private const string SmokeTestMinimumSecondsEnvironmentVariable = "MEDIAEMBEDKIT_MPV_SAMPLE_SMOKE_SECONDS";
         /// <summary>
+        /// 啟用範例功能冒煙測試的環境變數名稱。
+        /// </summary>
+        private const string FeatureSmokeTestEnvironmentVariable = "MEDIAEMBEDKIT_MPV_SAMPLE_FEATURE_SMOKE";
+        /// <summary>
         /// 指定範例共用 runtime 資料夾的環境變數名稱。
         /// </summary>
         private const string RuntimeDirectoryEnvironmentVariable = "MEDIAEMBEDKIT_MPV_RUNTIME_DIR";
@@ -105,7 +109,7 @@ namespace MediaEmbedKit.Mpv.Samples
         /// <summary>
         /// 範例播放時使用的 yt-dlp 格式選擇。
         /// </summary>
-        private const string PlaybackYtdlpFormat = "bestvideo[height<=720]+bestaudio/best[height<=720]/best";
+        internal const string SmoothPlaybackYtdlpFormat = "bestvideo[vcodec^=avc1][height<=720][ext=mp4]+bestaudio[acodec^=mp4a][ext=m4a]/best[height<=720][vcodec^=avc1][ext=mp4]/best[height<=720][ext=mp4]/best[height<=720]/best";
         /// <summary>
         /// 範例 Lua 指令碼的檔案名稱。
         /// </summary>
@@ -235,6 +239,21 @@ namespace MediaEmbedKit.Mpv.Samples
         }
 
         /// <summary>
+        /// 取得目前是否啟用範例功能冒煙測試。
+        /// </summary>
+        /// <value>環境變數設定為 <c>1</c> 時為 <see langword="true"/>。</value>
+        internal static bool IsFeatureSmokeTestEnabled
+        {
+            get
+            {
+                return string.Equals(
+                    Environment.GetEnvironmentVariable(FeatureSmokeTestEnvironmentVariable),
+                    "1",
+                    StringComparison.OrdinalIgnoreCase);
+            }
+        }
+
+        /// <summary>
         /// 安裝或更新範例需要的原生執行階段與外部工具。
         /// </summary>
         /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
@@ -327,7 +346,9 @@ namespace MediaEmbedKit.Mpv.Samples
         private static void ConfigurePlayerOptions(string runtimeDirectory)
         {
             _playerOptions = MpvRuntimeInstaller.CreatePlayerOptions(runtimeDirectory);
-            _playerOptions.InitialOptions["ytdl-format"] = PlaybackYtdlpFormat;
+            _playerOptions.YtdlpFormat = SmoothPlaybackYtdlpFormat;
+            _playerOptions.InitialOptions["ytdl-format"] = SmoothPlaybackYtdlpFormat;
+            _playerOptions.InitialOptions["hwdec"] = "auto-safe";
             _playerOptions.InitialOptions["panscan"] = "1.0";
             _playerOptions.InitialOptions["keepaspect"] = "no";
         }
@@ -415,6 +436,7 @@ namespace MediaEmbedKit.Mpv.Samples
             return "local mp = require 'mp'" + Environment.NewLine
                 + "mp.register_script_message('sample-ping', function(text)" + Environment.NewLine
                 + "    mp.osd_message('MediaEmbedKit.Mpv Lua: ' .. (text or ''), 2)" + Environment.NewLine
+                + "    mp.commandv('script-message', 'sample-pong', text or '')" + Environment.NewLine
                 + "end)" + Environment.NewLine;
         }
 
@@ -469,7 +491,7 @@ namespace MediaEmbedKit.Mpv.Samples
         /// <param name="sampleName">正在測試的範例名稱。</param>
         /// <param name="getPlayer">取得目前播放器執行個體的委派。</param>
         /// <returns>代表等待播放狀態的工作。</returns>
-        private static async Task WaitForPlaybackAsync(string sampleName, Func<MpvPlayer?> getPlayer)
+        internal static async Task WaitForPlaybackAsync(string sampleName, Func<MpvPlayer?> getPlayer)
         {
             DateTimeOffset deadline = DateTimeOffset.UtcNow.AddSeconds(SmokeTimeoutSeconds);
             Exception? lastException = null;
@@ -574,7 +596,7 @@ namespace MediaEmbedKit.Mpv.Samples
         /// </summary>
         /// <param name="sampleName">正在測試的範例名稱。</param>
         /// <param name="message">要輸出的測試訊息。</param>
-        private static void WriteSmokeLine(string sampleName, string message)
+        internal static void WriteSmokeLine(string sampleName, string message)
         {
             string line = "[sample-smoke] " + sampleName + " " + message;
             Console.WriteLine(line);
