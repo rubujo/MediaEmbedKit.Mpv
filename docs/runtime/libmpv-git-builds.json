@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "lastCheckedDate": "2026-05-09",
+  "lastCheckedDate": "2026-05-12",
   "stableBaseline": {
     "mpvTag": "v0.41.0",
     "clientApiVersion": "2.5",
@@ -21,21 +21,20 @@
       "mpvCommit": "5921fe5",
       "sourceKind": "git-build",
       "cApiStatus": "header-compatible",
-      "managedAction": "CommandNamed 針對 mpv_command_node 具名命令 map 使用 _name。",
-      "notes": "client.h 的具名命令 map 與 wait_async_requests 註解有變更；已追蹤 header 未偵測到公開 P/Invoke 簽章變更。"
+      "managedAction": "CommandNamed 針對 mpv_command_node 具名命令 map 使用 _name；本次無需新增 P/Invoke。",
+      "notes": "client.h 的具名命令 map 與 wait_async_requests 註解相對 v0.41.0 有變更；render.h、render_gl.h 與 stream_cb.h 未變更。"
     },
     {
       "name": "Zhongfly",
       "repository": "zhongfly/mpv-winbuild",
-      "releaseTag": "2026-05-08-e0eb42c303",
-      "releaseUrl": "https://github.com/zhongfly/mpv-winbuild/releases/tag/2026-05-08-e0eb42c303",
-      "publishedAt": "2026-05-08T16:32:38Z",
-      "mpvCommit": "e0eb42c303",
+      "releaseTag": "2026-05-11-7732c305a5",
+      "releaseUrl": "https://github.com/zhongfly/mpv-winbuild/releases/tag/2026-05-11-7732c305a5",
+      "publishedAt": "2026-05-11T23:17:52Z",
+      "mpvCommit": "7732c305a5",
       "sourceKind": "git-build",
       "cApiStatus": "header-compatible",
-      "managedAction": "CommandNamed 針對 mpv_command_node 具名命令 map 使用 _name。",
-      "notes": "已追蹤公開 header 的 C API 形狀與 shinchiro mpv commit 相容；未偵測到公開 P/Invoke 簽章變更。"
+      "managedAction": "CommandNamed 針對 mpv_command_node 具名命令 map 使用 _name；本次無需新增 P/Invoke。",
+      "notes": "已追蹤最新 provider release；公開 header 形狀與 shinchiro mpv commit 相同，未偵測到 P/Invoke 簽章、列舉、旗標或資料結構變更。"
     }
   ]
 }
-
