@@ -358,8 +358,17 @@ namespace MediaEmbedKit.Mpv.WinUI
                 throw new InvalidOperationException("無法建立提供 libmpv 使用的 WinUI 原生子視窗。");
             }
 
-            UpdateVideoWindowBounds();
-            EnsureOverlayWindow();
+            try
+            {
+                UpdateVideoWindowBounds();
+                EnsureOverlayWindow();
+            }
+            catch
+            {
+                DestroyOverlayWindow();
+                DestroyVideoWindow();
+                throw;
+            }
         }
 
         /// <summary>
@@ -378,12 +387,22 @@ namespace MediaEmbedKit.Mpv.WinUI
                 return;
             }
 
-            _player = new MpvPlayer(PlayerOptions);
-            _player.SetVideoWindow(_videoHwnd);
-            _player.Initialize();
+            MpvPlayer player = new MpvPlayer(PlayerOptions);
+            try
+            {
+                player.SetVideoWindow(_videoHwnd);
+                player.Initialize();
+                _player = player;
+            }
+            catch
+            {
+                player.Dispose();
+                throw;
+            }
+
             PlayerCreated?.Invoke(this, EventArgs.Empty);
 
-            if (!string.IsNullOrWhiteSpace(_pendingSource))
+            if (_player != null && !string.IsNullOrWhiteSpace(_pendingSource))
             {
                 _player.LoadFile(_pendingSource!, _pendingMode);
             }
@@ -519,33 +538,39 @@ namespace MediaEmbedKit.Mpv.WinUI
             }
 
             CaptureOverlayContentMargin(OverlayContent);
-            _overlaySource = new DesktopWindowXamlSource();
-            _overlayHostHwnd = NativeMethods.CreateWindowEx(
-                0,
-                "STATIC",
-                string.Empty,
-                NativeMethods.WS_CHILD | NativeMethods.WS_VISIBLE | NativeMethods.WS_CLIPSIBLINGS | NativeMethods.WS_CLIPCHILDREN,
-                0,
-                0,
-                1,
-                1,
-                _parentHwnd,
-                IntPtr.Zero,
-                IntPtr.Zero,
-                IntPtr.Zero);
-
-            if (_overlayHostHwnd == IntPtr.Zero)
+            try
             {
-                _overlaySource.Dispose();
-                _overlaySource = null;
-                throw new InvalidOperationException("無法建立 WinUI 覆蓋層子視窗。");
-            }
+                _overlaySource = new DesktopWindowXamlSource();
+                _overlayHostHwnd = NativeMethods.CreateWindowEx(
+                    0,
+                    "STATIC",
+                    string.Empty,
+                    NativeMethods.WS_CHILD | NativeMethods.WS_VISIBLE | NativeMethods.WS_CLIPSIBLINGS | NativeMethods.WS_CLIPCHILDREN,
+                    0,
+                    0,
+                    1,
+                    1,
+                    _parentHwnd,
+                    IntPtr.Zero,
+                    IntPtr.Zero,
+                    IntPtr.Zero);
 
-            WindowId overlayWindowId = Win32Interop.GetWindowIdFromWindow(_overlayHostHwnd);
-            _overlaySource.Initialize(overlayWindowId);
-            _overlaySource.Content = OverlayContent;
-            _overlayHwnd = Win32Interop.GetWindowFromWindowId(_overlaySource.SiteBridge.WindowId);
-            UpdateOverlayWindowBounds();
+                if (_overlayHostHwnd == IntPtr.Zero)
+                {
+                    throw new InvalidOperationException("無法建立 WinUI 覆蓋層子視窗。");
+                }
+
+                WindowId overlayWindowId = Win32Interop.GetWindowIdFromWindow(_overlayHostHwnd);
+                _overlaySource.Initialize(overlayWindowId);
+                _overlaySource.Content = OverlayContent;
+                _overlayHwnd = Win32Interop.GetWindowFromWindowId(_overlaySource.SiteBridge.WindowId);
+                UpdateOverlayWindowBounds();
+            }
+            catch
+            {
+                DestroyOverlayWindow();
+                throw;
+            }
         }
 
         /// <summary>

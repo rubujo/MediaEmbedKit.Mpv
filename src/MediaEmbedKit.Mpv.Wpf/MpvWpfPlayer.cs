@@ -109,7 +109,13 @@ namespace MediaEmbedKit.Mpv.Wpf
             }
 
             EnsurePlayer();
-            _player!.LoadFile(pathOrUrl, mode);
+            MpvPlayer? player = _player;
+            if (player == null)
+            {
+                throw new InvalidOperationException("播放器尚未建立。");
+            }
+
+            player.LoadFile(pathOrUrl, mode);
         }
 
         /// <summary>
@@ -147,7 +153,16 @@ namespace MediaEmbedKit.Mpv.Wpf
 
             if (!isInDesignMode)
             {
-                EnsurePlayer();
+                try
+                {
+                    EnsurePlayer();
+                }
+                catch
+                {
+                    NativeMethods.DestroyWindow(_hwnd);
+                    _hwnd = IntPtr.Zero;
+                    throw;
+                }
             }
 
             return new HandleRef(this, _hwnd);
@@ -326,9 +341,19 @@ namespace MediaEmbedKit.Mpv.Wpf
                 throw new InvalidOperationException("The WPF host window has not been created yet.");
             }
 
-            _player = new MpvPlayer(PlayerOptions);
-            _player.SetVideoWindow(_hwnd);
-            _player.Initialize();
+            MpvPlayer player = new MpvPlayer(PlayerOptions);
+            try
+            {
+                player.SetVideoWindow(_hwnd);
+                player.Initialize();
+                _player = player;
+            }
+            catch
+            {
+                player.Dispose();
+                throw;
+            }
+
             PlayerCreated?.Invoke(this, EventArgs.Empty);
         }
 

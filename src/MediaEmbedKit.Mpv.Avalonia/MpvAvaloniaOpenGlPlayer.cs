@@ -207,17 +207,41 @@ namespace MediaEmbedKit.Mpv.Avalonia
                 return;
             }
 
-            _player = new MpvPlayer(PlayerOptions);
-            _player.SetOptionString("vo", "libmpv");
-            _player.Initialize();
+            MpvPlayer? player = null;
+            MpvOpenGlRenderContext? renderContext = null;
+            try
+            {
+                player = new MpvPlayer(PlayerOptions);
+                player.SetOptionString("vo", "libmpv");
+                player.Initialize();
 
-            MpvOpenGlRenderContextOptions options = new MpvOpenGlRenderContextOptions(gl.GetProcAddress);
-            _renderContext = _player.CreateOpenGlRenderContext(options);
-            _renderContext.UpdateAvailable += RenderContextUpdateAvailable;
+                MpvOpenGlRenderContextOptions options = new MpvOpenGlRenderContextOptions(gl.GetProcAddress);
+                renderContext = player.CreateOpenGlRenderContext(options);
+                renderContext.UpdateAvailable += RenderContextUpdateAvailable;
+
+                _player = player;
+                _renderContext = renderContext;
+                player = null;
+                renderContext = null;
+            }
+            catch
+            {
+                if (renderContext != null)
+                {
+                    renderContext.Dispose();
+                }
+
+                if (player != null)
+                {
+                    player.Dispose();
+                }
+
+                throw;
+            }
 
             PlayerCreated?.Invoke(this, EventArgs.Empty);
 
-            if (!string.IsNullOrWhiteSpace(_pendingSource))
+            if (_player != null && !string.IsNullOrWhiteSpace(_pendingSource))
             {
                 _player.LoadFile(_pendingSource!, _pendingMode);
             }

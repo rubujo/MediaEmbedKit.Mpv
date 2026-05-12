@@ -88,7 +88,13 @@ namespace MediaEmbedKit.Mpv.WinForms
             }
 
             InitializePlayer();
-            _player!.LoadFile(pathOrUrl, mode);
+            MpvPlayer? player = _player;
+            if (player == null)
+            {
+                throw new InvalidOperationException("播放器尚未建立。");
+            }
+
+            player.LoadFile(pathOrUrl, mode);
         }
 
         /// <summary>
@@ -110,10 +116,7 @@ namespace MediaEmbedKit.Mpv.WinForms
         /// <param name="e">事件資料。</param>
         protected override void OnHandleDestroyed(EventArgs e)
         {
-            if (!RecreatingHandle)
-            {
-                DisposePlayer();
-            }
+            DisposePlayer();
 
             base.OnHandleDestroyed(e);
         }
@@ -173,9 +176,19 @@ namespace MediaEmbedKit.Mpv.WinForms
                 CreateControl();
             }
 
-            _player = new MpvPlayer(PlayerOptions);
-            _player.SetVideoWindow(Handle);
-            _player.Initialize();
+            MpvPlayer player = new MpvPlayer(PlayerOptions);
+            try
+            {
+                player.SetVideoWindow(Handle);
+                player.Initialize();
+                _player = player;
+            }
+            catch
+            {
+                player.Dispose();
+                throw;
+            }
+
             PlayerCreated?.Invoke(this, EventArgs.Empty);
         }
 
