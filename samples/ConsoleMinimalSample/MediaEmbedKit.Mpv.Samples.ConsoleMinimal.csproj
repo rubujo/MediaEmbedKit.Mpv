@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>MediaEmbedKit.Mpv.Samples.ConsoleMinimal</AssemblyName>
+    <RootNamespace>MediaEmbedKit.Mpv.Samples.ConsoleMinimal</RootNamespace>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\SampleRuntime.cs" Link="SampleRuntime.cs" />
+    <ProjectReference Include="..\..\src\MediaEmbedKit.Mpv\MediaEmbedKit.Mpv.csproj" />
+  </ItemGroup>
+</Project>

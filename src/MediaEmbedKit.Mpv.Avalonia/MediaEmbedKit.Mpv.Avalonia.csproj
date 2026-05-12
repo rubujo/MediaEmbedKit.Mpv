@@ -3,7 +3,7 @@
     <TargetFrameworks>net8.0-windows;net10.0-windows</TargetFrameworks>
     <AssemblyName>MediaEmbedKit.Mpv.Avalonia</AssemblyName>
     <RootNamespace>MediaEmbedKit.Mpv.Avalonia</RootNamespace>
-    <Description>Avalonia native-host control for MediaEmbedKit.Mpv.</Description>
+    <Description>Windows x64 Avalonia OpenGL render API control for MediaEmbedKit.Mpv.</Description>
     <PackageId>MediaEmbedKit.Mpv.Avalonia</PackageId>
     <Title>MediaEmbedKit.Mpv.Avalonia</Title>
   </PropertyGroup>

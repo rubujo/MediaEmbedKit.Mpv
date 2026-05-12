@@ -4,9 +4,11 @@ using System.Globalization;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using System.Windows.Threading;
 using MediaEmbedKit.Mpv;
 using MediaEmbedKit.Mpv.Samples;
+using MediaEmbedKit.Mpv.Wpf;
 
 namespace MediaEmbedKit.Mpv.Samples.Wpf
 {
@@ -20,6 +22,14 @@ namespace MediaEmbedKit.Mpv.Samples.Wpf
         /// </summary>
         private const int EventLogLimit = 60;
 
+        /// <summary>
+        /// 背景 runtime 初始化完成後建立的 WPF 播放控制項。
+        /// </summary>
+        private MpvWpfPlayer? _playerHost;
+        /// <summary>
+        /// 需要在 runtime 就緒後才可使用的控制項清單。
+        /// </summary>
+        private readonly List<Control> _runtimeControls = new List<Control>();
         /// <summary>
         /// 範例進階功能控制器。
         /// </summary>
@@ -48,6 +58,14 @@ namespace MediaEmbedKit.Mpv.Samples.Wpf
         /// 控制非同步範例功能不可重入的閘門。
         /// </summary>
         private readonly SampleAsyncFeatureGate _asyncFeatureGate = new SampleAsyncFeatureGate();
+        /// <summary>
+        /// 紀錄範例 runtime 是否已完成初始化。
+        /// </summary>
+        private bool _runtimeReady;
+        /// <summary>
+        /// 表示冒煙測試是否已啟動。
+        /// </summary>
+        private bool _smokeStarted;
 
         /// <summary>
         /// 初始化 <see cref="MainWindow"/> 類別的新執行個體。
@@ -56,14 +74,14 @@ namespace MediaEmbedKit.Mpv.Samples.Wpf
         {
             InitializeComponent();
             UrlTextBox.Text = SampleRuntime.PlaybackUrl;
-            SampleRuntime.CopyTo(SampleRuntime.PlayerOptions, PlayerHost.PlayerOptions);
             _features = new SampleFeatureController(() => _currentPlayer, AppendEventLine);
             ConfigureFormatComboBox();
             _eventLogDispatcher = new SampleEventLogDispatcher(AppendEventLines, ScheduleEventLogFlush);
             _statusDispatcher = new SampleStatusUpdateDispatcher(() => _features.GetStatusText(), SetStatusText, ScheduleUiUpdate);
-            PlayerHost.PlayerCreated += PlayerCreated;
+            RegisterRuntimeControls(this);
+            SetRuntimeControlsEnabled(false);
             Loaded += WindowLoaded;
-            AppendEventLine(CreateLifecycleLine("WindowCreated", "WPF 視窗已建立，等待 HwndHost 建立播放器。"));
+            AppendEventLine(CreateLifecycleLine("WindowCreated", "WPF 視窗已建立，等待 runtime 初始化。"));
         }
 
         /// <summary>
@@ -76,7 +94,11 @@ namespace MediaEmbedKit.Mpv.Samples.Wpf
             _eventBridge?.WriteLifecycle("WindowClosed", "視窗已關閉，準備取消事件訂閱。");
             _eventBridge?.Dispose();
             _eventLogDispatcher.Dispose();
-            PlayerHost.PlayerCreated -= PlayerCreated;
+            if (_playerHost != null)
+            {
+                _playerHost.PlayerCreated -= PlayerCreated;
+            }
+
             _currentPlayer = null;
             base.OnClosed(e);
         }
@@ -90,10 +112,21 @@ namespace MediaEmbedKit.Mpv.Samples.Wpf
         {
             try
             {
-                AppendEventLine(CreateLifecycleLine("Loaded", "視窗已載入，準備載入預設媒體來源。"));
-                LoadCurrentSource();
-                if (SampleRuntime.IsSmokeTestEnabled)
+                _runtimeControls.Clear();
+                RegisterRuntimeControls(this);
+                SetRuntimeControlsEnabled(false);
+                AppendEventLine(CreateLifecycleLine("Loaded", "視窗已載入，準備初始化範例 runtime。"));
+                bool initialized = await InitializeRuntimeAsync().ConfigureAwait(true);
+                if (!initialized)
                 {
+                    return;
+                }
+
+                AppendEventLine(CreateLifecycleLine("Loaded", "runtime 已完成，準備載入預設媒體來源。"));
+                LoadCurrentSource();
+                if (SampleRuntime.IsSmokeTestEnabled && !_smokeStarted)
+                {
+                    _smokeStarted = true;
                     await RunSmokeAsync().ConfigureAwait(true);
                 }
             }
@@ -105,12 +138,100 @@ namespace MediaEmbedKit.Mpv.Samples.Wpf
         }
 
         /// <summary>
+        /// 非同步初始化範例 runtime 與 WPF 播放控制項。
+        /// </summary>
+        /// <returns>初始化成功時為 <see langword="true"/>。</returns>
+        private async Task<bool> InitializeRuntimeAsync()
+        {
+            SetStatusText("正在準備 runtime...");
+            try
+            {
+                await Task.Run(async () => await SampleRuntime.InstallOrUpdateAsync().ConfigureAwait(false)).ConfigureAwait(true);
+                CreatePlayerHost();
+                _runtimeReady = true;
+                SetRuntimeControlsEnabled(true);
+                SetStatusText("播放器已初始化");
+                AppendEventLine(CreateLifecycleLine("RuntimeReady", SampleRuntime.RuntimeDirectory));
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Environment.ExitCode = 1;
+                SetStatusText("runtime 初始化失敗");
+                AppendEventLine(CreateLifecycleLine("RuntimeError", ex.Message));
+                if (SampleRuntime.IsSmokeTestEnabled)
+                {
+                    SampleRuntime.WriteSmokeLine("WpfSample", "FAILED Runtime: " + ex.Message);
+                    Close();
+                    return false;
+                }
+
+                MessageBox.Show(this, ex.Message, "mpv runtime", MessageBoxButton.OK, MessageBoxImage.Error);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 建立 runtime 就緒後才可初始化的 WPF 播放控制項。
+        /// </summary>
+        private void CreatePlayerHost()
+        {
+            if (_playerHost != null)
+            {
+                return;
+            }
+
+            MpvWpfPlayer playerHost = new MpvWpfPlayer
+            {
+                OverlayContent = CreateSafeOverlayContent(),
+                IsOverlayOpen = true
+            };
+            SampleRuntime.CopyTo(SampleRuntime.PlayerOptions, playerHost.PlayerOptions);
+            ApplySelectedYtdlpFormatToPlayerOptions(playerHost.PlayerOptions);
+            playerHost.PlayerCreated += PlayerCreated;
+            PlayerHostContainer.Children.Add(playerHost);
+            _playerHost = playerHost;
+        }
+
+        /// <summary>
+        /// 建立由 `MpvWpfPlayer` 管理的 AirSpace 安全覆蓋層。
+        /// </summary>
+        /// <returns>可交給 WPF 播放控制項管理的覆蓋層元素。</returns>
+        private static UIElement CreateSafeOverlayContent()
+        {
+            Grid root = new Grid
+            {
+                IsHitTestVisible = false
+            };
+            Border badge = new Border
+            {
+                Width = SampleRuntime.SampleOverlayBadgeWidth,
+                Height = SampleRuntime.SampleOverlayBadgeHeight,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                VerticalAlignment = VerticalAlignment.Top,
+                Margin = new Thickness(16),
+                Background = new SolidColorBrush(Color.FromArgb(221, 0, 120, 212)),
+                CornerRadius = new CornerRadius(4)
+            };
+            badge.Child = new TextBlock
+            {
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                Foreground = Brushes.White,
+                FontWeight = FontWeights.SemiBold,
+                Text = "OverlayContent：AirSpace 安全覆蓋層"
+            };
+            root.Children.Add(badge);
+            return root;
+        }
+
+        /// <summary>
         /// 執行 WPF 範例播放冒煙測試。
         /// </summary>
         /// <returns>代表冒煙測試流程的工作。</returns>
         private Task RunSmokeAsync()
         {
-            return SampleRuntime.RunSmokeUntilPlaybackAsync("WpfSample", () => PlayerHost.Player, Close);
+            return SampleRuntime.RunSmokeUntilPlaybackAsync("WpfSample", () => _playerHost?.Player, Close);
         }
 
         /// <summary>
@@ -121,10 +242,10 @@ namespace MediaEmbedKit.Mpv.Samples.Wpf
         private void PlayerCreated(object? sender, EventArgs e)
         {
             _eventBridge?.Dispose();
-            if (PlayerHost.Player != null)
+            if (_playerHost?.Player != null)
             {
-                _currentPlayer = PlayerHost.Player;
-                _eventBridge = new SamplePlayerEventBridge(PlayerHost.Player, AppendEventLine);
+                _currentPlayer = _playerHost.Player;
+                _eventBridge = new SamplePlayerEventBridge(_playerHost.Player, AppendEventLine);
                 _statusDispatcher.RequestUpdate();
             }
         }
@@ -144,6 +265,11 @@ namespace MediaEmbedKit.Mpv.Samples.Wpf
         /// </summary>
         private void LoadCurrentSource()
         {
+            if (!EnsureRuntimeReady())
+            {
+                return;
+            }
+
             if (string.IsNullOrWhiteSpace(UrlTextBox.Text))
             {
                 AppendEventLine(CreateLifecycleLine("LoadFileSkipped", "媒體來源不可為空白。"));
@@ -153,7 +279,7 @@ namespace MediaEmbedKit.Mpv.Samples.Wpf
             try
             {
                 _eventBridge?.WriteLifecycle("LoadFile", UrlTextBox.Text);
-                PlayerHost.LoadFile(UrlTextBox.Text, MpvLoadFileMode.Replace);
+                _playerHost?.LoadFile(UrlTextBox.Text, MpvLoadFileMode.Replace);
             }
             catch (Exception ex)
             {
@@ -169,10 +295,15 @@ namespace MediaEmbedKit.Mpv.Samples.Wpf
         /// <param name="e">事件資料。</param>
         private void PauseClick(object sender, RoutedEventArgs e)
         {
-            if (PlayerHost.Player != null)
+            if (!EnsureRuntimeReady())
+            {
+                return;
+            }
+
+            if (_playerHost?.Player != null)
             {
                 _eventBridge?.WriteLifecycle("Pause", "切換播放器暫停狀態。");
-                PlayerHost.Player.Pause = !PlayerHost.Player.Pause;
+                _playerHost.Player.Pause = !_playerHost.Player.Pause;
             }
         }
 
@@ -183,8 +314,13 @@ namespace MediaEmbedKit.Mpv.Samples.Wpf
         /// <param name="e">事件資料。</param>
         private void StopClick(object sender, RoutedEventArgs e)
         {
+            if (!EnsureRuntimeReady())
+            {
+                return;
+            }
+
             _eventBridge?.WriteLifecycle("Stop", "停止目前播放項目。");
-            PlayerHost.Player?.Stop();
+            _playerHost?.Player?.Stop();
         }
 
         /// <summary>
@@ -202,8 +338,12 @@ namespace MediaEmbedKit.Mpv.Samples.Wpf
 
             try
             {
-                SampleFeatureController.ApplyYtdlpFormat(PlayerHost.PlayerOptions, choice);
-                if (PlayerHost.Player != null)
+                if (_playerHost != null)
+                {
+                    SampleFeatureController.ApplyYtdlpFormat(_playerHost.PlayerOptions, choice);
+                }
+
+                if (_playerHost?.Player != null)
                 {
                     _features.ApplyYtdlpFormat(choice);
                 }
@@ -380,6 +520,11 @@ namespace MediaEmbedKit.Mpv.Samples.Wpf
         /// <param name="action">要執行的功能。</param>
         private void RunFeature(Action action)
         {
+            if (!EnsureRuntimeReady())
+            {
+                return;
+            }
+
             try
             {
                 action();
@@ -398,6 +543,11 @@ namespace MediaEmbedKit.Mpv.Samples.Wpf
         /// <returns>代表功能執行流程的工作。</returns>
         private async Task RunFeatureAsync(Func<Task> action)
         {
+            if (!EnsureRuntimeReady())
+            {
+                return;
+            }
+
             if (!_asyncFeatureGate.TryEnter())
             {
                 AppendEventLine(CreateLifecycleLine("FeatureBusy", "已有非同步功能正在執行。"));
@@ -416,6 +566,65 @@ namespace MediaEmbedKit.Mpv.Samples.Wpf
             finally
             {
                 _asyncFeatureGate.Exit();
+            }
+        }
+
+        /// <summary>
+        /// 確認 runtime 已完成初始化。
+        /// </summary>
+        /// <returns>runtime 已就緒時為 <see langword="true"/>。</returns>
+        private bool EnsureRuntimeReady()
+        {
+            if (_runtimeReady)
+            {
+                return true;
+            }
+
+            AppendEventLine(CreateLifecycleLine("RuntimePending", "runtime 尚未初始化完成。"));
+            return false;
+        }
+
+        /// <summary>
+        /// 遞迴登錄需要等 runtime 就緒後才可操作的控制項。
+        /// </summary>
+        /// <param name="dependencyObject">要掃描的視覺樹節點。</param>
+        private void RegisterRuntimeControls(DependencyObject dependencyObject)
+        {
+            Control? control = dependencyObject as Control;
+            if (control is Button || control is ComboBox)
+            {
+                _runtimeControls.Add(control);
+            }
+
+            int childCount = VisualTreeHelper.GetChildrenCount(dependencyObject);
+            for (int index = 0; index < childCount; index++)
+            {
+                RegisterRuntimeControls(VisualTreeHelper.GetChild(dependencyObject, index));
+            }
+        }
+
+        /// <summary>
+        /// 設定 runtime 相關控制項是否可操作。
+        /// </summary>
+        /// <param name="enabled">控制項可操作時為 <see langword="true"/>。</param>
+        private void SetRuntimeControlsEnabled(bool enabled)
+        {
+            foreach (Control control in _runtimeControls)
+            {
+                control.IsEnabled = enabled;
+            }
+        }
+
+        /// <summary>
+        /// 將目前選擇的 yt-dlp 格式套用到指定播放器選項。
+        /// </summary>
+        /// <param name="options">要套用格式的播放器選項。</param>
+        private void ApplySelectedYtdlpFormatToPlayerOptions(MpvPlayerOptions options)
+        {
+            SampleYtdlpFormatChoice? selectedChoice = FormatComboBox.SelectedItem as SampleYtdlpFormatChoice;
+            if (selectedChoice != null)
+            {
+                SampleFeatureController.ApplyYtdlpFormat(options, selectedChoice);
             }
         }
 
@@ -523,7 +732,7 @@ namespace MediaEmbedKit.Mpv.Samples.Wpf
             FormatComboBox.SelectedIndex = selectedIndex;
             if (FormatComboBox.SelectedItem is SampleYtdlpFormatChoice selectedChoice)
             {
-                SampleFeatureController.ApplyYtdlpFormat(PlayerHost.PlayerOptions, selectedChoice);
+                ApplySelectedYtdlpFormatToPlayerOptions(SampleRuntime.PlayerOptions);
             }
         }
     }

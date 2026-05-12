@@ -1,6 +1,8 @@
 ﻿using Microsoft.Maui.Handlers;
 #if WINDOWS
 using MediaEmbedKit.Mpv.WinUI;
+using Microsoft.Maui.Platform;
+using WinUiElement = Microsoft.UI.Xaml.UIElement;
 #endif
 
 namespace MediaEmbedKit.Mpv.Maui
@@ -22,6 +24,7 @@ namespace MediaEmbedKit.Mpv.Maui
             new PropertyMapper<MpvView, MpvViewHandler>(ViewMapper)
             {
                 [nameof(MpvView.Source)] = MapSource,
+                [nameof(MpvView.OverlayView)] = MapOverlayView,
                 [nameof(MpvView.OverlayContent)] = MapOverlayContent,
                 [nameof(MpvView.IsOverlayOpen)] = MapIsOverlayOpen
             };
@@ -65,7 +68,7 @@ namespace MediaEmbedKit.Mpv.Maui
                 return;
             }
 
-            PlatformView.OverlayContent = VirtualView.OverlayContent;
+            PlatformView.OverlayContent = ResolveOverlayContent();
             PlatformView.IsOverlayOpen = VirtualView.IsOverlayOpen;
 #endif
         }
@@ -162,6 +165,16 @@ namespace MediaEmbedKit.Mpv.Maui
         }
 
         /// <summary>
+        /// 將 <see cref="MpvView.OverlayView"/> 屬性變更套用到平台控制項。
+        /// </summary>
+        /// <param name="handler">正在處理屬性對應的 MAUI handler。</param>
+        /// <param name="view">來源屬性變更的 MAUI mpv 檢視。</param>
+        private static void MapOverlayView(MpvViewHandler handler, MpvView view)
+        {
+            handler.UpdateOverlayContent();
+        }
+
+        /// <summary>
         /// 將 <see cref="MpvView.OverlayContent"/> 屬性變更套用到平台控制項。
         /// </summary>
         /// <param name="handler">正在處理屬性對應的 MAUI handler。</param>
@@ -182,6 +195,26 @@ namespace MediaEmbedKit.Mpv.Maui
         }
 
 #if WINDOWS
+        /// <summary>
+        /// 解析應交給 WinUI 控制項的覆蓋層內容。
+        /// </summary>
+        /// <returns>WinUI 覆蓋層元素；未設定時為 <see langword="null"/>。</returns>
+        private WinUiElement? ResolveOverlayContent()
+        {
+            if (VirtualView.OverlayContent != null)
+            {
+                return VirtualView.OverlayContent;
+            }
+
+            Microsoft.Maui.Controls.View? overlayView = VirtualView.OverlayView;
+            if (overlayView == null || MauiContext == null)
+            {
+                return null;
+            }
+
+            return overlayView.ToPlatform(MauiContext);
+        }
+
         /// <summary>
         /// 將 MAUI 視窗轉接到 WinUI 播放控制項。
         /// </summary>

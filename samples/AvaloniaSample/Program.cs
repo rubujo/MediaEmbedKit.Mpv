@@ -1,6 +1,5 @@
 ﻿using System;
 using Avalonia;
-using MediaEmbedKit.Mpv.Samples;
 
 namespace MediaEmbedKit.Mpv.Samples.Avalonia
 {
@@ -16,7 +15,6 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
         [STAThread]
         private static void Main(string[] args)
         {
-            SampleRuntime.InstallOrUpdateAsync().GetAwaiter().GetResult();
             BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
         }
 

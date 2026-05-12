@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Threading.Tasks;
 using MediaEmbedKit.Mpv;
 using MediaEmbedKit.Mpv.Samples;
+using MediaEmbedKit.Mpv.WinUI;
 using Microsoft.UI;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Windowing;
@@ -26,6 +27,10 @@ namespace MediaEmbedKit.Mpv.Samples.WinUI
         /// </summary>
         private const int EventLogLimit = 60;
 
+        /// <summary>
+        /// 背景 runtime 初始化完成後建立的 WinUI 播放控制項。
+        /// </summary>
+        private MpvWinUiPlayer? _playerHost;
         /// <summary>
         /// 顯示在 UI 的事件文字列集合。
         /// </summary>
@@ -55,6 +60,10 @@ namespace MediaEmbedKit.Mpv.Samples.WinUI
         /// </summary>
         private readonly SampleAsyncFeatureGate _asyncFeatureGate = new SampleAsyncFeatureGate();
         /// <summary>
+        /// 紀錄範例 runtime 是否已完成初始化。
+        /// </summary>
+        private bool _runtimeReady;
+        /// <summary>
         /// 表示預設媒體載入是否已排程。
         /// </summary>
         private bool _playbackStarted;
@@ -73,16 +82,17 @@ namespace MediaEmbedKit.Mpv.Samples.WinUI
             ResizeWindow();
             EventList.ItemsSource = _eventLines;
             SourceBox.Text = SampleRuntime.PlaybackUrl;
-            SampleRuntime.CopyTo(SampleRuntime.PlayerOptions, PlayerHost.PlayerOptions);
             _features = new SampleFeatureController(() => _currentPlayer, AppendEventLine);
             ConfigureFormatComboBox();
             _eventLogDispatcher = new SampleEventLogDispatcher(AppendEventLines, ScheduleEventLogFlush);
             _statusDispatcher = new SampleStatusUpdateDispatcher(() => _features.GetStatusText(), SetStatusText, ScheduleUiUpdate);
-            PlayerHost.Attach(this);
-            PlayerHost.PlayerCreated += PlayerCreated;
-            PlayerHost.Loaded += PlayerHostLoaded;
+            SetRuntimeControlsEnabled(false);
+            if (Content is FrameworkElement rootElement)
+            {
+                rootElement.Loaded += RootLoaded;
+            }
             Closed += WindowClosed;
-            AppendEventLine(CreateLifecycleLine("WindowCreated", "WinUI 視窗已建立，等待 HWND 後端建立播放器。"));
+            AppendEventLine(CreateLifecycleLine("WindowCreated", "WinUI 視窗已建立，等待 runtime 初始化。"));
         }
 
         /// <summary>
@@ -96,8 +106,103 @@ namespace MediaEmbedKit.Mpv.Samples.WinUI
             _eventBridge?.WriteLifecycle("WindowClosed", "視窗已關閉，準備取消事件訂閱。");
             _eventBridge?.Dispose();
             _eventLogDispatcher.Dispose();
-            PlayerHost.PlayerCreated -= PlayerCreated;
+            if (_playerHost != null)
+            {
+                _playerHost.PlayerCreated -= PlayerCreated;
+                _playerHost.Dispose();
+            }
+
             _currentPlayer = null;
+        }
+
+        /// <summary>
+        /// 非同步初始化範例 runtime 與 WinUI 播放控制項。
+        /// </summary>
+        /// <returns>初始化成功時為 <see langword="true"/>。</returns>
+        private async Task<bool> InitializeRuntimeAsync()
+        {
+            SetStatusText("正在準備 runtime...");
+            try
+            {
+                await Task.Run(async () => await SampleRuntime.InstallOrUpdateAsync().ConfigureAwait(false)).ConfigureAwait(true);
+                CreatePlayerHost();
+                _runtimeReady = true;
+                SetRuntimeControlsEnabled(true);
+                SetStatusText("播放器已初始化");
+                AppendEventLine(CreateLifecycleLine("RuntimeReady", SampleRuntime.RuntimeDirectory));
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Environment.ExitCode = 1;
+                SetStatusText("runtime 初始化失敗");
+                AppendEventLine(CreateLifecycleLine("RuntimeError", ex.Message));
+                if (SampleRuntime.IsSmokeTestEnabled)
+                {
+                    SampleRuntime.WriteSmokeLine("WinUISample", "FAILED Runtime: " + ex.Message);
+                    Close();
+                    return false;
+                }
+
+                ContentDialog dialog = new ContentDialog
+                {
+                    Title = "mpv runtime",
+                    Content = ex.Message,
+                    CloseButtonText = "確定",
+                    XamlRoot = PlayerHostContainer.XamlRoot
+                };
+                _ = dialog.ShowAsync();
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 建立 runtime 就緒後才可初始化的 WinUI 播放控制項。
+        /// </summary>
+        private void CreatePlayerHost()
+        {
+            if (_playerHost != null)
+            {
+                return;
+            }
+
+            MpvWinUiPlayer playerHost = new MpvWinUiPlayer
+            {
+                OverlayContent = CreateSafeOverlayContent(),
+                IsOverlayOpen = true
+            };
+            SampleRuntime.CopyTo(SampleRuntime.PlayerOptions, playerHost.PlayerOptions);
+            ApplySelectedYtdlpFormatToPlayerOptions(playerHost.PlayerOptions);
+            playerHost.Attach(this);
+            playerHost.PlayerCreated += PlayerCreated;
+            PlayerHostContainer.Children.Add(playerHost);
+            _playerHost = playerHost;
+        }
+
+        /// <summary>
+        /// 建立由 `MpvWinUiPlayer` 管理的 AirSpace 安全覆蓋層。
+        /// </summary>
+        /// <returns>可交給 WinUI 播放控制項管理的覆蓋層元素。</returns>
+        private static UIElement CreateSafeOverlayContent()
+        {
+            Border border = new Border
+            {
+                Width = SampleRuntime.SampleOverlayBadgeWidth,
+                Height = SampleRuntime.SampleOverlayBadgeHeight,
+                Margin = new Thickness(16),
+                Background = new SolidColorBrush(ColorHelper.FromArgb(221, 0, 120, 212)),
+                CornerRadius = new CornerRadius(4),
+                IsHitTestVisible = false
+            };
+            border.Child = new TextBlock
+            {
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                Foreground = new SolidColorBrush(Colors.White),
+                FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+                Text = "OverlayContent：AirSpace 安全覆蓋層"
+            };
+            return border;
         }
 
         /// <summary>
@@ -108,10 +213,10 @@ namespace MediaEmbedKit.Mpv.Samples.WinUI
         private void PlayerCreated(object? sender, EventArgs e)
         {
             _eventBridge?.Dispose();
-            if (PlayerHost.Player != null)
+            if (_playerHost?.Player != null)
             {
-                _currentPlayer = PlayerHost.Player;
-                _eventBridge = new SamplePlayerEventBridge(PlayerHost.Player, AppendEventLine);
+                _currentPlayer = _playerHost.Player;
+                _eventBridge = new SamplePlayerEventBridge(_playerHost.Player, AppendEventLine);
                 _statusDispatcher.RequestUpdate();
             }
         }
@@ -133,10 +238,15 @@ namespace MediaEmbedKit.Mpv.Samples.WinUI
         /// <param name="e">事件資料。</param>
         private void OnPauseClicked(object sender, RoutedEventArgs e)
         {
-            if (PlayerHost.Player != null)
+            if (!EnsureRuntimeReady())
+            {
+                return;
+            }
+
+            if (_playerHost?.Player != null)
             {
                 _eventBridge?.WriteLifecycle("Pause", "切換播放器暫停狀態。");
-                PlayerHost.Player.Pause = !PlayerHost.Player.Pause;
+                _playerHost.Player.Pause = !_playerHost.Player.Pause;
             }
         }
 
@@ -147,21 +257,38 @@ namespace MediaEmbedKit.Mpv.Samples.WinUI
         /// <param name="e">事件資料。</param>
         private void OnStopClicked(object sender, RoutedEventArgs e)
         {
+            if (!EnsureRuntimeReady())
+            {
+                return;
+            }
+
             _eventBridge?.WriteLifecycle("Stop", "停止目前播放項目。");
-            PlayerHost.Player?.Stop();
+            _playerHost?.Player?.Stop();
         }
 
         /// <summary>
-        /// 在 WinUI 播放控制項載入後載入預設媒體並執行冒煙測試。
+        /// 在 WinUI 視覺樹載入後初始化 runtime、載入預設媒體並執行冒煙測試。
         /// </summary>
         /// <param name="sender">引發事件的物件。</param>
         /// <param name="e">事件資料。</param>
-        private async void PlayerHostLoaded(object sender, RoutedEventArgs e)
+        private async void RootLoaded(object sender, RoutedEventArgs e)
         {
             try
             {
-                PlayerHost.Loaded -= PlayerHostLoaded;
-                AppendEventLine(CreateLifecycleLine("Loaded", "播放控制項已載入，準備載入預設媒體來源。"));
+                if (sender is FrameworkElement rootElement)
+                {
+                    rootElement.Loaded -= RootLoaded;
+                }
+
+                SetRuntimeControlsEnabled(false);
+                AppendEventLine(CreateLifecycleLine("Loaded", "視窗內容已載入，準備初始化範例 runtime。"));
+                bool initialized = await InitializeRuntimeAsync().ConfigureAwait(true);
+                if (!initialized)
+                {
+                    return;
+                }
+
+                AppendEventLine(CreateLifecycleLine("Loaded", "runtime 已完成，準備載入預設媒體來源。"));
                 StartPlayback();
                 if (SampleRuntime.IsSmokeTestEnabled && !_smokeStarted)
                 {
@@ -194,10 +321,15 @@ namespace MediaEmbedKit.Mpv.Samples.WinUI
         /// </summary>
         private void LoadCurrentSource()
         {
+            if (!EnsureRuntimeReady())
+            {
+                return;
+            }
+
             if (!string.IsNullOrWhiteSpace(SourceBox.Text))
             {
                 _eventBridge?.WriteLifecycle("LoadFile", SourceBox.Text);
-                PlayerHost.LoadFile(SourceBox.Text, MpvLoadFileMode.Replace);
+                _playerHost?.LoadFile(SourceBox.Text, MpvLoadFileMode.Replace);
             }
         }
 
@@ -207,7 +339,7 @@ namespace MediaEmbedKit.Mpv.Samples.WinUI
         /// <returns>代表冒煙測試流程的工作。</returns>
         private Task RunSmokeAsync()
         {
-            return SampleRuntime.RunSmokeUntilPlaybackAsync("WinUISample", () => PlayerHost.Player, Close);
+            return SampleRuntime.RunSmokeUntilPlaybackAsync("WinUISample", () => _playerHost?.Player, Close);
         }
 
         /// <summary>
@@ -225,8 +357,12 @@ namespace MediaEmbedKit.Mpv.Samples.WinUI
 
             try
             {
-                SampleFeatureController.ApplyYtdlpFormat(PlayerHost.PlayerOptions, choice);
-                if (PlayerHost.Player != null)
+                if (_playerHost != null)
+                {
+                    SampleFeatureController.ApplyYtdlpFormat(_playerHost.PlayerOptions, choice);
+                }
+
+                if (_playerHost?.Player != null)
                 {
                     _features.ApplyYtdlpFormat(choice);
                 }
@@ -403,6 +539,11 @@ namespace MediaEmbedKit.Mpv.Samples.WinUI
         /// <param name="action">要執行的功能。</param>
         private void RunFeature(Action action)
         {
+            if (!EnsureRuntimeReady())
+            {
+                return;
+            }
+
             try
             {
                 action();
@@ -421,6 +562,11 @@ namespace MediaEmbedKit.Mpv.Samples.WinUI
         /// <returns>代表功能執行流程的工作。</returns>
         private async Task RunFeatureAsync(Func<Task> action)
         {
+            if (!EnsureRuntimeReady())
+            {
+                return;
+            }
+
             if (!_asyncFeatureGate.TryEnter())
             {
                 AppendEventLine(CreateLifecycleLine("FeatureBusy", "已有非同步功能正在執行。"));
@@ -439,6 +585,68 @@ namespace MediaEmbedKit.Mpv.Samples.WinUI
             finally
             {
                 _asyncFeatureGate.Exit();
+            }
+        }
+
+        /// <summary>
+        /// 確認 runtime 已完成初始化。
+        /// </summary>
+        /// <returns>runtime 已就緒時為 <see langword="true"/>。</returns>
+        private bool EnsureRuntimeReady()
+        {
+            if (_runtimeReady)
+            {
+                return true;
+            }
+
+            AppendEventLine(CreateLifecycleLine("RuntimePending", "runtime 尚未初始化完成。"));
+            return false;
+        }
+
+        /// <summary>
+        /// 設定 runtime 相關控制項是否可操作。
+        /// </summary>
+        /// <param name="enabled">控制項可操作時為 <see langword="true"/>。</param>
+        private void SetRuntimeControlsEnabled(bool enabled)
+        {
+            SetRuntimeControlsEnabled(Content as DependencyObject, enabled);
+        }
+
+        /// <summary>
+        /// 遞迴設定 runtime 相關控制項是否可操作。
+        /// </summary>
+        /// <param name="root">要掃描的視覺樹節點。</param>
+        /// <param name="enabled">控制項可操作時為 <see langword="true"/>。</param>
+        private static void SetRuntimeControlsEnabled(DependencyObject? root, bool enabled)
+        {
+            if (root == null)
+            {
+                return;
+            }
+
+            Control? control = root as Control;
+            if (control is Button || control is ComboBox)
+            {
+                control.IsEnabled = enabled;
+            }
+
+            int childCount = VisualTreeHelper.GetChildrenCount(root);
+            for (int index = 0; index < childCount; index++)
+            {
+                SetRuntimeControlsEnabled(VisualTreeHelper.GetChild(root, index), enabled);
+            }
+        }
+
+        /// <summary>
+        /// 將目前選擇的 yt-dlp 格式套用到指定播放器選項。
+        /// </summary>
+        /// <param name="options">要套用格式的播放器選項。</param>
+        private void ApplySelectedYtdlpFormatToPlayerOptions(MpvPlayerOptions options)
+        {
+            SampleYtdlpFormatChoice? selectedChoice = FormatComboBox.SelectedItem as SampleYtdlpFormatChoice;
+            if (selectedChoice != null)
+            {
+                SampleFeatureController.ApplyYtdlpFormat(options, selectedChoice);
             }
         }
 
@@ -534,7 +742,7 @@ namespace MediaEmbedKit.Mpv.Samples.WinUI
             FormatComboBox.SelectedIndex = selectedIndex;
             if (FormatComboBox.SelectedItem is SampleYtdlpFormatChoice selectedChoice)
             {
-                SampleFeatureController.ApplyYtdlpFormat(PlayerHost.PlayerOptions, selectedChoice);
+                ApplySelectedYtdlpFormatToPlayerOptions(SampleRuntime.PlayerOptions);
             }
         }
 

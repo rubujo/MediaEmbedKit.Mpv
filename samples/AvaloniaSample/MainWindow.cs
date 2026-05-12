@@ -27,7 +27,15 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
         /// <summary>
         /// 顯示 libmpv 視訊內容的 Avalonia OpenGL 控制項。
         /// </summary>
-        private readonly MpvAvaloniaPlayer _player;
+        private MpvAvaloniaPlayer? _player;
+        /// <summary>
+        /// runtime 就緒後承載 OpenGL 播放控制項的容器。
+        /// </summary>
+        private readonly Grid _playerHostContainer = new Grid();
+        /// <summary>
+        /// 需要在 runtime 就緒後才可使用的控制項清單。
+        /// </summary>
+        private readonly List<Control> _runtimeControls = new List<Control>();
         /// <summary>
         /// 讓使用者輸入檔案路徑或媒體網址的文字方塊。
         /// </summary>
@@ -85,6 +93,10 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
         /// </summary>
         private readonly SampleAsyncFeatureGate _asyncFeatureGate = new SampleAsyncFeatureGate();
         /// <summary>
+        /// 紀錄範例 runtime 是否已完成初始化。
+        /// </summary>
+        private bool _runtimeReady;
+        /// <summary>
         /// 表示預設媒體載入是否已排程。
         /// </summary>
         private bool _playbackStarted;
@@ -121,17 +133,13 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
             _stopButton = CreateCommandButton("Stop");
             _stopButton.Margin = new Thickness(0);
             _stopButton.Click += OnStopClicked;
-
-            _player = new MpvAvaloniaPlayer
-            {
-                HorizontalAlignment = HorizontalAlignment.Stretch,
-                VerticalAlignment = VerticalAlignment.Stretch
-            };
-            _player.PlayerCreated += PlayerCreated;
-            SampleRuntime.CopyTo(SampleRuntime.PlayerOptions, _player.PlayerOptions);
+            _runtimeControls.Add(_loadButton);
+            _runtimeControls.Add(_pauseButton);
+            _runtimeControls.Add(_stopButton);
 
             _features = new SampleFeatureController(() => _currentPlayer, AppendEventLine);
             _formatComboBox = CreateFormatComboBox();
+            _runtimeControls.Add(_formatComboBox);
             _statusTextBlock = new TextBlock
             {
                 Width = 380,
@@ -160,8 +168,9 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
             _statusDispatcher = new SampleStatusUpdateDispatcher(() => _features.GetStatusText(), SetStatusText, ScheduleUiUpdate);
 
             Content = CreateLayout();
+            SetRuntimeControlsEnabled(false);
             Opened += WindowOpened;
-            AppendEventLine(CreateLifecycleLine("WindowCreated", "Avalonia 視窗已建立，等待 OpenGL render API 建立播放器。"));
+            AppendEventLine(CreateLifecycleLine("WindowCreated", "Avalonia 視窗已建立，等待 runtime 初始化。"));
         }
 
         /// <summary>
@@ -174,7 +183,11 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
             _eventBridge?.WriteLifecycle("WindowClosed", "視窗已關閉，準備取消事件訂閱。");
             _eventBridge?.Dispose();
             _eventLogDispatcher.Dispose();
-            _player.PlayerCreated -= PlayerCreated;
+            if (_player != null)
+            {
+                _player.PlayerCreated -= PlayerCreated;
+            }
+
             _currentPlayer = null;
             base.OnClosed(e);
         }
@@ -188,7 +201,14 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
         {
             try
             {
-                AppendEventLine(CreateLifecycleLine("Opened", "視窗已開啟，準備載入預設媒體來源。"));
+                AppendEventLine(CreateLifecycleLine("Opened", "視窗已開啟，準備初始化範例 runtime。"));
+                bool initialized = await InitializeRuntimeAsync().ConfigureAwait(true);
+                if (!initialized)
+                {
+                    return;
+                }
+
+                AppendEventLine(CreateLifecycleLine("Opened", "runtime 已完成，準備載入預設媒體來源。"));
                 StartPlayback();
                 if (SampleRuntime.IsSmokeTestEnabled && !_smokeStarted)
                 {
@@ -203,6 +223,60 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
         }
 
         /// <summary>
+        /// 非同步初始化範例 runtime 與 Avalonia OpenGL 播放控制項。
+        /// </summary>
+        /// <returns>初始化成功時為 <see langword="true"/>。</returns>
+        private async Task<bool> InitializeRuntimeAsync()
+        {
+            SetStatusText("正在準備 runtime...");
+            try
+            {
+                await Task.Run(async () => await SampleRuntime.InstallOrUpdateAsync().ConfigureAwait(false)).ConfigureAwait(true);
+                CreatePlayerHost();
+                _runtimeReady = true;
+                SetRuntimeControlsEnabled(true);
+                SetStatusText("播放器已初始化");
+                AppendEventLine(CreateLifecycleLine("RuntimeReady", SampleRuntime.RuntimeDirectory));
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Environment.ExitCode = 1;
+                SetStatusText("runtime 初始化失敗");
+                AppendEventLine(CreateLifecycleLine("RuntimeError", ex.Message));
+                if (SampleRuntime.IsSmokeTestEnabled)
+                {
+                    SampleRuntime.WriteSmokeLine("AvaloniaSample", "FAILED Runtime: " + ex.Message);
+                    Close();
+                }
+
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 建立 runtime 就緒後才可初始化的 Avalonia OpenGL 播放控制項。
+        /// </summary>
+        private void CreatePlayerHost()
+        {
+            if (_player != null)
+            {
+                return;
+            }
+
+            MpvAvaloniaPlayer player = new MpvAvaloniaPlayer
+            {
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                VerticalAlignment = VerticalAlignment.Stretch
+            };
+            SampleRuntime.CopyTo(SampleRuntime.PlayerOptions, player.PlayerOptions);
+            ApplySelectedYtdlpFormatToPlayerOptions(player.PlayerOptions);
+            player.PlayerCreated += PlayerCreated;
+            _playerHostContainer.Children.Insert(0, player);
+            _player = player;
+        }
+
+        /// <summary>
         /// 處理播放器建立事件並開始輸出 libmpv 事件。
         /// </summary>
         /// <param name="sender">引發事件的物件。</param>
@@ -210,7 +284,7 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
         private void PlayerCreated(object? sender, EventArgs e)
         {
             _eventBridge?.Dispose();
-            if (_player.Player != null)
+            if (_player?.Player != null)
             {
                 _currentPlayer = _player.Player;
                 _eventBridge = new SamplePlayerEventBridge(_player.Player, AppendEventLine);
@@ -235,7 +309,12 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
         /// <param name="e">事件資料。</param>
         private void OnPauseClicked(object? sender, RoutedEventArgs e)
         {
-            if (_player.Player != null)
+            if (!EnsureRuntimeReady())
+            {
+                return;
+            }
+
+            if (_player?.Player != null)
             {
                 _eventBridge?.WriteLifecycle("Pause", "切換播放器暫停狀態。");
                 _player.Player.Pause = !_player.Player.Pause;
@@ -249,8 +328,13 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
         /// <param name="e">事件資料。</param>
         private void OnStopClicked(object? sender, RoutedEventArgs e)
         {
+            if (!EnsureRuntimeReady())
+            {
+                return;
+            }
+
             _eventBridge?.WriteLifecycle("Stop", "停止目前播放項目。");
-            _player.Player?.Stop();
+            _player?.Player?.Stop();
         }
 
         /// <summary>
@@ -269,8 +353,12 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
 
             try
             {
-                SampleFeatureController.ApplyYtdlpFormat(_player.PlayerOptions, choice);
-                if (_player.Player != null)
+                if (_player != null)
+                {
+                    SampleFeatureController.ApplyYtdlpFormat(_player.PlayerOptions, choice);
+                }
+
+                if (_player?.Player != null)
                 {
                     _features.ApplyYtdlpFormat(choice);
                 }
@@ -300,10 +388,15 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
         /// </summary>
         private void LoadCurrentSource()
         {
+            if (!EnsureRuntimeReady())
+            {
+                return;
+            }
+
             if (!string.IsNullOrWhiteSpace(_sourceBox.Text))
             {
                 _eventBridge?.WriteLifecycle("LoadFile", _sourceBox.Text);
-                _player.LoadFile(_sourceBox.Text, MpvLoadFileMode.Replace);
+                _player?.LoadFile(_sourceBox.Text, MpvLoadFileMode.Replace);
             }
         }
 
@@ -313,7 +406,7 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
         /// <returns>代表冒煙測試流程的工作。</returns>
         private Task RunSmokeAsync()
         {
-            return SampleRuntime.RunSmokeUntilPlaybackAsync("AvaloniaSample", () => _player.Player, Close);
+            return SampleRuntime.RunSmokeUntilPlaybackAsync("AvaloniaSample", () => _player?.Player, Close);
         }
 
         /// <summary>
@@ -417,7 +510,7 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
         /// <summary>
         /// 建立播放區域與 Avalonia 覆蓋層展示。
         /// </summary>
-        /// <returns>包含單一播放器、安全覆蓋層與一般覆蓋層對照的播放區域。</returns>
+        /// <returns>包含單一播放器與同層覆蓋層示範的播放區域。</returns>
         private Grid CreatePlayerSurface()
         {
             Grid playerSurface = new Grid
@@ -441,7 +534,7 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
         /// <summary>
         /// 建立左右對照標題列。
         /// </summary>
-        /// <returns>包含安全覆蓋層與一般覆蓋層標題的面板。</returns>
+        /// <returns>包含 OpenGL render API 與一般覆蓋層標題的面板。</returns>
         private static Grid CreateHeaderPanel()
         {
             Grid header = new Grid
@@ -454,8 +547,8 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
                 }
             };
 
-            Border safeHeader = CreateHeaderBadge("Avalonia OpenGL 覆蓋層：同層組合", "#DD0078D4", new Thickness(16, 6, 8, 6));
-            Border normalHeader = CreateHeaderBadge("一般 Avalonia Overlay 嘗試覆蓋同一個 OpenGL 控制項", "#DD5C2D91", new Thickness(8, 6, 16, 6));
+            Border safeHeader = CreateHeaderBadge("Avalonia OpenGL render API：同層組合", "#DD0078D4", new Thickness(16, 6, 8, 6));
+            Border normalHeader = CreateHeaderBadge("一般 Avalonia Overlay：同層展示", "#DD5C2D91", new Thickness(8, 6, 16, 6));
             header.Children.Add(safeHeader);
             Grid.SetColumn(normalHeader, 1);
             header.Children.Add(normalHeader);
@@ -465,7 +558,7 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
         /// <summary>
         /// 建立播放視訊與覆蓋層對照面板。
         /// </summary>
-        /// <returns>包含播放器、安全覆蓋層與一般覆蓋層的播放面板。</returns>
+        /// <returns>包含播放器與一般 Avalonia 覆蓋層的播放面板。</returns>
         private Grid CreateVideoSurface()
         {
             Grid videoSurface = new Grid
@@ -473,9 +566,9 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
                 Background = Brushes.Black
             };
 
-            Border safeOverlay = CreateOverlayBadge("Avalonia OpenGL render API 覆蓋層", "#DD0078D4", HorizontalAlignment.Left);
-            Border normalOverlay = CreateOverlayBadge("一般 Avalonia Overlay：同一播放區對照", "#DD5C2D91", HorizontalAlignment.Right);
-            videoSurface.Children.Add(_player);
+            Border safeOverlay = CreateOverlayBadge("OpenGL render API 同層覆蓋", "#DD0078D4", HorizontalAlignment.Left);
+            Border normalOverlay = CreateOverlayBadge("一般 Avalonia Overlay 同層展示", "#DD5C2D91", HorizontalAlignment.Right);
+            videoSurface.Children.Add(_playerHostContainer);
             videoSurface.Children.Add(safeOverlay);
             videoSurface.Children.Add(normalOverlay);
             return videoSurface;
@@ -511,7 +604,7 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
         }
 
         /// <summary>
-        /// 建立 AirSpace 對照區標題列。
+        /// 建立 OpenGL 同層組合展示標題列。
         /// </summary>
         /// <param name="text">要顯示的標題文字。</param>
         /// <param name="background">標題背景色彩。</param>
@@ -541,6 +634,11 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
         /// <param name="action">要執行的功能。</param>
         private void RunFeature(Action action)
         {
+            if (!EnsureRuntimeReady())
+            {
+                return;
+            }
+
             try
             {
                 action();
@@ -559,6 +657,11 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
         /// <returns>代表功能執行流程的工作。</returns>
         private async Task RunFeatureAsync(Func<Task> action)
         {
+            if (!EnsureRuntimeReady())
+            {
+                return;
+            }
+
             if (!_asyncFeatureGate.TryEnter())
             {
                 AppendEventLine(CreateLifecycleLine("FeatureBusy", "已有非同步功能正在執行。"));
@@ -577,6 +680,46 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
             finally
             {
                 _asyncFeatureGate.Exit();
+            }
+        }
+
+        /// <summary>
+        /// 確認 runtime 已完成初始化。
+        /// </summary>
+        /// <returns>runtime 已就緒時為 <see langword="true"/>。</returns>
+        private bool EnsureRuntimeReady()
+        {
+            if (_runtimeReady)
+            {
+                return true;
+            }
+
+            AppendEventLine(CreateLifecycleLine("RuntimePending", "runtime 尚未初始化完成。"));
+            return false;
+        }
+
+        /// <summary>
+        /// 設定 runtime 相關控制項是否可操作。
+        /// </summary>
+        /// <param name="enabled">控制項可操作時為 <see langword="true"/>。</param>
+        private void SetRuntimeControlsEnabled(bool enabled)
+        {
+            foreach (Control control in _runtimeControls)
+            {
+                control.IsEnabled = enabled;
+            }
+        }
+
+        /// <summary>
+        /// 將目前選擇的 yt-dlp 格式套用到指定播放器選項。
+        /// </summary>
+        /// <param name="options">要套用格式的播放器選項。</param>
+        private void ApplySelectedYtdlpFormatToPlayerOptions(MpvPlayerOptions options)
+        {
+            SampleYtdlpFormatChoice? selectedChoice = _formatComboBox.SelectedItem as SampleYtdlpFormatChoice;
+            if (selectedChoice != null)
+            {
+                SampleFeatureController.ApplyYtdlpFormat(options, selectedChoice);
             }
         }
 
@@ -686,7 +829,7 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
             comboBox.SelectedIndex = selectedIndex;
             if (comboBox.SelectedItem is SampleYtdlpFormatChoice selectedChoice)
             {
-                SampleFeatureController.ApplyYtdlpFormat(_player.PlayerOptions, selectedChoice);
+                SampleFeatureController.ApplyYtdlpFormat(SampleRuntime.PlayerOptions, selectedChoice);
             }
 
             comboBox.SelectionChanged += FormatComboBoxSelectionChanged;
@@ -747,9 +890,9 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
         /// <param name="text">按鈕文字。</param>
         /// <param name="width">按鈕寬度。</param>
         /// <returns>已套用共用外觀的按鈕。</returns>
-        private static Button CreateFeatureButtonCore(string text, double width)
+        private Button CreateFeatureButtonCore(string text, double width)
         {
-            return new Button
+            Button button = new Button
             {
                 Content = text,
                 Width = width,
@@ -762,6 +905,8 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
                 HorizontalContentAlignment = HorizontalAlignment.Center,
                 VerticalContentAlignment = VerticalAlignment.Center
             };
+            _runtimeControls.Add(button);
+            return button;
         }
     }
 }

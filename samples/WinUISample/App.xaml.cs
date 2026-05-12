@@ -1,6 +1,4 @@
 ﻿using Microsoft.UI.Xaml;
-using MediaEmbedKit.Mpv.Samples;
-
 namespace MediaEmbedKit.Mpv.Samples.WinUI
 {
     /// <summary>
@@ -40,7 +38,6 @@ namespace MediaEmbedKit.Mpv.Samples.WinUI
                 return;
             }
 
-            SampleRuntime.InstallOrUpdateAsync().GetAwaiter().GetResult();
             _window = new MainWindow();
             _window.Activate();
         }

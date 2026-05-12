@@ -151,22 +151,7 @@
 
             <Grid Grid.Row="1"
                   Background="Black">
-                <mpv:MpvWinUiPlayer x:Name="PlayerHost">
-                    <mpv:MpvWinUiPlayer.OverlayContent>
-                        <Border Width="340"
-                                Height="32"
-                                Margin="16"
-                                Background="#DD0078D4"
-                                CornerRadius="4"
-                                IsHitTestVisible="False">
-                            <TextBlock HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"
-                                       Foreground="White"
-                                       FontWeight="SemiBold"
-                                       Text="OverlayContent：AirSpace 安全覆蓋層" />
-                        </Border>
-                    </mpv:MpvWinUiPlayer.OverlayContent>
-                </mpv:MpvWinUiPlayer>
+                <Grid x:Name="PlayerHostContainer" />
 
                 <Border Width="340"
                         Height="32"

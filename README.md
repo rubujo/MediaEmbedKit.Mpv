@@ -89,7 +89,7 @@ encoding mode 屬於 mpv 的附帶能力。本專案只包裝 mpv 相關選項�
 
 ## 範例
 
-範例位於 `samples`。所有範例會在啟動時呼叫共用 helper 準備 runtime 資產，並示範初始化、事件輸出、播放控制與釋放流程。
+範例位於 `samples`。GUI 範例會先顯示視窗，再於背景呼叫共用 helper 準備 runtime 資產；Console 範例則示範核心 `MpvPlayer` 最小生命週期。範例涵蓋初始化、事件輸出、播放控制與釋放流程。
 
 ```powershell
 dotnet run --project .\samples\WinFormsSample\MediaEmbedKit.Mpv.Samples.WinForms.csproj
@@ -97,6 +97,7 @@ dotnet run --project .\samples\WpfSample\MediaEmbedKit.Mpv.Samples.Wpf.csproj
 dotnet run --project .\samples\AvaloniaSample\MediaEmbedKit.Mpv.Samples.Avalonia.csproj
 dotnet run --project .\samples\WinUISample\MediaEmbedKit.Mpv.Samples.WinUI.csproj
 dotnet run --project .\samples\MauiSample\MediaEmbedKit.Mpv.Samples.Maui.csproj
+dotnet run --project .\samples\ConsoleMinimalSample\MediaEmbedKit.Mpv.Samples.ConsoleMinimal.csproj
 ```
 
 範例說明請參閱 `samples/README.md`。

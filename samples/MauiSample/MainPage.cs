@@ -11,17 +11,6 @@ using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Graphics;
 using Microsoft.Maui.Layouts;
-using WinUiBorder = Microsoft.UI.Xaml.Controls.Border;
-using WinUiColorHelper = Microsoft.UI.ColorHelper;
-using WinUiColors = Microsoft.UI.Colors;
-using WinUiCornerRadius = Microsoft.UI.Xaml.CornerRadius;
-using WinUiElement = Microsoft.UI.Xaml.UIElement;
-using WinUiFontWeights = Microsoft.UI.Text.FontWeights;
-using WinUiHorizontalAlignment = Microsoft.UI.Xaml.HorizontalAlignment;
-using WinUiSolidColorBrush = Microsoft.UI.Xaml.Media.SolidColorBrush;
-using WinUiTextBlock = Microsoft.UI.Xaml.Controls.TextBlock;
-using WinUiThickness = Microsoft.UI.Xaml.Thickness;
-using WinUiVerticalAlignment = Microsoft.UI.Xaml.VerticalAlignment;
 
 namespace MediaEmbedKit.Mpv.Samples.Maui
 {
@@ -38,7 +27,15 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
         /// <summary>
         /// 顯示 libmpv 視訊內容的 MAUI 檢視。
         /// </summary>
-        private readonly MpvView _player;
+        private MpvView? _player;
+        /// <summary>
+        /// runtime 就緒後承載 MAUI 播放檢視的容器。
+        /// </summary>
+        private readonly Grid _playerHostContainer = new Grid();
+        /// <summary>
+        /// 需要在 runtime 就緒後才可使用的控制項清單。
+        /// </summary>
+        private readonly List<VisualElement> _runtimeControls = new List<VisualElement>();
         /// <summary>
         /// 讓使用者輸入檔案路徑或媒體網址的輸入方塊。
         /// </summary>
@@ -100,6 +97,10 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
         /// </summary>
         private readonly SampleAsyncFeatureGate _asyncFeatureGate = new SampleAsyncFeatureGate();
         /// <summary>
+        /// 紀錄範例 runtime 是否已完成初始化。
+        /// </summary>
+        private bool _runtimeReady;
+        /// <summary>
         /// 表示預設媒體是否已載入。
         /// </summary>
         private bool _initialSourceLoaded;
@@ -128,16 +129,6 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
                 VerticalOptions = LayoutOptions.Center
             };
 
-            _player = new MpvView
-            {
-                HorizontalOptions = LayoutOptions.Fill,
-                VerticalOptions = LayoutOptions.Fill,
-                OverlayContent = CreateWinUiOverlayContent(),
-                IsOverlayOpen = true
-            };
-            _player.PlayerCreated += PlayerCreated;
-            SampleRuntime.CopyTo(SampleRuntime.PlayerOptions, _player.PlayerOptions);
-
             _features = new SampleFeatureController(() => _currentPlayer, AppendEventLine);
             _formatChoices = SampleFeatureController.CreateYtdlpFormatChoices();
             _formatPicker = CreateFormatPicker();
@@ -159,6 +150,9 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
             _pauseButton.Clicked += PauseButtonClicked;
             _stopButton = CreateCommandButton("Stop");
             _stopButton.Clicked += StopButtonClicked;
+            _runtimeControls.Add(_loadButton);
+            _runtimeControls.Add(_pauseButton);
+            _runtimeControls.Add(_stopButton);
 
             _eventList = new CollectionView
             {
@@ -171,7 +165,8 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
             _statusDispatcher = new SampleStatusUpdateDispatcher(() => _features.GetStatusText(), SetStatusText, ScheduleUiUpdate);
 
             Content = CreateLayout();
-            AppendEventLine(CreateLifecycleLine("PageCreated", "MAUI 頁面已建立，等待 Windows handler 建立播放器。"));
+            SetRuntimeControlsEnabled(false);
+            AppendEventLine(CreateLifecycleLine("PageCreated", "MAUI 頁面已建立，等待 runtime 初始化。"));
         }
 
         /// <summary>
@@ -187,7 +182,17 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
                     return;
                 }
 
-                if (_player.Player != null && _eventBridge == null)
+                if (!_runtimeReady)
+                {
+                    AppendEventLine(CreateLifecycleLine("Appearing", "頁面已顯示，準備初始化範例 runtime。"));
+                    bool initialized = await InitializeRuntimeAsync().ConfigureAwait(true);
+                    if (!initialized)
+                    {
+                        return;
+                    }
+                }
+
+                if (_player?.Player != null && _eventBridge == null)
                 {
                     AttachPlayerEvents(_player.Player);
                 }
@@ -238,8 +243,70 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
             _eventBridge?.Dispose();
             _eventBridge = null;
             _eventLogDispatcher.Dispose();
-            _player.PlayerCreated -= PlayerCreated;
+            if (_player != null)
+            {
+                _player.PlayerCreated -= PlayerCreated;
+            }
+
             _currentPlayer = null;
+        }
+
+        /// <summary>
+        /// 非同步初始化範例 runtime 與 MAUI 播放檢視。
+        /// </summary>
+        /// <returns>初始化成功時為 <see langword="true"/>。</returns>
+        private async Task<bool> InitializeRuntimeAsync()
+        {
+            SetStatusText("正在準備 runtime...");
+            try
+            {
+                await Task.Run(async () => await SampleRuntime.InstallOrUpdateAsync().ConfigureAwait(false)).ConfigureAwait(true);
+                CreatePlayerHost();
+                _runtimeReady = true;
+                SetRuntimeControlsEnabled(true);
+                SetStatusText("播放器已初始化");
+                AppendEventLine(CreateLifecycleLine("RuntimeReady", SampleRuntime.RuntimeDirectory));
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Environment.ExitCode = 1;
+                SetStatusText("runtime 初始化失敗");
+                AppendEventLine(CreateLifecycleLine("RuntimeError", ex.Message));
+                if (SampleRuntime.IsSmokeTestEnabled)
+                {
+                    SampleRuntime.WriteSmokeLine("MauiSample", "FAILED Runtime: " + ex.Message);
+                    CloseApplication();
+                    return false;
+                }
+
+                await DisplayAlertAsync("mpv runtime", ex.Message, "確定").ConfigureAwait(true);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// 建立 runtime 就緒後才可初始化的 MAUI 播放檢視。
+        /// </summary>
+        private void CreatePlayerHost()
+        {
+            if (_player != null)
+            {
+                return;
+            }
+
+            MpvView player = new MpvView
+            {
+                HorizontalOptions = LayoutOptions.Fill,
+                VerticalOptions = LayoutOptions.Fill,
+                OverlayView = CreateMauiOverlayView(),
+                IsOverlayOpen = true
+            };
+            SampleRuntime.CopyTo(SampleRuntime.PlayerOptions, player.PlayerOptions);
+            ApplySelectedYtdlpFormatToPlayerOptions(player.PlayerOptions);
+            player.PlayerCreated += PlayerCreated;
+            _playerHostContainer.Add(player, 0, 0);
+            _player = player;
         }
 
         /// <summary>
@@ -248,7 +315,7 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
         /// <returns>代表冒煙測試流程的工作。</returns>
         private Task RunSmokeAsync()
         {
-            return SampleRuntime.RunSmokeUntilPlaybackAsync("MauiSample", () => _player.Player, CloseApplication);
+            return SampleRuntime.RunSmokeUntilPlaybackAsync("MauiSample", () => _player?.Player, CloseApplication);
         }
 
         /// <summary>
@@ -258,7 +325,7 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
         /// <param name="e">事件資料。</param>
         private void PlayerCreated(object? sender, EventArgs e)
         {
-            if (_player.Player != null)
+            if (_player?.Player != null)
             {
                 AttachPlayerEvents(_player.Player);
             }
@@ -281,7 +348,12 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
         /// <param name="e">事件資料。</param>
         private void PauseButtonClicked(object? sender, EventArgs e)
         {
-            if (_player.Player != null)
+            if (!EnsureRuntimeReady())
+            {
+                return;
+            }
+
+            if (_player?.Player != null)
             {
                 _eventBridge?.WriteLifecycle("Pause", "切換播放器暫停狀態。");
                 _player.Player.Pause = !_player.Player.Pause;
@@ -295,8 +367,13 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
         /// <param name="e">事件資料。</param>
         private void StopButtonClicked(object? sender, EventArgs e)
         {
+            if (!EnsureRuntimeReady())
+            {
+                return;
+            }
+
             _eventBridge?.WriteLifecycle("Stop", "停止目前播放項目。");
-            _player.Player?.Stop();
+            _player?.Player?.Stop();
         }
 
         /// <summary>
@@ -321,8 +398,12 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
             SampleYtdlpFormatChoice choice = _formatChoices[selectedIndex];
             try
             {
-                SampleFeatureController.ApplyYtdlpFormat(_player.PlayerOptions, choice);
-                if (_player.Player != null)
+                if (_player != null)
+                {
+                    SampleFeatureController.ApplyYtdlpFormat(_player.PlayerOptions, choice);
+                }
+
+                if (_player?.Player != null)
                 {
                     _features.ApplyYtdlpFormat(choice);
                 }
@@ -339,10 +420,15 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
         private void LoadCurrentSource()
         {
             string source = _sourceEntry.Text ?? string.Empty;
+            if (!EnsureRuntimeReady())
+            {
+                return;
+            }
+
             if (!string.IsNullOrWhiteSpace(source))
             {
                 _eventBridge?.WriteLifecycle("LoadFile", source);
-                _player.LoadFile(source, MpvLoadFileMode.Replace);
+                _player?.LoadFile(source, MpvLoadFileMode.Replace);
             }
         }
 
@@ -470,7 +556,7 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
                 }
             };
 
-            header.Add(CreateHeaderBadge("控制項 OverlayContent：可覆蓋 HWND", Color.FromArgb("#DD0078D4"), new Thickness(16, 6, 8, 6)), 0, 0);
+            header.Add(CreateHeaderBadge("控制項 OverlayView：可覆蓋 HWND", Color.FromArgb("#DD0078D4"), new Thickness(16, 6, 8, 6)), 0, 0);
             header.Add(CreateHeaderBadge("一般 MAUI Overlay 嘗試覆蓋同一個 HWND", Color.FromArgb("#DD5C2D91"), new Thickness(8, 6, 16, 6)), 1, 0);
             return header;
         }
@@ -488,7 +574,7 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
 
             Label normalOverlay = CreateOverlayBadge("一般 MAUI Overlay：AirSpace 對照", Color.FromArgb("#DD5C2D91"));
             normalOverlay.ZIndex = 10;
-            surface.Add(_player, 0, 0);
+            surface.Add(_playerHostContainer, 0, 0);
             surface.Add(normalOverlay, 0, 0);
             return surface;
         }
@@ -543,29 +629,27 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
         }
 
         /// <summary>
-        /// 建立 Windows 平台控制項管理的安全覆蓋層內容。
+        /// 建立 MAUI handler 可轉換到平台控制項的安全覆蓋層檢視。
         /// </summary>
-        /// <returns>可交給 Windows handler 顯示的 WinUI 覆蓋層元素。</returns>
-        private static WinUiElement CreateWinUiOverlayContent()
+        /// <returns>可交給 `MpvView.OverlayView` 顯示的 MAUI 覆蓋層檢視。</returns>
+        private static View CreateMauiOverlayView()
         {
-            WinUiBorder border = new WinUiBorder
+            return new Label
             {
-                Width = SampleRuntime.SampleOverlayBadgeWidth,
-                Height = SampleRuntime.SampleOverlayBadgeHeight,
-                Margin = new WinUiThickness(16),
-                Background = new WinUiSolidColorBrush(WinUiColorHelper.FromArgb(221, 0, 120, 212)),
-                CornerRadius = new WinUiCornerRadius(4),
-                IsHitTestVisible = false
+                Text = "OverlayView：AirSpace 安全覆蓋層",
+                WidthRequest = SampleRuntime.SampleOverlayBadgeWidth,
+                HeightRequest = SampleRuntime.SampleOverlayBadgeHeight,
+                Margin = new Thickness(16),
+                BackgroundColor = Color.FromArgb("#DD0078D4"),
+                TextColor = Colors.White,
+                FontAttributes = FontAttributes.Bold,
+                HorizontalOptions = LayoutOptions.Start,
+                VerticalOptions = LayoutOptions.Start,
+                HorizontalTextAlignment = TextAlignment.Center,
+                VerticalTextAlignment = TextAlignment.Center,
+                LineBreakMode = LineBreakMode.TailTruncation,
+                InputTransparent = true
             };
-            border.Child = new WinUiTextBlock
-            {
-                Text = "OverlayContent：AirSpace 安全覆蓋層",
-                Foreground = new WinUiSolidColorBrush(WinUiColors.White),
-                FontWeight = WinUiFontWeights.SemiBold,
-                HorizontalAlignment = WinUiHorizontalAlignment.Center,
-                VerticalAlignment = WinUiVerticalAlignment.Center
-            };
-            return border;
         }
 
         /// <summary>
@@ -586,6 +670,11 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
         /// <param name="action">要執行的功能。</param>
         private void RunFeature(Action action)
         {
+            if (!EnsureRuntimeReady())
+            {
+                return;
+            }
+
             try
             {
                 action();
@@ -604,6 +693,11 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
         /// <returns>代表功能執行流程的工作。</returns>
         private async Task RunFeatureAsync(Func<Task> action)
         {
+            if (!EnsureRuntimeReady())
+            {
+                return;
+            }
+
             if (!_asyncFeatureGate.TryEnter())
             {
                 AppendEventLine(CreateLifecycleLine("FeatureBusy", "已有非同步功能正在執行。"));
@@ -622,6 +716,46 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
             finally
             {
                 _asyncFeatureGate.Exit();
+            }
+        }
+
+        /// <summary>
+        /// 確認 runtime 已完成初始化。
+        /// </summary>
+        /// <returns>runtime 已就緒時為 <see langword="true"/>。</returns>
+        private bool EnsureRuntimeReady()
+        {
+            if (_runtimeReady)
+            {
+                return true;
+            }
+
+            AppendEventLine(CreateLifecycleLine("RuntimePending", "runtime 尚未初始化完成。"));
+            return false;
+        }
+
+        /// <summary>
+        /// 設定 runtime 相關控制項是否可操作。
+        /// </summary>
+        /// <param name="enabled">控制項可操作時為 <see langword="true"/>。</param>
+        private void SetRuntimeControlsEnabled(bool enabled)
+        {
+            foreach (VisualElement control in _runtimeControls)
+            {
+                control.IsEnabled = enabled;
+            }
+        }
+
+        /// <summary>
+        /// 將目前選擇的 yt-dlp 格式套用到指定播放器選項。
+        /// </summary>
+        /// <param name="options">要套用格式的播放器選項。</param>
+        private void ApplySelectedYtdlpFormatToPlayerOptions(MpvPlayerOptions options)
+        {
+            int selectedIndex = _formatPicker.SelectedIndex;
+            if (selectedIndex >= 0 && selectedIndex < _formatChoices.Count)
+            {
+                SampleFeatureController.ApplyYtdlpFormat(options, _formatChoices[selectedIndex]);
             }
         }
 
@@ -738,10 +872,11 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
             picker.SelectedIndex = selectedIndex;
             if (selectedIndex >= 0 && selectedIndex < _formatChoices.Count)
             {
-                SampleFeatureController.ApplyYtdlpFormat(_player.PlayerOptions, _formatChoices[selectedIndex]);
+                SampleFeatureController.ApplyYtdlpFormat(SampleRuntime.PlayerOptions, _formatChoices[selectedIndex]);
             }
 
             picker.SelectedIndexChanged += FormatPickerSelectedIndexChanged;
+            _runtimeControls.Add(picker);
             return picker;
         }
 
@@ -819,9 +954,9 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
         /// <param name="text">按鈕文字。</param>
         /// <param name="width">按鈕寬度。</param>
         /// <returns>已套用共用外觀的按鈕。</returns>
-        private static Button CreateFeatureButtonCore(string text, double width)
+        private Button CreateFeatureButtonCore(string text, double width)
         {
-            return new Button
+            Button button = new Button
             {
                 Text = text,
                 WidthRequest = width,
@@ -834,6 +969,8 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
                 HorizontalOptions = LayoutOptions.Start,
                 VerticalOptions = LayoutOptions.Center
             };
+            _runtimeControls.Add(button);
+            return button;
         }
 
         /// <summary>

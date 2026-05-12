@@ -1,6 +1,6 @@
 ﻿using System;
 using Microsoft.Maui.Controls;
-using Microsoft.UI.Xaml;
+using WinUiElement = Microsoft.UI.Xaml.UIElement;
 
 using MediaEmbedKit.Mpv.WinUI;
 
@@ -22,13 +22,23 @@ namespace MediaEmbedKit.Mpv.Maui
             propertyChanged: OnSourceChanged);
 
         /// <summary>
+        /// 識別 <see cref="OverlayView"/> 可繫結屬性。
+        /// </summary>
+        public static readonly BindableProperty OverlayViewProperty = BindableProperty.Create(
+            nameof(OverlayView),
+            typeof(View),
+            typeof(MpvView),
+            default(View),
+            propertyChanged: OnOverlayViewChanged);
+
+        /// <summary>
         /// 識別 <see cref="OverlayContent"/> 可繫結屬性。
         /// </summary>
         public static readonly BindableProperty OverlayContentProperty = BindableProperty.Create(
             nameof(OverlayContent),
-            typeof(UIElement),
+            typeof(WinUiElement),
             typeof(MpvView),
-            default(UIElement),
+            default(WinUiElement),
             propertyChanged: OnOverlayContentChanged);
 
         /// <summary>
@@ -91,12 +101,22 @@ namespace MediaEmbedKit.Mpv.Maui
         }
 
         /// <summary>
-        /// 取得或設定 Windows 平台控制項管理的 AirSpace 覆蓋層內容。
+        /// 取得或設定由 MAUI handler 轉換的平台覆蓋層檢視。
+        /// </summary>
+        /// <value>顯示在視訊上方的 MAUI 檢視；未設定時為 <see langword="null"/>。</value>
+        public View? OverlayView
+        {
+            get { return (View?)GetValue(OverlayViewProperty); }
+            set { SetValue(OverlayViewProperty, value); }
+        }
+
+        /// <summary>
+        /// 取得或設定 Windows 平台控制項管理的原生 AirSpace 覆蓋層內容。
         /// </summary>
         /// <value>顯示在視訊上方的 WinUI 元素；未設定時為 <see langword="null"/>。</value>
-        public UIElement? OverlayContent
+        public WinUiElement? OverlayContent
         {
-            get { return (UIElement?)GetValue(OverlayContentProperty); }
+            get { return (WinUiElement?)GetValue(OverlayContentProperty); }
             set { SetValue(OverlayContentProperty, value); }
         }
 
@@ -177,6 +197,21 @@ namespace MediaEmbedKit.Mpv.Maui
             if (!string.IsNullOrWhiteSpace(source))
             {
                 view.LoadFile(source!);
+            }
+        }
+
+        /// <summary>
+        /// 在 <see cref="OverlayView"/> 屬性變更時同步平台控制項。
+        /// </summary>
+        /// <param name="bindable">屬性所屬的可繫結物件。</param>
+        /// <param name="oldValue">屬性先前的值。</param>
+        /// <param name="newValue">屬性新的值。</param>
+        private static void OnOverlayViewChanged(BindableObject bindable, object oldValue, object newValue)
+        {
+            MpvView view = (MpvView)bindable;
+            if (view.Handler is MpvViewHandler handler)
+            {
+                handler.UpdateOverlayContent();
             }
         }
 

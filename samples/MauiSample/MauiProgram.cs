@@ -1,5 +1,4 @@
 ﻿using MediaEmbedKit.Mpv.Maui;
-using MediaEmbedKit.Mpv.Samples;
 using Microsoft.Maui.Hosting;
 
 namespace MediaEmbedKit.Mpv.Samples.Maui
@@ -15,7 +14,6 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
         /// <returns>已設定 MediaEmbedKit.Mpv handler 的 MAUI 應用程式。</returns>
         public static MauiApp CreateMauiApp()
         {
-            SampleRuntime.InstallOrUpdateAsync().GetAwaiter().GetResult();
             return MauiApp.CreateBuilder()
                 .UseMauiApp<App>()
                 .UseMediaEmbedKitMpv()

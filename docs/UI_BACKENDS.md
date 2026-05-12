@@ -27,6 +27,8 @@ WinForms、WPF、WinUI 3 與 .NET MAUI Windows 使用 HWND `wid` 後端。Avalon
 
 `MpvAvaloniaPlayer` 使用 Avalonia `OpenGlControlBase` 與 libmpv OpenGL render API。它不是 HWND `wid` 嵌入後端。
 
+`MpvAvaloniaPlayer` 是建議使用的對外控制項名稱。`MpvAvaloniaOpenGlPlayer` 保留為明確後端類型，供需要直接表達 OpenGL render API 後端的程式碼使用。
+
 ## WinUI 3
 
 `MpvWinUiPlayer` 使用 `MpvWinUiHwndPlayer` 的 Windows HWND 後端。控制項內建 `OverlayContent`，並透過 XAML Island 覆蓋層處理 AirSpace。
@@ -36,3 +38,5 @@ WinForms、WPF、WinUI 3 與 .NET MAUI Windows 使用 HWND `wid` 後端。Avalon
 ## .NET MAUI Windows
 
 `MpvViewHandler` 在 Windows 對應到 WinUI 3 `MpvWinUiPlayer`，因此使用相同 HWND 後端。設計階段不初始化播放後端。
+
+MAUI 應用程式優先使用 `MpvView.OverlayView` 提供 MAUI `View` 覆蓋層。`MpvView.OverlayContent` 保留為 Windows 原生 WinUI escape hatch；兩者同時設定時，`OverlayContent` 優先。

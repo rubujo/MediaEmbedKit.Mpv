@@ -11,6 +11,7 @@
     <Project Path="samples/AvaloniaSample/MediaEmbedKit.Mpv.Samples.Avalonia.csproj" />
     <Project Path="samples/WinUISample/MediaEmbedKit.Mpv.Samples.WinUI.csproj" />
     <Project Path="samples/MauiSample/MediaEmbedKit.Mpv.Samples.Maui.csproj" />
+    <Project Path="samples/ConsoleMinimalSample/MediaEmbedKit.Mpv.Samples.ConsoleMinimal.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/MediaEmbedKit.Mpv.Tests/MediaEmbedKit.Mpv.Tests.csproj" />
