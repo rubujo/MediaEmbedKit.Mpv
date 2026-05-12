@@ -27,13 +27,11 @@
 
 ## 驗證狀態
 
-最近一次完整驗證包含：
+Windows x64 發佈前驗證以本機 release gate 為準：
 
 ```powershell
-dotnet run --project .\tests\MediaEmbedKit.Mpv.Tests\MediaEmbedKit.Mpv.Tests.csproj
-dotnet run --project .\tests\MediaEmbedKit.Mpv.IntegrationTests\MediaEmbedKit.Mpv.IntegrationTests.csproj
-dotnet build .\MediaEmbedKit.Mpv.slnx
-dotnet run --project .\tests\MediaEmbedKit.Mpv.PlaybackSmoke\MediaEmbedKit.Mpv.PlaybackSmoke.csproj -- --seconds 20
+.\tools\Invoke-PreReleaseValidation.ps1
+.\tools\Invoke-PreReleaseValidation.ps1 -IncludeWindowsReleaseGate -GuiPlaybackSeconds 20
 ```
 
-核心 API 測試與原生整合測試通過。WinForms、WPF、Avalonia、WinUI 3 與 MAUI Windows 範例已以 YouTube 測試網址播放超過 20 秒並正常關閉。
+核心 API 測試、原生整合測試、NuGet 套件內容、乾淨 consumer 建置、Console minimal 播放與 GUI consumer 播放都應在發佈前通過。WinForms、WPF、Avalonia、WinUI 3 與 MAUI Windows 範例需以 YouTube 測試網址播放到指定秒數後正常關閉。

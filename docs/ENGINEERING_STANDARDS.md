@@ -38,6 +38,7 @@ Markdown 文件應使用正式、精煉且一致的正體中文。英文授權�
 - `docs/UI_BACKENDS.md`：UI 後端。
 - `docs/RUNTIME_ASSETS.md`：runtime 政策。
 - `docs/RELEASE_CHECKLIST.md`：發佈前本機檢查。
+- `docs/DESIGN_TIME_CHECKLIST.md`：Windows UI 控制項設計階段檢查。
 - `docs/AI_AGENT_INTEGRATION.md`：AI agent 與 skills 結構。
 
 ## 方案結構
@@ -110,10 +111,10 @@ GUI consumer 實際播放驗證使用：
 .\tools\Invoke-PreReleaseValidation.ps1
 ```
 
-若要在發佈前流程一併執行 GUI 驗證，可使用：
+發佈前主流程預設使用 Release configuration。若要執行完整 Windows release gate，可使用：
 
 ```powershell
-.\tools\Invoke-PreReleaseValidation.ps1 -IncludeGuiConsumerPlaybackValidation -IncludeGuiPlaybackStress -GuiPlaybackSeconds 20
+.\tools\Invoke-PreReleaseValidation.ps1 -IncludeWindowsReleaseGate -GuiPlaybackSeconds 20
 ```
 
 NuGet 套件內容驗證使用：

@@ -1,6 +1,6 @@
 # 發佈前檢查清單
 
-本文件定義發佈前可在本機完成的檢查項目。CI 工作流程需等待平台與發佈策略確認後再建立。
+本文件定義 Windows x64 發佈前可在本機完成的檢查項目。現階段發佈品質以本機驗證鏈為準，不建立 CI 工作流程。
 
 ## 必要檢查
 
@@ -10,7 +10,13 @@
 .\tools\Invoke-PreReleaseValidation.ps1
 ```
 
-此腳本會依序執行還原、格式檢查、核心測試、整合測試、方案建置、NuGet 套件內容驗證與乾淨 consumer 專案驗證。
+此腳本是唯一主流程，預設使用 Release configuration，並依序執行還原、格式檢查、核心測試、整合測試、方案建置、NuGet 套件內容驗證與乾淨 consumer 專案驗證。
+
+完整 Windows release gate 會額外執行第一階段壓力測試、Console minimal 播放驗證、GUI consumer 實際播放驗證與 GUI 播放壓力測試：
+
+```powershell
+.\tools\Invoke-PreReleaseValidation.ps1 -IncludeWindowsReleaseGate -GuiPlaybackSeconds 20
+```
 
 若目前環境沒有可用的 Windows x64 `libmpv-2.dll`，可先略過整合測試：
 
@@ -28,6 +34,12 @@
 
 ```powershell
 .\tools\Invoke-PreReleaseValidation.ps1 -IncludeGuiConsumerPlaybackValidation -IncludeGuiPlaybackStress -GuiPlaybackSeconds 20
+```
+
+若要讓 Console minimal、GUI consumer 與 GUI 壓力測試共用既有 runtime，可指定工作區內的 runtime 資料夾：
+
+```powershell
+.\tools\Invoke-PreReleaseValidation.ps1 -IncludeWindowsReleaseGate -RuntimeDirectory .\.tmp\gui-playback-runtime
 ```
 
 ## NuGet 套件檢查
@@ -98,5 +110,5 @@ GUI 播放相關腳本會在啟動視窗前先準備共用 runtime 資料夾，�
 
 - 確認 package version 與 release notes。
 - 確認第三方授權與散發義務。
-- 在 Visual Studio 設計工具中確認 WinForms、WPF、WinUI 3 與 MAUI Windows 設計階段行為。
-- 若要啟用 CI，先確認支援平台、runner 映像、runtime asset 取得方式與 secrets 管理策略。
+- 依 `docs/DESIGN_TIME_CHECKLIST.md` 確認 WinForms、WPF、WinUI 3、MAUI Windows 與 Avalonia 設計階段行為。
+- 確認 NuGet 套件不包含 `libmpv-2.dll`、`yt-dlp.exe` 或 `deno.exe`。

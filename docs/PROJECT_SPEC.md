@@ -9,6 +9,7 @@
 | libmpv、yt-dlp、Deno runtime 政策 | `docs/RUNTIME_ASSETS.md` |
 | libmpv C API 覆蓋與測試矩陣 | `docs/LIBMPV_C_API_TEST_MATRIX.md` |
 | 發佈前本機檢查 | `docs/RELEASE_CHECKLIST.md` |
+| Windows 設計階段檢查 | `docs/DESIGN_TIME_CHECKLIST.md` |
 | 工程、文件、提交與驗證規則 | `docs/ENGINEERING_STANDARDS.md` |
 | AI agent 與 Agent Skills 結構 | `docs/AI_AGENT_INTEGRATION.md` |
 | 參考來源 | `docs/REFERENCE_SOURCES.md` |
@@ -55,6 +56,7 @@ MediaEmbedKit.Mpv 提供 .NET libmpv 包裝器與 Windows 桌面 UI 控制項。
 - Windows x64 runtime helper 支援 libmpv、yt-dlp 與 Deno 下載、更新與同層配置。
 - 範例播放冒煙測試涵蓋 WinForms、WPF、Avalonia、WinUI 3 與 MAUI Windows。
 - 已提供本機發佈前驗證、NuGet 套件內容檢查、乾淨 consumer 建置驗證、GUI consumer 實際播放驗證、第一階段壓力測試與長時間 GUI 播放壓力測試腳本。
+- Windows UI 控制項設計階段檢查清單已由 `docs/DESIGN_TIME_CHECKLIST.md` 維護。
 
 libmpv C API wrapper 可宣稱已完成 stable v0.41.0 公開 C API 包裝覆蓋。實戰驗證範圍依 `docs/LIBMPV_C_API_TEST_MATRIX.md` 維護。
 

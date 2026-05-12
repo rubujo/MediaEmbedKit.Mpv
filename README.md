@@ -119,7 +119,11 @@ dotnet run --project .\tests\MediaEmbedKit.Mpv.PlaybackSmoke\MediaEmbedKit.Mpv.P
 .\tools\Invoke-PreReleaseValidation.ps1
 ```
 
-此腳本會執行格式檢查、測試、建置、NuGet 套件內容驗證與乾淨 consumer 專案驗證。若要一併執行第一階段壓力測試，可加入 `-IncludeStressTests`。CI 工作流程尚未建立，需等待平台與 runner 策略確認。
+此腳本是 Windows x64 發佈前本機驗證主流程，會執行格式檢查、測試、Release 建置、NuGet 套件內容驗證與乾淨 consumer 專案驗證。若要執行完整 Windows release gate，可使用：
+
+```powershell
+.\tools\Invoke-PreReleaseValidation.ps1 -IncludeWindowsReleaseGate -GuiPlaybackSeconds 20
+```
 
 GUI consumer 實際播放驗證會以本機 NuGet 套件建立臨時 consumer sample，並播放到指定秒數後關閉。長時間 GUI 播放壓力測試可使用：
 
@@ -135,6 +139,7 @@ GUI consumer 實際播放驗證會以本機 NuGet 套件建立臨時 consumer sa
 - `docs/RUNTIME_ASSETS.md`：runtime 下載與更新政策。
 - `docs/LIBMPV_C_API_TEST_MATRIX.md`：C API 覆蓋與驗證矩陣。
 - `docs/RELEASE_CHECKLIST.md`：發佈前本機檢查。
+- `docs/DESIGN_TIME_CHECKLIST.md`：Windows UI 控制項設計階段檢查。
 - `docs/ENGINEERING_STANDARDS.md`：工程、文件、提交與格式規範。
 - `docs/AI_AGENT_INTEGRATION.md`：AI agent 入口與 skill 結構。
 

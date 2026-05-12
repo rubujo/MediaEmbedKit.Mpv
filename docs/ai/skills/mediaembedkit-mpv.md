@@ -42,3 +42,4 @@ dotnet build .\MediaEmbedKit.Mpv.slnx
 ```
 
 使用 `rg` 搜尋程式碼。變更 API 行為、支援範圍或平台宣告時，必須同步更新文件。
+發佈品質相關任務以 `tools/Invoke-PreReleaseValidation.ps1` 為主流程；需要完整 Windows x64 release gate 時使用 `-IncludeWindowsReleaseGate`。
