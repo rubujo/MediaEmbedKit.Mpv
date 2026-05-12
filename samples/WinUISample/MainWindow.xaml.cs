@@ -51,6 +51,10 @@ namespace MediaEmbedKit.Mpv.Samples.WinUI
         /// </summary>
         private readonly SampleEventLogDispatcher _eventLogDispatcher;
         /// <summary>
+        /// 控制非同步範例功能不可重入的閘門。
+        /// </summary>
+        private readonly SampleAsyncFeatureGate _asyncFeatureGate = new SampleAsyncFeatureGate();
+        /// <summary>
         /// 表示預設媒體載入是否已排程。
         /// </summary>
         private bool _playbackStarted;
@@ -79,7 +83,6 @@ namespace MediaEmbedKit.Mpv.Samples.WinUI
             PlayerHost.Loaded += PlayerHostLoaded;
             Closed += WindowClosed;
             AppendEventLine(CreateLifecycleLine("WindowCreated", "WinUI 視窗已建立，等待 HWND 後端建立播放器。"));
-            _ = DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, StartPlayback);
         }
 
         /// <summary>
@@ -155,35 +158,20 @@ namespace MediaEmbedKit.Mpv.Samples.WinUI
         /// <param name="e">事件資料。</param>
         private async void PlayerHostLoaded(object sender, RoutedEventArgs e)
         {
-            PlayerHost.Loaded -= PlayerHostLoaded;
-            AppendEventLine(CreateLifecycleLine("Loaded", "播放控制項已載入，準備載入預設媒體來源。"));
-            StartPlayback();
-            if (SampleRuntime.IsSmokeTestEnabled && !_smokeStarted)
+            try
             {
-                _smokeStarted = true;
-                await RunSmokeAsync().ConfigureAwait(true);
-            }
-        }
-
-        /// <summary>
-        /// 從應用程式啟動流程排程 WinUI 3 範例播放冒煙測試。
-        /// </summary>
-        internal void StartSmokePlayback()
-        {
-            if (_smokeStarted)
-            {
-                return;
-            }
-
-            _smokeStarted = true;
-            if (!DispatcherQueue.TryEnqueue(async () =>
-            {
+                PlayerHost.Loaded -= PlayerHostLoaded;
+                AppendEventLine(CreateLifecycleLine("Loaded", "播放控制項已載入，準備載入預設媒體來源。"));
                 StartPlayback();
-                await RunSmokeAsync().ConfigureAwait(true);
-            }))
+                if (SampleRuntime.IsSmokeTestEnabled && !_smokeStarted)
+                {
+                    _smokeStarted = true;
+                    await RunSmokeAsync().ConfigureAwait(true);
+                }
+            }
+            catch (Exception ex)
             {
-                StartPlayback();
-                _ = RunSmokeAsync();
+                AppendEventLine(CreateLifecycleLine("LoadedError", ex.Message));
             }
         }
 
@@ -433,6 +421,12 @@ namespace MediaEmbedKit.Mpv.Samples.WinUI
         /// <returns>代表功能執行流程的工作。</returns>
         private async Task RunFeatureAsync(Func<Task> action)
         {
+            if (!_asyncFeatureGate.TryEnter())
+            {
+                AppendEventLine(CreateLifecycleLine("FeatureBusy", "已有非同步功能正在執行。"));
+                return;
+            }
+
             try
             {
                 await action().ConfigureAwait(true);
@@ -441,6 +435,10 @@ namespace MediaEmbedKit.Mpv.Samples.WinUI
             catch (Exception ex)
             {
                 AppendEventLine(CreateLifecycleLine("FeatureError", ex.Message));
+            }
+            finally
+            {
+                _asyncFeatureGate.Exit();
             }
         }
 
@@ -479,18 +477,20 @@ namespace MediaEmbedKit.Mpv.Samples.WinUI
         /// 將事件清單更新排入 WinUI UI 執行緒。
         /// </summary>
         /// <param name="action">要在 UI 執行緒執行的更新。</param>
-        private void ScheduleEventLogFlush(Action action)
+        /// <returns>成功排入 UI 執行緒時為 <see langword="true"/>。</returns>
+        private bool ScheduleEventLogFlush(Action action)
         {
-            ScheduleUiUpdate(action);
+            return ScheduleUiUpdate(action);
         }
 
         /// <summary>
         /// 將指定動作排入 WinUI UI 執行緒。
         /// </summary>
         /// <param name="action">要在 UI 執行緒執行的動作。</param>
-        private void ScheduleUiUpdate(Action action)
+        /// <returns>成功排入 UI 執行緒時為 <see langword="true"/>。</returns>
+        private bool ScheduleUiUpdate(Action action)
         {
-            _ = DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, () => action());
+            return DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, () => action());
         }
 
         /// <summary>

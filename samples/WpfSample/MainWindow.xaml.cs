@@ -44,6 +44,10 @@ namespace MediaEmbedKit.Mpv.Samples.Wpf
         /// 批次轉送事件文字到 UI 執行緒的分派器。
         /// </summary>
         private readonly SampleEventLogDispatcher _eventLogDispatcher;
+        /// <summary>
+        /// 控制非同步範例功能不可重入的閘門。
+        /// </summary>
+        private readonly SampleAsyncFeatureGate _asyncFeatureGate = new SampleAsyncFeatureGate();
 
         /// <summary>
         /// 初始化 <see cref="MainWindow"/> 類別的新執行個體。
@@ -84,11 +88,19 @@ namespace MediaEmbedKit.Mpv.Samples.Wpf
         /// <param name="e">事件資料。</param>
         private async void WindowLoaded(object sender, RoutedEventArgs e)
         {
-            AppendEventLine(CreateLifecycleLine("Loaded", "視窗已載入，準備載入預設媒體來源。"));
-            LoadCurrentSource();
-            if (SampleRuntime.IsSmokeTestEnabled)
+            try
             {
-                await RunSmokeAsync().ConfigureAwait(true);
+                AppendEventLine(CreateLifecycleLine("Loaded", "視窗已載入，準備載入預設媒體來源。"));
+                LoadCurrentSource();
+                if (SampleRuntime.IsSmokeTestEnabled)
+                {
+                    await RunSmokeAsync().ConfigureAwait(true);
+                }
+            }
+            catch (Exception ex)
+            {
+                AppendEventLine(CreateLifecycleLine("LoadedError", ex.Message));
+                MessageBox.Show(this, ex.Message, "mpv sample", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -132,6 +144,12 @@ namespace MediaEmbedKit.Mpv.Samples.Wpf
         /// </summary>
         private void LoadCurrentSource()
         {
+            if (string.IsNullOrWhiteSpace(UrlTextBox.Text))
+            {
+                AppendEventLine(CreateLifecycleLine("LoadFileSkipped", "媒體來源不可為空白。"));
+                return;
+            }
+
             try
             {
                 _eventBridge?.WriteLifecycle("LoadFile", UrlTextBox.Text);
@@ -380,6 +398,12 @@ namespace MediaEmbedKit.Mpv.Samples.Wpf
         /// <returns>代表功能執行流程的工作。</returns>
         private async Task RunFeatureAsync(Func<Task> action)
         {
+            if (!_asyncFeatureGate.TryEnter())
+            {
+                AppendEventLine(CreateLifecycleLine("FeatureBusy", "已有非同步功能正在執行。"));
+                return;
+            }
+
             try
             {
                 await action().ConfigureAwait(true);
@@ -388,6 +412,10 @@ namespace MediaEmbedKit.Mpv.Samples.Wpf
             catch (Exception ex)
             {
                 AppendEventLine(CreateLifecycleLine("FeatureError", ex.Message));
+            }
+            finally
+            {
+                _asyncFeatureGate.Exit();
             }
         }
 
@@ -421,18 +449,37 @@ namespace MediaEmbedKit.Mpv.Samples.Wpf
         /// 將事件清單更新排入 WPF UI 執行緒。
         /// </summary>
         /// <param name="action">要在 UI 執行緒執行的更新。</param>
-        private void ScheduleEventLogFlush(Action action)
+        /// <returns>成功排入 UI 執行緒時為 <see langword="true"/>。</returns>
+        private bool ScheduleEventLogFlush(Action action)
         {
-            ScheduleUiUpdate(action);
+            return ScheduleUiUpdate(action);
         }
 
         /// <summary>
         /// 將指定動作排入 WPF UI 執行緒。
         /// </summary>
         /// <param name="action">要在 UI 執行緒執行的動作。</param>
-        private void ScheduleUiUpdate(Action action)
+        /// <returns>成功排入 UI 執行緒時為 <see langword="true"/>。</returns>
+        private bool ScheduleUiUpdate(Action action)
         {
-            _ = Dispatcher.BeginInvoke(action, DispatcherPriority.Background);
+            if (Dispatcher.HasShutdownStarted || Dispatcher.HasShutdownFinished)
+            {
+                return false;
+            }
+
+            try
+            {
+                DispatcherOperation operation = Dispatcher.BeginInvoke(action, DispatcherPriority.Background);
+                return operation.Status != DispatcherOperationStatus.Aborted;
+            }
+            catch (ObjectDisposedException)
+            {
+                return false;
+            }
+            catch (InvalidOperationException)
+            {
+                return false;
+            }
         }
 
         /// <summary>

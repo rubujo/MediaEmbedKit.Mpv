@@ -39,7 +39,7 @@ namespace MediaEmbedKit.Mpv.Samples
         /// <summary>
         /// 將批次更新排入 UI 執行緒的委派。
         /// </summary>
-        private readonly Action<Action> _scheduleOnUiThread;
+        private readonly Func<Action, bool> _scheduleOnUiThread;
         /// <summary>
         /// 週期性清空背景事件佇列的計時器。
         /// </summary>
@@ -62,11 +62,11 @@ namespace MediaEmbedKit.Mpv.Samples
         /// </summary>
         /// <param name="appendLines">接收批次事件列並更新 UI 的委派。</param>
         /// <param name="scheduleOnUiThread">將批次更新排入 UI 執行緒的委派。</param>
-        public SampleEventLogDispatcher(Action<IReadOnlyList<string>> appendLines, Action<Action> scheduleOnUiThread)
+        public SampleEventLogDispatcher(Action<IReadOnlyList<string>> appendLines, Func<Action, bool> scheduleOnUiThread)
         {
             _appendLines = appendLines ?? throw new ArgumentNullException(nameof(appendLines));
             _scheduleOnUiThread = scheduleOnUiThread ?? throw new ArgumentNullException(nameof(scheduleOnUiThread));
-            _flushTimer = new Timer(Flush, null, FlushInterval, FlushInterval);
+            _flushTimer = new Timer(FlushFromTimer, null, FlushInterval, FlushInterval);
         }
 
         /// <summary>
@@ -116,20 +116,29 @@ namespace MediaEmbedKit.Mpv.Samples
             _flushTimer.Dispose();
             if (shouldFlush)
             {
-                Flush(null);
+                Flush(true);
             }
+        }
+
+        /// <summary>
+        /// 從計時器觸發事件輸出。
+        /// </summary>
+        /// <param name="state">計時器狀態；未使用。</param>
+        private void FlushFromTimer(object? state)
+        {
+            Flush(false);
         }
 
         /// <summary>
         /// 將目前佇列中的事件列批次送往 UI 執行緒。
         /// </summary>
-        /// <param name="state">計時器狀態；未使用。</param>
-        private void Flush(object? state)
+        /// <param name="allowAfterDispose">已釋放時仍允許送出最後事件列。</param>
+        private void Flush(bool allowAfterDispose)
         {
             List<string> lines = new List<string>();
             lock (_syncRoot)
             {
-                if (_disposed && state != null)
+                if (_disposed && !allowAfterDispose)
                 {
                     return;
                 }
@@ -161,20 +170,45 @@ namespace MediaEmbedKit.Mpv.Samples
                 return;
             }
 
-            _scheduleOnUiThread(() =>
+            bool scheduled;
+            try
             {
-                try
+                scheduled = _scheduleOnUiThread(() =>
                 {
-                    _appendLines(lines);
-                }
-                finally
-                {
-                    lock (_syncRoot)
+                    try
                     {
-                        _uiFlushQueued = false;
+                        _appendLines(lines);
                     }
-                }
-            });
+                    finally
+                    {
+                        ResetQueuedState();
+                    }
+                });
+            }
+            catch (ObjectDisposedException)
+            {
+                scheduled = false;
+            }
+            catch (InvalidOperationException)
+            {
+                scheduled = false;
+            }
+
+            if (!scheduled)
+            {
+                ResetQueuedState();
+            }
+        }
+
+        /// <summary>
+        /// 重設目前已排入 UI 更新的狀態。
+        /// </summary>
+        private void ResetQueuedState()
+        {
+            lock (_syncRoot)
+            {
+                _uiFlushQueued = false;
+            }
         }
     }
 }

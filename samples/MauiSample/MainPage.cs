@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
+using System.Threading;
 using System.Threading.Tasks;
 using MediaEmbedKit.Mpv;
 using MediaEmbedKit.Mpv.Maui;
@@ -27,7 +28,7 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
     /// <summary>
     /// 表示 .NET MAUI 範例的主要頁面。
     /// </summary>
-    public sealed class MainPage : ContentPage
+    public sealed class MainPage : ContentPage, IDisposable
     {
         /// <summary>
         /// 範例事件輸出的最大保留列數。
@@ -95,6 +96,10 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
         /// </summary>
         private readonly SampleEventLogDispatcher _eventLogDispatcher;
         /// <summary>
+        /// 控制非同步範例功能不可重入的閘門。
+        /// </summary>
+        private readonly SampleAsyncFeatureGate _asyncFeatureGate = new SampleAsyncFeatureGate();
+        /// <summary>
         /// 表示預設媒體是否已載入。
         /// </summary>
         private bool _initialSourceLoaded;
@@ -102,6 +107,10 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
         /// 表示冒煙測試是否已啟動。
         /// </summary>
         private bool _smokeStarted;
+        /// <summary>
+        /// 表示頁面是否已完成最終釋放。
+        /// </summary>
+        private int _disposed;
 
         /// <summary>
         /// 初始化 <see cref="MainPage"/> 類別的新執行個體。
@@ -170,23 +179,35 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
         /// </summary>
         protected override async void OnAppearing()
         {
-            base.OnAppearing();
-            if (_player.Player != null && _eventBridge == null)
+            try
             {
-                AttachPlayerEvents(_player.Player);
-            }
+                base.OnAppearing();
+                if (Volatile.Read(ref _disposed) != 0)
+                {
+                    return;
+                }
 
-            if (!_initialSourceLoaded)
-            {
-                _initialSourceLoaded = true;
-                AppendEventLine(CreateLifecycleLine("Appearing", "頁面已顯示，準備載入預設媒體來源。"));
-                LoadCurrentSource();
-            }
+                if (_player.Player != null && _eventBridge == null)
+                {
+                    AttachPlayerEvents(_player.Player);
+                }
 
-            if (SampleRuntime.IsSmokeTestEnabled && !_smokeStarted)
+                if (!_initialSourceLoaded)
+                {
+                    _initialSourceLoaded = true;
+                    AppendEventLine(CreateLifecycleLine("Appearing", "頁面已顯示，準備載入預設媒體來源。"));
+                    LoadCurrentSource();
+                }
+
+                if (SampleRuntime.IsSmokeTestEnabled && !_smokeStarted)
+                {
+                    _smokeStarted = true;
+                    await RunSmokeAsync().ConfigureAwait(true);
+                }
+            }
+            catch (Exception ex)
             {
-                _smokeStarted = true;
-                await RunSmokeAsync().ConfigureAwait(true);
+                AppendEventLine(CreateLifecycleLine("AppearingError", ex.Message));
             }
         }
 
@@ -195,12 +216,30 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
         /// </summary>
         protected override void OnDisappearing()
         {
-            _statusDispatcher.Dispose();
             _eventBridge?.WriteLifecycle("Disappearing", "頁面即將離開畫面，準備取消事件訂閱。");
             _eventBridge?.Dispose();
             _eventBridge = null;
             _currentPlayer = null;
             base.OnDisappearing();
+        }
+
+        /// <summary>
+        /// 釋放 MAUI 範例頁面持有的背景分派器與播放器事件訂閱。
+        /// </summary>
+        public void Dispose()
+        {
+            if (Interlocked.Exchange(ref _disposed, 1) != 0)
+            {
+                return;
+            }
+
+            _statusDispatcher.Dispose();
+            _eventBridge?.WriteLifecycle("Dispose", "頁面即將釋放，準備取消事件訂閱。");
+            _eventBridge?.Dispose();
+            _eventBridge = null;
+            _eventLogDispatcher.Dispose();
+            _player.PlayerCreated -= PlayerCreated;
+            _currentPlayer = null;
         }
 
         /// <summary>
@@ -565,6 +604,12 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
         /// <returns>代表功能執行流程的工作。</returns>
         private async Task RunFeatureAsync(Func<Task> action)
         {
+            if (!_asyncFeatureGate.TryEnter())
+            {
+                AppendEventLine(CreateLifecycleLine("FeatureBusy", "已有非同步功能正在執行。"));
+                return;
+            }
+
             try
             {
                 await action().ConfigureAwait(true);
@@ -573,6 +618,10 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
             catch (Exception ex)
             {
                 AppendEventLine(CreateLifecycleLine("FeatureError", ex.Message));
+            }
+            finally
+            {
+                _asyncFeatureGate.Exit();
             }
         }
 
@@ -611,18 +660,32 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
         /// 將事件清單更新排入 MAUI UI 執行緒。
         /// </summary>
         /// <param name="action">要在 UI 執行緒執行的更新。</param>
-        private static void ScheduleEventLogFlush(Action action)
+        /// <returns>成功排入 UI 執行緒時為 <see langword="true"/>。</returns>
+        private static bool ScheduleEventLogFlush(Action action)
         {
-            ScheduleUiUpdate(action);
+            return ScheduleUiUpdate(action);
         }
 
         /// <summary>
         /// 將指定動作排入 MAUI UI 執行緒。
         /// </summary>
         /// <param name="action">要在 UI 執行緒執行的動作。</param>
-        private static void ScheduleUiUpdate(Action action)
+        /// <returns>成功排入 UI 執行緒時為 <see langword="true"/>。</returns>
+        private static bool ScheduleUiUpdate(Action action)
         {
-            MainThread.BeginInvokeOnMainThread(action);
+            try
+            {
+                MainThread.BeginInvokeOnMainThread(action);
+                return true;
+            }
+            catch (ObjectDisposedException)
+            {
+                return false;
+            }
+            catch (InvalidOperationException)
+            {
+                return false;
+            }
         }
 
         /// <summary>

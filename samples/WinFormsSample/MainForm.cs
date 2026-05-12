@@ -80,9 +80,9 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
         /// </summary>
         private bool _runtimeReady;
         /// <summary>
-        /// 紀錄目前是否有非同步功能正在執行。
+        /// 控制非同步範例功能不可重入的閘門。
         /// </summary>
-        private bool _asyncFeatureRunning;
+        private readonly SampleAsyncFeatureGate _asyncFeatureGate = new SampleAsyncFeatureGate();
 
         /// <summary>
         /// 初始化 <see cref="MainForm"/> 類別的新執行個體。
@@ -176,22 +176,30 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
         /// <param name="e">事件資料。</param>
         private async void MainFormShown(object? sender, EventArgs e)
         {
-            AppendEventLine(CreateLifecycleLine("Shown", "視窗已顯示，準備初始化範例 runtime。"));
-            bool initialized = await InitializeRuntimeAsync().ConfigureAwait(true);
-            if (!initialized)
+            try
             {
-                return;
-            }
+                AppendEventLine(CreateLifecycleLine("Shown", "視窗已顯示，準備初始化範例 runtime。"));
+                bool initialized = await InitializeRuntimeAsync().ConfigureAwait(true);
+                if (!initialized)
+                {
+                    return;
+                }
 
-            AppendEventLine(CreateLifecycleLine("Shown", "runtime 已完成，準備載入預設媒體來源。"));
-            LoadCurrentSource();
-            if (SampleRuntime.IsFeatureSmokeTestEnabled)
-            {
-                await RunFeatureSmokeAsync().ConfigureAwait(true);
+                AppendEventLine(CreateLifecycleLine("Shown", "runtime 已完成，準備載入預設媒體來源。"));
+                LoadCurrentSource();
+                if (SampleRuntime.IsFeatureSmokeTestEnabled)
+                {
+                    await RunFeatureSmokeAsync().ConfigureAwait(true);
+                }
+                else if (SampleRuntime.IsSmokeTestEnabled)
+                {
+                    await RunSmokeAsync().ConfigureAwait(true);
+                }
             }
-            else if (SampleRuntime.IsSmokeTestEnabled)
+            catch (Exception ex)
             {
-                await RunSmokeAsync().ConfigureAwait(true);
+                AppendEventLine(CreateLifecycleLine("ShownError", ex.Message));
+                MessageBox.Show(this, ex.Message, "mpv sample", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -377,6 +385,12 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
         {
             if (!EnsureRuntimeReady())
             {
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(_urlTextBox.Text))
+            {
+                AppendEventLine(CreateLifecycleLine("LoadFileSkipped", "媒體來源不可為空白。"));
                 return;
             }
 
@@ -674,13 +688,12 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
                 return false;
             }
 
-            if (_asyncFeatureRunning)
+            if (!_asyncFeatureGate.TryEnter())
             {
                 AppendEventLine(CreateLifecycleLine("FeatureBusy", "已有非同步功能正在執行。"));
                 return false;
             }
 
-            _asyncFeatureRunning = true;
             SetFeatureButtonsEnabled(false);
             return true;
         }
@@ -690,7 +703,7 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
         /// </summary>
         private void EndAsyncFeature()
         {
-            _asyncFeatureRunning = false;
+            _asyncFeatureGate.Exit();
             SetFeatureButtonsEnabled(_runtimeReady);
         }
 
@@ -742,26 +755,22 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
         /// 將事件清單更新排入 WinForms UI 執行緒。
         /// </summary>
         /// <param name="action">要在 UI 執行緒執行的更新。</param>
-        private void ScheduleEventLogFlush(Action action)
+        /// <returns>成功排入 UI 執行緒時為 <see langword="true"/>。</returns>
+        private bool ScheduleEventLogFlush(Action action)
         {
-            ScheduleUiUpdate(action);
+            return ScheduleUiUpdate(action);
         }
 
         /// <summary>
         /// 將指定動作排入 WinForms UI 執行緒。
         /// </summary>
         /// <param name="action">要在 UI 執行緒執行的動作。</param>
-        private void ScheduleUiUpdate(Action action)
+        /// <returns>成功排入或直接執行動作時為 <see langword="true"/>。</returns>
+        private bool ScheduleUiUpdate(Action action)
         {
-            if (IsDisposed)
+            if (IsDisposed || Disposing || !IsHandleCreated)
             {
-                return;
-            }
-
-            if (!IsHandleCreated)
-            {
-                _ = Task.Delay(250).ContinueWith(task => ScheduleUiUpdate(action), TaskScheduler.Default);
-                return;
+                return false;
             }
 
             try
@@ -769,13 +778,19 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
                 if (InvokeRequired)
                 {
                     _ = BeginInvoke(action);
-                    return;
+                    return true;
                 }
 
                 action();
+                return true;
+            }
+            catch (ObjectDisposedException)
+            {
+                return false;
             }
             catch (InvalidOperationException)
             {
+                return false;
             }
         }
 
@@ -789,7 +804,7 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
             SetButtonEnabled(_pauseButton, enabled);
             SetButtonEnabled(_stopButton, enabled);
             _formatComboBox.Enabled = enabled;
-            SetFeatureButtonsEnabled(enabled && !_asyncFeatureRunning);
+            SetFeatureButtonsEnabled(enabled && !_asyncFeatureGate.IsRunning);
         }
 
         /// <summary>

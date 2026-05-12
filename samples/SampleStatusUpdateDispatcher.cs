@@ -28,7 +28,7 @@ namespace MediaEmbedKit.Mpv.Samples
         /// <summary>
         /// 將 UI 更新排入 UI 執行緒的委派。
         /// </summary>
-        private readonly Action<Action> _scheduleOnUiThread;
+        private readonly Func<Action, bool> _scheduleOnUiThread;
         /// <summary>
         /// 週期性讀取播放狀態的背景計時器。
         /// </summary>
@@ -55,7 +55,7 @@ namespace MediaEmbedKit.Mpv.Samples
         public SampleStatusUpdateDispatcher(
             Func<string> readStatusText,
             Action<string> applyStatusText,
-            Action<Action> scheduleOnUiThread)
+            Func<Action, bool> scheduleOnUiThread)
         {
             _readStatusText = readStatusText ?? throw new ArgumentNullException(nameof(readStatusText));
             _applyStatusText = applyStatusText ?? throw new ArgumentNullException(nameof(applyStatusText));
@@ -125,7 +125,11 @@ namespace MediaEmbedKit.Mpv.Samples
 
             try
             {
-                _scheduleOnUiThread(() => ApplyStatusText(statusText));
+                bool scheduled = _scheduleOnUiThread(() => ApplyStatusText(statusText));
+                if (!scheduled)
+                {
+                    ResetQueuedState();
+                }
             }
             catch (ObjectDisposedException)
             {

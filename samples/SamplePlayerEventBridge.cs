@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Threading;
 
 namespace MediaEmbedKit.Mpv.Samples
 {
@@ -22,6 +23,7 @@ namespace MediaEmbedKit.Mpv.Samples
             MpvEventId.VideoReconfig,
             MpvEventId.AudioReconfig,
             MpvEventId.PlaybackRestart,
+            MpvEventId.ClientMessage,
             MpvEventId.Shutdown
         };
 
@@ -52,7 +54,7 @@ namespace MediaEmbedKit.Mpv.Samples
         /// <summary>
         /// 表示目前事件橋接器是否已釋放。
         /// </summary>
-        private bool _disposed;
+        private int _disposed;
 
         /// <summary>
         /// 初始化 <see cref="SamplePlayerEventBridge"/> 類別的新執行個體。
@@ -84,12 +86,11 @@ namespace MediaEmbedKit.Mpv.Samples
         /// </summary>
         public void Dispose()
         {
-            if (_disposed)
+            if (Interlocked.Exchange(ref _disposed, 1) != 0)
             {
                 return;
             }
 
-            _disposed = true;
             WriteLifecycle("Dispose", "取消事件訂閱並釋放範例事件橋接器。");
             UnobserveCommonProperties();
             Unsubscribe();
@@ -241,7 +242,10 @@ namespace MediaEmbedKit.Mpv.Samples
         private void PlayerFileLoaded(object? sender, MpvEventArgs e)
         {
             Append("file-loaded", "reply=" + e.ReplyUserData.ToString(CultureInfo.InvariantCulture));
-            WriteYtdlJsonSubprocessResult();
+            ThreadPool.QueueUserWorkItem(delegate
+            {
+                WriteYtdlJsonSubprocessResult();
+            });
         }
 
         /// <summary>
@@ -319,7 +323,26 @@ namespace MediaEmbedKit.Mpv.Samples
         /// </summary>
         private void WriteYtdlJsonSubprocessResult()
         {
-            MpvYtdlJsonSubprocessResult? result = _player.GetYtdlJsonSubprocessResult();
+            if (Volatile.Read(ref _disposed) != 0)
+            {
+                return;
+            }
+
+            MpvYtdlJsonSubprocessResult? result;
+            try
+            {
+                result = _player.GetYtdlJsonSubprocessResult();
+            }
+            catch (ObjectDisposedException)
+            {
+                return;
+            }
+            catch (MpvException ex)
+            {
+                Append("ytdl-result", "讀取 yt-dlp 子程序結果失敗：" + ex.ErrorCode);
+                return;
+            }
+
             if (result == null)
             {
                 return;

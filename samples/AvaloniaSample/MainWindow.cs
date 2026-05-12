@@ -81,6 +81,10 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
         /// </summary>
         private readonly SampleEventLogDispatcher _eventLogDispatcher;
         /// <summary>
+        /// 控制非同步範例功能不可重入的閘門。
+        /// </summary>
+        private readonly SampleAsyncFeatureGate _asyncFeatureGate = new SampleAsyncFeatureGate();
+        /// <summary>
         /// 表示預設媒體載入是否已排程。
         /// </summary>
         private bool _playbackStarted;
@@ -182,12 +186,19 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
         /// <param name="e">事件資料。</param>
         private async void WindowOpened(object? sender, EventArgs e)
         {
-            AppendEventLine(CreateLifecycleLine("Opened", "視窗已開啟，準備載入預設媒體來源。"));
-            StartPlayback();
-            if (SampleRuntime.IsSmokeTestEnabled && !_smokeStarted)
+            try
             {
-                _smokeStarted = true;
-                await RunSmokeAsync().ConfigureAwait(true);
+                AppendEventLine(CreateLifecycleLine("Opened", "視窗已開啟，準備載入預設媒體來源。"));
+                StartPlayback();
+                if (SampleRuntime.IsSmokeTestEnabled && !_smokeStarted)
+                {
+                    _smokeStarted = true;
+                    await RunSmokeAsync().ConfigureAwait(true);
+                }
+            }
+            catch (Exception ex)
+            {
+                AppendEventLine(CreateLifecycleLine("OpenedError", ex.Message));
             }
         }
 
@@ -548,6 +559,12 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
         /// <returns>代表功能執行流程的工作。</returns>
         private async Task RunFeatureAsync(Func<Task> action)
         {
+            if (!_asyncFeatureGate.TryEnter())
+            {
+                AppendEventLine(CreateLifecycleLine("FeatureBusy", "已有非同步功能正在執行。"));
+                return;
+            }
+
             try
             {
                 await action().ConfigureAwait(true);
@@ -556,6 +573,10 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
             catch (Exception ex)
             {
                 AppendEventLine(CreateLifecycleLine("FeatureError", ex.Message));
+            }
+            finally
+            {
+                _asyncFeatureGate.Exit();
             }
         }
 
@@ -589,18 +610,32 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
         /// 將事件清單更新排入 Avalonia UI 執行緒。
         /// </summary>
         /// <param name="action">要在 UI 執行緒執行的更新。</param>
-        private static void ScheduleEventLogFlush(Action action)
+        /// <returns>成功排入 UI 執行緒時為 <see langword="true"/>。</returns>
+        private static bool ScheduleEventLogFlush(Action action)
         {
-            ScheduleUiUpdate(action);
+            return ScheduleUiUpdate(action);
         }
 
         /// <summary>
         /// 將指定動作排入 Avalonia UI 執行緒。
         /// </summary>
         /// <param name="action">要在 UI 執行緒執行的動作。</param>
-        private static void ScheduleUiUpdate(Action action)
+        /// <returns>成功排入 UI 執行緒時為 <see langword="true"/>。</returns>
+        private static bool ScheduleUiUpdate(Action action)
         {
-            Dispatcher.UIThread.Post(action, DispatcherPriority.Background);
+            try
+            {
+                Dispatcher.UIThread.Post(action, DispatcherPriority.Background);
+                return true;
+            }
+            catch (ObjectDisposedException)
+            {
+                return false;
+            }
+            catch (InvalidOperationException)
+            {
+                return false;
+            }
         }
 
         /// <summary>

@@ -285,7 +285,10 @@ namespace MediaEmbedKit.Mpv.Samples
                 _activeRuntimeDirectory = Path.GetFullPath(runtimeDirectory);
                 ConfigurePlayerOptions(runtimeDirectory);
                 EnsureSampleFiles();
+                return;
             }
+
+            throw new PlatformNotSupportedException("目前範例只支援 Windows x64 runtime 自動安裝：" + result.Message);
         }
 
         /// <summary>

@@ -33,7 +33,7 @@ namespace MediaEmbedKit.Mpv.Samples
         /// <summary>
         /// 紀錄範例 Lua 指令碼是否已經要求載入。
         /// </summary>
-        private bool _sampleLuaScriptLoaded;
+        private int _sampleLuaScriptLoaded;
 
         /// <summary>
         /// 初始化 <see cref="SampleFeatureController"/> 類別的新執行個體。
@@ -245,11 +245,18 @@ namespace MediaEmbedKit.Mpv.Samples
             player.ClientMessage += handler;
             try
             {
-                if (!_sampleLuaScriptLoaded)
+                if (Interlocked.CompareExchange(ref _sampleLuaScriptLoaded, 1, 0) == 0)
                 {
-                    player.LoadScript(SampleRuntime.SampleLuaScriptPath);
-                    _sampleLuaScriptLoaded = true;
-                    Append("api", "已載入 Lua 指令碼：" + SampleRuntime.SampleLuaScriptPath);
+                    try
+                    {
+                        player.LoadScript(SampleRuntime.SampleLuaScriptPath);
+                        Append("api", "已載入 Lua 指令碼：" + SampleRuntime.SampleLuaScriptPath);
+                    }
+                    catch
+                    {
+                        Volatile.Write(ref _sampleLuaScriptLoaded, 0);
+                        throw;
+                    }
                 }
 
                 MpvClientMessageEventArgs message = await WaitForLuaScriptReplyAsync(player, reply.Task).ConfigureAwait(false);
@@ -299,11 +306,20 @@ namespace MediaEmbedKit.Mpv.Samples
             {
                 WorkingDirectory = SampleRuntime.RuntimeDirectory
             };
-            AttachExternalToolOutput(runner, "yt-dlp");
-            ExternalToolProcessResult result = await runner.ListFormatsAsync(
-                url,
-                TimeSpan.FromSeconds(90),
-                CancellationToken.None).ConfigureAwait(false);
+            EventHandler<ExternalToolOutputEventArgs> handler = AttachExternalToolOutput(runner, "yt-dlp");
+            ExternalToolProcessResult result;
+            try
+            {
+                result = await runner.ListFormatsAsync(
+                    url,
+                    TimeSpan.FromSeconds(90),
+                    CancellationToken.None).ConfigureAwait(false);
+            }
+            finally
+            {
+                runner.OutputReceived -= handler;
+            }
+
             AppendProcessResult("yt-dlp", result);
         }
 
@@ -318,10 +334,19 @@ namespace MediaEmbedKit.Mpv.Samples
             {
                 WorkingDirectory = SampleRuntime.RuntimeDirectory
             };
-            AttachExternalToolOutput(runner, "deno");
-            ExternalToolProcessResult result = await runner.GetVersionAsync(
-                TimeSpan.FromSeconds(30),
-                CancellationToken.None).ConfigureAwait(false);
+            EventHandler<ExternalToolOutputEventArgs> handler = AttachExternalToolOutput(runner, "deno");
+            ExternalToolProcessResult result;
+            try
+            {
+                result = await runner.GetVersionAsync(
+                    TimeSpan.FromSeconds(30),
+                    CancellationToken.None).ConfigureAwait(false);
+            }
+            finally
+            {
+                runner.OutputReceived -= handler;
+            }
+
             AppendProcessResult("deno", result);
         }
 
@@ -454,14 +479,17 @@ namespace MediaEmbedKit.Mpv.Samples
         /// </summary>
         /// <param name="runner">要觀察的 yt-dlp 處理序執行器。</param>
         /// <param name="category">訊息分類。</param>
-        private void AttachExternalToolOutput(YtDlpProcessRunner runner, string category)
+        /// <returns>已註冊到輸出事件的處理常式。</returns>
+        private EventHandler<ExternalToolOutputEventArgs> AttachExternalToolOutput(YtDlpProcessRunner runner, string category)
         {
             int emittedLines = 0;
-            runner.OutputReceived += delegate (object? sender, ExternalToolOutputEventArgs e)
+            EventHandler<ExternalToolOutputEventArgs> handler = delegate (object? sender, ExternalToolOutputEventArgs e)
             {
                 int lineNumber = Interlocked.Increment(ref emittedLines);
                 AppendExternalToolOutput(category, e, lineNumber);
             };
+            runner.OutputReceived += handler;
+            return handler;
         }
 
         /// <summary>
@@ -469,14 +497,17 @@ namespace MediaEmbedKit.Mpv.Samples
         /// </summary>
         /// <param name="runner">要觀察的 Deno 處理序執行器。</param>
         /// <param name="category">訊息分類。</param>
-        private void AttachExternalToolOutput(DenoProcessRunner runner, string category)
+        /// <returns>已註冊到輸出事件的處理常式。</returns>
+        private EventHandler<ExternalToolOutputEventArgs> AttachExternalToolOutput(DenoProcessRunner runner, string category)
         {
             int emittedLines = 0;
-            runner.OutputReceived += delegate (object? sender, ExternalToolOutputEventArgs e)
+            EventHandler<ExternalToolOutputEventArgs> handler = delegate (object? sender, ExternalToolOutputEventArgs e)
             {
                 int lineNumber = Interlocked.Increment(ref emittedLines);
                 AppendExternalToolOutput(category, e, lineNumber);
             };
+            runner.OutputReceived += handler;
+            return handler;
         }
 
         /// <summary>

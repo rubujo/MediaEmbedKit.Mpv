@@ -43,10 +43,6 @@ namespace MediaEmbedKit.Mpv.Samples.WinUI
             SampleRuntime.InstallOrUpdateAsync().GetAwaiter().GetResult();
             _window = new MainWindow();
             _window.Activate();
-            if (SampleRuntime.IsSmokeTestEnabled && _window is MainWindow mainWindow)
-            {
-                mainWindow.StartSmokePlayback();
-            }
         }
     }
 }

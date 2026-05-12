@@ -1,4 +1,5 @@
 ﻿using Microsoft.Maui.Controls;
+using System;
 
 namespace MediaEmbedKit.Mpv.Samples.Maui
 {
@@ -14,12 +15,19 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
         /// <returns>包含主要頁面的 MAUI 視窗。</returns>
         protected override Window CreateWindow(IActivationState? activationState)
         {
-            return new Window(new MainPage())
+            MainPage page = new MainPage();
+            Window window = new Window(page)
             {
                 Title = "MediaEmbedKit.Mpv MAUI Sample",
                 Width = SampleRuntime.SampleWindowWidth,
                 Height = SampleRuntime.SampleWindowHeight
             };
+            window.Destroying += delegate (object? sender, EventArgs e)
+            {
+                page.Dispose();
+            };
+
+            return window;
         }
     }
 }
