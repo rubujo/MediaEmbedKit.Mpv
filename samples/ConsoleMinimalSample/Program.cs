@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using MediaEmbedKit.Mpv;
+using MediaEmbedKit.Mpv.Downloads;
 using MediaEmbedKit.Mpv.Samples;
 
 namespace MediaEmbedKit.Mpv.Samples.ConsoleMinimal
@@ -21,10 +22,7 @@ namespace MediaEmbedKit.Mpv.Samples.ConsoleMinimal
             try
             {
                 Console.WriteLine("準備 Windows x64 runtime...");
-                await SampleRuntime.InstallOrUpdateAsync().ConfigureAwait(false);
-
-                MpvPlayerOptions options = new MpvPlayerOptions();
-                SampleRuntime.CopyTo(SampleRuntime.PlayerOptions, options);
+                MpvPlayerOptions options = await CreatePlayerOptionsAsync().ConfigureAwait(false);
 
                 using MpvPlayer player = new MpvPlayer(options);
                 player.EventReceived += PlayerEventReceived;
@@ -55,6 +53,29 @@ namespace MediaEmbedKit.Mpv.Samples.ConsoleMinimal
                 Console.Error.WriteLine(ex.GetType().Name + ": " + ex.Message);
                 return 1;
             }
+        }
+
+        /// <summary>
+        /// 透過公開 runtime helper 建立最小播放器選項。
+        /// </summary>
+        /// <returns>可用於核心播放器的播放器選項。</returns>
+        private static async Task<MpvPlayerOptions> CreatePlayerOptionsAsync()
+        {
+            string runtimeDirectory = await SampleRuntime.PrepareCoreRuntimeAsync().ConfigureAwait(false);
+            MpvPlayerOptions options = MpvRuntimeInstaller.CreatePlayerOptions(runtimeDirectory);
+            ApplyPlaybackDefaults(options);
+            return options;
+        }
+
+        /// <summary>
+        /// 套用適合網路範例播放的最小 mpv 選項。
+        /// </summary>
+        /// <param name="options">要套用設定的播放器選項。</param>
+        private static void ApplyPlaybackDefaults(MpvPlayerOptions options)
+        {
+            options.YtdlpFormat = SampleRuntime.SmoothPlaybackYtdlpFormat;
+            options.InitialOptions["ytdl-format"] = SampleRuntime.SmoothPlaybackYtdlpFormat;
+            options.InitialOptions["hwdec"] = "auto-safe";
         }
 
         /// <summary>

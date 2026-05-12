@@ -29,6 +29,28 @@ namespace MediaEmbedKit.Mpv.Maui
                 [nameof(MpvView.IsOverlayOpen)] = MapIsOverlayOpen
             };
 
+#if WINDOWS
+        /// <summary>
+        /// 保存目前由 <see cref="MpvView.OverlayView"/> 轉換的平台覆蓋層來源檢視。
+        /// </summary>
+        private Microsoft.Maui.Controls.View? _resolvedOverlayView;
+
+        /// <summary>
+        /// 保存目前由 <see cref="MpvView.OverlayView"/> 轉換出的 WinUI 覆蓋層元素。
+        /// </summary>
+        private WinUiElement? _resolvedOverlayPlatformView;
+
+        /// <summary>
+        /// 保存目前由 <see cref="MpvView.OverlayView"/> 轉換時使用的 MAUI handler。
+        /// </summary>
+        private Microsoft.Maui.IElementHandler? _resolvedOverlayHandler;
+
+        /// <summary>
+        /// 記錄目前覆蓋層 handler 是否由本 handler 建立並負責中斷連線。
+        /// </summary>
+        private bool _ownsResolvedOverlayHandler;
+#endif
+
         /// <summary>
         /// 初始化 <see cref="MpvViewHandler"/> 類別的新執行個體。
         /// </summary>
@@ -131,6 +153,8 @@ namespace MediaEmbedKit.Mpv.Maui
         {
 #if WINDOWS
             platformView.PlayerCreated -= OnPlayerCreated;
+            platformView.OverlayContent = null;
+            ReleaseResolvedOverlayView();
             VirtualView.SetPlayer(null);
             platformView.Dispose();
 #endif
@@ -203,16 +227,54 @@ namespace MediaEmbedKit.Mpv.Maui
         {
             if (VirtualView.OverlayContent != null)
             {
+                ReleaseResolvedOverlayView();
                 return VirtualView.OverlayContent;
             }
 
             Microsoft.Maui.Controls.View? overlayView = VirtualView.OverlayView;
             if (overlayView == null || MauiContext == null)
             {
+                ReleaseResolvedOverlayView();
                 return null;
             }
 
-            return overlayView.ToPlatform(MauiContext);
+            if (ReferenceEquals(_resolvedOverlayView, overlayView) && _resolvedOverlayPlatformView != null)
+            {
+                return _resolvedOverlayPlatformView;
+            }
+
+            ReleaseResolvedOverlayView();
+
+            Microsoft.Maui.IElementHandler? existingHandler = overlayView.Handler;
+            WinUiElement platformView = overlayView.ToPlatform(MauiContext);
+            _resolvedOverlayView = overlayView;
+            _resolvedOverlayPlatformView = platformView;
+            _resolvedOverlayHandler = overlayView.Handler;
+            _ownsResolvedOverlayHandler = existingHandler == null;
+            return platformView;
+        }
+
+        /// <summary>
+        /// 中斷並清除目前由 <see cref="MpvView.OverlayView"/> 轉換出的覆蓋層 handler。
+        /// </summary>
+        private void ReleaseResolvedOverlayView()
+        {
+            Microsoft.Maui.Controls.View? overlayView = _resolvedOverlayView;
+            Microsoft.Maui.IElementHandler? overlayHandler = _resolvedOverlayHandler;
+            bool shouldDisconnect = _ownsResolvedOverlayHandler
+                && overlayView != null
+                && overlayHandler != null
+                && ReferenceEquals(overlayView.Handler, overlayHandler);
+
+            _resolvedOverlayView = null;
+            _resolvedOverlayPlatformView = null;
+            _resolvedOverlayHandler = null;
+            _ownsResolvedOverlayHandler = false;
+
+            if (shouldDisconnect)
+            {
+                overlayHandler!.DisconnectHandler();
+            }
         }
 
         /// <summary>

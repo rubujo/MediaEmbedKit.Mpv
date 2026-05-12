@@ -5,6 +5,7 @@
 ## 示範內容
 
 - 視窗先顯示，再於背景準備 Windows x64 runtime 資料夾。
+- runtime 初始化失敗時會顯示錯誤對話方塊；冒煙測試模式則寫入失敗結果後關閉。
 - 透過 Avalonia `OpenGlControlBase` 管理 OpenGL 內容與 render 生命週期。
 - 顯示 Avalonia OpenGL render API 與一般 Avalonia 覆蓋層的同層組合行為。
 - 透過 `SamplePlayerEventBridge` 輸出 libmpv 事件、記錄訊息與屬性變更。

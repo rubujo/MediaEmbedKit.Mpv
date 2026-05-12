@@ -78,7 +78,6 @@ namespace MediaEmbedKit.Mpv.Samples.Wpf
             ConfigureFormatComboBox();
             _eventLogDispatcher = new SampleEventLogDispatcher(AppendEventLines, ScheduleEventLogFlush);
             _statusDispatcher = new SampleStatusUpdateDispatcher(() => _features.GetStatusText(), SetStatusText, ScheduleUiUpdate);
-            RegisterRuntimeControls(this);
             SetRuntimeControlsEnabled(false);
             Loaded += WindowLoaded;
             AppendEventLine(CreateLifecycleLine("WindowCreated", "WPF 視窗已建立，等待 runtime 初始化。"));

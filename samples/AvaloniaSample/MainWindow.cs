@@ -248,10 +248,85 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
                 {
                     SampleRuntime.WriteSmokeLine("AvaloniaSample", "FAILED Runtime: " + ex.Message);
                     Close();
+                    return false;
                 }
 
+                await ShowRuntimeErrorDialogAsync(ex.Message).ConfigureAwait(true);
                 return false;
             }
+        }
+
+        /// <summary>
+        /// 以 modal 視窗顯示 runtime 初始化錯誤。
+        /// </summary>
+        /// <param name="message">要顯示的錯誤訊息。</param>
+        /// <returns>代表錯誤視窗顯示流程的工作。</returns>
+        private async Task ShowRuntimeErrorDialogAsync(string message)
+        {
+            Window dialog = new Window
+            {
+                Title = "mpv runtime",
+                Width = 520,
+                Height = 200,
+                MinWidth = 520,
+                MinHeight = 200,
+                CanResize = false,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                Content = CreateRuntimeErrorDialogContent(message)
+            };
+
+            await dialog.ShowDialog<object?>(this).ConfigureAwait(true);
+        }
+
+        /// <summary>
+        /// 建立 runtime 初始化錯誤視窗內容。
+        /// </summary>
+        /// <param name="message">要顯示的錯誤訊息。</param>
+        /// <returns>錯誤視窗使用的內容控制項。</returns>
+        private static Control CreateRuntimeErrorDialogContent(string message)
+        {
+            Button closeButton = new Button
+            {
+                Content = "確定",
+                Width = 96,
+                Height = 32,
+                HorizontalAlignment = HorizontalAlignment.Right,
+                HorizontalContentAlignment = HorizontalAlignment.Center,
+                VerticalContentAlignment = VerticalAlignment.Center
+            };
+
+            StackPanel panel = new StackPanel
+            {
+                Spacing = 18,
+                Margin = new Thickness(20),
+                Children =
+                {
+                    new TextBlock
+                    {
+                        Text = message,
+                        TextWrapping = TextWrapping.Wrap,
+                        Foreground = Brushes.Black
+                    },
+                    closeButton
+                }
+            };
+
+            Border border = new Border
+            {
+                Background = Brushes.White,
+                Child = panel
+            };
+
+            closeButton.Click += (sender, e) =>
+            {
+                TopLevel? topLevel = TopLevel.GetTopLevel(closeButton);
+                if (topLevel is Window window)
+                {
+                    window.Close(null);
+                }
+            };
+
+            return border;
         }
 
         /// <summary>

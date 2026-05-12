@@ -101,9 +101,9 @@ namespace MediaEmbedKit.Mpv.Maui
         }
 
         /// <summary>
-        /// 取得或設定由 MAUI handler 轉換的平台覆蓋層檢視。
+        /// 取得或設定建議使用的 MAUI 覆蓋層檢視。
         /// </summary>
-        /// <value>顯示在視訊上方的 MAUI 檢視；未設定時為 <see langword="null"/>。</value>
+        /// <value>由 handler 轉換並顯示在視訊上方的 MAUI 檢視；未設定時為 <see langword="null"/>。</value>
         public View? OverlayView
         {
             get { return (View?)GetValue(OverlayViewProperty); }
@@ -111,9 +111,9 @@ namespace MediaEmbedKit.Mpv.Maui
         }
 
         /// <summary>
-        /// 取得或設定 Windows 平台控制項管理的原生 AirSpace 覆蓋層內容。
+        /// 取得或設定 Windows 原生 WinUI 覆蓋層內容。
         /// </summary>
-        /// <value>顯示在視訊上方的 WinUI 元素；未設定時為 <see langword="null"/>。</value>
+        /// <value>直接交給 Windows 平台控制項的 WinUI 元素；未設定時為 <see langword="null"/>。</value>
         public WinUiElement? OverlayContent
         {
             get { return (WinUiElement?)GetValue(OverlayContentProperty); }

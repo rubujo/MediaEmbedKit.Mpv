@@ -260,16 +260,30 @@ namespace MediaEmbedKit.Mpv.Samples
         /// <returns>代表安裝或更新流程的工作。</returns>
         internal static async Task InstallOrUpdateAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
+            string runtimeDirectory = await PrepareCoreRuntimeAsync(cancellationToken).ConfigureAwait(false);
+            ConfigurePlayerOptions(runtimeDirectory);
+            EnsureSampleFiles();
+        }
+
+        /// <summary>
+        /// 準備核心播放器範例需要的 Windows x64 runtime。
+        /// </summary>
+        /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
+        /// <returns>可提供給播放器選項的 runtime 資料夾完整路徑。</returns>
+        internal static async Task<string> PrepareCoreRuntimeAsync(CancellationToken cancellationToken = default(CancellationToken))
+        {
             string runtimeDirectory = RuntimeDirectory;
-            if (TryUseExistingRuntime(runtimeDirectory))
+            if (HasCompleteRuntime(runtimeDirectory))
             {
-                return;
+                _activeRuntimeDirectory = Path.GetFullPath(runtimeDirectory);
+                return _activeRuntimeDirectory;
             }
 
             string? repositoryRuntimeDirectory = FindRepositoryRuntimeDirectory();
-            if (repositoryRuntimeDirectory != null && TryUseExistingRuntime(repositoryRuntimeDirectory))
+            if (repositoryRuntimeDirectory != null && HasCompleteRuntime(repositoryRuntimeDirectory))
             {
-                return;
+                _activeRuntimeDirectory = Path.GetFullPath(repositoryRuntimeDirectory);
+                return _activeRuntimeDirectory;
             }
 
             MpvRuntimeInstallOptions options = new MpvRuntimeInstallOptions();
@@ -283,9 +297,7 @@ namespace MediaEmbedKit.Mpv.Samples
             if (result.IsSupported)
             {
                 _activeRuntimeDirectory = Path.GetFullPath(runtimeDirectory);
-                ConfigurePlayerOptions(runtimeDirectory);
-                EnsureSampleFiles();
-                return;
+                return _activeRuntimeDirectory;
             }
 
             throw new PlatformNotSupportedException("目前範例只支援 Windows x64 runtime 自動安裝：" + result.Message);
@@ -301,24 +313,6 @@ namespace MediaEmbedKit.Mpv.Samples
             return File.Exists(Path.Combine(runtimeDirectory, "libmpv-2.dll"))
                 && File.Exists(Path.Combine(runtimeDirectory, "yt-dlp.exe"))
                 && File.Exists(Path.Combine(runtimeDirectory, "deno.exe"));
-        }
-
-        /// <summary>
-        /// 嘗試使用已存在且完整的執行階段資料夾。
-        /// </summary>
-        /// <param name="runtimeDirectory">要檢查並套用的執行階段資料夾。</param>
-        /// <returns>資料夾可直接用於播放範例時為 <see langword="true"/>。</returns>
-        private static bool TryUseExistingRuntime(string runtimeDirectory)
-        {
-            if (!HasCompleteRuntime(runtimeDirectory))
-            {
-                return false;
-            }
-
-            _activeRuntimeDirectory = Path.GetFullPath(runtimeDirectory);
-            ConfigurePlayerOptions(_activeRuntimeDirectory);
-            EnsureSampleFiles();
-            return true;
         }
 
         /// <summary>
