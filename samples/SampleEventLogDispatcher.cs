@@ -135,6 +135,7 @@ namespace MediaEmbedKit.Mpv.Samples
         /// <param name="allowAfterDispose">已釋放時仍允許送出最後事件列。</param>
         private void Flush(bool allowAfterDispose)
         {
+            int droppedLineCount = 0;
             List<string> lines = new List<string>();
             lock (_syncRoot)
             {
@@ -150,26 +151,27 @@ namespace MediaEmbedKit.Mpv.Samples
 
                 if (_droppedLineCount > 0)
                 {
-                    lines.Add("事件輸出已略過 " + _droppedLineCount + " 列高頻訊息，以避免範例 UI 壅塞。");
+                    droppedLineCount = _droppedLineCount;
                     _droppedLineCount = 0;
                 }
 
-                while (_pendingLines.Count > 0 && lines.Count < MaxLinesPerFlush)
+                while (_pendingLines.Count > 0 && lines.Count < MaxLinesPerFlush - (droppedLineCount > 0 ? 1 : 0))
                 {
                     lines.Add(_pendingLines.Dequeue());
                 }
 
-                if (lines.Count > 0)
+                if (droppedLineCount > 0 || lines.Count > 0)
                 {
                     _uiFlushQueued = true;
                 }
             }
 
-            if (lines.Count == 0)
+            if (droppedLineCount == 0 && lines.Count == 0)
             {
                 return;
             }
 
+            List<string> displayLines = CreateDisplayLines(lines, droppedLineCount);
             bool scheduled;
             try
             {
@@ -177,7 +179,7 @@ namespace MediaEmbedKit.Mpv.Samples
                 {
                     try
                     {
-                        _appendLines(lines);
+                        _appendLines(displayLines);
                     }
                     finally
                     {
@@ -196,7 +198,62 @@ namespace MediaEmbedKit.Mpv.Samples
 
             if (!scheduled)
             {
-                ResetQueuedState();
+                RestoreUnscheduledLines(lines, droppedLineCount);
+            }
+        }
+
+        /// <summary>
+        /// 建立送往 UI 的事件列集合。
+        /// </summary>
+        /// <param name="lines">實際事件文字列。</param>
+        /// <param name="droppedLineCount">先前因佇列滿載而略過的事件列數。</param>
+        /// <returns>包含摘要列與實際事件列的集合。</returns>
+        private static List<string> CreateDisplayLines(List<string> lines, int droppedLineCount)
+        {
+            if (droppedLineCount <= 0)
+            {
+                return lines;
+            }
+
+            List<string> displayLines = new List<string>(lines.Count + 1);
+            displayLines.Add("事件輸出已略過 " + droppedLineCount + " 列高頻訊息，以避免範例 UI 壅塞。");
+            displayLines.AddRange(lines);
+            return displayLines;
+        }
+
+        /// <summary>
+        /// 在 UI 排程失敗時還原尚未送出的事件列。
+        /// </summary>
+        /// <param name="lines">尚未送往 UI 的實際事件列。</param>
+        /// <param name="droppedLineCount">尚未送往 UI 的略過事件列摘要數。</param>
+        private void RestoreUnscheduledLines(IReadOnlyList<string> lines, int droppedLineCount)
+        {
+            lock (_syncRoot)
+            {
+                _uiFlushQueued = false;
+                if (_disposed)
+                {
+                    return;
+                }
+
+                _droppedLineCount += droppedLineCount;
+                if (lines.Count == 0)
+                {
+                    return;
+                }
+
+                List<string> restoredLines = new List<string>(lines.Count + _pendingLines.Count);
+                restoredLines.AddRange(lines);
+                restoredLines.AddRange(_pendingLines);
+                _pendingLines.Clear();
+
+                int restoredLineCount = Math.Min(restoredLines.Count, MaxPendingLines);
+                for (int index = 0; index < restoredLineCount; index++)
+                {
+                    _pendingLines.Enqueue(restoredLines[index]);
+                }
+
+                _droppedLineCount += restoredLines.Count - restoredLineCount;
             }
         }
 

@@ -120,7 +120,6 @@ namespace MediaEmbedKit.Mpv.Samples
                     return;
                 }
 
-                _lastStatusText = statusText;
             }
 
             try
@@ -178,6 +177,13 @@ namespace MediaEmbedKit.Mpv.Samples
                 }
 
                 _applyStatusText(statusText);
+                lock (_syncRoot)
+                {
+                    if (!_disposed)
+                    {
+                        _lastStatusText = statusText;
+                    }
+                }
             }
             finally
             {

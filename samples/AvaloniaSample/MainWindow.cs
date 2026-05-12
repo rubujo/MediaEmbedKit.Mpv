@@ -625,8 +625,8 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
         {
             try
             {
-                Dispatcher.UIThread.Post(action, DispatcherPriority.Background);
-                return true;
+                DispatcherOperation operation = Dispatcher.UIThread.InvokeAsync(action, DispatcherPriority.Background);
+                return operation.Status != DispatcherOperationStatus.Aborted;
             }
             catch (ObjectDisposedException)
             {
