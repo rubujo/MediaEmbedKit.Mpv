@@ -267,7 +267,9 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
                 _features.DumpTracks();
                 _features.LoadSampleConfig();
                 await _features.LoadSampleLuaScriptAsync().ConfigureAwait(true);
+                await _features.RunYtdlpDiagnosticsAsync(_urlTextBox.Text).ConfigureAwait(true);
                 await _features.RunDenoDiagnosticsAsync().ConfigureAwait(true);
+                await _features.RunFFmpegDiagnosticsAsync().ConfigureAwait(true);
                 _features.TakeScreenshot();
                 Environment.ExitCode = 0;
                 SampleRuntime.WriteSmokeLine("WinFormsSample", "FEATURES OK");
@@ -522,7 +524,7 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
             panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
             panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
             panel.Controls.Add(CreateHeaderBadge("WinForms HWND 播放區：控制項同層展示", ThemeColor(SampleTheme.AccentBadgeOpaqueArgb), new Padding(16, 6, 8, 6)), 0, 0);
-            panel.Controls.Add(CreateHeaderBadge("WinForms Z-order 對照：一般 Label 覆蓋", ThemeColor(SampleTheme.ContrastBadgeOpaqueArgb), new Padding(8, 6, 16, 6)), 1, 0);
+            panel.Controls.Add(CreateHeaderBadge("WinForms Z-order 對照：一般 Label 會被影片覆蓋", ThemeColor(SampleTheme.ContrastBadgeOpaqueArgb), new Padding(8, 6, 16, 6)), 1, 0);
             return panel;
         }
 
@@ -554,7 +556,7 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
             Label normalOverlayLabel = new Label
             {
                 AutoSize = false,
-                Text = "WinForms Label Z-order 對照",
+                Text = "WinForms Label Z-order 對照（會被影片覆蓋）",
                 TextAlign = ContentAlignment.MiddleCenter,
                 BackColor = ThemeColor(SampleTheme.ContrastBadgeOpaqueArgb),
                 ForeColor = Color.White,
