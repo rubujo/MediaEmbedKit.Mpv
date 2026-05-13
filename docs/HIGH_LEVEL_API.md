@@ -254,6 +254,40 @@ builder 路徑適合需要混合其他 `Use*` 設定（hwdec、yt-dlp 格式、l
 - mpv 在 `EndFile` 之後才把最終 bytes flush 到檔案（觀察 log：`encoded ... bytes` 在 `Run command: quit` 之後才出現）；`MpvEncoder.EncodeAsync` 已先 dispose player 再讀檔案大小，自行包裝請仿照此順序。
 - 跳過音訊 / 視訊串流用 `vid=no` / `aid=no`（mpv API 名稱），不是 shell 的 `--no-audio` / `--no-video`（後者非 libmpv option API 接受的選項名稱）。
 
+### 編輯類高階入口
+
+| 入口 | 行為 | 對應 mpv 機制 |
+| --- | --- | --- |
+| `MpvEncoder.EncodeAsync` | 單檔轉碼 | `o=`, `oac=`, `ovc=` 等 |
+| `MpvEncoder.EncodeTwoPassAsync` | 兩階段轉碼 | `flags=+pass1/2` 或 SVT-AV1 原生 `pass=1/2` |
+| `MpvEncoder.RemuxAsync` | Stream-copy 重新封裝 | `ovc=copy`, `oac=copy` |
+| `MpvEncoder.ExtractAudioAsync` / `ExtractVideoAsync` | 抽單一軌 | `vid=no` / `aid=no` + 對應 codec |
+| `MpvEncoder.ExtractFrameAsync` / `ExtractFramesAsync` | 抽取單一或多張影格圖片 | `start=` + `hr-seek=yes` + `frames=1` |
+| `MpvEncoder.ConcatenateAsync` | 多檔合併（會重新編碼） | mpv EDL `# mpv EDL v0` 暫存檔 |
+| `MpvEncoder.SplitAsync` | 依時間段切割成多檔 | 多次 `start=` / `end=` 編碼 |
+| `MpvEncodingOptions.WithStartTime` / `WithEndTime` / `WithLength` | 裁切 | `start` / `end` / `length` |
+| `WithKeyframeAccurateSeek` | 精準切點 | `hr-seek=yes` |
+| `WithBurnInSubtitleTrack(int)` / `WithExternalSubtitle(path)` | 字幕燒入 | `sid=` / `sub-files=` + `sub-visibility=yes` |
+| `WithVideoFilter` / `WithAudioFilter` / `WithLavfiComplex` | filter 逃生口 | `vf` / `af` / `lavfi-complex` |
+| `WithMetadataTag` / `WithoutMetadataTag` | metadata 個別增減 | 累積到 `oset-metadata` / `oremove-metadata` |
+
+### libmpv 結構性不支援的場景
+
+下列場景**不是函式庫實作不完整，而是 libmpv 本身設計上不支援**。對應需求請改用 FFmpeg CLI（runtime 資料夾的 `ffmpeg.exe` 已可直接呼叫）或既有 .NET ffmpeg 函式庫（FFMpegCore / Xabe.FFmpeg）。
+
+| 場景 | 為何 libmpv 不支援 | 替代方案 |
+| --- | --- | --- |
+| **多軌輸出**（多語音軌、多視訊軌、多字幕軌共存） | mpv encoding 管線只設計單一 `[vo]` + `[ao]` 輸出；`ovc` / `oac` 為純量 | FFmpeg `-map 0:v -map 0:a:0 -map 0:a:1 ...` |
+| **HLS / DASH segment muxing**（產生切片與 manifest） | mpv 一次只寫單一輸出 URL，無片段化迴圈或 manifest 處理 | FFmpeg `-f hls` / `-f dash` |
+| **字幕匯出成獨立檔**（影片內嵌字幕 → `.srt` 等） | mpv 沒有把字幕封包寫成獨立檔的公開路徑 | FFmpeg `-c:s srt` 或 ffprobe + extract |
+| **原檔 in-place metadata / chapter 編輯** | mpv encoding 必經 decode→encode 重新輸出，無原檔覆寫機制 | FFmpeg `-i meta.ffmetadata -c copy` |
+| **任意多輸出 filter graph**（一個 graph 同時產生多條輸出 pad） | mpv 假設單一 `[vo]` / `[ao]` 輸出 pad；多輸出不被識別 | FFmpeg `-filter_complex` |
+| **轉碼期間動態切換來源** | mpv encoding 一次處理單一輸入（含 EDL 視為單一虛擬輸入） | 應用層協調多次 `EncodeAsync` |
+
+關於 EDL 概念：本函式庫 `ConcatenateAsync` 透過 mpv [EDL](https://github.com/mpv-player/mpv/blob/master/DOCS/edl-mpv.rst) v0 demuxer 串接多個輸入，**結果必經重新編碼**（mpv 結構性無 stream-copy 多輸入支援）。若需要對同 codec / 同參數的多檔做零再編碼合併，請改用 FFmpeg `concat` demuxer + `-c copy`。
+
+關於 stream-copy（`MpvVideoCodecPreset.Copy` / `MpvAudioCodecPreset.Copy` / `MpvEncoder.RemuxAsync`）的已知 caveat：mpv encoding mode 的 `ovc=copy` / `oac=copy` 在部分 codec/container 組合下會以 `AudioOutputInitFailed` 或類似錯誤結束（mpv 的 `ao/lavc` 不支援所有 codec 直通）。若 Remux 對特定來源失敗，請改用顯式 codec preset（如 `MpvAudioCodecPreset.Aac`）做完整轉碼，或直接以 FFmpeg `-c copy` 處理。
+
 ## 對照表
 
 | 舊式 | 新式 |

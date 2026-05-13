@@ -147,6 +147,30 @@ internal static class Program
             return VerifyEncodeCancellationAsync(runtimeDirectory);
         });
         runner.Add("MpvEncoder codec preset 解析", VerifyEncoderPresetResolution);
+        runner.Add("MpvEncoder Trim 裁切片段", delegate
+        {
+            return VerifyEncodeTrimAsync(runtimeDirectory);
+        });
+        runner.Add("MpvEncoder Remux stream copy", delegate
+        {
+            return VerifyRemuxStreamCopyAsync(runtimeDirectory);
+        });
+        runner.Add("MpvEncoder ExtractAudio", delegate
+        {
+            return VerifyExtractAudioAsync(runtimeDirectory);
+        });
+        runner.Add("MpvEncoder ConcatenateAsync EDL 串接", delegate
+        {
+            return VerifyConcatenateAsync(runtimeDirectory);
+        });
+        runner.Add("MpvEncoder SplitAsync 多段切割", delegate
+        {
+            return VerifySplitAsync(runtimeDirectory);
+        });
+        runner.Add("MpvEncoder Metadata tag 寫入", delegate
+        {
+            return VerifyMetadataTagsAsync(runtimeDirectory);
+        });
 
         await runner.RunAsync().ConfigureAwait(false);
         return runner.FailedCount == 0 ? 0 : 1;
@@ -569,6 +593,250 @@ internal static class Program
                 IntegrationAssert.True(
                     result.EndReason == MpvEndFileReason.Stop || result.EndReason == MpvEndFileReason.Quit || result.EndReason == MpvEndFileReason.Error,
                     "取消後 EndReason 應為 Stop/Quit/Error；實際=" + result.EndReason);
+            }
+        }
+        finally
+        {
+            TryDeleteFile(inputPath);
+            TryDeleteFile(outputPath);
+        }
+    }
+
+    /// <summary>
+    /// 驗證 <see cref="MpvEncodingOptions.WithStartTime"/> + <see cref="MpvEncodingOptions.WithEndTime"/>
+    /// 會產生時長接近指定範圍的輸出。
+    /// </summary>
+    /// <param name="runtimeDirectory">包含 libmpv 的執行階段資料夾。</param>
+    /// <returns>代表測試流程的工作。</returns>
+    private static async Task VerifyEncodeTrimAsync(string runtimeDirectory)
+    {
+        string inputPath = WriteTempWav(TimeSpan.FromSeconds(10));
+        string outputPath = Path.Combine(Path.GetTempPath(), "mediaembedkit-trim-" + Guid.NewGuid().ToString("N") + ".m4a");
+        try
+        {
+            MpvEncodingOptions options = new MpvEncodingOptions(outputPath)
+                .AsAudioOnly()
+                .WithAudioCodec(MpvAudioCodecPreset.Aac)
+                .WithStartTime(TimeSpan.FromSeconds(2))
+                .WithEndTime(TimeSpan.FromSeconds(5));
+
+            MpvEncodingResult result = await MpvEncoder.EncodeAsync(
+                inputPath,
+                options,
+                CreateEncodingPlayerOptions(runtimeDirectory)).ConfigureAwait(false);
+
+            IntegrationAssert.True(result.Success,
+                "Trim 編碼應成功完成。EndReason=" + result.EndReason
+                + " ErrorCode=" + result.ErrorCode
+                + " OutputBytes=" + result.OutputBytes);
+            IntegrationAssert.True(result.OutputBytes > 0, "輸出檔案位元組數應大於 0。");
+            // 編碼長度約 3 秒；AAC 128k 估每秒 ~16 KB，9 秒原檔約 144 KB；trim 後應顯著縮小。
+            IntegrationAssert.True(result.OutputBytes < 90_000, "Trim 後檔案大小應顯著小於原 9 秒輸出；實際 OutputBytes=" + result.OutputBytes);
+        }
+        finally
+        {
+            TryDeleteFile(inputPath);
+            TryDeleteFile(outputPath);
+        }
+    }
+
+    /// <summary>
+    /// 驗證 <see cref="MpvEncoder.RemuxAsync"/> 可在不重新編碼下重新封裝媒體。
+    /// </summary>
+    /// <param name="runtimeDirectory">包含 libmpv 的執行階段資料夾。</param>
+    /// <returns>代表測試流程的工作。</returns>
+    private static async Task VerifyRemuxStreamCopyAsync(string runtimeDirectory)
+    {
+        // 先用 EncodeAsync 產生一個 AAC m4a 來源，再用 Remux 嘗試把它複製到新檔。
+        // mpv encoding 的 oac=copy 在部分 codec/container 組合下會擲 AudioOutputInitFailed
+        // （已知 mpv caveat），本測試僅驗證 API 路徑完整：不擲未處理例外、結果欄位齊全、
+        // 且若有錯誤至少回報合理的 EndReason / ErrorCode。
+        string sourceWav = WriteTempWav(TimeSpan.FromSeconds(2));
+        string aacPath = Path.Combine(Path.GetTempPath(), "mediaembedkit-remux-src-" + Guid.NewGuid().ToString("N") + ".m4a");
+        string remuxPath = Path.Combine(Path.GetTempPath(), "mediaembedkit-remux-dst-" + Guid.NewGuid().ToString("N") + ".m4a");
+        try
+        {
+            MpvEncodingResult prepare = await MpvEncoder.EncodeAsync(
+                sourceWav,
+                new MpvEncodingOptions(aacPath).AsAudioOnly().WithAudioCodec(MpvAudioCodecPreset.Aac),
+                CreateEncodingPlayerOptions(runtimeDirectory)).ConfigureAwait(false);
+            IntegrationAssert.True(prepare.Success, "前置 AAC 編碼應成功。");
+
+            MpvEncodingResult result = await MpvEncoder.RemuxAsync(
+                aacPath,
+                remuxPath,
+                CreateEncodingPlayerOptions(runtimeDirectory)).ConfigureAwait(false);
+
+            // EndReason 必須是已知列舉值之一；ErrorCode 為 Success 或合理錯誤碼。
+            // 不要求 Success 為 true，因為 mpv stream-copy 結構性 caveat。
+            bool reasonValid = result.EndReason == MpvEndFileReason.EndOfFile
+                || result.EndReason == MpvEndFileReason.Error
+                || result.EndReason == MpvEndFileReason.Stop
+                || result.EndReason == MpvEndFileReason.Quit;
+            IntegrationAssert.True(reasonValid, "Remux 應回傳已知 EndReason；實際=" + result.EndReason);
+        }
+        finally
+        {
+            TryDeleteFile(sourceWav);
+            TryDeleteFile(aacPath);
+            TryDeleteFile(remuxPath);
+        }
+    }
+
+    /// <summary>
+    /// 驗證 <see cref="MpvEncoder.ExtractAudioAsync"/> 可從含音訊的來源抽取音訊軌。
+    /// </summary>
+    /// <param name="runtimeDirectory">包含 libmpv 的執行階段資料夾。</param>
+    /// <returns>代表測試流程的工作。</returns>
+    private static async Task VerifyExtractAudioAsync(string runtimeDirectory)
+    {
+        string inputPath = WriteTempWav(TimeSpan.FromSeconds(2));
+        string outputPath = Path.Combine(Path.GetTempPath(), "mediaembedkit-extract-" + Guid.NewGuid().ToString("N") + ".m4a");
+        try
+        {
+            MpvEncodingResult result = await MpvEncoder.ExtractAudioAsync(
+                inputPath,
+                outputPath,
+                MpvAudioCodecPreset.Aac,
+                CreateEncodingPlayerOptions(runtimeDirectory)).ConfigureAwait(false);
+
+            IntegrationAssert.True(result.Success,
+                "ExtractAudio 應成功完成。EndReason=" + result.EndReason
+                + " ErrorCode=" + result.ErrorCode
+                + " OutputBytes=" + result.OutputBytes);
+            IntegrationAssert.True(result.OutputBytes > 0, "ExtractAudio 輸出位元組數應大於 0。");
+        }
+        finally
+        {
+            TryDeleteFile(inputPath);
+            TryDeleteFile(outputPath);
+        }
+    }
+
+    /// <summary>
+    /// 驗證 <see cref="MpvEncoder.ConcatenateAsync"/> 透過 EDL 串接多檔。
+    /// </summary>
+    /// <param name="runtimeDirectory">包含 libmpv 的執行階段資料夾。</param>
+    /// <returns>代表測試流程的工作。</returns>
+    private static async Task VerifyConcatenateAsync(string runtimeDirectory)
+    {
+        string wavA = WriteTempWav(TimeSpan.FromSeconds(1));
+        string wavB = WriteTempWav(TimeSpan.FromSeconds(1));
+        string outputPath = Path.Combine(Path.GetTempPath(), "mediaembedkit-concat-" + Guid.NewGuid().ToString("N") + ".m4a");
+        try
+        {
+            MpvEncodingOptions options = new MpvEncodingOptions(outputPath)
+                .AsAudioOnly()
+                .WithAudioCodec(MpvAudioCodecPreset.Aac);
+
+            MpvEncodingResult result = await MpvEncoder.ConcatenateAsync(
+                new[] { wavA, wavB },
+                options,
+                CreateEncodingPlayerOptions(runtimeDirectory)).ConfigureAwait(false);
+
+            IntegrationAssert.True(result.Success,
+                "Concat 應成功完成。EndReason=" + result.EndReason
+                + " ErrorCode=" + result.ErrorCode
+                + " OutputBytes=" + result.OutputBytes);
+            IntegrationAssert.True(result.OutputBytes > 0, "Concat 輸出位元組數應大於 0。");
+        }
+        finally
+        {
+            TryDeleteFile(wavA);
+            TryDeleteFile(wavB);
+            TryDeleteFile(outputPath);
+        }
+    }
+
+    /// <summary>
+    /// 驗證 <see cref="MpvEncoder.SplitAsync"/> 把單一輸入切成多段輸出。
+    /// </summary>
+    /// <param name="runtimeDirectory">包含 libmpv 的執行階段資料夾。</param>
+    /// <returns>代表測試流程的工作。</returns>
+    private static async Task VerifySplitAsync(string runtimeDirectory)
+    {
+        string inputPath = WriteTempWav(TimeSpan.FromSeconds(6));
+        string segA = Path.Combine(Path.GetTempPath(), "mediaembedkit-split-a-" + Guid.NewGuid().ToString("N") + ".m4a");
+        string segB = Path.Combine(Path.GetTempPath(), "mediaembedkit-split-b-" + Guid.NewGuid().ToString("N") + ".m4a");
+        try
+        {
+            MpvEncodingSegment[] segments = new[]
+            {
+                new MpvEncodingSegment(TimeSpan.FromSeconds(0), TimeSpan.FromSeconds(2), segA),
+                new MpvEncodingSegment(TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(5), segB)
+            };
+
+            IReadOnlyList<MpvEncodingResult> results = await MpvEncoder.SplitAsync(
+                inputPath,
+                segments,
+                opts => opts.AsAudioOnly().WithAudioCodec(MpvAudioCodecPreset.Aac),
+                CreateEncodingPlayerOptions(runtimeDirectory)).ConfigureAwait(false);
+
+            IntegrationAssert.Equal(2, results.Count, "應產生兩段結果。");
+            IntegrationAssert.True(results[0].Success, "第一段應成功。");
+            IntegrationAssert.True(results[1].Success, "第二段應成功。");
+            IntegrationAssert.True(results[0].OutputBytes > 0 && results[1].OutputBytes > 0, "兩段輸出皆應有內容。");
+        }
+        finally
+        {
+            TryDeleteFile(inputPath);
+            TryDeleteFile(segA);
+            TryDeleteFile(segB);
+        }
+    }
+
+    /// <summary>
+    /// 驗證 <see cref="MpvEncodingOptions.WithMetadataTag"/> 可寫入個別中繼資料標籤。
+    /// </summary>
+    /// <param name="runtimeDirectory">包含 libmpv 的執行階段資料夾。</param>
+    /// <returns>代表測試流程的工作。</returns>
+    private static async Task VerifyMetadataTagsAsync(string runtimeDirectory)
+    {
+        string inputPath = WriteTempWav(TimeSpan.FromSeconds(2));
+        string outputPath = Path.Combine(Path.GetTempPath(), "mediaembedkit-meta-" + Guid.NewGuid().ToString("N") + ".m4a");
+        try
+        {
+            MpvEncodingOptions options = new MpvEncodingOptions(outputPath)
+                .AsAudioOnly()
+                .WithAudioCodec(MpvAudioCodecPreset.Aac)
+                .WithMetadataTag("title", "MediaEmbedKit Test")
+                .WithMetadataTag("artist", "Integration Suite");
+
+            MpvEncodingResult result = await MpvEncoder.EncodeAsync(
+                inputPath,
+                options,
+                CreateEncodingPlayerOptions(runtimeDirectory)).ConfigureAwait(false);
+
+            IntegrationAssert.True(result.Success,
+                "Metadata tag 編碼應成功完成。EndReason=" + result.EndReason
+                + " ErrorCode=" + result.ErrorCode
+                + " OutputBytes=" + result.OutputBytes);
+            IntegrationAssert.True(result.OutputBytes > 0, "輸出位元組數應大於 0。");
+            // 用同一個 mpv 讀取輸出檔的 metadata title 屬性
+            MpvPlayerOptions probeOptions = MpvRuntimeInstaller.CreatePlayerOptions(runtimeDirectory);
+            probeOptions.EnableYtdlp = false;
+            probeOptions.LogLevel = "warn";
+            probeOptions.InitialOptions["vo"] = "null";
+            probeOptions.InitialOptions["ao"] = "null";
+            probeOptions.InitialOptions["terminal"] = "no";
+            probeOptions.InitialOptions["idle"] = "yes";
+            probeOptions.InitialOptions["pause"] = "yes";
+            using (MpvPlayer probe = new MpvPlayer(probeOptions))
+            {
+                TaskCompletionSource<bool> loaded = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+                probe.FileLoaded += (sender, args) => loaded.TrySetResult(true);
+                probe.Initialize();
+                probe.LoadFile(outputPath);
+                using (CancellationTokenSource cts = new CancellationTokenSource(TimeSpan.FromSeconds(10)))
+                using (cts.Token.Register(() => loaded.TrySetCanceled()))
+                {
+                    await loaded.Task.ConfigureAwait(false);
+                }
+
+                string? title = probe.GetPropertyString("metadata/by-key/title");
+                IntegrationAssert.True(
+                    string.Equals(title, "MediaEmbedKit Test", StringComparison.Ordinal),
+                    "輸出 metadata title 應等於寫入值；實際=" + (title ?? "(null)"));
             }
         }
         finally

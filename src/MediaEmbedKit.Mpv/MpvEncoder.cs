@@ -51,6 +51,359 @@ public static class MpvEncoder
     }
 
     /// <summary>
+    /// 以 stream-copy 模式重新封裝媒體（不重新編碼視訊與音訊）。
+    /// </summary>
+    /// <param name="inputPathOrUrl">輸入媒體的檔案路徑或網址。</param>
+    /// <param name="outputPath">輸出檔案路徑；副檔名決定容器格式。</param>
+    /// <param name="playerOptions">建立 <see cref="MpvPlayer"/> 時使用的選項。</param>
+    /// <param name="progress">進度回報。</param>
+    /// <param name="cancellationToken">取消編碼的權杖。</param>
+    /// <returns>編碼結果。</returns>
+    public static Task<MpvEncodingResult> RemuxAsync(
+        string inputPathOrUrl,
+        string outputPath,
+        MpvPlayerOptions? playerOptions = null,
+        IProgress<MpvEncodingProgress>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(outputPath))
+        {
+            throw new ArgumentException("輸出路徑不可為空白。", nameof(outputPath));
+        }
+
+        MpvEncodingOptions options = new MpvEncodingOptions(outputPath)
+            .WithVideoCodec(MpvVideoCodecPreset.Copy)
+            .WithAudioCodec(MpvAudioCodecPreset.Copy);
+        return EncodeAsync(inputPathOrUrl, options, playerOptions, progress, cancellationToken);
+    }
+
+    /// <summary>
+    /// 抽取輸入媒體的音訊軌並以指定編碼器輸出。
+    /// </summary>
+    /// <param name="inputPathOrUrl">輸入媒體的檔案路徑或網址。</param>
+    /// <param name="outputPath">輸出檔案路徑。</param>
+    /// <param name="audioCodec">輸出音訊編碼器；可用 <see cref="MpvAudioCodecPreset.Copy"/> 直接 stream-copy。</param>
+    /// <param name="playerOptions">建立 <see cref="MpvPlayer"/> 時使用的選項。</param>
+    /// <param name="progress">進度回報。</param>
+    /// <param name="cancellationToken">取消編碼的權杖。</param>
+    /// <returns>編碼結果。</returns>
+    public static Task<MpvEncodingResult> ExtractAudioAsync(
+        string inputPathOrUrl,
+        string outputPath,
+        MpvAudioCodecPreset audioCodec,
+        MpvPlayerOptions? playerOptions = null,
+        IProgress<MpvEncodingProgress>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(outputPath))
+        {
+            throw new ArgumentException("輸出路徑不可為空白。", nameof(outputPath));
+        }
+
+        MpvEncodingOptions options = new MpvEncodingOptions(outputPath)
+            .AsAudioOnly()
+            .WithAudioCodec(audioCodec);
+        return EncodeAsync(inputPathOrUrl, options, playerOptions, progress, cancellationToken);
+    }
+
+    /// <summary>
+    /// 抽取輸入媒體的視訊軌並以指定編碼器輸出（無音訊）。
+    /// </summary>
+    /// <param name="inputPathOrUrl">輸入媒體的檔案路徑或網址。</param>
+    /// <param name="outputPath">輸出檔案路徑。</param>
+    /// <param name="videoCodec">輸出視訊編碼器；可用 <see cref="MpvVideoCodecPreset.Copy"/> 直接 stream-copy。</param>
+    /// <param name="playerOptions">建立 <see cref="MpvPlayer"/> 時使用的選項。</param>
+    /// <param name="progress">進度回報。</param>
+    /// <param name="cancellationToken">取消編碼的權杖。</param>
+    /// <returns>編碼結果。</returns>
+    public static Task<MpvEncodingResult> ExtractVideoAsync(
+        string inputPathOrUrl,
+        string outputPath,
+        MpvVideoCodecPreset videoCodec,
+        MpvPlayerOptions? playerOptions = null,
+        IProgress<MpvEncodingProgress>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(outputPath))
+        {
+            throw new ArgumentException("輸出路徑不可為空白。", nameof(outputPath));
+        }
+
+        MpvEncodingOptions options = new MpvEncodingOptions(outputPath)
+            .AsVideoOnly()
+            .WithVideoCodec(videoCodec);
+        return EncodeAsync(inputPathOrUrl, options, playerOptions, progress, cancellationToken);
+    }
+
+    /// <summary>
+    /// 在指定時間點抽取單一影格並輸出為圖片。
+    /// </summary>
+    /// <param name="inputPathOrUrl">輸入媒體的檔案路徑或網址。</param>
+    /// <param name="at">要抽取的時間點。</param>
+    /// <param name="outputPath">輸出影格檔案路徑；副檔名決定影像格式（png / jpg / webp 等由 mpv 推斷）。</param>
+    /// <param name="playerOptions">建立 <see cref="MpvPlayer"/> 時使用的選項。</param>
+    /// <param name="cancellationToken">取消編碼的權杖。</param>
+    /// <returns>編碼結果；<see cref="MpvEncodingResult.OutputBytes"/> 對應產生的影像位元組數。</returns>
+    public static Task<MpvEncodingResult> ExtractFrameAsync(
+        string inputPathOrUrl,
+        TimeSpan at,
+        string outputPath,
+        MpvPlayerOptions? playerOptions = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(outputPath))
+        {
+            throw new ArgumentException("輸出路徑不可為空白。", nameof(outputPath));
+        }
+
+        if (at < TimeSpan.Zero)
+        {
+            throw new ArgumentOutOfRangeException(nameof(at), at, "時間點不可為負值。");
+        }
+
+        MpvEncodingOptions options = new MpvEncodingOptions(outputPath)
+            .WithStartTime(at)
+            .WithKeyframeAccurateSeek()
+            .AsVideoOnly()
+            .WithOption("frames", "1");
+        return EncodeAsync(inputPathOrUrl, options, playerOptions, progress: null, cancellationToken: cancellationToken);
+    }
+
+    /// <summary>
+    /// 在多個時間點分別抽取影格並輸出為圖片。
+    /// </summary>
+    /// <param name="inputPathOrUrl">輸入媒體的檔案路徑或網址。</param>
+    /// <param name="frames">時間點與對應輸出路徑序列。</param>
+    /// <param name="playerOptions">建立 <see cref="MpvPlayer"/> 時使用的選項。</param>
+    /// <param name="cancellationToken">取消編碼的權杖。</param>
+    /// <returns>依輸入順序對應的結果清單。</returns>
+    public static async Task<IReadOnlyList<MpvEncodingResult>> ExtractFramesAsync(
+        string inputPathOrUrl,
+        IEnumerable<KeyValuePair<TimeSpan, string>> frames,
+        MpvPlayerOptions? playerOptions = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (frames == null)
+        {
+            throw new ArgumentNullException(nameof(frames));
+        }
+
+        List<MpvEncodingResult> results = new List<MpvEncodingResult>();
+        foreach (KeyValuePair<TimeSpan, string> frame in frames)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            MpvEncodingResult result = await ExtractFrameAsync(
+                inputPathOrUrl,
+                frame.Key,
+                frame.Value,
+                playerOptions,
+                cancellationToken).ConfigureAwait(false);
+            results.Add(result);
+        }
+
+        return results;
+    }
+
+    /// <summary>
+    /// 透過 mpv EDL demuxer 把多個輸入串接成一個輸出檔（會重新編碼）。
+    /// </summary>
+    /// <param name="inputPaths">輸入媒體路徑序列（依序串接）。</param>
+    /// <param name="encodingOptions">已配置好的 encoding mode 選項。</param>
+    /// <param name="playerOptions">建立 <see cref="MpvPlayer"/> 時使用的選項。</param>
+    /// <param name="progress">進度回報。</param>
+    /// <param name="cancellationToken">取消編碼的權杖。</param>
+    /// <returns>編碼結果。</returns>
+    public static async Task<MpvEncodingResult> ConcatenateAsync(
+        IEnumerable<string> inputPaths,
+        MpvEncodingOptions encodingOptions,
+        MpvPlayerOptions? playerOptions = null,
+        IProgress<MpvEncodingProgress>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (inputPaths == null)
+        {
+            throw new ArgumentNullException(nameof(inputPaths));
+        }
+
+        if (encodingOptions == null)
+        {
+            throw new ArgumentNullException(nameof(encodingOptions));
+        }
+
+        List<string> inputs = new List<string>(inputPaths);
+        if (inputs.Count == 0)
+        {
+            throw new ArgumentException("Concatenate 需要至少一個輸入。", nameof(inputPaths));
+        }
+
+        string edlPath = Path.Combine(
+            Path.GetTempPath(),
+            "mediaembedkit-mpv-concat-" + Guid.NewGuid().ToString("N") + ".edl");
+        WriteEdlPlaylist(edlPath, inputs);
+        try
+        {
+            return await EncodeAsync(edlPath, encodingOptions, playerOptions, progress, cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            try
+            {
+                if (File.Exists(edlPath))
+                {
+                    File.Delete(edlPath);
+                }
+            }
+            catch (IOException)
+            {
+            }
+            catch (UnauthorizedAccessException)
+            {
+            }
+        }
+    }
+
+    /// <summary>
+    /// 把單一輸入依時間段切割成多個輸出檔。
+    /// </summary>
+    /// <param name="inputPathOrUrl">輸入媒體的檔案路徑或網址。</param>
+    /// <param name="segments">時間段序列（每段包含起點、終點與輸出路徑）。</param>
+    /// <param name="configureBase">套用至每個段的共同 encoding 設定（codec / metadata 等），不含 <c>start</c> / <c>end</c>。</param>
+    /// <param name="playerOptions">建立 <see cref="MpvPlayer"/> 時使用的選項。</param>
+    /// <param name="progress">進度回報；報告值為 (目前段索引, 總段數, 目前段內進度)。</param>
+    /// <param name="cancellationToken">取消編碼的權杖。</param>
+    /// <returns>依輸入順序對應的結果清單。</returns>
+    public static async Task<IReadOnlyList<MpvEncodingResult>> SplitAsync(
+        string inputPathOrUrl,
+        IEnumerable<MpvEncodingSegment> segments,
+        Func<MpvEncodingOptions, MpvEncodingOptions> configureBase,
+        MpvPlayerOptions? playerOptions = null,
+        IProgress<MpvSplitProgress>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (segments == null)
+        {
+            throw new ArgumentNullException(nameof(segments));
+        }
+
+        if (configureBase == null)
+        {
+            throw new ArgumentNullException(nameof(configureBase));
+        }
+
+        List<MpvEncodingSegment> segmentList = new List<MpvEncodingSegment>(segments);
+        if (segmentList.Count == 0)
+        {
+            throw new ArgumentException("Split 需要至少一個時間段。", nameof(segments));
+        }
+
+        List<MpvEncodingResult> results = new List<MpvEncodingResult>();
+        for (int index = 0; index < segmentList.Count; index++)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            MpvEncodingSegment segment = segmentList[index];
+            if (segment.End <= segment.Start)
+            {
+                throw new ArgumentException(
+                    "段索引 " + index + " 的終點必須大於起點。",
+                    nameof(segments));
+            }
+
+            MpvEncodingOptions options = configureBase(new MpvEncodingOptions(segment.OutputPath))
+                .WithStartTime(segment.Start)
+                .WithEndTime(segment.End);
+
+            int currentIndex = index;
+            int total = segmentList.Count;
+            IProgress<MpvEncodingProgress>? segmentProgress = progress == null
+                ? null
+                : new ProgressForwarder(progress, currentIndex, total);
+
+            MpvEncodingResult result = await EncodeAsync(
+                inputPathOrUrl,
+                options,
+                playerOptions,
+                segmentProgress,
+                cancellationToken).ConfigureAwait(false);
+            results.Add(result);
+        }
+
+        return results;
+    }
+
+    /// <summary>
+    /// 把進度從單段事件轉送為 (index, total, snapshot) 三元組事件。
+    /// </summary>
+    private sealed class ProgressForwarder : IProgress<MpvEncodingProgress>
+    {
+        /// <summary>
+        /// 上游 progress channel。
+        /// </summary>
+        private readonly IProgress<MpvSplitProgress> _target;
+        /// <summary>
+        /// 目前段索引。
+        /// </summary>
+        private readonly int _index;
+        /// <summary>
+        /// 總段數。
+        /// </summary>
+        private readonly int _total;
+
+        /// <summary>
+        /// 初始化轉送器。
+        /// </summary>
+        /// <param name="target">上游 progress channel。</param>
+        /// <param name="index">目前段索引。</param>
+        /// <param name="total">總段數。</param>
+        public ProgressForwarder(IProgress<MpvSplitProgress> target, int index, int total)
+        {
+            _target = target;
+            _index = index;
+            _total = total;
+        }
+
+        /// <inheritdoc />
+        public void Report(MpvEncodingProgress value)
+        {
+            _target.Report(new MpvSplitProgress(_index, _total, value));
+        }
+    }
+
+    /// <summary>
+    /// 寫入 mpv EDL v0 playlist 檔。
+    /// </summary>
+    /// <param name="path">EDL 檔輸出路徑。</param>
+    /// <param name="inputs">輸入媒體路徑序列。</param>
+    private static void WriteEdlPlaylist(string path, IReadOnlyList<string> inputs)
+    {
+        using (StreamWriter writer = new StreamWriter(path, false, new System.Text.UTF8Encoding(false)))
+        {
+            writer.NewLine = "\n";
+            writer.WriteLine("# mpv EDL v0");
+            for (int index = 0; index < inputs.Count; index++)
+            {
+                string input = inputs[index];
+                if (string.IsNullOrWhiteSpace(input))
+                {
+                    throw new ArgumentException("Concatenate 輸入序列含有空白項目。", nameof(inputs));
+                }
+
+                writer.WriteLine(EncodeEdlFilename(input));
+            }
+        }
+    }
+
+    /// <summary>
+    /// 將檔名以 mpv EDL <c>%bytecount%filename</c> 格式編碼以避開逗號 / 引號 / 空白等 escape 問題。
+    /// </summary>
+    /// <param name="filename">原始檔名或路徑。</param>
+    /// <returns>EDL 安全的單行表示。</returns>
+    private static string EncodeEdlFilename(string filename)
+    {
+        int byteCount = System.Text.Encoding.UTF8.GetByteCount(filename);
+        return "%" + byteCount.ToString(System.Globalization.CultureInfo.InvariantCulture) + "%" + filename;
+    }
+
+    /// <summary>
     /// 以非同步方式執行兩階段（two-pass）編碼。
     /// 對 <c>libx264</c> / <c>libx265</c> / <c>libvpx-vp9</c> 等使用 <c>flags=+pass1</c> / <c>flags=+pass2</c>
     /// 加 <c>passlogfile</c>；對 <c>libsvtav1</c> 改用其原生 <c>pass=1</c> / <c>pass=2</c> 慣例。

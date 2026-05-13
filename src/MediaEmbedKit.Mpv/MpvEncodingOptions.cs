@@ -11,6 +11,14 @@ namespace MediaEmbedKit.Mpv;
 public sealed class MpvEncodingOptions
 {
     /// <summary>
+    /// 累積的 metadata key/value tag 清單；於序列化階段與 <see cref="Metadata"/> 合併。
+    /// </summary>
+    private readonly List<KeyValuePair<string, string>> _metadataAddTags = new List<KeyValuePair<string, string>>();
+    /// <summary>
+    /// 累積的 metadata 移除鍵名清單；於序列化階段與 <see cref="RemovedMetadata"/> 合併。
+    /// </summary>
+    private readonly List<string> _metadataRemoveTags = new List<string>();
+    /// <summary>
     /// 累積的 muxer (ofopts) 加值清單；於序列化階段與 <see cref="ContainerFormatOptions"/> 合併。
     /// </summary>
     private readonly List<KeyValuePair<string, string>> _muxerAddOptions = new List<KeyValuePair<string, string>>();
@@ -153,6 +161,7 @@ public sealed class MpvEncodingOptions
             case MpvVideoCodecPreset.Av1Nvenc: return "av1_nvenc";
             case MpvVideoCodecPreset.Av1Qsv: return "av1_qsv";
             case MpvVideoCodecPreset.Av1Amf: return "av1_amf";
+            case MpvVideoCodecPreset.Copy: return "copy";
             default:
                 throw new ArgumentOutOfRangeException(nameof(preset), preset, "未支援的視訊編碼器預設值。");
         }
@@ -216,6 +225,7 @@ public sealed class MpvEncodingOptions
             case MpvAudioCodecPreset.Aac: return "aac";
             case MpvAudioCodecPreset.Opus: return "libopus";
             case MpvAudioCodecPreset.Mp3: return "libmp3lame";
+            case MpvAudioCodecPreset.Copy: return "copy";
             default:
                 throw new ArgumentOutOfRangeException(nameof(preset), preset, "未支援的音訊編碼器預設值。");
         }
@@ -276,6 +286,146 @@ public sealed class MpvEncodingOptions
     }
 
     /// <summary>
+    /// 追加單一中繼資料 key/value 對應 mpv <c>oset-metadata</c>。可重複呼叫累加多個 tag。
+    /// </summary>
+    /// <param name="key">中繼資料鍵名（例如 <c>title</c>、<c>artist</c>、<c>comment</c>）。</param>
+    /// <param name="value">中繼資料值。</param>
+    /// <returns>目前的 encoding mode 選項。</returns>
+    public MpvEncodingOptions WithMetadataTag(string key, string value)
+    {
+        ValidateAdditiveOption(key, value);
+        _metadataAddTags.Add(new KeyValuePair<string, string>(key, value));
+        return this;
+    }
+
+    /// <summary>
+    /// 追加單一要從輸出檔案排除的中繼資料鍵名對應 mpv <c>oremove-metadata</c>。可重複呼叫累加多個鍵名。
+    /// </summary>
+    /// <param name="key">中繼資料鍵名。</param>
+    /// <returns>目前的 encoding mode 選項。</returns>
+    public MpvEncodingOptions WithoutMetadataTag(string key)
+    {
+        if (string.IsNullOrWhiteSpace(key))
+        {
+            throw new ArgumentException("中繼資料鍵名不可為空白。", nameof(key));
+        }
+
+        _metadataRemoveTags.Add(key);
+        return this;
+    }
+
+    /// <summary>
+    /// 指定編碼起點對應 mpv <c>start</c> 選項。
+    /// </summary>
+    /// <param name="startTime">起點時間。</param>
+    /// <returns>目前的 encoding mode 選項。</returns>
+    public MpvEncodingOptions WithStartTime(TimeSpan startTime)
+    {
+        if (startTime < TimeSpan.Zero)
+        {
+            throw new ArgumentOutOfRangeException(nameof(startTime), startTime, "起點時間不可為負值。");
+        }
+
+        return WithOption("start", FormatSeconds(startTime));
+    }
+
+    /// <summary>
+    /// 指定編碼終點對應 mpv <c>end</c> 選項（絕對時間）。
+    /// </summary>
+    /// <param name="endTime">終點時間。</param>
+    /// <returns>目前的 encoding mode 選項。</returns>
+    public MpvEncodingOptions WithEndTime(TimeSpan endTime)
+    {
+        if (endTime < TimeSpan.Zero)
+        {
+            throw new ArgumentOutOfRangeException(nameof(endTime), endTime, "終點時間不可為負值。");
+        }
+
+        return WithOption("end", FormatSeconds(endTime));
+    }
+
+    /// <summary>
+    /// 指定編碼長度對應 mpv <c>length</c> 選項（相對於 <see cref="WithStartTime"/>）。
+    /// </summary>
+    /// <param name="length">編碼長度。</param>
+    /// <returns>目前的 encoding mode 選項。</returns>
+    public MpvEncodingOptions WithLength(TimeSpan length)
+    {
+        if (length <= TimeSpan.Zero)
+        {
+            throw new ArgumentOutOfRangeException(nameof(length), length, "編碼長度必須為正值。");
+        }
+
+        return WithOption("length", FormatSeconds(length));
+    }
+
+    /// <summary>
+    /// 啟用 mpv <c>hr-seek=yes</c>（高精度搜尋），讓 <see cref="WithStartTime"/> 切點精確到 frame，
+    /// 代價是 mpv 必須解碼到目標時間。
+    /// </summary>
+    /// <returns>目前的 encoding mode 選項。</returns>
+    public MpvEncodingOptions WithKeyframeAccurateSeek()
+    {
+        return WithOption("hr-seek", "yes");
+    }
+
+    /// <summary>
+    /// 追加 mpv 視訊 filter chain 字串（對應 <c>vf</c> 選項），保留使用者完全控制權。
+    /// </summary>
+    /// <param name="filterChain">mpv vf filter chain，例如 <c>scale=1280:720,fps=30</c>。</param>
+    /// <returns>目前的 encoding mode 選項。</returns>
+    public MpvEncodingOptions WithVideoFilter(string filterChain)
+    {
+        if (string.IsNullOrWhiteSpace(filterChain))
+        {
+            throw new ArgumentException("視訊 filter chain 不可為空白。", nameof(filterChain));
+        }
+
+        return WithOption("vf", filterChain);
+    }
+
+    /// <summary>
+    /// 追加 mpv 音訊 filter chain 字串（對應 <c>af</c> 選項）。
+    /// </summary>
+    /// <param name="filterChain">mpv af filter chain，例如 <c>aresample=48000,loudnorm</c>。</param>
+    /// <returns>目前的 encoding mode 選項。</returns>
+    public MpvEncodingOptions WithAudioFilter(string filterChain)
+    {
+        if (string.IsNullOrWhiteSpace(filterChain))
+        {
+            throw new ArgumentException("音訊 filter chain 不可為空白。", nameof(filterChain));
+        }
+
+        return WithOption("af", filterChain);
+    }
+
+    /// <summary>
+    /// 套用 mpv <c>lavfi-complex</c> 選項，使用 libavfilter graph 語法。
+    /// 注意：mpv 設計假設單一 <c>[vo]</c> / <c>[ao]</c> 輸出 pad，不支援 ffmpeg 任意多輸出 graph。
+    /// </summary>
+    /// <param name="graph">libavfilter graph 字串。</param>
+    /// <returns>目前的 encoding mode 選項。</returns>
+    public MpvEncodingOptions WithLavfiComplex(string graph)
+    {
+        if (string.IsNullOrWhiteSpace(graph))
+        {
+            throw new ArgumentException("lavfi-complex graph 不可為空白。", nameof(graph));
+        }
+
+        return WithOption("lavfi-complex", graph);
+    }
+
+    /// <summary>
+    /// 將 <see cref="TimeSpan"/> 序列化為 mpv 可接受的秒值字串。
+    /// </summary>
+    /// <param name="time">要序列化的時間。</param>
+    /// <returns>以秒為單位的字串（不變異文化）。</returns>
+    private static string FormatSeconds(TimeSpan time)
+    {
+        return time.TotalSeconds.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
+    }
+
+    /// <summary>
     /// 將輸出設為僅音訊：套用 mpv <c>vid=no</c>，跳過視訊串流編碼。
     /// </summary>
     /// <returns>目前的 encoding mode 選項。</returns>
@@ -291,6 +441,42 @@ public sealed class MpvEncodingOptions
     public MpvEncodingOptions AsVideoOnly()
     {
         return WithOption("aid", "no");
+    }
+
+    /// <summary>
+    /// 啟用內嵌於來源的指定字幕軌並把字幕燒入輸出視訊。
+    /// libmpv 結構性僅支援 burn-in；不支援把字幕作為獨立軌道嵌入容器。
+    /// </summary>
+    /// <param name="trackId">mpv 字幕軌索引（從 1 起算）。</param>
+    /// <returns>目前的 encoding mode 選項。</returns>
+    public MpvEncodingOptions WithBurnInSubtitleTrack(int trackId)
+    {
+        if (trackId < 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(trackId), trackId, "字幕軌索引必須為 1 或更大。");
+        }
+
+        WithOption("sid", trackId.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        WithOption("sub-visibility", "yes");
+        return this;
+    }
+
+    /// <summary>
+    /// 載入外部字幕檔案並燒入輸出視訊。
+    /// libmpv 結構性僅支援 burn-in；不支援把字幕作為獨立軌道嵌入容器。
+    /// </summary>
+    /// <param name="subtitleFilePath">字幕檔路徑（.srt / .ass / .vtt 等 mpv 支援格式）。</param>
+    /// <returns>目前的 encoding mode 選項。</returns>
+    public MpvEncodingOptions WithExternalSubtitle(string subtitleFilePath)
+    {
+        if (string.IsNullOrWhiteSpace(subtitleFilePath))
+        {
+            throw new ArgumentException("字幕檔路徑不可為空白。", nameof(subtitleFilePath));
+        }
+
+        WithOption("sub-files", subtitleFilePath);
+        WithOption("sub-visibility", "yes");
+        return this;
     }
 
     /// <summary>
@@ -510,8 +696,8 @@ public sealed class MpvEncodingOptions
         AddOptionalOption(options, "oacopts", CombineOptionString(AudioCodecOptions, _audioCodecAddOptions));
         AddOptionalOption(options, "orawts", CopyRawTimestamps);
         AddOptionalOption(options, "ocopy-metadata", CopyMetadata);
-        AddOptionalOption(options, "oset-metadata", Metadata);
-        AddOptionalOption(options, "oremove-metadata", RemovedMetadata);
+        AddOptionalOption(options, "oset-metadata", CombineOptionString(Metadata, _metadataAddTags));
+        AddOptionalOption(options, "oremove-metadata", CombineRemovedMetadata(RemovedMetadata, _metadataRemoveTags));
 
         foreach (KeyValuePair<string, string> option in AdditionalOptions)
         {
@@ -519,6 +705,39 @@ public sealed class MpvEncodingOptions
         }
 
         return options;
+    }
+
+    /// <summary>
+    /// 將原始 <c>oremove-metadata</c> 字串與累積的單一鍵名清單合併為單一逗號分隔字串。
+    /// </summary>
+    /// <param name="raw">由 <see cref="RemoveMetadata"/> 設定的原始字串；可為 <see langword="null"/>。</param>
+    /// <param name="additions">透過 <see cref="WithoutMetadataTag"/> 累積的單一鍵名。</param>
+    /// <returns>合併後的字串；無任何輸入時為 <see langword="null"/>。</returns>
+    private static string? CombineRemovedMetadata(string? raw, IReadOnlyList<string> additions)
+    {
+        bool hasRaw = !string.IsNullOrWhiteSpace(raw);
+        if (!hasRaw && additions.Count == 0)
+        {
+            return null;
+        }
+
+        StringBuilder builder = new StringBuilder();
+        if (hasRaw)
+        {
+            builder.Append(raw);
+        }
+
+        for (int index = 0; index < additions.Count; index++)
+        {
+            if (builder.Length > 0)
+            {
+                builder.Append(',');
+            }
+
+            builder.Append(additions[index]);
+        }
+
+        return builder.ToString();
     }
 
     /// <summary>

@@ -20,5 +20,10 @@ public enum MpvAudioCodecPreset
     /// <summary>
     /// MP3 — <c>libmp3lame</c>，向後相容傳統播放器時使用。
     /// </summary>
-    Mp3 = 2
+    Mp3 = 2,
+
+    /// <summary>
+    /// Stream copy（不重新編碼）— <c>copy</c>。輸出格式必須能容納來源音訊串流的編碼格式。
+    /// </summary>
+    Copy = 100
 }

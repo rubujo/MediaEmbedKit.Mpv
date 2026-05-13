@@ -76,5 +76,10 @@ public enum MpvVideoCodecPreset
     /// <summary>
     /// AMD 硬體 AV1 — <c>av1_amf</c>（RDNA3 起）。
     /// </summary>
-    Av1Amf = 34
+    Av1Amf = 34,
+
+    /// <summary>
+    /// Stream copy（不重新編碼）— <c>copy</c>。輸出格式必須能容納來源視訊串流的編碼格式。
+    /// </summary>
+    Copy = 100
 }
