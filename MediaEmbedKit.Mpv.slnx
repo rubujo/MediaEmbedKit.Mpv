@@ -18,6 +18,7 @@
     <Project Path="tests/MediaEmbedKit.Mpv.IntegrationTests/MediaEmbedKit.Mpv.IntegrationTests.csproj" />
     <Project Path="tests/MediaEmbedKit.Mpv.PlaybackSmoke/MediaEmbedKit.Mpv.PlaybackSmoke.csproj" />
     <Project Path="tests/MediaEmbedKit.Mpv.StressTests/MediaEmbedKit.Mpv.StressTests.csproj" />
+    <Project Path="tests/MediaEmbedKit.Mpv.Avalonia.HeadlessTests/MediaEmbedKit.Mpv.Avalonia.HeadlessTests.csproj" />
   </Folder>
   <Folder Name="/方案項目/">
     <File Path=".editorconfig" />

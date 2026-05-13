@@ -171,6 +171,22 @@ internal static class Program
         {
             return VerifyMetadataTagsAsync(runtimeDirectory);
         });
+        runner.Add("MpvEncoder Two-pass 編碼端到端", delegate
+        {
+            return VerifyEncodeTwoPassAsync(runtimeDirectory);
+        });
+        runner.Add("MpvEncoder ExtractFrame 抽影格", delegate
+        {
+            return VerifyExtractFrameAsync(runtimeDirectory);
+        });
+        runner.Add("MpvEncoder WithAudioFilter 音訊濾鏡", delegate
+        {
+            return VerifyAudioFilterAsync(runtimeDirectory);
+        });
+        runner.Add("MpvEncoder Cancel grace period 寬限期路徑", delegate
+        {
+            return VerifyCancellationGracePeriodAsync(runtimeDirectory);
+        });
 
         await runner.RunAsync().ConfigureAwait(false);
         return runner.FailedCount == 0 ? 0 : 1;
@@ -837,6 +853,214 @@ internal static class Program
                 IntegrationAssert.True(
                     string.Equals(title, "MediaEmbedKit Test", StringComparison.Ordinal),
                     "輸出 metadata title 應等於寫入值；實際=" + (title ?? "(null)"));
+            }
+        }
+        finally
+        {
+            TryDeleteFile(inputPath);
+            TryDeleteFile(outputPath);
+        }
+    }
+
+    /// <summary>
+    /// 嘗試以 mpv <c>av://lavfi:</c> 合成輸入 + libx264 <c>preset=ultrafast</c> 產生
+    /// 一段約 1 秒的測試 mp4。成功則回傳路徑；mpv 不支援 lavfi 輸入時回傳 <see langword="null"/>。
+    /// </summary>
+    /// <param name="runtimeDirectory">執行階段資料夾。</param>
+    /// <param name="durationSeconds">測試影片長度（秒）。</param>
+    /// <returns>產生的 mp4 路徑或 <see langword="null"/>（lavfi 不支援）。</returns>
+    private static async Task<string?> TryGenerateLavfiTestVideoAsync(string runtimeDirectory, double durationSeconds)
+    {
+        string outputPath = Path.Combine(Path.GetTempPath(), "mediaembedkit-lavfi-" + Guid.NewGuid().ToString("N") + ".mp4");
+        MpvEncodingOptions options = new MpvEncodingOptions(outputPath)
+            .AsVideoOnly()
+            .WithVideoCodec(MpvVideoCodecPreset.H264)
+            .WithVideoCodecOption("preset", "ultrafast")
+            .WithVideoCodecOption("crf", "30")
+            .WithOption("end", durationSeconds.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture));
+
+        string lavfiUrl = "av://lavfi:testsrc=duration=" + durationSeconds.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture)
+            + ":size=160x90:rate=24";
+        try
+        {
+            MpvEncodingResult result = await MpvEncoder.EncodeAsync(
+                lavfiUrl,
+                options,
+                CreateEncodingPlayerOptions(runtimeDirectory)).ConfigureAwait(false);
+            if (result.Success && result.OutputBytes > 0)
+            {
+                return outputPath;
+            }
+        }
+        catch (Exception)
+        {
+            // 視為不支援，回傳 null
+        }
+
+        TryDeleteFile(outputPath);
+        return null;
+    }
+
+    /// <summary>
+    /// 驗證 <see cref="MpvEncoder.EncodeTwoPassAsync"/> 端到端：兩階段都應完成，
+    /// 第一階段輸出到 null sink，第二階段輸出到實際檔案。
+    /// </summary>
+    /// <param name="runtimeDirectory">執行階段資料夾。</param>
+    /// <returns>代表測試流程的工作。</returns>
+    private static async Task VerifyEncodeTwoPassAsync(string runtimeDirectory)
+    {
+        string? inputPath = await TryGenerateLavfiTestVideoAsync(runtimeDirectory, 1.0).ConfigureAwait(false);
+        if (inputPath == null)
+        {
+            Console.WriteLine("(略過：mpv av://lavfi 合成輸入不可用於此 build)");
+            return;
+        }
+
+        string outputPath = Path.Combine(Path.GetTempPath(), "mediaembedkit-twopass-" + Guid.NewGuid().ToString("N") + ".mp4");
+        try
+        {
+            MpvEncodingOptions options = new MpvEncodingOptions(outputPath)
+                .AsVideoOnly()
+                .WithVideoCodec(MpvVideoCodecPreset.H264)
+                .WithVideoCodecOption("preset", "ultrafast")
+                .WithVideoCodecOption("b", "600k");
+
+            MpvTwoPassEncodingResult result = await MpvEncoder.EncodeTwoPassAsync(
+                inputPath,
+                options,
+                CreateEncodingPlayerOptions(runtimeDirectory)).ConfigureAwait(false);
+
+            IntegrationAssert.True(result.FirstPass != null, "第一階段結果不應為 null。");
+            IntegrationAssert.True(result.FirstPass!.EndReason == MpvEndFileReason.EndOfFile,
+                "第一階段應走到 EOF；實際=" + result.FirstPass.EndReason);
+            IntegrationAssert.True(result.SecondPass != null, "第二階段結果不應為 null。");
+            IntegrationAssert.True(result.SecondPass!.Success,
+                "第二階段應成功完成。EndReason=" + result.SecondPass.EndReason
+                + " ErrorCode=" + result.SecondPass.ErrorCode
+                + " OutputBytes=" + result.SecondPass.OutputBytes);
+            IntegrationAssert.True(result.Success, "整體 Success 應為 true。");
+        }
+        finally
+        {
+            TryDeleteFile(inputPath);
+            TryDeleteFile(outputPath);
+        }
+    }
+
+    /// <summary>
+    /// 驗證 <see cref="MpvEncoder.ExtractFrameAsync"/>：抽出單一影格輸出為 PNG。
+    /// </summary>
+    /// <param name="runtimeDirectory">執行階段資料夾。</param>
+    /// <returns>代表測試流程的工作。</returns>
+    private static async Task VerifyExtractFrameAsync(string runtimeDirectory)
+    {
+        string? inputPath = await TryGenerateLavfiTestVideoAsync(runtimeDirectory, 1.0).ConfigureAwait(false);
+        if (inputPath == null)
+        {
+            Console.WriteLine("(略過：mpv av://lavfi 合成輸入不可用於此 build)");
+            return;
+        }
+
+        string outputPath = Path.Combine(Path.GetTempPath(), "mediaembedkit-frame-" + Guid.NewGuid().ToString("N") + ".png");
+        try
+        {
+            MpvEncodingResult result = await MpvEncoder.ExtractFrameAsync(
+                inputPath,
+                TimeSpan.FromMilliseconds(500),
+                outputPath,
+                CreateEncodingPlayerOptions(runtimeDirectory)).ConfigureAwait(false);
+
+            IntegrationAssert.True(result.Success,
+                "ExtractFrame 應成功完成。EndReason=" + result.EndReason
+                + " ErrorCode=" + result.ErrorCode
+                + " OutputBytes=" + result.OutputBytes);
+            IntegrationAssert.True(result.OutputBytes > 0, "PNG 輸出應有位元組。");
+            // 驗證 PNG 標頭（8 bytes：89 50 4E 47 0D 0A 1A 0A）
+            byte[] header = new byte[8];
+            using (FileStream fs = File.OpenRead(outputPath))
+            {
+                int read = fs.Read(header, 0, 8);
+                IntegrationAssert.Equal(8, read, "PNG 標頭應有 8 bytes。");
+            }
+            IntegrationAssert.True(header[0] == 0x89 && header[1] == 0x50 && header[2] == 0x4E && header[3] == 0x47,
+                "輸出應為 PNG 格式（magic mismatch）。");
+        }
+        finally
+        {
+            TryDeleteFile(inputPath);
+            TryDeleteFile(outputPath);
+        }
+    }
+
+    /// <summary>
+    /// 驗證 <see cref="MpvEncodingOptions.WithAudioFilter"/>：mpv 接受 <c>af</c> 選項並完成編碼。
+    /// </summary>
+    /// <param name="runtimeDirectory">執行階段資料夾。</param>
+    /// <returns>代表測試流程的工作。</returns>
+    private static async Task VerifyAudioFilterAsync(string runtimeDirectory)
+    {
+        string inputPath = WriteTempWav(TimeSpan.FromSeconds(2));
+        string outputPath = Path.Combine(Path.GetTempPath(), "mediaembedkit-af-" + Guid.NewGuid().ToString("N") + ".m4a");
+        try
+        {
+            MpvEncodingOptions options = new MpvEncodingOptions(outputPath)
+                .AsAudioOnly()
+                .WithAudioCodec(MpvAudioCodecPreset.Aac)
+                .WithAudioFilter("aresample=48000");
+
+            MpvEncodingResult result = await MpvEncoder.EncodeAsync(
+                inputPath,
+                options,
+                CreateEncodingPlayerOptions(runtimeDirectory)).ConfigureAwait(false);
+
+            IntegrationAssert.True(result.Success,
+                "WithAudioFilter 編碼應成功完成。EndReason=" + result.EndReason
+                + " ErrorCode=" + result.ErrorCode
+                + " OutputBytes=" + result.OutputBytes);
+            IntegrationAssert.True(result.OutputBytes > 0, "輸出位元組數應大於 0。");
+        }
+        finally
+        {
+            TryDeleteFile(inputPath);
+            TryDeleteFile(outputPath);
+        }
+    }
+
+    /// <summary>
+    /// 驗證 <see cref="MpvEncoder.EncodeAsync"/> 取消寬限期路徑：
+    /// 已預先取消的 token 觸發後，helper 仍應於 <c>CancellationGracePeriod</c> 內回傳結果而非永久卡住。
+    /// </summary>
+    /// <param name="runtimeDirectory">執行階段資料夾。</param>
+    /// <returns>代表測試流程的工作。</returns>
+    private static async Task VerifyCancellationGracePeriodAsync(string runtimeDirectory)
+    {
+        string inputPath = WriteTempWav(TimeSpan.FromSeconds(30));
+        string outputPath = Path.Combine(Path.GetTempPath(), "mediaembedkit-cancel-grace-" + Guid.NewGuid().ToString("N") + ".m4a");
+        try
+        {
+            MpvEncodingOptions options = new MpvEncodingOptions(outputPath)
+                .AsAudioOnly()
+                .WithAudioCodec(MpvAudioCodecPreset.Aac);
+
+            using (CancellationTokenSource cts = new CancellationTokenSource())
+            {
+                // 預先取消，立刻進入寬限期路徑。
+                cts.Cancel();
+                System.Diagnostics.Stopwatch stopwatch = System.Diagnostics.Stopwatch.StartNew();
+                MpvEncodingResult result = await MpvEncoder.EncodeAsync(
+                    inputPath,
+                    options,
+                    CreateEncodingPlayerOptions(runtimeDirectory),
+                    progress: null,
+                    cancellationToken: cts.Token).ConfigureAwait(false);
+                stopwatch.Stop();
+
+                // 此測試的核心：驗證 helper 對預先取消的 token 不會卡住。
+                // 不斷言 Success 或 EndReason，因為實際結果取決於 LoadFile 與 Stop 的 race（
+                // mpv idle 時 Stop 為 no-op；後續 LoadFile 可能在 grace period 內完成）。
+                IntegrationAssert.True(stopwatch.Elapsed < TimeSpan.FromSeconds(15),
+                    "取消後應在合理時間內回傳，避免無上限等待；實際=" + stopwatch.Elapsed);
+                IntegrationAssert.True(result != null, "result 不應為 null。");
             }
         }
         finally

@@ -542,6 +542,10 @@ public static class MpvEncoder
             clone.AudioCodec = null;
             clone.AudioCodecOptions = null;
             clone.WithOption("aid", "no");
+            // 第一階段輸出到 NUL（Windows）/ /dev/null；這兩個路徑都沒有副檔名，
+            // 必須明確指定 libavformat 的 null muxer，否則 mpv 會以
+            // [encode] format not found 終止。
+            clone.ContainerFormat = "null";
         }
 
         return clone;

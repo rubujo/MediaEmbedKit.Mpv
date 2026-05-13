@@ -18,6 +18,18 @@ internal static class Program
     /// 播放器重複建立與釋放次數。
     /// </summary>
     private const int PlayerLifecycleIterations = 12;
+    /// <summary>
+    /// 長時間 leak 檢查中重複建立／釋放 player 的回合數。
+    /// </summary>
+    private const int LongRunLeakIterations = 50;
+    /// <summary>
+    /// 長時間 leak 檢查可容忍的相對成長百分比（依 baseline GC heap）。
+    /// </summary>
+    private const double LongRunLeakRelativeGrowthLimit = 0.25;
+    /// <summary>
+    /// 長時間 leak 檢查可容忍的絕對成長下限（位元組）；小於此值的成長視為 GC 噪音，不算 leak。
+    /// </summary>
+    private const long LongRunLeakAbsoluteGrowthFloorBytes = 8L * 1024L * 1024L;
 
     /// <summary>
     /// 自訂串流重複播放次數。
@@ -59,9 +71,75 @@ internal static class Program
         });
         runner.Add("外部工具大量輸出與逾時", VerifyExternalToolOutputAndTimeoutAsync);
         runner.Add("runtime helper 失敗與已載入更新路徑", VerifyRuntimeHelperFailurePathsAsync);
+        runner.Add("播放器長時間建立／釋放記憶體 leak 檢查", delegate
+        {
+            return VerifyLongRunMemoryLeakAsync(runtimeDirectory);
+        });
 
         await runner.RunAsync().ConfigureAwait(false);
         return runner.FailedCount == 0 ? 0 : 1;
+    }
+
+    /// <summary>
+    /// 長時間反覆建立／釋放播放器並追蹤受控堆積成長，作為簡易 leak 哨兵。
+    /// 失敗條件：經過 <see cref="LongRunLeakIterations"/> 次後，相對 baseline 的成長
+    /// 超過 <see cref="LongRunLeakRelativeGrowthLimit"/> 且絕對成長大於
+    /// <see cref="LongRunLeakAbsoluteGrowthFloorBytes"/>（避免把 GC 噪音當 leak）。
+    /// </summary>
+    /// <param name="runtimeDirectory">包含 libmpv 的執行階段資料夾。</param>
+    /// <returns>代表測試流程的工作。</returns>
+    private static Task VerifyLongRunMemoryLeakAsync(string runtimeDirectory)
+    {
+        // Warm-up：先跑 3 次建立／釋放讓 JIT、libmpv 內部 cache 等到達穩態。
+        for (int warmup = 0; warmup < 3; warmup++)
+        {
+            using (MpvPlayer warm = CreatePlayer(runtimeDirectory))
+            {
+                warm.Initialize();
+            }
+        }
+
+        // Baseline 取樣（強制完整 GC）。
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        GC.Collect();
+        long baselineBytes = GC.GetTotalMemory(forceFullCollection: true);
+
+        for (int iteration = 0; iteration < LongRunLeakIterations; iteration++)
+        {
+            using (MpvPlayer player = CreatePlayer(runtimeDirectory))
+            {
+                player.Initialize();
+                StressAssert.True(player.IsInitialized, "iteration " + iteration + " 應完成初始化。");
+                // 觸發若干屬性讀取，確保 watch / property 路徑也被覆蓋。
+                _ = player.GetPropertyString("mpv-version");
+                _ = player.GetPropertyDouble("volume");
+            }
+        }
+
+        // 終點取樣。
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        GC.Collect();
+        long endBytes = GC.GetTotalMemory(forceFullCollection: true);
+
+        long growthBytes = endBytes - baselineBytes;
+        double growthRelative = baselineBytes <= 0 ? 0 : (double)growthBytes / baselineBytes;
+        Console.WriteLine(
+            "[leak] baseline=" + baselineBytes
+            + " end=" + endBytes
+            + " growth=" + growthBytes
+            + " relative=" + growthRelative.ToString("P1", System.Globalization.CultureInfo.InvariantCulture));
+
+        bool relativeOver = growthRelative > LongRunLeakRelativeGrowthLimit;
+        bool absoluteOver = growthBytes > LongRunLeakAbsoluteGrowthFloorBytes;
+        StressAssert.True(
+            !(relativeOver && absoluteOver),
+            "受控堆積在 " + LongRunLeakIterations + " 次 build/dispose 後同時超出相對與絕對門檻；"
+            + "growth=" + growthBytes + " bytes ("
+            + growthRelative.ToString("P1", System.Globalization.CultureInfo.InvariantCulture) + ")");
+
+        return Task.CompletedTask;
     }
 
     /// <summary>

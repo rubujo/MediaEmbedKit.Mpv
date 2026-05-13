@@ -15,11 +15,12 @@ internal static class Program
     /// <summary>
     /// 執行 Console minimal sample。
     /// </summary>
-    /// <param name="args">第一個非旗標引數可指定要播放的檔案路徑或媒體網址；可選旗標：<c>--runtime-check</c>、<c>--license-audit</c>、<c>--apply-staged</c>。</param>
+    /// <param name="args">第一個非旗標引數可指定要播放的檔案路徑或媒體網址；可選旗標：<c>--runtime-check</c>、<c>--license-audit</c>、<c>--apply-staged</c>、<c>--encode &lt;output&gt;</c>。</param>
     /// <returns>處理程序結束代碼。</returns>
     private static async Task<int> Main(string[] args)
     {
         string? source = null;
+        string? encodeOutput = null;
         bool runRuntimeCheck = false;
         bool runLicenseAudit = false;
         bool applyStaged = false;
@@ -38,6 +39,10 @@ internal static class Program
             {
                 applyStaged = true;
             }
+            else if (string.Equals(arg, "--encode", StringComparison.OrdinalIgnoreCase) && index + 1 < args.Length)
+            {
+                encodeOutput = args[++index];
+            }
             else if (source == null)
             {
                 source = arg;
@@ -50,6 +55,11 @@ internal static class Program
         {
             Console.WriteLine("準備 Windows x64 runtime...");
             string runtimeDirectory = await SampleRuntime.PrepareCoreRuntimeAsync().ConfigureAwait(false);
+
+            if (encodeOutput != null)
+            {
+                return await RunEncodeAsync(source, encodeOutput, runtimeDirectory).ConfigureAwait(false);
+            }
 
             if (applyStaged)
             {
@@ -113,6 +123,82 @@ internal static class Program
             Console.Error.WriteLine(ex.GetType().Name + ": " + ex.Message);
             return 1;
         }
+    }
+
+    /// <summary>
+    /// 以 <see cref="MpvEncoder.EncodeAsync"/> 示範一站式轉碼：根據輸出副檔名自動選擇音訊或音影一同轉碼。
+    /// </summary>
+    /// <param name="inputPath">輸入媒體路徑或網址。</param>
+    /// <param name="outputPath">輸出檔案路徑。</param>
+    /// <param name="runtimeDirectory">執行階段資料夾。</param>
+    /// <returns>處理程序結束代碼（0 成功；非 0 失敗）。</returns>
+    private static async Task<int> RunEncodeAsync(string inputPath, string outputPath, string runtimeDirectory)
+    {
+        Console.WriteLine("[encode] input=" + inputPath);
+        Console.WriteLine("[encode] output=" + outputPath);
+
+        string extension = System.IO.Path.GetExtension(outputPath).ToLowerInvariant();
+        bool audioOnly =
+            extension == ".m4a" || extension == ".mp3" || extension == ".ogg"
+            || extension == ".opus" || extension == ".aac" || extension == ".wav";
+
+        MpvEncodingOptions options;
+        if (audioOnly)
+        {
+            options = new MpvEncodingOptions(outputPath)
+                .AsAudioOnly()
+                .WithAudioCodec(MpvAudioCodecPreset.Aac);
+            Console.WriteLine("[encode] preset: audio-only (AAC)");
+        }
+        else
+        {
+            options = new MpvEncodingOptions(outputPath)
+                .WithVideoCodec(MpvVideoCodecPreset.H264)
+                .WithVideoCodecOption("preset", "veryfast")
+                .WithVideoCodecOption("crf", "23")
+                .WithAudioCodec(MpvAudioCodecPreset.Aac)
+                .WithAudioCodecOption("b", "192k");
+            Console.WriteLine("[encode] preset: video=libx264 veryfast crf=23, audio=AAC 192k");
+        }
+
+        MpvPlayerOptions playerOptions = MpvRuntimeInstaller.CreatePlayerOptions(runtimeDirectory);
+        playerOptions.EnableYtdlp = !audioOnly || inputPath.StartsWith("http", StringComparison.OrdinalIgnoreCase);
+        playerOptions.LogLevel = "warn";
+
+        Progress<MpvEncodingProgress> progress = new Progress<MpvEncodingProgress>(p =>
+        {
+            string remaining = p.EstimatedRemaining.HasValue
+                ? p.EstimatedRemaining.Value.ToString(@"mm\:ss")
+                : "--:--";
+            Console.WriteLine("[encode] "
+                + (p.Percent.HasValue ? p.Percent.Value.ToString("F1", System.Globalization.CultureInfo.InvariantCulture) : "--")
+                + "%  pos=" + p.Position.ToString(@"mm\:ss")
+                + "  bytes=" + p.OutputBytes
+                + "  eta=" + remaining);
+        });
+
+        using CancellationTokenSource cts = new CancellationTokenSource();
+        Console.CancelKeyPress += (sender, e) =>
+        {
+            e.Cancel = true;
+            Console.WriteLine("[encode] 收到 Ctrl-C，取消編碼...");
+            cts.Cancel();
+        };
+
+        MpvEncodingResult result = await MpvEncoder.EncodeAsync(
+            inputPath,
+            options,
+            playerOptions,
+            progress,
+            cts.Token).ConfigureAwait(false);
+
+        Console.WriteLine("[encode] result: Success=" + result.Success
+            + " EndReason=" + result.EndReason
+            + " ErrorCode=" + result.ErrorCode
+            + " OutputBytes=" + result.OutputBytes
+            + " Elapsed=" + result.Elapsed.ToString(@"mm\:ss\.fff"));
+
+        return result.Success ? 0 : 1;
     }
 
     /// <summary>
