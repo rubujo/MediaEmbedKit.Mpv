@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -192,6 +194,130 @@ namespace MediaEmbedKit.Mpv.Downloads
                     standardError.ToString(),
                     startedAt,
                     completedAt);
+            }
+        }
+
+        /// <summary>
+        /// 以 <see cref="IAsyncEnumerable{T}"/> 串流外部工具的標準輸出與標準錯誤輸出。
+        /// </summary>
+        /// <param name="arguments">要傳給外部工具的引數集合。</param>
+        /// <param name="cancellationToken">取消列舉的 token；取消時會嘗試終止處理序。</param>
+        /// <returns>逐行回傳的輸出事件。</returns>
+        public async IAsyncEnumerable<ExternalToolOutputEventArgs> StreamAsync(
+            IEnumerable<string> arguments,
+            [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        {
+            if (arguments == null)
+            {
+                throw new ArgumentNullException(nameof(arguments));
+            }
+
+            List<string> argumentList = new List<string>(arguments);
+            string argumentText = FormatArguments(argumentList);
+            ProcessStartInfo startInfo = new ProcessStartInfo
+            {
+                FileName = ExecutablePath,
+                Arguments = argumentText,
+                CreateNoWindow = true,
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            };
+
+            if (!string.IsNullOrWhiteSpace(WorkingDirectory))
+            {
+                startInfo.WorkingDirectory = WorkingDirectory!;
+            }
+
+            foreach (KeyValuePair<string, string> item in _environmentVariables)
+            {
+                startInfo.EnvironmentVariables[item.Key] = item.Value;
+            }
+
+            BlockingCollection<ExternalToolOutputEventArgs> buffer = new BlockingCollection<ExternalToolOutputEventArgs>(new ConcurrentQueue<ExternalToolOutputEventArgs>());
+            using (Process process = new Process())
+            {
+                int pendingStreams = 2;
+                process.StartInfo = startInfo;
+                process.EnableRaisingEvents = true;
+                process.OutputDataReceived += delegate (object sender, DataReceivedEventArgs e)
+                {
+                    EnqueueStreamLine(buffer, ExternalToolOutputStream.StandardOutput, e.Data, ref pendingStreams);
+                };
+                process.ErrorDataReceived += delegate (object sender, DataReceivedEventArgs e)
+                {
+                    EnqueueStreamLine(buffer, ExternalToolOutputStream.StandardError, e.Data, ref pendingStreams);
+                };
+
+                if (!process.Start())
+                {
+                    throw new InvalidOperationException("無法啟動外部工具：" + ExecutablePath);
+                }
+
+                process.BeginOutputReadLine();
+                process.BeginErrorReadLine();
+
+                try
+                {
+                    while (true)
+                    {
+                        ExternalToolOutputEventArgs item;
+                        try
+                        {
+                            item = buffer.Take(cancellationToken);
+                        }
+                        catch (InvalidOperationException)
+                        {
+                            yield break;
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            KillProcess(process);
+                            throw;
+                        }
+
+                        yield return item;
+                    }
+                }
+                finally
+                {
+                    if (!process.HasExited)
+                    {
+                        KillProcess(process);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 將處理序輸出回呼資料寫入串流緩衝。
+        /// </summary>
+        /// <param name="buffer">輸出緩衝。</param>
+        /// <param name="stream">輸出資料流。</param>
+        /// <param name="line">回呼接收到的單列文字；資料流結束時為 <see langword="null"/>。</param>
+        /// <param name="pendingStreams">尚未結束的資料流數。</param>
+        private static void EnqueueStreamLine(
+            BlockingCollection<ExternalToolOutputEventArgs> buffer,
+            ExternalToolOutputStream stream,
+            string? line,
+            ref int pendingStreams)
+        {
+            if (line == null)
+            {
+                if (Interlocked.Decrement(ref pendingStreams) <= 0)
+                {
+                    buffer.CompleteAdding();
+                }
+
+                return;
+            }
+
+            try
+            {
+                buffer.Add(new ExternalToolOutputEventArgs(stream, line, DateTimeOffset.Now));
+            }
+            catch (InvalidOperationException)
+            {
             }
         }
 

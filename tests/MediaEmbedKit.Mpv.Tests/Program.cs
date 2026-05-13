@@ -37,9 +37,73 @@ namespace MediaEmbedKit.Mpv.Tests
             runner.Add("Windows 執行階段播放器選項", VerifyWindowsRuntimePlayerOptions);
             runner.Add("MpvCapabilities 查詢與防呆", VerifyMpvCapabilities);
             runner.Add("MpvMediaItem 建構 per-file options", VerifyMpvMediaItemBuildFileOptions);
+            runner.Add("MpvRuntimeHealthCheck 缺檔資料夾報告", VerifyMpvRuntimeHealthCheckMissingFiles);
+            runner.Add("MpvLibraryUpdateScheduler 路徑與列舉", VerifyMpvLibraryUpdateSchedulerLayout);
 
             await runner.RunAsync().ConfigureAwait(false);
             return runner.FailedCount == 0 ? 0 : 1;
+        }
+
+        /// <summary>
+        /// 驗證 <see cref="MpvRuntimeHealthCheck.AnalyzeAsync"/> 在缺檔資料夾會列出對應錯誤。
+        /// </summary>
+        /// <returns>代表測試流程的工作。</returns>
+        private static async Task VerifyMpvRuntimeHealthCheckMissingFiles()
+        {
+            string tempDirectory = Path.Combine(Path.GetTempPath(), "mediaembedkit-health-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(tempDirectory);
+            try
+            {
+                MpvRuntimeHealthReport report = await MpvRuntimeHealthCheck.AnalyzeAsync(tempDirectory).ConfigureAwait(false);
+                AssertEx.True(!report.IsLibMpvPresent, "空資料夾不應視為包含 libmpv-2.dll");
+                AssertEx.True(!report.IsHealthy, "缺 libmpv 時不應視為健康");
+                AssertEx.True(!report.IsYtdlpPresent, "空資料夾不應視為包含 yt-dlp.exe");
+                AssertEx.True(!report.IsFFmpegPresent, "空資料夾不應視為包含 ffmpeg.exe");
+                AssertEx.True(report.Errors.Count > 0, "缺檔報告應至少包含一筆錯誤");
+            }
+            finally
+            {
+                Directory.Delete(tempDirectory, true);
+            }
+        }
+
+        /// <summary>
+        /// 驗證 <see cref="MpvLibraryUpdateScheduler"/> 的路徑公開與暫存列舉。
+        /// </summary>
+        /// <returns>代表測試流程的工作。</returns>
+        private static Task VerifyMpvLibraryUpdateSchedulerLayout()
+        {
+            string tempDirectory = Path.Combine(Path.GetTempPath(), "mediaembedkit-scheduler-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(tempDirectory);
+            try
+            {
+                MpvLibraryUpdateScheduler scheduler = new MpvLibraryUpdateScheduler(tempDirectory);
+                AssertEx.Equal(Path.Combine(tempDirectory, "libmpv-2.dll"), scheduler.CurrentLibraryPath, "目前 libmpv 路徑");
+                AssertEx.Equal(Path.Combine(tempDirectory, ".previous", "libmpv-2.dll"), scheduler.PreviousLibraryPath, "前一版 libmpv 路徑");
+                AssertEx.Equal(Path.Combine(tempDirectory, ".updates"), scheduler.StagedRootDirectory, "暫存資料夾路徑");
+                AssertEx.Equal(0, scheduler.ListStagedUpdates().Count, "空 .updates 資料夾應傳回空集合");
+
+                string stagedDirectory = Path.Combine(scheduler.StagedRootDirectory, "20260513000000");
+                Directory.CreateDirectory(stagedDirectory);
+                File.WriteAllBytes(Path.Combine(stagedDirectory, "libmpv-2.dll"), new byte[] { 0xCA, 0xFE });
+                System.Collections.Generic.IReadOnlyList<MpvLibraryStagedUpdate> staged = scheduler.ListStagedUpdates();
+                AssertEx.Equal(1, staged.Count, "應辨識出單一暫存版本");
+                AssertEx.Equal(stagedDirectory, staged[0].StagedDirectory, "暫存資料夾完整路徑");
+                AssertEx.Equal(Path.Combine(stagedDirectory, "libmpv-2.dll"), staged[0].LibraryPath, "暫存 libmpv 完整路徑");
+
+                System.Collections.Generic.IReadOnlyList<MpvLibraryStagedUpdate> pruned = scheduler.PruneStagedUpdates();
+                AssertEx.Equal(1, pruned.Count, "PruneStagedUpdates 應傳回被清除的集合");
+                AssertEx.True(!Directory.Exists(stagedDirectory), "清除後暫存資料夾應被刪除");
+            }
+            finally
+            {
+                if (Directory.Exists(tempDirectory))
+                {
+                    Directory.Delete(tempDirectory, true);
+                }
+            }
+
+            return Task.CompletedTask;
         }
 
         /// <summary>
