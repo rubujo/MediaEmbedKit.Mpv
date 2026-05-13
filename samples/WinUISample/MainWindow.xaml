@@ -4,7 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:mpv="using:MediaEmbedKit.Mpv.WinUI"
     Title="MediaEmbedKit.Mpv WinUI 3 Sample">
-    <Grid RowDefinitions="48,88,*,168">
+    <Grid RowDefinitions="48,88,40,*,168">
         <Grid ColumnDefinitions="*,96,96,88" Padding="8">
             <TextBox x:Name="SourceBox"
                      Text="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
@@ -127,7 +127,43 @@
             </StackPanel>
         </Grid>
 
-        <Grid Grid.Row="2" RowDefinitions="40,*" Background="Black">
+        <Border x:Name="MvvmDemoBar"
+                Grid.Row="2"
+                Margin="8,4,8,4"
+                Padding="8,0"
+                Background="#11000000"
+                CornerRadius="4">
+            <StackPanel Orientation="Horizontal"
+                        Spacing="6"
+                        VerticalAlignment="Center">
+                <TextBlock VerticalAlignment="Center"
+                           FontWeight="SemiBold"
+                           Text="MVVM 綁定示範：" />
+                <TextBlock VerticalAlignment="Center"
+                           Text="狀態 =" />
+                <TextBlock Width="80"
+                           VerticalAlignment="Center"
+                           FontFamily="Consolas"
+                           Text="{Binding PlaybackState, FallbackValue=Idle}" />
+                <TextBlock VerticalAlignment="Center"
+                           Text="音量" />
+                <Slider Width="160"
+                        VerticalAlignment="Center"
+                        Minimum="0"
+                        Maximum="130"
+                        Value="{Binding Volume, Mode=TwoWay, FallbackValue=100}" />
+                <Button Width="120"
+                        Height="28"
+                        Content="Toggle Pause"
+                        Command="{Binding TogglePauseCommand}" />
+                <Button Width="120"
+                        Height="28"
+                        Content="Toggle Mute"
+                        Command="{Binding ToggleMuteCommand}" />
+            </StackPanel>
+        </Border>
+
+        <Grid Grid.Row="3" RowDefinitions="40,*" Background="Black">
             <Grid ColumnDefinitions="*,*">
                 <Border Margin="16,6,8,6"
                         Background="#DD0078D4"
@@ -173,7 +209,7 @@
         </Grid>
 
         <ListView x:Name="EventList"
-                  Grid.Row="3"
+                  Grid.Row="4"
                   SelectionMode="None">
             <ListView.ItemTemplate>
                 <DataTemplate>

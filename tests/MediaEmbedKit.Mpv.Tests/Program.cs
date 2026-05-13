@@ -47,6 +47,7 @@ internal static class Program
         runner.Add("MpvLicenseAuditor 分類授權狀態", VerifyMpvLicenseAuditorClassification);
         runner.Add("MpvMediaItem fluent helpers", VerifyMpvMediaItemFluentHelpers);
         runner.Add("MpvPlayerOptions.CopyTo 全欄複製", VerifyMpvPlayerOptionsCopyTo);
+        runner.Add("MpvRelayCommand CanExecute/Execute/RaiseCanExecuteChanged", VerifyMpvRelayCommand);
 
         await runner.RunAsync().ConfigureAwait(false);
         return runner.FailedCount == 0 ? 0 : 1;
@@ -149,6 +150,55 @@ internal static class Program
         AssertEx.Throws<ArgumentException>(
             delegate { item.WithYtdlpFormat(" "); },
             "空白 yt-dlp selector 應被拒絕");
+
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// 驗證 <see cref="MpvRelayCommand"/> 的核心行為：建構檢查、CanExecute 預設、
+    /// 委派執行、CanExecuteChanged 觸發以及參數型別委派。
+    /// </summary>
+    /// <returns>代表測試流程的工作。</returns>
+    private static Task VerifyMpvRelayCommand()
+    {
+        AssertEx.Throws<ArgumentNullException>(
+            delegate { _ = new MpvRelayCommand((Action)null!); },
+            "MpvRelayCommand 不接受 null Action 委派");
+
+        AssertEx.Throws<ArgumentNullException>(
+            delegate { _ = new MpvRelayCommand((Action<object?>)null!); },
+            "MpvRelayCommand 不接受 null Action<object?> 委派");
+
+        int executionCount = 0;
+        MpvRelayCommand commandWithoutGuard = new MpvRelayCommand(() => executionCount++);
+        AssertEx.True(
+            commandWithoutGuard.CanExecute(null),
+            "未指定 canExecute 時 CanExecute 應預設為 true");
+        commandWithoutGuard.Execute(null);
+        AssertEx.Equal(1, executionCount, "Execute 應呼叫 Action 委派一次");
+
+        bool gate = false;
+        int gatedExecutionCount = 0;
+        MpvRelayCommand gatedCommand = new MpvRelayCommand(() => gatedExecutionCount++, () => gate);
+        AssertEx.True(!gatedCommand.CanExecute(null), "canExecute 回傳 false 時 CanExecute 應為 false");
+        gatedCommand.Execute(null);
+        AssertEx.Equal(1, gatedExecutionCount, "Execute 不會自動檢查 CanExecute，仍會呼叫委派");
+
+        int canExecuteChangedCount = 0;
+        gatedCommand.CanExecuteChanged += (_, _) => canExecuteChangedCount++;
+        gate = true;
+        gatedCommand.RaiseCanExecuteChanged();
+        AssertEx.Equal(1, canExecuteChangedCount, "RaiseCanExecuteChanged 應觸發事件一次");
+        AssertEx.True(gatedCommand.CanExecute(null), "canExecute 回傳 true 時 CanExecute 應為 true");
+
+        object? capturedParameter = null;
+        MpvRelayCommand parameterized = new MpvRelayCommand(
+            parameter => capturedParameter = parameter,
+            parameter => parameter is string text && text.Length > 0);
+        AssertEx.True(!parameterized.CanExecute(null), "空白參數應被 canExecute 拒絕");
+        AssertEx.True(parameterized.CanExecute("ok"), "有效字串參數應通過 canExecute");
+        parameterized.Execute("payload");
+        AssertEx.Equal("payload", capturedParameter as string ?? string.Empty, "Execute 應把參數轉發給委派");
 
         return Task.CompletedTask;
     }

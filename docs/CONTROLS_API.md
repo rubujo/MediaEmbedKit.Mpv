@@ -1,0 +1,108 @@
+# 控制項共通綁定 API
+
+本文件描述 MediaEmbedKit.Mpv 5 個 UI 框架控制項共同提供的 bindable property 與 ICommand。所有屬性與指令在 WPF、Avalonia、WinUI 3、MAUI Windows 與 WinForms 上具有相同語意，且皆與 libmpv 屬性雙向同步（唯讀者單向）。
+
+## 控制項對應
+
+| 框架 | 控制項型別 |
+| --- | --- |
+| WinForms | `MediaEmbedKit.Mpv.WinForms.MpvPlayerControl` |
+| WPF | `MediaEmbedKit.Mpv.Wpf.MpvWpfPlayer` |
+| Avalonia | `MediaEmbedKit.Mpv.Avalonia.MpvAvaloniaPlayer` |
+| WinUI 3 | `MediaEmbedKit.Mpv.WinUI.MpvWinUiPlayer` |
+| MAUI Windows | `MediaEmbedKit.Mpv.Maui.MpvView` |
+
+## 共通屬性
+
+| 屬性 | 型別 | 預設值 | 對應 mpv 屬性 | 唯讀 | 說明 |
+| --- | --- | --- | --- | --- | --- |
+| `Source` | `string?` | `null` | `loadfile` | 否 | 變更時自動載入新媒體；空字串或 `null` 不觸發載入。 |
+| `Position` | `TimeSpan` | `00:00:00` | `time-pos` | 否 | 雙向繫結時設值會觸發 `seek` 到絕對位置。 |
+| `Duration` | `TimeSpan` | `00:00:00` | `duration` | 是 | 由 mpv 在 `FileLoaded` 後填入。 |
+| `Volume` | `double` | `100.0` | `volume` | 否 | 範圍 0–130。 |
+| `IsPaused` | `bool` | `false` | `pause` | 否 | |
+| `IsMuted` | `bool` | `false` | `mute` | 否 | |
+| `PlaybackState` | `MpvPlaybackState` | `Idle` | n/a（事件聚合） | 是 | 由 libmpv `StartFile`/`FileLoaded`/`EndFile`/`Idle`/`Shutdown` 聚合，詳見 `MpvPlaybackState`。 |
+
+### 各框架實作型別
+
+| 屬性類別 | WinForms | WPF | Avalonia | WinUI 3 | MAUI |
+| --- | --- | --- | --- | --- | --- |
+| 可讀寫 | INotifyPropertyChanged | `DependencyProperty` | `StyledProperty<T>` | `DependencyProperty` | `BindableProperty` |
+| 唯讀 | INotifyPropertyChanged | `DependencyPropertyKey` | `DirectProperty<T,U>` | `DependencyProperty`（內部 SetValue 寫入） | `BindablePropertyKey` |
+
+### 雙向綁定的循環防護
+
+控制項以內部 `_suppressPlayerWrite` 旗標確保由 `player` 反射回來的值不會再寫回 `player`，避免循環抖動。setter / property-changed 回呼讀到旗標時直接 return。所有跨執行緒寫回都會 marshal 到 UI 執行緒（WPF `Dispatcher.BeginInvoke`、Avalonia `Dispatcher.UIThread.Post`、WinUI `DispatcherQueue.TryEnqueue`、MAUI `Dispatcher.Dispatch`、WinForms `Control.BeginInvoke`）。
+
+## 共通 Commands
+
+所有控制項都提供下列 `System.Windows.Input.ICommand`，由 `MediaEmbedKit.Mpv.MpvRelayCommand` 包裝；`CanExecute` 與 player 生命週期同步，player 建立或釋放時會呼叫 `RaiseCanExecuteChanged`。
+
+| 指令 | 行為 | 對應 mpv 操作 |
+| --- | --- | --- |
+| `PlayCommand` | `IsPaused = false` | `pause=no` |
+| `PauseCommand` | `IsPaused = true` | `pause=yes` |
+| `StopCommand` | 呼叫 `MpvPlayer.Stop()` | `stop` |
+| `TogglePauseCommand` | 切換 `IsPaused` | `pause = !pause` |
+| `ToggleMuteCommand` | 切換 `IsMuted` | `mute = !mute` |
+
+## MVVM 範例
+
+### WPF / WinUI / MAUI XAML
+
+WPF 與 WinUI 將控制項 `DataContext` 指向 player 本體後即可：
+
+```xml
+<TextBlock Text="{Binding PlaybackState}" />
+<Slider Minimum="0" Maximum="130"
+        Value="{Binding Volume, Mode=TwoWay}" />
+<Button Content="Toggle Pause"
+        Command="{Binding TogglePauseCommand}" />
+```
+
+MAUI XAML 寫法相同；MAUI Windows 平台僅支援 `MpvView`。
+
+### Avalonia（程式碼設定 binding）
+
+```csharp
+control.Bind(TextBlock.TextProperty,
+    new Binding(nameof(MpvAvaloniaPlayer.PlaybackState))
+    {
+        Source = playerControl,
+        StringFormat = "狀態 = {0}"
+    });
+```
+
+### WinForms（INotifyPropertyChanged）
+
+```csharp
+stateLabel.DataBindings.Add(new Binding(
+    nameof(Label.Text),
+    playerControl,
+    nameof(MpvPlayerControl.PlaybackState),
+    formattingEnabled: true)
+{
+    FormatString = "狀態 = {0}"
+});
+
+muteButton.Click += (_, _) => playerControl.ToggleMuteCommand.Execute(null);
+```
+
+## 範例對照
+
+5 個 sample 各自示範 MVVM 綁定區段：
+
+| Sample | 示範元素 |
+| --- | --- |
+| `samples/WpfSample/MainWindow.xaml` | `DataContext = playerHost`、`PlaybackState` 文字、`Volume` 雙向、`TogglePauseCommand` / `ToggleMuteCommand` |
+| `samples/WinUISample/MainWindow.xaml` | `MvvmDemoBar.DataContext = playerHost`、同上元素 |
+| `samples/AvaloniaSample/MainWindow.cs` | `_mvvmStateTextBlock.Bind(...)` + `TogglePauseCommand` / `StopCommand` 取代 click 內容 |
+| `samples/MauiSample/MainPage.cs` | `_mvvmStateLabel.SetBinding(...)` + Command click |
+| `samples/WinFormsSample/MainForm.cs` | `_mvvmStateLabel.DataBindings.Add(...)` + Command click |
+
+## 注意事項
+
+- `MpvWinUiPlayer.Duration` 與 `PlaybackState` 在 WinUI 3 未提供 `RegisterReadOnly`，因此公開為一般 DP 但僅由控制項內部 `SetValue`；外部設值會立刻被下一次 player 觀察值覆寫。
+- `MpvView.PlayerCreated` 在跨平台 handler 連線後才觸發；綁定到 `Player` 屬性必須在 `PlayerCreated` 後讀取。
+- `Position` 連續寫入會觸發大量 `seek`；建議搭配 `IsDragging` 一類旗標，只在使用者放開滑桿時寫值。

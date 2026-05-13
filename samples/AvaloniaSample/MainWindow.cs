@@ -67,6 +67,10 @@ public sealed class MainWindow : Window
     /// </summary>
     private readonly TextBlock _statusTextBlock;
     /// <summary>
+    /// MVVM 綁定示範：透過 Avalonia binding 即時顯示 <see cref="MpvAvaloniaPlayer.PlaybackState"/>。
+    /// </summary>
+    private readonly TextBlock _mvvmStateTextBlock;
+    /// <summary>
     /// 顯示 libmpv 事件與範例生命週期的清單。
     /// </summary>
     private readonly ItemsControl _eventList;
@@ -159,6 +163,22 @@ public sealed class MainWindow : Window
             Text = "播放器尚未初始化",
             TextTrimming = TextTrimming.CharacterEllipsis
         };
+
+        _mvvmStateTextBlock = new TextBlock
+        {
+            Width = 240,
+            Height = SampleRuntime.SampleButtonHeight,
+            Margin = new Thickness(0, 0, SampleRuntime.SampleControlSpacing, 4),
+            Padding = new Thickness(8, 0),
+            VerticalAlignment = VerticalAlignment.Center,
+            Text = "MVVM 綁定示範：狀態 = Idle"
+        };
+        _mvvmStateTextBlock.Bind(
+            TextBlock.TextProperty,
+            new global::Avalonia.Data.Binding(nameof(MpvAvaloniaPlayer.PlaybackState))
+            {
+                StringFormat = "MVVM 綁定示範：狀態 = {0}"
+            });
 
         _eventList = new ItemsControl
         {
@@ -352,6 +372,7 @@ public sealed class MainWindow : Window
         player.PlayerCreated += PlayerCreated;
         _playerHostContainer.Children.Insert(0, player);
         _player = player;
+        _mvvmStateTextBlock.DataContext = player;
     }
 
     /// <summary>
@@ -387,16 +408,13 @@ public sealed class MainWindow : Window
     /// <param name="e">事件資料。</param>
     private void OnPauseClicked(object? sender, RoutedEventArgs e)
     {
-        if (!EnsureRuntimeReady())
+        if (!EnsureRuntimeReady() || _player == null)
         {
             return;
         }
 
-        if (_player?.Player != null)
-        {
-            _eventBridge?.WriteLifecycle("Pause", "切換播放器暫停狀態。");
-            _player.Player.Pause = !_player.Player.Pause;
-        }
+        _eventBridge?.WriteLifecycle("Pause", "透過 TogglePauseCommand 切換暫停狀態。");
+        _player.TogglePauseCommand.Execute(null);
     }
 
     /// <summary>
@@ -406,13 +424,13 @@ public sealed class MainWindow : Window
     /// <param name="e">事件資料。</param>
     private void OnStopClicked(object? sender, RoutedEventArgs e)
     {
-        if (!EnsureRuntimeReady())
+        if (!EnsureRuntimeReady() || _player == null)
         {
             return;
         }
 
-        _eventBridge?.WriteLifecycle("Stop", "停止目前播放項目。");
-        _player?.Player?.Stop();
+        _eventBridge?.WriteLifecycle("Stop", "透過 StopCommand 停止播放。");
+        _player.StopCommand.Execute(null);
     }
 
     /// <summary>
@@ -572,6 +590,7 @@ public sealed class MainWindow : Window
         };
         primaryRow.Children.Add(_formatComboBox);
         primaryRow.Children.Add(_statusTextBlock);
+        primaryRow.Children.Add(_mvvmStateTextBlock);
         primaryRow.Children.Add(CreateFeatureButton("OSD", () => _features.ShowOsd()));
         primaryRow.Children.Add(CreateFeatureButton("-10s", () => _features.SeekRelative(-10)));
         primaryRow.Children.Add(CreateFeatureButton("+10s", () => _features.SeekRelative(10)));

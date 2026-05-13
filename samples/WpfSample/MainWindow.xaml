@@ -11,6 +11,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="48" />
             <RowDefinition Height="88" />
+            <RowDefinition Height="40" />
             <RowDefinition Height="*" />
             <RowDefinition Height="168" />
         </Grid.RowDefinitions>
@@ -162,7 +163,45 @@
             </WrapPanel>
         </Grid>
 
-        <Grid Grid.Row="2"
+        <Border Grid.Row="2"
+                Margin="8,4,8,4"
+                Padding="8,0"
+                Background="#11000000"
+                CornerRadius="4">
+            <StackPanel Orientation="Horizontal"
+                        VerticalAlignment="Center">
+                <TextBlock VerticalAlignment="Center"
+                           FontWeight="SemiBold"
+                           Text="MVVM 綁定示範：" />
+                <TextBlock Margin="8,0,4,0"
+                           VerticalAlignment="Center"
+                           Text="狀態 =" />
+                <TextBlock Width="80"
+                           VerticalAlignment="Center"
+                           FontFamily="Consolas"
+                           Text="{Binding PlaybackState, FallbackValue=Idle}" />
+                <TextBlock Margin="8,0,4,0"
+                           VerticalAlignment="Center"
+                           Text="音量" />
+                <Slider Width="160"
+                        VerticalAlignment="Center"
+                        Minimum="0"
+                        Maximum="130"
+                        Value="{Binding Volume, Mode=TwoWay, FallbackValue=100}" />
+                <Button Width="120"
+                        Height="28"
+                        Margin="12,0,0,0"
+                        Content="Toggle Pause"
+                        Command="{Binding TogglePauseCommand}" />
+                <Button Width="120"
+                        Height="28"
+                        Margin="8,0,0,0"
+                        Content="Toggle Mute"
+                        Command="{Binding ToggleMuteCommand}" />
+            </StackPanel>
+        </Border>
+
+        <Grid Grid.Row="3"
               Background="Black">
             <Grid.RowDefinitions>
                 <RowDefinition Height="40" />
@@ -220,7 +259,7 @@
         </Grid>
 
         <ListBox x:Name="EventListBox"
-                 Grid.Row="3"
+                 Grid.Row="4"
                  Margin="0"
                  FontFamily="Consolas"
                  FontSize="12"

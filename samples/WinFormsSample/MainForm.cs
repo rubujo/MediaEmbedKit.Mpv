@@ -48,6 +48,10 @@ public sealed class MainForm : Form
     /// </summary>
     private readonly Label _statusLabel;
     /// <summary>
+    /// MVVM 綁定示範：透過 <see cref="MpvPlayerControl.PlaybackState"/> 的 INotifyPropertyChanged 即時顯示狀態。
+    /// </summary>
+    private readonly Label _mvvmStateLabel;
+    /// <summary>
     /// 顯示 libmpv 事件與範例生命週期的清單。
     /// </summary>
     private readonly ListBox _eventListBox;
@@ -128,6 +132,20 @@ public sealed class MainForm : Form
             TextAlign = ContentAlignment.MiddleLeft,
             Margin = new Padding(0, 0, SampleRuntime.SampleControlSpacing, 0)
         };
+
+        _mvvmStateLabel = new Label
+        {
+            AutoSize = false,
+            Width = 220,
+            Height = SampleRuntime.SampleButtonHeight,
+            Text = "MVVM 綁定示範：狀態 = Idle",
+            TextAlign = ContentAlignment.MiddleLeft,
+            Margin = new Padding(0, 0, SampleRuntime.SampleControlSpacing, 0)
+        };
+        _mvvmStateLabel.DataBindings.Add(new Binding(nameof(Label.Text), _player, nameof(MpvPlayerControl.PlaybackState), formattingEnabled: true)
+        {
+            FormatString = "MVVM 綁定示範：狀態 = {0}"
+        });
 
         _eventListBox = new ListBox
         {
@@ -327,8 +345,8 @@ public sealed class MainForm : Form
 
         if (_player.Player != null)
         {
-            _eventBridge?.WriteLifecycle("Pause", "切換播放器暫停狀態。");
-            _player.Player.Pause = !_player.Player.Pause;
+            _eventBridge?.WriteLifecycle("Pause", "透過 TogglePauseCommand 切換暫停狀態。");
+            _player.TogglePauseCommand.Execute(null);
         }
     }
 
@@ -344,8 +362,8 @@ public sealed class MainForm : Form
             return;
         }
 
-        _eventBridge?.WriteLifecycle("Stop", "停止目前播放項目。");
-        _player.Player?.Stop();
+        _eventBridge?.WriteLifecycle("Stop", "透過 StopCommand 停止播放。");
+        _player.StopCommand.Execute(null);
     }
 
     /// <summary>
@@ -469,6 +487,7 @@ public sealed class MainForm : Form
 
         panel.Controls.Add(_formatComboBox);
         panel.Controls.Add(_statusLabel);
+        panel.Controls.Add(_mvvmStateLabel);
         panel.Controls.Add(CreateFeatureButton("OSD", () => _features.ShowOsd()));
         panel.Controls.Add(CreateFeatureButton("-10s", () => _features.SeekRelative(-10)));
         panel.Controls.Add(CreateFeatureButton("+10s", () => _features.SeekRelative(10)));

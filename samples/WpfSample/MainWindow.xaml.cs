@@ -192,6 +192,7 @@ public partial class MainWindow : Window
         playerHost.PlayerCreated += PlayerCreated;
         PlayerHostContainer.Children.Add(playerHost);
         _playerHost = playerHost;
+        DataContext = playerHost;
     }
 
     /// <summary>

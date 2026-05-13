@@ -180,6 +180,7 @@ public sealed partial class MainWindow : Window
         playerHost.PlayerCreated += PlayerCreated;
         PlayerHostContainer.Children.Add(playerHost);
         _playerHost = playerHost;
+        MvvmDemoBar.DataContext = playerHost;
     }
 
     /// <summary>

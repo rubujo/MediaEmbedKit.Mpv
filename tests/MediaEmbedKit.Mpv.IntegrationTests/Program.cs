@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -22,13 +23,32 @@ internal static class Program
     internal const int SampleRate = 44100;
 
     /// <summary>
+    /// 由子處理序使用的旗標，指示僅執行需要乾淨 libmpv 載入狀態的 scheduler 測試。
+    /// </summary>
+    private const string SchedulerOnlyArgument = "--scheduler-only";
+
+    /// <summary>
     /// 測試執行進入點。
     /// </summary>
-    /// <param name="args">命令列引數；目前未使用。</param>
+    /// <param name="args">命令列引數；目前僅支援 <c>--scheduler-only</c>。</param>
     /// <returns>所有測試通過時傳回 0，否則傳回 1。</returns>
     private static async Task<int> Main(string[] args)
     {
-        _ = args;
+        if (args.Length > 0 && string.Equals(args[0], SchedulerOnlyArgument, StringComparison.Ordinal))
+        {
+            try
+            {
+                await VerifyUpdateSchedulerRoundTripAsync(string.Empty).ConfigureAwait(false);
+                Console.WriteLine("scheduler 子處理序：通過");
+                return 0;
+            }
+            catch (Exception exception)
+            {
+                Console.Error.WriteLine(exception.ToString());
+                return 1;
+            }
+        }
+
         string runtimeDirectory = await RuntimeResolver.ResolveAsync().ConfigureAwait(false);
         Console.WriteLine("使用執行階段資料夾：" + runtimeDirectory);
 
@@ -108,7 +128,7 @@ internal static class Program
         });
         runner.Add("MpvLibraryUpdateScheduler stage/apply/rollback 路徑", delegate
         {
-            return VerifyUpdateSchedulerRoundTripAsync(runtimeDirectory);
+            return VerifyUpdateSchedulerInSubprocessAsync();
         });
         runner.Add("MpvRuntimeHealthCheck probeLibMpv", delegate
         {
@@ -290,9 +310,46 @@ internal static class Program
     }
 
     /// <summary>
+    /// 透過子處理序執行 scheduler 測試，避免父處理序先前的 libmpv 載入狀態影響
+    /// <see cref="MpvLibraryUpdateScheduler.ApplyStagedOnStartup"/> 的「下次啟動前才可套用」契約。
+    /// </summary>
+    /// <returns>代表測試流程的工作。</returns>
+    private static async Task VerifyUpdateSchedulerInSubprocessAsync()
+    {
+        string processPath = Environment.ProcessPath
+            ?? throw new InvalidOperationException("無法解析整合測試處理序路徑。");
+
+        using (Process process = new Process())
+        {
+            process.StartInfo.FileName = processPath;
+            process.StartInfo.Arguments = SchedulerOnlyArgument;
+            process.StartInfo.RedirectStandardOutput = true;
+            process.StartInfo.RedirectStandardError = true;
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.CreateNoWindow = true;
+            process.Start();
+
+            string stdout = await process.StandardOutput.ReadToEndAsync().ConfigureAwait(false);
+            string stderr = await process.StandardError.ReadToEndAsync().ConfigureAwait(false);
+            await process.WaitForExitAsync().ConfigureAwait(false);
+
+            if (process.ExitCode != 0)
+            {
+                string message = string.Format(
+                    CultureInfo.InvariantCulture,
+                    "scheduler 子處理序失敗 (exit={0})\nSTDOUT:\n{1}\nSTDERR:\n{2}",
+                    process.ExitCode,
+                    stdout,
+                    stderr);
+                throw new InvalidOperationException(message);
+            }
+        }
+    }
+
+    /// <summary>
     /// 驗證 <see cref="MpvLibraryUpdateScheduler"/> 的 stage → apply → rollback 路徑。
     /// </summary>
-    /// <param name="runtimeDirectory">包含 libmpv 的執行階段資料夾。</param>
+    /// <param name="runtimeDirectory">包含 libmpv 的執行階段資料夾；本測試不使用。</param>
     /// <returns>代表測試流程的工作。</returns>
     private static Task VerifyUpdateSchedulerRoundTripAsync(string runtimeDirectory)
     {

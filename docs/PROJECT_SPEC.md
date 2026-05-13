@@ -9,6 +9,7 @@
 | libmpv、yt-dlp、Deno、FFmpeg runtime 政策 | `docs/RUNTIME_ASSETS.md` |
 | libmpv C API 覆蓋與測試矩陣 | `docs/LIBMPV_C_API_TEST_MATRIX.md` |
 | 高階 API 與 ergonomics 指南 | `docs/HIGH_LEVEL_API.md` |
+| 控制項共通綁定 API | `docs/CONTROLS_API.md` |
 | 發佈前本機檢查 | `docs/RELEASE_CHECKLIST.md` |
 | Windows 設計階段檢查 | `docs/DESIGN_TIME_CHECKLIST.md` |
 | 工程、文件、提交與驗證規則 | `docs/ENGINEERING_STANDARDS.md` |
@@ -61,6 +62,7 @@ MediaEmbedKit.Mpv 提供 .NET libmpv 包裝器與 Windows 桌面 UI 控制項。
 - 高階 API 已提供 `MpvAppBuilder`、`MpvMediaItem`、`MpvPlayer.LoadAsync`、`MpvPlayer.WatchProperty<T>`、`MpvCapabilities`、`IAsyncDisposable`、`Microsoft.Extensions.Logging.Abstractions` 整合、`MpvServiceCollectionExtensions.AddMpvPlayer` 與 `AddMpvPlayerFactory`。
 - Runtime helper 已提供 `MpvLibraryUpdateScheduler` 暫存／套用／回滾、`MpvRuntimeHealthCheck` 啟動健檢、`MpvLicenseAuditor` 授權稽核、provider fallback、`YtDlpProcessRunner` / `DenoProcessRunner` / `ExternalToolProcessRunner` 的 `IAsyncEnumerable` 串流輸出。
 - 高階 API 與 ergonomics 詳細指南由 `docs/HIGH_LEVEL_API.md` 維護。
+- 5 個 UI 框架控制項共通的 `Source` / `Position` / `Duration` / `Volume` / `IsPaused` / `IsMuted` / `PlaybackState` 綁定屬性與 `PlayCommand` / `PauseCommand` / `StopCommand` / `TogglePauseCommand` / `ToggleMuteCommand` 等 `ICommand` 詳細說明由 `docs/CONTROLS_API.md` 維護。
 
 libmpv C API wrapper 可宣稱已完成 stable v0.41.0 公開 C API 包裝覆蓋。實戰驗證範圍依 `docs/LIBMPV_C_API_TEST_MATRIX.md` 維護。
 
