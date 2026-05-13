@@ -5,64 +5,88 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MediaEmbedKit.Mpv.Downloads
+namespace MediaEmbedKit.Mpv.Downloads;
+
+/// <summary>
+/// 提供 yt-dlp FFmpeg-Builds Windows x64 下載、版本查詢與解壓縮 helper。
+/// </summary>
+public static class FFmpegDownloader
 {
     /// <summary>
-    /// 提供 yt-dlp FFmpeg-Builds Windows x64 下載、版本查詢與解壓縮 helper。
+    /// 預設 FFmpeg-Builds Windows x64 發行資產名稱。
     /// </summary>
-    public static class FFmpegDownloader
+    public const string WindowsX64AssetName = "ffmpeg-master-latest-win64-gpl.zip";
+
+    /// <summary>
+    /// FFmpeg-Builds 發行資產 checksum 檔案名稱。
+    /// </summary>
+    public const string ChecksumAssetName = "checksums.sha256";
+
+    /// <summary>
+    /// 下載並解壓縮最新 yt-dlp FFmpeg-Builds Windows x64 發行檔。
+    /// </summary>
+    /// <param name="installDirectory">FFmpeg 與 FFprobe 要安裝到的資料夾。</param>
+    /// <param name="options">FFmpeg 下載選項；未指定時使用預設選項。</param>
+    /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
+    /// <returns>表示 FFmpeg 下載與解壓縮結果的工作。</returns>
+    public static async Task<FFmpegDownloadResult> DownloadAndExtractLatestAsync(
+        string installDirectory,
+        FFmpegDownloadOptions? options = null,
+        CancellationToken cancellationToken = default(CancellationToken))
     {
-        /// <summary>
-        /// 預設 FFmpeg-Builds Windows x64 發行資產名稱。
-        /// </summary>
-        public const string WindowsX64AssetName = "ffmpeg-master-latest-win64-gpl.zip";
-
-        /// <summary>
-        /// FFmpeg-Builds 發行資產 checksum 檔案名稱。
-        /// </summary>
-        public const string ChecksumAssetName = "checksums.sha256";
-
-        /// <summary>
-        /// 下載並解壓縮最新 yt-dlp FFmpeg-Builds Windows x64 發行檔。
-        /// </summary>
-        /// <param name="installDirectory">FFmpeg 與 FFprobe 要安裝到的資料夾。</param>
-        /// <param name="options">FFmpeg 下載選項；未指定時使用預設選項。</param>
-        /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
-        /// <returns>表示 FFmpeg 下載與解壓縮結果的工作。</returns>
-        public static async Task<FFmpegDownloadResult> DownloadAndExtractLatestAsync(
-            string installDirectory,
-            FFmpegDownloadOptions? options = null,
-            CancellationToken cancellationToken = default(CancellationToken))
+        if (string.IsNullOrWhiteSpace(installDirectory))
         {
-            if (string.IsNullOrWhiteSpace(installDirectory))
+            throw new ArgumentException("安裝資料夾不可為空白。", nameof(installDirectory));
+        }
+
+        options = options ?? new FFmpegDownloadOptions();
+        Directory.CreateDirectory(installDirectory);
+
+        Uri defaultApiUri = new Uri("https://api.github.com/repos/yt-dlp/FFmpeg-Builds/releases/latest");
+        Uri apiUri = options.ReleaseApiUriOverride ?? defaultApiUri;
+        GitHubRelease release = await DownloadUtility.GetLatestReleaseAsync(
+            apiUri,
+            options.UserAgent,
+            cancellationToken).ConfigureAwait(false);
+
+        GitHubReleaseAsset asset = SelectAsset(release);
+        DownloadUtility.ValidateLockedGitHubSource(
+            apiUri,
+            defaultApiUri,
+            asset.BrowserDownloadUrl,
+            "yt-dlp",
+            "FFmpeg-Builds",
+            options.LockReleaseSource);
+
+        string archivePath = Path.Combine(installDirectory, asset.Name);
+        string ffmpegPath = Path.Combine(installDirectory, "ffmpeg.exe");
+        string ffprobePath = Path.Combine(installDirectory, "ffprobe.exe");
+        if (CanUseExistingTools(ffmpegPath, ffprobePath, options))
+        {
+            return new FFmpegDownloadResult(
+                release.TagName,
+                asset.Name,
+                new Uri(asset.BrowserDownloadUrl),
+                archivePath,
+                ffmpegPath,
+                ffprobePath,
+                asset.Digest,
+                false);
+        }
+
+        if (CanVerifyExistingArchive(ffmpegPath, ffprobePath, archivePath, options))
+        {
+            try
             {
-                throw new ArgumentException("安裝資料夾不可為空白。", nameof(installDirectory));
-            }
+                DownloadUtility.VerifyDownloadedAsset(
+                    archivePath,
+                    asset.Digest,
+                    options.VerifyDigest,
+                    options.VerificationPolicy,
+                    options.ExpectedSha256,
+                    asset.Name);
+                await VerifyProviderChecksumIfRequiredAsync(release, asset, archivePath, options, cancellationToken).ConfigureAwait(false);
 
-            options = options ?? new FFmpegDownloadOptions();
-            Directory.CreateDirectory(installDirectory);
-
-            Uri defaultApiUri = new Uri("https://api.github.com/repos/yt-dlp/FFmpeg-Builds/releases/latest");
-            Uri apiUri = options.ReleaseApiUriOverride ?? defaultApiUri;
-            GitHubRelease release = await DownloadUtility.GetLatestReleaseAsync(
-                apiUri,
-                options.UserAgent,
-                cancellationToken).ConfigureAwait(false);
-
-            GitHubReleaseAsset asset = SelectAsset(release);
-            DownloadUtility.ValidateLockedGitHubSource(
-                apiUri,
-                defaultApiUri,
-                asset.BrowserDownloadUrl,
-                "yt-dlp",
-                "FFmpeg-Builds",
-                options.LockReleaseSource);
-
-            string archivePath = Path.Combine(installDirectory, asset.Name);
-            string ffmpegPath = Path.Combine(installDirectory, "ffmpeg.exe");
-            string ffprobePath = Path.Combine(installDirectory, "ffprobe.exe");
-            if (CanUseExistingTools(ffmpegPath, ffprobePath, options))
-            {
                 return new FFmpegDownloadResult(
                     release.TagName,
                     asset.Name,
@@ -73,206 +97,181 @@ namespace MediaEmbedKit.Mpv.Downloads
                     asset.Digest,
                     false);
             }
-
-            if (CanVerifyExistingArchive(ffmpegPath, ffprobePath, archivePath, options))
+            catch (InvalidOperationException)
             {
-                try
-                {
-                    DownloadUtility.VerifyDownloadedAsset(
-                        archivePath,
-                        asset.Digest,
-                        options.VerifyDigest,
-                        options.VerificationPolicy,
-                        options.ExpectedSha256,
-                        asset.Name);
-                    await VerifyProviderChecksumIfRequiredAsync(release, asset, archivePath, options, cancellationToken).ConfigureAwait(false);
-
-                    return new FFmpegDownloadResult(
-                        release.TagName,
-                        asset.Name,
-                        new Uri(asset.BrowserDownloadUrl),
-                        archivePath,
-                        ffmpegPath,
-                        ffprobePath,
-                        asset.Digest,
-                        false);
-                }
-                catch (InvalidOperationException)
-                {
-                }
             }
-
-            await DownloadUtility.DownloadFileAsync(
-                asset.BrowserDownloadUrl,
-                archivePath,
-                options.UserAgent,
-                true,
-                cancellationToken).ConfigureAwait(false);
-
-            DownloadUtility.VerifyDownloadedAsset(
-                archivePath,
-                asset.Digest,
-                options.VerifyDigest,
-                options.VerificationPolicy,
-                options.ExpectedSha256,
-                asset.Name);
-            await VerifyProviderChecksumIfRequiredAsync(release, asset, archivePath, options, cancellationToken).ConfigureAwait(false);
-
-            string extractDirectory = Path.Combine(installDirectory, ".ffmpeg-extract", Guid.NewGuid().ToString("N"));
-            try
-            {
-                DownloadUtility.ExtractZipToDirectory(archivePath, extractDirectory, true);
-                string extractedFFmpegPath = FindExtractedExecutable(extractDirectory, "ffmpeg.exe");
-                string extractedFFprobePath = FindExtractedExecutable(extractDirectory, "ffprobe.exe");
-                File.Copy(extractedFFmpegPath, ffmpegPath, true);
-                File.Copy(extractedFFprobePath, ffprobePath, true);
-            }
-            finally
-            {
-                if (Directory.Exists(extractDirectory))
-                {
-                    Directory.Delete(extractDirectory, true);
-                }
-            }
-
-            return new FFmpegDownloadResult(
-                release.TagName,
-                asset.Name,
-                new Uri(asset.BrowserDownloadUrl),
-                archivePath,
-                ffmpegPath,
-                ffprobePath,
-                asset.Digest,
-                true);
         }
 
-        /// <summary>
-        /// 讀取已安裝 FFmpeg 可執行檔的版本。
-        /// </summary>
-        /// <param name="executablePath">FFmpeg 可執行檔路徑。</param>
-        /// <returns>FFmpeg 版本字串；無法讀取時為 <see langword="null"/>。</returns>
-        public static string? GetInstalledVersion(string executablePath)
+        await DownloadUtility.DownloadFileAsync(
+            asset.BrowserDownloadUrl,
+            archivePath,
+            options.UserAgent,
+            true,
+            cancellationToken).ConfigureAwait(false);
+
+        DownloadUtility.VerifyDownloadedAsset(
+            archivePath,
+            asset.Digest,
+            options.VerifyDigest,
+            options.VerificationPolicy,
+            options.ExpectedSha256,
+            asset.Name);
+        await VerifyProviderChecksumIfRequiredAsync(release, asset, archivePath, options, cancellationToken).ConfigureAwait(false);
+
+        string extractDirectory = Path.Combine(installDirectory, ".ffmpeg-extract", Guid.NewGuid().ToString("N"));
+        try
         {
-            if (string.IsNullOrWhiteSpace(executablePath) || !File.Exists(executablePath))
+            DownloadUtility.ExtractZipToDirectory(archivePath, extractDirectory, true);
+            string extractedFFmpegPath = FindExtractedExecutable(extractDirectory, "ffmpeg.exe");
+            string extractedFFprobePath = FindExtractedExecutable(extractDirectory, "ffprobe.exe");
+            File.Copy(extractedFFmpegPath, ffmpegPath, true);
+            File.Copy(extractedFFprobePath, ffprobePath, true);
+        }
+        finally
+        {
+            if (Directory.Exists(extractDirectory))
             {
-                return null;
+                Directory.Delete(extractDirectory, true);
             }
-
-            return DownloadUtility.RunProcessForFirstLine(executablePath, "-version", TimeSpan.FromSeconds(15));
         }
 
-        /// <summary>
-        /// 判斷既有 FFmpeg 與 FFprobe 是否可直接重用。
-        /// </summary>
-        /// <param name="ffmpegPath">FFmpeg 可執行檔路徑。</param>
-        /// <param name="ffprobePath">FFprobe 可執行檔路徑。</param>
-        /// <param name="options">FFmpeg 下載選項。</param>
-        /// <returns>可重用既有工具時為 <see langword="true"/>。</returns>
-        private static bool CanUseExistingTools(string ffmpegPath, string ffprobePath, FFmpegDownloadOptions options)
+        return new FFmpegDownloadResult(
+            release.TagName,
+            asset.Name,
+            new Uri(asset.BrowserDownloadUrl),
+            archivePath,
+            ffmpegPath,
+            ffprobePath,
+            asset.Digest,
+            true);
+    }
+
+    /// <summary>
+    /// 讀取已安裝 FFmpeg 可執行檔的版本。
+    /// </summary>
+    /// <param name="executablePath">FFmpeg 可執行檔路徑。</param>
+    /// <returns>FFmpeg 版本字串；無法讀取時為 <see langword="null"/>。</returns>
+    public static string? GetInstalledVersion(string executablePath)
+    {
+        if (string.IsNullOrWhiteSpace(executablePath) || !File.Exists(executablePath))
         {
-            return File.Exists(ffmpegPath) &&
-                File.Exists(ffprobePath) &&
-                !options.OverwriteExisting &&
-                options.VerificationPolicy == MpvNativeAssetVerificationPolicy.BestEffort &&
-                string.IsNullOrWhiteSpace(options.ExpectedSha256);
+            return null;
         }
 
-        /// <summary>
-        /// 判斷既有壓縮檔是否可用於嚴格驗證路徑。
-        /// </summary>
-        /// <param name="ffmpegPath">FFmpeg 可執行檔路徑。</param>
-        /// <param name="ffprobePath">FFprobe 可執行檔路徑。</param>
-        /// <param name="archivePath">FFmpeg-Builds 壓縮檔路徑。</param>
-        /// <param name="options">FFmpeg 下載選項。</param>
-        /// <returns>可嘗試驗證既有壓縮檔時為 <see langword="true"/>。</returns>
-        private static bool CanVerifyExistingArchive(string ffmpegPath, string ffprobePath, string archivePath, FFmpegDownloadOptions options)
+        return DownloadUtility.RunProcessForFirstLine(executablePath, "-version", TimeSpan.FromSeconds(15));
+    }
+
+    /// <summary>
+    /// 判斷既有 FFmpeg 與 FFprobe 是否可直接重用。
+    /// </summary>
+    /// <param name="ffmpegPath">FFmpeg 可執行檔路徑。</param>
+    /// <param name="ffprobePath">FFprobe 可執行檔路徑。</param>
+    /// <param name="options">FFmpeg 下載選項。</param>
+    /// <returns>可重用既有工具時為 <see langword="true"/>。</returns>
+    private static bool CanUseExistingTools(string ffmpegPath, string ffprobePath, FFmpegDownloadOptions options)
+    {
+        return File.Exists(ffmpegPath) &&
+            File.Exists(ffprobePath) &&
+            !options.OverwriteExisting &&
+            options.VerificationPolicy == MpvNativeAssetVerificationPolicy.BestEffort &&
+            string.IsNullOrWhiteSpace(options.ExpectedSha256);
+    }
+
+    /// <summary>
+    /// 判斷既有壓縮檔是否可用於嚴格驗證路徑。
+    /// </summary>
+    /// <param name="ffmpegPath">FFmpeg 可執行檔路徑。</param>
+    /// <param name="ffprobePath">FFprobe 可執行檔路徑。</param>
+    /// <param name="archivePath">FFmpeg-Builds 壓縮檔路徑。</param>
+    /// <param name="options">FFmpeg 下載選項。</param>
+    /// <returns>可嘗試驗證既有壓縮檔時為 <see langword="true"/>。</returns>
+    private static bool CanVerifyExistingArchive(string ffmpegPath, string ffprobePath, string archivePath, FFmpegDownloadOptions options)
+    {
+        return File.Exists(ffmpegPath) &&
+            File.Exists(ffprobePath) &&
+            File.Exists(archivePath) &&
+            !options.OverwriteExisting;
+    }
+
+    /// <summary>
+    /// 從 GitHub 發行資料選取 FFmpeg Windows x64 發行資產。
+    /// </summary>
+    /// <param name="release">GitHub 發行資料。</param>
+    /// <returns>符合 Windows x64 的 GitHub 發行資產。</returns>
+    private static GitHubReleaseAsset SelectAsset(GitHubRelease release)
+    {
+        GitHubReleaseAsset? asset = release.Assets.FirstOrDefault(item => string.Equals(item.Name, WindowsX64AssetName, StringComparison.OrdinalIgnoreCase));
+        if (asset == null)
         {
-            return File.Exists(ffmpegPath) &&
-                File.Exists(ffprobePath) &&
-                File.Exists(archivePath) &&
-                !options.OverwriteExisting;
+            throw new InvalidOperationException("GitHub 發行資料中找不到 FFmpeg Windows x64 資產：" + release.TagName);
         }
 
-        /// <summary>
-        /// 從 GitHub 發行資料選取 FFmpeg Windows x64 發行資產。
-        /// </summary>
-        /// <param name="release">GitHub 發行資料。</param>
-        /// <returns>符合 Windows x64 的 GitHub 發行資產。</returns>
-        private static GitHubReleaseAsset SelectAsset(GitHubRelease release)
+        return asset;
+    }
+
+    /// <summary>
+    /// 在策略要求時使用 FFmpeg-Builds 發行的 checksum 檔案驗證下載檔案。
+    /// </summary>
+    /// <param name="release">GitHub 發行資料。</param>
+    /// <param name="asset">已下載的 FFmpeg 發行資產。</param>
+    /// <param name="filePath">已下載壓縮檔路徑。</param>
+    /// <param name="options">FFmpeg 下載選項。</param>
+    /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
+    /// <returns>表示驗證流程的工作。</returns>
+    private static async Task VerifyProviderChecksumIfRequiredAsync(
+        GitHubRelease release,
+        GitHubReleaseAsset asset,
+        string filePath,
+        FFmpegDownloadOptions options,
+        CancellationToken cancellationToken)
+    {
+        if (options.VerificationPolicy != MpvNativeAssetVerificationPolicy.RequireProviderChecksum)
         {
-            GitHubReleaseAsset? asset = release.Assets.FirstOrDefault(item => string.Equals(item.Name, WindowsX64AssetName, StringComparison.OrdinalIgnoreCase));
-            if (asset == null)
-            {
-                throw new InvalidOperationException("GitHub 發行資料中找不到 FFmpeg Windows x64 資產：" + release.TagName);
-            }
-
-            return asset;
+            return;
         }
 
-        /// <summary>
-        /// 在策略要求時使用 FFmpeg-Builds 發行的 checksum 檔案驗證下載檔案。
-        /// </summary>
-        /// <param name="release">GitHub 發行資料。</param>
-        /// <param name="asset">已下載的 FFmpeg 發行資產。</param>
-        /// <param name="filePath">已下載壓縮檔路徑。</param>
-        /// <param name="options">FFmpeg 下載選項。</param>
-        /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
-        /// <returns>表示驗證流程的工作。</returns>
-        private static async Task VerifyProviderChecksumIfRequiredAsync(
-            GitHubRelease release,
-            GitHubReleaseAsset asset,
-            string filePath,
-            FFmpegDownloadOptions options,
-            CancellationToken cancellationToken)
+        GitHubReleaseAsset checksumAsset = SelectChecksumAsset(release);
+        byte[] checksumBytes = await DownloadUtility.DownloadBytesAsync(
+            checksumAsset.BrowserDownloadUrl,
+            options.UserAgent,
+            cancellationToken).ConfigureAwait(false);
+        DownloadUtility.VerifyDownloadedBytes(checksumBytes, checksumAsset.Digest, true, checksumAsset.Name);
+
+        string checksumText = Encoding.UTF8.GetString(checksumBytes);
+        string expectedSha256 = DownloadUtility.FindSha256InChecksumText(checksumText, asset.Name);
+        DownloadUtility.VerifySha256(filePath, expectedSha256, asset.Name);
+    }
+
+    /// <summary>
+    /// 從 GitHub 發行資料選取 FFmpeg-Builds checksum 資產。
+    /// </summary>
+    /// <param name="release">GitHub 發行資料。</param>
+    /// <returns>checksum 發行資產。</returns>
+    private static GitHubReleaseAsset SelectChecksumAsset(GitHubRelease release)
+    {
+        GitHubReleaseAsset? asset = release.Assets.FirstOrDefault(item => string.Equals(item.Name, ChecksumAssetName, StringComparison.OrdinalIgnoreCase));
+        if (asset == null)
         {
-            if (options.VerificationPolicy != MpvNativeAssetVerificationPolicy.RequireProviderChecksum)
-            {
-                return;
-            }
-
-            GitHubReleaseAsset checksumAsset = SelectChecksumAsset(release);
-            byte[] checksumBytes = await DownloadUtility.DownloadBytesAsync(
-                checksumAsset.BrowserDownloadUrl,
-                options.UserAgent,
-                cancellationToken).ConfigureAwait(false);
-            DownloadUtility.VerifyDownloadedBytes(checksumBytes, checksumAsset.Digest, true, checksumAsset.Name);
-
-            string checksumText = Encoding.UTF8.GetString(checksumBytes);
-            string expectedSha256 = DownloadUtility.FindSha256InChecksumText(checksumText, asset.Name);
-            DownloadUtility.VerifySha256(filePath, expectedSha256, asset.Name);
+            throw new InvalidOperationException("GitHub 發行資料中找不到 FFmpeg checksum 資產：" + release.TagName);
         }
 
-        /// <summary>
-        /// 從 GitHub 發行資料選取 FFmpeg-Builds checksum 資產。
-        /// </summary>
-        /// <param name="release">GitHub 發行資料。</param>
-        /// <returns>checksum 發行資產。</returns>
-        private static GitHubReleaseAsset SelectChecksumAsset(GitHubRelease release)
+        return asset;
+    }
+
+    /// <summary>
+    /// 從解壓縮資料夾尋找指定可執行檔。
+    /// </summary>
+    /// <param name="extractDirectory">解壓縮資料夾。</param>
+    /// <param name="executableName">要尋找的可執行檔名稱。</param>
+    /// <returns>找到的可執行檔完整路徑。</returns>
+    private static string FindExtractedExecutable(string extractDirectory, string executableName)
+    {
+        string? executablePath = Directory.GetFiles(extractDirectory, executableName, SearchOption.AllDirectories).FirstOrDefault();
+        if (executablePath == null)
         {
-            GitHubReleaseAsset? asset = release.Assets.FirstOrDefault(item => string.Equals(item.Name, ChecksumAssetName, StringComparison.OrdinalIgnoreCase));
-            if (asset == null)
-            {
-                throw new InvalidOperationException("GitHub 發行資料中找不到 FFmpeg checksum 資產：" + release.TagName);
-            }
-
-            return asset;
+            throw new FileNotFoundException("FFmpeg-Builds 壓縮檔已解壓縮，但找不到 " + executableName + "。", executableName);
         }
 
-        /// <summary>
-        /// 從解壓縮資料夾尋找指定可執行檔。
-        /// </summary>
-        /// <param name="extractDirectory">解壓縮資料夾。</param>
-        /// <param name="executableName">要尋找的可執行檔名稱。</param>
-        /// <returns>找到的可執行檔完整路徑。</returns>
-        private static string FindExtractedExecutable(string extractDirectory, string executableName)
-        {
-            string? executablePath = Directory.GetFiles(extractDirectory, executableName, SearchOption.AllDirectories).FirstOrDefault();
-            if (executablePath == null)
-            {
-                throw new FileNotFoundException("FFmpeg-Builds 壓縮檔已解壓縮，但找不到 " + executableName + "。", executableName);
-            }
-
-            return executablePath;
-        }
+        return executablePath;
     }
 }

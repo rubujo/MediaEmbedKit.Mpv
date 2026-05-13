@@ -2,39 +2,38 @@
 using System;
 using System.Threading;
 
-namespace MediaEmbedKit.Mpv.Samples.Maui
+namespace MediaEmbedKit.Mpv.Samples.Maui;
+
+/// <summary>
+/// 表示 .NET MAUI 範例應用程式。
+/// </summary>
+public sealed class App : Application
 {
     /// <summary>
-    /// 表示 .NET MAUI 範例應用程式。
+    /// 建立 MAUI 範例應用程式的主要視窗。
     /// </summary>
-    public sealed class App : Application
+    /// <param name="activationState">平台提供的啟用狀態。</param>
+    /// <returns>包含主要頁面的 MAUI 視窗。</returns>
+    protected override Window CreateWindow(IActivationState? activationState)
     {
-        /// <summary>
-        /// 建立 MAUI 範例應用程式的主要視窗。
-        /// </summary>
-        /// <param name="activationState">平台提供的啟用狀態。</param>
-        /// <returns>包含主要頁面的 MAUI 視窗。</returns>
-        protected override Window CreateWindow(IActivationState? activationState)
+        MainPage page = new MainPage();
+        Window window = new Window(page)
         {
-            MainPage page = new MainPage();
-            Window window = new Window(page)
+            Title = "MediaEmbedKit.Mpv MAUI Sample",
+            Width = SampleRuntime.SampleWindowWidth,
+            Height = SampleRuntime.SampleWindowHeight
+        };
+        int destroyed = 0;
+        window.Destroying += delegate (object? sender, EventArgs e)
+        {
+            if (Interlocked.Exchange(ref destroyed, 1) != 0)
             {
-                Title = "MediaEmbedKit.Mpv MAUI Sample",
-                Width = SampleRuntime.SampleWindowWidth,
-                Height = SampleRuntime.SampleWindowHeight
-            };
-            int destroyed = 0;
-            window.Destroying += delegate (object? sender, EventArgs e)
-            {
-                if (Interlocked.Exchange(ref destroyed, 1) != 0)
-                {
-                    return;
-                }
+                return;
+            }
 
-                page.Dispose();
-            };
+            page.Dispose();
+        };
 
-            return window;
-        }
+        return window;
     }
 }

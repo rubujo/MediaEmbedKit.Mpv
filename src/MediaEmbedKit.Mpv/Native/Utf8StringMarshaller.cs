@@ -2,136 +2,135 @@
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace MediaEmbedKit.Mpv.Native
+namespace MediaEmbedKit.Mpv.Native;
+
+/// <summary>
+/// 管理傳給 libmpv 的 UTF-8 原生字串緩衝區。
+/// </summary>
+internal sealed class Utf8String : IDisposable
 {
     /// <summary>
-    /// 管理傳給 libmpv 的 UTF-8 原生字串緩衝區。
+    /// 使用指定字串初始化 <see cref="Utf8String"/> 類別的新執行個體。
     /// </summary>
-    internal sealed class Utf8String : IDisposable
+    /// <param name="value">要轉換為 UTF-8 原生字串的受控字串。</param>
+    public Utf8String(string? value)
     {
-        /// <summary>
-        /// 使用指定字串初始化 <see cref="Utf8String"/> 類別的新執行個體。
-        /// </summary>
-        /// <param name="value">要轉換為 UTF-8 原生字串的受控字串。</param>
-        public Utf8String(string? value)
+        if (value == null)
         {
-            if (value == null)
-            {
-                Pointer = IntPtr.Zero;
-                return;
-            }
-
-            byte[] bytes = Encoding.UTF8.GetBytes(value);
-            Pointer = Marshal.AllocHGlobal(bytes.Length + 1);
-            Marshal.Copy(bytes, 0, Pointer, bytes.Length);
-            Marshal.WriteByte(Pointer, bytes.Length, 0);
+            Pointer = IntPtr.Zero;
+            return;
         }
 
-        /// <summary>
-        /// 取得 UTF-8 原生字串緩衝區指標。
-        /// </summary>
-        /// <value>UTF-8 原生字串緩衝區指標。</value>
-        public IntPtr Pointer { get; private set; }
-
-        /// <summary>
-        /// 釋放 UTF-8 原生字串緩衝區。
-        /// </summary>
-        public void Dispose()
-        {
-            if (Pointer != IntPtr.Zero)
-            {
-                Marshal.FreeHGlobal(Pointer);
-                Pointer = IntPtr.Zero;
-            }
-        }
+        byte[] bytes = Encoding.UTF8.GetBytes(value);
+        Pointer = Marshal.AllocHGlobal(bytes.Length + 1);
+        Marshal.Copy(bytes, 0, Pointer, bytes.Length);
+        Marshal.WriteByte(Pointer, bytes.Length, 0);
     }
 
     /// <summary>
-    /// 管理傳給 libmpv 的 UTF-8 字串指標陣列。
+    /// 取得 UTF-8 原生字串緩衝區指標。
     /// </summary>
-    internal sealed class Utf8StringArray : IDisposable
+    /// <value>UTF-8 原生字串緩衝區指標。</value>
+    public IntPtr Pointer { get; private set; }
+
+    /// <summary>
+    /// 釋放 UTF-8 原生字串緩衝區。
+    /// </summary>
+    public void Dispose()
     {
-        /// <summary>
-        /// 保存陣列內每個 UTF-8 原生字串。
-        /// </summary>
-        private readonly Utf8String[] _strings;
-
-        /// <summary>
-        /// 使用指定字串陣列初始化 <see cref="Utf8StringArray"/> 類別的新執行個體。
-        /// </summary>
-        /// <param name="values">要轉換為 UTF-8 原生字串陣列的受控字串陣列。</param>
-        public Utf8StringArray(string[] values)
+        if (Pointer != IntPtr.Zero)
         {
-            _strings = new Utf8String[values.Length];
-            Pointer = Marshal.AllocHGlobal(IntPtr.Size * (values.Length + 1));
+            Marshal.FreeHGlobal(Pointer);
+            Pointer = IntPtr.Zero;
+        }
+    }
+}
 
-            for (int i = 0; i < values.Length; i++)
-            {
-                _strings[i] = new Utf8String(values[i]);
-                Marshal.WriteIntPtr(Pointer, i * IntPtr.Size, _strings[i].Pointer);
-            }
+/// <summary>
+/// 管理傳給 libmpv 的 UTF-8 字串指標陣列。
+/// </summary>
+internal sealed class Utf8StringArray : IDisposable
+{
+    /// <summary>
+    /// 保存陣列內每個 UTF-8 原生字串。
+    /// </summary>
+    private readonly Utf8String[] _strings;
 
-            Marshal.WriteIntPtr(Pointer, values.Length * IntPtr.Size, IntPtr.Zero);
+    /// <summary>
+    /// 使用指定字串陣列初始化 <see cref="Utf8StringArray"/> 類別的新執行個體。
+    /// </summary>
+    /// <param name="values">要轉換為 UTF-8 原生字串陣列的受控字串陣列。</param>
+    public Utf8StringArray(string[] values)
+    {
+        _strings = new Utf8String[values.Length];
+        Pointer = Marshal.AllocHGlobal(IntPtr.Size * (values.Length + 1));
+
+        for (int i = 0; i < values.Length; i++)
+        {
+            _strings[i] = new Utf8String(values[i]);
+            Marshal.WriteIntPtr(Pointer, i * IntPtr.Size, _strings[i].Pointer);
         }
 
-        /// <summary>
-        /// 取得 UTF-8 字串指標陣列的原生指標。
-        /// </summary>
-        /// <value>以零結尾的 UTF-8 字串指標陣列。</value>
-        public IntPtr Pointer { get; private set; }
-
-        /// <summary>
-        /// 釋放 UTF-8 字串指標陣列與所有字串緩衝區。
-        /// </summary>
-        public void Dispose()
-        {
-            for (int i = 0; i < _strings.Length; i++)
-            {
-                if (_strings[i] != null)
-                {
-                    _strings[i].Dispose();
-                }
-            }
-
-            if (Pointer != IntPtr.Zero)
-            {
-                Marshal.FreeHGlobal(Pointer);
-                Pointer = IntPtr.Zero;
-            }
-        }
+        Marshal.WriteIntPtr(Pointer, values.Length * IntPtr.Size, IntPtr.Zero);
     }
 
     /// <summary>
-    /// 提供 UTF-8 原生字串與受控字串之間的轉換方法。
+    /// 取得 UTF-8 字串指標陣列的原生指標。
     /// </summary>
-    internal static class Utf8StringMarshaller
+    /// <value>以零結尾的 UTF-8 字串指標陣列。</value>
+    public IntPtr Pointer { get; private set; }
+
+    /// <summary>
+    /// 釋放 UTF-8 字串指標陣列與所有字串緩衝區。
+    /// </summary>
+    public void Dispose()
     {
-        /// <summary>
-        /// 將零結尾 UTF-8 原生字串轉換為受控字串。
-        /// </summary>
-        /// <param name="pointer">零結尾 UTF-8 原生字串指標。</param>
-        /// <returns>轉換後的受控字串；指標為零時為 <see langword="null"/>。</returns>
-        public static string? PtrToString(IntPtr pointer)
+        for (int i = 0; i < _strings.Length; i++)
         {
-            if (pointer == IntPtr.Zero)
+            if (_strings[i] != null)
             {
-                return null;
+                _strings[i].Dispose();
             }
-
-            int length = 0;
-            while (Marshal.ReadByte(pointer, length) != 0)
-            {
-                length++;
-            }
-
-            if (length == 0)
-            {
-                return string.Empty;
-            }
-
-            byte[] bytes = new byte[length];
-            Marshal.Copy(pointer, bytes, 0, length);
-            return Encoding.UTF8.GetString(bytes, 0, bytes.Length);
         }
+
+        if (Pointer != IntPtr.Zero)
+        {
+            Marshal.FreeHGlobal(Pointer);
+            Pointer = IntPtr.Zero;
+        }
+    }
+}
+
+/// <summary>
+/// 提供 UTF-8 原生字串與受控字串之間的轉換方法。
+/// </summary>
+internal static class Utf8StringMarshaller
+{
+    /// <summary>
+    /// 將零結尾 UTF-8 原生字串轉換為受控字串。
+    /// </summary>
+    /// <param name="pointer">零結尾 UTF-8 原生字串指標。</param>
+    /// <returns>轉換後的受控字串；指標為零時為 <see langword="null"/>。</returns>
+    public static string? PtrToString(IntPtr pointer)
+    {
+        if (pointer == IntPtr.Zero)
+        {
+            return null;
+        }
+
+        int length = 0;
+        while (Marshal.ReadByte(pointer, length) != 0)
+        {
+            length++;
+        }
+
+        if (length == 0)
+        {
+            return string.Empty;
+        }
+
+        byte[] bytes = new byte[length];
+        Marshal.Copy(pointer, bytes, 0, length);
+        return Encoding.UTF8.GetString(bytes, 0, bytes.Length);
     }
 }
