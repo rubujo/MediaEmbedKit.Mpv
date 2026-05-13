@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Input;
 using System.Windows.Interop;
 
 namespace MediaEmbedKit.Mpv.Wpf;
@@ -136,6 +137,164 @@ public class MpvWpfPlayer : HwndHost
         Loaded += PlayerLoaded;
         Unloaded += PlayerUnloaded;
         IsVisibleChanged += PlayerIsVisibleChanged;
+
+        _playCommand = new MpvRelayCommand(ExecutePlay, CanExecutePlayerCommand);
+        _pauseCommand = new MpvRelayCommand(ExecutePause, CanExecutePlayerCommand);
+        _stopCommand = new MpvRelayCommand(ExecuteStop, CanExecutePlayerCommand);
+        _togglePauseCommand = new MpvRelayCommand(ExecuteTogglePause, CanExecutePlayerCommand);
+        _toggleMuteCommand = new MpvRelayCommand(ExecuteToggleMute, CanExecutePlayerCommand);
+    }
+
+    /// <summary>
+    /// 設定 <see cref="IsPaused"/> 為 <see langword="false"/> 開始或續播。
+    /// </summary>
+    private readonly MpvRelayCommand _playCommand;
+    /// <summary>
+    /// 設定 <see cref="IsPaused"/> 為 <see langword="true"/> 暫停。
+    /// </summary>
+    private readonly MpvRelayCommand _pauseCommand;
+    /// <summary>
+    /// 呼叫 <see cref="MpvPlayer.Stop()"/> 停止播放。
+    /// </summary>
+    private readonly MpvRelayCommand _stopCommand;
+    /// <summary>
+    /// 切換 <see cref="IsPaused"/>。
+    /// </summary>
+    private readonly MpvRelayCommand _togglePauseCommand;
+    /// <summary>
+    /// 切換 <see cref="IsMuted"/>。
+    /// </summary>
+    private readonly MpvRelayCommand _toggleMuteCommand;
+
+    /// <summary>
+    /// 取得讓播放器開始或續播的指令。
+    /// </summary>
+    /// <value>對應 mpv <c>pause=no</c>。</value>
+    public ICommand PlayCommand
+    {
+        get { return _playCommand; }
+    }
+
+    /// <summary>
+    /// 取得暫停播放的指令。
+    /// </summary>
+    /// <value>對應 mpv <c>pause=yes</c>。</value>
+    public ICommand PauseCommand
+    {
+        get { return _pauseCommand; }
+    }
+
+    /// <summary>
+    /// 取得停止播放的指令。
+    /// </summary>
+    /// <value>對應 mpv <c>stop</c>。</value>
+    public ICommand StopCommand
+    {
+        get { return _stopCommand; }
+    }
+
+    /// <summary>
+    /// 取得切換暫停狀態的指令。
+    /// </summary>
+    /// <value>切換 mpv <c>pause</c>。</value>
+    public ICommand TogglePauseCommand
+    {
+        get { return _togglePauseCommand; }
+    }
+
+    /// <summary>
+    /// 取得切換靜音狀態的指令。
+    /// </summary>
+    /// <value>切換 mpv <c>mute</c>。</value>
+    public ICommand ToggleMuteCommand
+    {
+        get { return _toggleMuteCommand; }
+    }
+
+    /// <summary>
+    /// 判斷指令目前是否有可用播放器。
+    /// </summary>
+    /// <returns>已綁定播放器時為 <see langword="true"/>。</returns>
+    private bool CanExecutePlayerCommand()
+    {
+        return _player != null;
+    }
+
+    /// <summary>
+    /// 執行 <see cref="PlayCommand"/>。
+    /// </summary>
+    private void ExecutePlay()
+    {
+        if (_player == null)
+        {
+            return;
+        }
+
+        try { _player.Pause = false; } catch (MpvException) { }
+    }
+
+    /// <summary>
+    /// 執行 <see cref="PauseCommand"/>。
+    /// </summary>
+    private void ExecutePause()
+    {
+        if (_player == null)
+        {
+            return;
+        }
+
+        try { _player.Pause = true; } catch (MpvException) { }
+    }
+
+    /// <summary>
+    /// 執行 <see cref="StopCommand"/>。
+    /// </summary>
+    private void ExecuteStop()
+    {
+        if (_player == null)
+        {
+            return;
+        }
+
+        try { _player.Stop(); } catch (MpvException) { }
+    }
+
+    /// <summary>
+    /// 執行 <see cref="TogglePauseCommand"/>。
+    /// </summary>
+    private void ExecuteTogglePause()
+    {
+        if (_player == null)
+        {
+            return;
+        }
+
+        try { _player.Pause = !_player.Pause; } catch (MpvException) { }
+    }
+
+    /// <summary>
+    /// 執行 <see cref="ToggleMuteCommand"/>。
+    /// </summary>
+    private void ExecuteToggleMute()
+    {
+        if (_player == null)
+        {
+            return;
+        }
+
+        try { _player.Mute = !_player.Mute; } catch (MpvException) { }
+    }
+
+    /// <summary>
+    /// 通知所有指令重新評估 <see cref="ICommand.CanExecute"/>。
+    /// </summary>
+    private void RaiseCommandsCanExecuteChanged()
+    {
+        _playCommand.RaiseCanExecuteChanged();
+        _pauseCommand.RaiseCanExecuteChanged();
+        _stopCommand.RaiseCanExecuteChanged();
+        _togglePauseCommand.RaiseCanExecuteChanged();
+        _toggleMuteCommand.RaiseCanExecuteChanged();
     }
 
     /// <summary>
@@ -505,6 +664,7 @@ public class MpvWpfPlayer : HwndHost
         }
 
         AttachPlayerBindings(_player);
+        RaiseCommandsCanExecuteChanged();
         PlayerCreated?.Invoke(this, EventArgs.Empty);
     }
 
@@ -787,6 +947,7 @@ public class MpvWpfPlayer : HwndHost
 
         _player.Dispose();
         _player = null;
+        RaiseCommandsCanExecuteChanged();
     }
 
     /// <summary>

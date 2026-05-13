@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Windows.Input;
 using Microsoft.Maui.Controls;
+using Microsoft.Maui.Dispatching;
 using WinUiElement = Microsoft.UI.Xaml.UIElement;
 
 using MediaEmbedKit.Mpv.WinUI;
@@ -52,9 +55,91 @@ public class MpvView : View
         propertyChanged: OnIsOverlayOpenChanged);
 
     /// <summary>
+    /// 識別 <see cref="Position"/> 可繫結屬性。
+    /// </summary>
+    public static readonly BindableProperty PositionProperty = BindableProperty.Create(
+        nameof(Position),
+        typeof(TimeSpan),
+        typeof(MpvView),
+        TimeSpan.Zero,
+        defaultBindingMode: BindingMode.TwoWay,
+        propertyChanged: OnPositionChanged);
+
+    /// <summary>
+    /// 唯讀 <see cref="Duration"/> 可繫結屬性的金鑰。
+    /// </summary>
+    private static readonly BindablePropertyKey DurationPropertyKey = BindableProperty.CreateReadOnly(
+        nameof(Duration),
+        typeof(TimeSpan),
+        typeof(MpvView),
+        TimeSpan.Zero);
+
+    /// <summary>
+    /// 識別 <see cref="Duration"/> 可繫結屬性（唯讀）。
+    /// </summary>
+    public static readonly BindableProperty DurationProperty = DurationPropertyKey.BindableProperty;
+
+    /// <summary>
+    /// 識別 <see cref="Volume"/> 可繫結屬性。
+    /// </summary>
+    public static readonly BindableProperty VolumeProperty = BindableProperty.Create(
+        nameof(Volume),
+        typeof(double),
+        typeof(MpvView),
+        100.0,
+        defaultBindingMode: BindingMode.TwoWay,
+        propertyChanged: OnVolumeChanged);
+
+    /// <summary>
+    /// 識別 <see cref="IsPaused"/> 可繫結屬性。
+    /// </summary>
+    public static readonly BindableProperty IsPausedProperty = BindableProperty.Create(
+        nameof(IsPaused),
+        typeof(bool),
+        typeof(MpvView),
+        false,
+        defaultBindingMode: BindingMode.TwoWay,
+        propertyChanged: OnIsPausedChanged);
+
+    /// <summary>
+    /// 識別 <see cref="IsMuted"/> 可繫結屬性。
+    /// </summary>
+    public static readonly BindableProperty IsMutedProperty = BindableProperty.Create(
+        nameof(IsMuted),
+        typeof(bool),
+        typeof(MpvView),
+        false,
+        defaultBindingMode: BindingMode.TwoWay,
+        propertyChanged: OnIsMutedChanged);
+
+    /// <summary>
+    /// 唯讀 <see cref="PlaybackState"/> 可繫結屬性的金鑰。
+    /// </summary>
+    private static readonly BindablePropertyKey PlaybackStatePropertyKey = BindableProperty.CreateReadOnly(
+        nameof(PlaybackState),
+        typeof(MpvPlaybackState),
+        typeof(MpvView),
+        MpvPlaybackState.Idle);
+
+    /// <summary>
+    /// 識別 <see cref="PlaybackState"/> 可繫結屬性（唯讀）。
+    /// </summary>
+    public static readonly BindableProperty PlaybackStateProperty = PlaybackStatePropertyKey.BindableProperty;
+
+    /// <summary>
     /// 保存尚未交給平台 handler 的載入模式。
     /// </summary>
     private MpvLoadFileMode _pendingMode = MpvLoadFileMode.Replace;
+
+    /// <summary>
+    /// 已附加的播放器屬性訂閱清單；player dispose 時一次釋放。
+    /// </summary>
+    private readonly List<IDisposable> _propertyWatchers = new List<IDisposable>();
+
+    /// <summary>
+    /// 表示目前 BindableProperty 變更來源是 player（避免回頭再寫入 player 造成循環）。
+    /// </summary>
+    private bool _suppressPlayerWrite;
 
     /// <summary>
     /// 在平台 handler 建立 libmpv 播放器後發生。
@@ -67,6 +152,164 @@ public class MpvView : View
     public MpvView()
     {
         PlayerOptions = new MpvPlayerOptions();
+
+        _playCommand = new MpvRelayCommand(ExecutePlay, CanExecutePlayerCommand);
+        _pauseCommand = new MpvRelayCommand(ExecutePause, CanExecutePlayerCommand);
+        _stopCommand = new MpvRelayCommand(ExecuteStop, CanExecutePlayerCommand);
+        _togglePauseCommand = new MpvRelayCommand(ExecuteTogglePause, CanExecutePlayerCommand);
+        _toggleMuteCommand = new MpvRelayCommand(ExecuteToggleMute, CanExecutePlayerCommand);
+    }
+
+    /// <summary>
+    /// 設定 <see cref="IsPaused"/> 為 <see langword="false"/> 開始或續播。
+    /// </summary>
+    private readonly MpvRelayCommand _playCommand;
+    /// <summary>
+    /// 設定 <see cref="IsPaused"/> 為 <see langword="true"/> 暫停。
+    /// </summary>
+    private readonly MpvRelayCommand _pauseCommand;
+    /// <summary>
+    /// 呼叫 <see cref="MpvPlayer.Stop()"/> 停止播放。
+    /// </summary>
+    private readonly MpvRelayCommand _stopCommand;
+    /// <summary>
+    /// 切換 <see cref="IsPaused"/>。
+    /// </summary>
+    private readonly MpvRelayCommand _togglePauseCommand;
+    /// <summary>
+    /// 切換 <see cref="IsMuted"/>。
+    /// </summary>
+    private readonly MpvRelayCommand _toggleMuteCommand;
+
+    /// <summary>
+    /// 取得讓播放器開始或續播的指令。
+    /// </summary>
+    /// <value>對應 mpv <c>pause=no</c>。</value>
+    public ICommand PlayCommand
+    {
+        get { return _playCommand; }
+    }
+
+    /// <summary>
+    /// 取得暫停播放的指令。
+    /// </summary>
+    /// <value>對應 mpv <c>pause=yes</c>。</value>
+    public ICommand PauseCommand
+    {
+        get { return _pauseCommand; }
+    }
+
+    /// <summary>
+    /// 取得停止播放的指令。
+    /// </summary>
+    /// <value>對應 mpv <c>stop</c>。</value>
+    public ICommand StopCommand
+    {
+        get { return _stopCommand; }
+    }
+
+    /// <summary>
+    /// 取得切換暫停狀態的指令。
+    /// </summary>
+    /// <value>切換 mpv <c>pause</c>。</value>
+    public ICommand TogglePauseCommand
+    {
+        get { return _togglePauseCommand; }
+    }
+
+    /// <summary>
+    /// 取得切換靜音狀態的指令。
+    /// </summary>
+    /// <value>切換 mpv <c>mute</c>。</value>
+    public ICommand ToggleMuteCommand
+    {
+        get { return _toggleMuteCommand; }
+    }
+
+    /// <summary>
+    /// 判斷指令目前是否有可用播放器。
+    /// </summary>
+    /// <returns>已綁定播放器時為 <see langword="true"/>。</returns>
+    private bool CanExecutePlayerCommand()
+    {
+        return Player != null;
+    }
+
+    /// <summary>
+    /// 執行 <see cref="PlayCommand"/>。
+    /// </summary>
+    private void ExecutePlay()
+    {
+        if (Player == null)
+        {
+            return;
+        }
+
+        try { Player.Pause = false; } catch (MpvException) { }
+    }
+
+    /// <summary>
+    /// 執行 <see cref="PauseCommand"/>。
+    /// </summary>
+    private void ExecutePause()
+    {
+        if (Player == null)
+        {
+            return;
+        }
+
+        try { Player.Pause = true; } catch (MpvException) { }
+    }
+
+    /// <summary>
+    /// 執行 <see cref="StopCommand"/>。
+    /// </summary>
+    private void ExecuteStop()
+    {
+        if (Player == null)
+        {
+            return;
+        }
+
+        try { Player.Stop(); } catch (MpvException) { }
+    }
+
+    /// <summary>
+    /// 執行 <see cref="TogglePauseCommand"/>。
+    /// </summary>
+    private void ExecuteTogglePause()
+    {
+        if (Player == null)
+        {
+            return;
+        }
+
+        try { Player.Pause = !Player.Pause; } catch (MpvException) { }
+    }
+
+    /// <summary>
+    /// 執行 <see cref="ToggleMuteCommand"/>。
+    /// </summary>
+    private void ExecuteToggleMute()
+    {
+        if (Player == null)
+        {
+            return;
+        }
+
+        try { Player.Mute = !Player.Mute; } catch (MpvException) { }
+    }
+
+    /// <summary>
+    /// 通知所有指令重新評估 <see cref="ICommand.CanExecute"/>。
+    /// </summary>
+    private void RaiseCommandsCanExecuteChanged()
+    {
+        _playCommand.RaiseCanExecuteChanged();
+        _pauseCommand.RaiseCanExecuteChanged();
+        _stopCommand.RaiseCanExecuteChanged();
+        _togglePauseCommand.RaiseCanExecuteChanged();
+        _toggleMuteCommand.RaiseCanExecuteChanged();
     }
 
     /// <summary>
@@ -131,6 +374,64 @@ public class MpvView : View
     }
 
     /// <summary>
+    /// 取得或設定目前播放位置。
+    /// </summary>
+    /// <value>對應 mpv <c>time-pos</c>；雙向繫結時設值會觸發 seek。</value>
+    public TimeSpan Position
+    {
+        get { return (TimeSpan)GetValue(PositionProperty); }
+        set { SetValue(PositionProperty, value); }
+    }
+
+    /// <summary>
+    /// 取得目前媒體總時長。
+    /// </summary>
+    /// <value>對應 mpv <c>duration</c>。</value>
+    public TimeSpan Duration
+    {
+        get { return (TimeSpan)GetValue(DurationProperty); }
+    }
+
+    /// <summary>
+    /// 取得或設定音量。
+    /// </summary>
+    /// <value>對應 mpv <c>volume</c>，範圍 0–130；預設 100。</value>
+    public double Volume
+    {
+        get { return (double)GetValue(VolumeProperty); }
+        set { SetValue(VolumeProperty, value); }
+    }
+
+    /// <summary>
+    /// 取得或設定是否暫停。
+    /// </summary>
+    /// <value>對應 mpv <c>pause</c>。</value>
+    public bool IsPaused
+    {
+        get { return (bool)GetValue(IsPausedProperty); }
+        set { SetValue(IsPausedProperty, value); }
+    }
+
+    /// <summary>
+    /// 取得或設定是否靜音。
+    /// </summary>
+    /// <value>對應 mpv <c>mute</c>。</value>
+    public bool IsMuted
+    {
+        get { return (bool)GetValue(IsMutedProperty); }
+        set { SetValue(IsMutedProperty, value); }
+    }
+
+    /// <summary>
+    /// 取得目前由 libmpv 事件聚合而成的播放狀態。
+    /// </summary>
+    /// <value>對應 <see cref="MpvPlayer.State"/>。</value>
+    public MpvPlaybackState PlaybackState
+    {
+        get { return (MpvPlaybackState)GetValue(PlaybackStateProperty); }
+    }
+
+    /// <summary>
     /// 取得等待平台 handler 建立後載入的媒體來源。
     /// </summary>
     /// <value>等待載入的檔案路徑或媒體網址。</value>
@@ -177,11 +478,127 @@ public class MpvView : View
             return;
         }
 
+        DetachPlayerBindings();
+
         Player = player;
         if (player != null)
         {
+            AttachPlayerBindings(player);
+            RaiseCommandsCanExecuteChanged();
             PlayerCreated?.Invoke(this, EventArgs.Empty);
         }
+        else
+        {
+            RaiseCommandsCanExecuteChanged();
+        }
+    }
+
+    /// <summary>
+    /// 將檢視的 BindableProperty 與目前播放器雙向綁定。
+    /// </summary>
+    /// <param name="player">已初始化的播放器。</param>
+    private void AttachPlayerBindings(MpvPlayer player)
+    {
+        _propertyWatchers.Add(player.WatchProperty<bool>("pause").Subscribe(new MpvDpObserver<bool>(value => UpdateFromPlayer(IsPausedProperty, value))));
+        _propertyWatchers.Add(player.WatchProperty<bool>("mute").Subscribe(new MpvDpObserver<bool>(value => UpdateFromPlayer(IsMutedProperty, value))));
+        _propertyWatchers.Add(player.WatchProperty<double>("volume").Subscribe(new MpvDpObserver<double>(value => UpdateFromPlayer(VolumeProperty, value))));
+        _propertyWatchers.Add(player.WatchProperty<double>("time-pos").Subscribe(new MpvDpObserver<double>(value => UpdateFromPlayer(PositionProperty, TimeSpan.FromSeconds(value)))));
+        _propertyWatchers.Add(player.WatchProperty<double>("duration").Subscribe(new MpvDpObserver<double>(value => UpdateReadOnlyFromPlayer(DurationPropertyKey, TimeSpan.FromSeconds(value)))));
+        player.StateChanged += OnPlayerStateChanged;
+
+        if (IsPaused != player.Pause)
+        {
+            try { player.Pause = IsPaused; } catch (MpvException) { }
+        }
+
+        if (IsMuted != player.Mute)
+        {
+            try { player.Mute = IsMuted; } catch (MpvException) { }
+        }
+
+        if (Math.Abs(Volume - player.Volume) > 0.01)
+        {
+            try { player.Volume = Volume; } catch (MpvException) { }
+        }
+    }
+
+    /// <summary>
+    /// 釋放 <see cref="AttachPlayerBindings"/> 建立的訂閱與事件。
+    /// </summary>
+    private void DetachPlayerBindings()
+    {
+        if (Player != null)
+        {
+            Player.StateChanged -= OnPlayerStateChanged;
+        }
+
+        for (int index = 0; index < _propertyWatchers.Count; index++)
+        {
+            try
+            {
+                _propertyWatchers[index].Dispose();
+            }
+            catch (ObjectDisposedException)
+            {
+            }
+        }
+
+        _propertyWatchers.Clear();
+    }
+
+    /// <summary>
+    /// 在 UI 執行緒以「來自 player」的標記更新可讀寫 BindableProperty，避免回頭再寫 player 觸發迴圈。
+    /// </summary>
+    /// <typeparam name="T">屬性值型別。</typeparam>
+    /// <param name="property">要更新的 BindableProperty。</param>
+    /// <param name="value">新值。</param>
+    private void UpdateFromPlayer<T>(BindableProperty property, T value)
+    {
+        IDispatcher? dispatcher = Dispatcher;
+        if (dispatcher == null)
+        {
+            return;
+        }
+
+        dispatcher.Dispatch(() =>
+        {
+            _suppressPlayerWrite = true;
+            try
+            {
+                SetValue(property, value);
+            }
+            finally
+            {
+                _suppressPlayerWrite = false;
+            }
+        });
+    }
+
+    /// <summary>
+    /// 在 UI 執行緒更新唯讀 BindableProperty。
+    /// </summary>
+    /// <typeparam name="T">屬性值型別。</typeparam>
+    /// <param name="key">屬性金鑰。</param>
+    /// <param name="value">新值。</param>
+    private void UpdateReadOnlyFromPlayer<T>(BindablePropertyKey key, T value)
+    {
+        IDispatcher? dispatcher = Dispatcher;
+        if (dispatcher == null)
+        {
+            return;
+        }
+
+        dispatcher.Dispatch(() => SetValue(key, value));
+    }
+
+    /// <summary>
+    /// 處理 <see cref="MpvPlayer.StateChanged"/> 並把新狀態寫進 <see cref="PlaybackState"/>。
+    /// </summary>
+    /// <param name="sender">引發事件的播放器。</param>
+    /// <param name="state">新的播放狀態。</param>
+    private void OnPlayerStateChanged(object? sender, MpvPlaybackState state)
+    {
+        UpdateReadOnlyFromPlayer<MpvPlaybackState>(PlaybackStatePropertyKey, state);
     }
 
     /// <summary>
@@ -193,10 +610,152 @@ public class MpvView : View
     private static void OnSourceChanged(BindableObject bindable, object oldValue, object newValue)
     {
         MpvView view = (MpvView)bindable;
+        if (view._suppressPlayerWrite)
+        {
+            return;
+        }
+
         string? source = newValue as string;
         if (!string.IsNullOrWhiteSpace(source))
         {
             view.LoadFile(source!);
+        }
+    }
+
+    /// <summary>
+    /// 在 <see cref="Position"/> 屬性變更時 seek 到指定位置。
+    /// </summary>
+    /// <param name="bindable">屬性所屬的可繫結物件。</param>
+    /// <param name="oldValue">屬性先前的值。</param>
+    /// <param name="newValue">屬性新的值。</param>
+    private static void OnPositionChanged(BindableObject bindable, object oldValue, object newValue)
+    {
+        MpvView view = (MpvView)bindable;
+        if (view._suppressPlayerWrite || view.Player == null)
+        {
+            return;
+        }
+
+        try
+        {
+            view.Player.Seek(((TimeSpan)newValue).TotalSeconds, "absolute");
+        }
+        catch (MpvException)
+        {
+        }
+    }
+
+    /// <summary>
+    /// 在 <see cref="Volume"/> 屬性變更時寫入 player。
+    /// </summary>
+    /// <param name="bindable">屬性所屬的可繫結物件。</param>
+    /// <param name="oldValue">屬性先前的值。</param>
+    /// <param name="newValue">屬性新的值。</param>
+    private static void OnVolumeChanged(BindableObject bindable, object oldValue, object newValue)
+    {
+        MpvView view = (MpvView)bindable;
+        if (view._suppressPlayerWrite || view.Player == null)
+        {
+            return;
+        }
+
+        try
+        {
+            view.Player.Volume = (double)newValue;
+        }
+        catch (MpvException)
+        {
+        }
+    }
+
+    /// <summary>
+    /// 在 <see cref="IsPaused"/> 屬性變更時寫入 player。
+    /// </summary>
+    /// <param name="bindable">屬性所屬的可繫結物件。</param>
+    /// <param name="oldValue">屬性先前的值。</param>
+    /// <param name="newValue">屬性新的值。</param>
+    private static void OnIsPausedChanged(BindableObject bindable, object oldValue, object newValue)
+    {
+        MpvView view = (MpvView)bindable;
+        if (view._suppressPlayerWrite || view.Player == null)
+        {
+            return;
+        }
+
+        try
+        {
+            view.Player.Pause = (bool)newValue;
+        }
+        catch (MpvException)
+        {
+        }
+    }
+
+    /// <summary>
+    /// 在 <see cref="IsMuted"/> 屬性變更時寫入 player。
+    /// </summary>
+    /// <param name="bindable">屬性所屬的可繫結物件。</param>
+    /// <param name="oldValue">屬性先前的值。</param>
+    /// <param name="newValue">屬性新的值。</param>
+    private static void OnIsMutedChanged(BindableObject bindable, object oldValue, object newValue)
+    {
+        MpvView view = (MpvView)bindable;
+        if (view._suppressPlayerWrite || view.Player == null)
+        {
+            return;
+        }
+
+        try
+        {
+            view.Player.Mute = (bool)newValue;
+        }
+        catch (MpvException)
+        {
+        }
+    }
+
+    /// <summary>
+    /// 提供將 <see cref="IObservable{T}"/> 訂閱包裝成委派的最小 observer。
+    /// </summary>
+    /// <typeparam name="T">屬性值型別。</typeparam>
+    private sealed class MpvDpObserver<T> : IObserver<T>
+    {
+        /// <summary>
+        /// 收到新值時要執行的委派。
+        /// </summary>
+        private readonly Action<T> _onNext;
+
+        /// <summary>
+        /// 初始化 <see cref="MpvDpObserver{T}"/> 類別的新執行個體。
+        /// </summary>
+        /// <param name="onNext">收到新值時要執行的委派。</param>
+        public MpvDpObserver(Action<T> onNext)
+        {
+            _onNext = onNext;
+        }
+
+        /// <summary>
+        /// 在訂閱因 player 釋放結束時通知；目前不做事。
+        /// </summary>
+        public void OnCompleted()
+        {
+        }
+
+        /// <summary>
+        /// 在訂閱收到例外狀況時通知；目前不做事。
+        /// </summary>
+        /// <param name="error">例外狀況。</param>
+        public void OnError(Exception error)
+        {
+        }
+
+        /// <summary>
+        /// 收到新值並轉發。
+        /// </summary>
+        /// <param name="value">新值。</param>
+        public void OnNext(T value)
+        {
+            _onNext(value);
         }
     }
 

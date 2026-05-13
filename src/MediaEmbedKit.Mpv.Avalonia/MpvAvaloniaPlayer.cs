@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading;
+using System.Windows.Input;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -39,6 +42,65 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// 表示目前控制項是否已釋放。
     /// </summary>
     private bool _disposed;
+    /// <summary>
+    /// 已附加的播放器屬性訂閱清單；player dispose 時一次釋放。
+    /// </summary>
+    private readonly List<IDisposable> _propertyWatchers = new List<IDisposable>();
+    /// <summary>
+    /// 表示目前屬性變更來源是 player（避免回頭再寫入 player 造成循環）。
+    /// </summary>
+    private bool _suppressPlayerWrite;
+
+    /// <summary>
+    /// 識別 <see cref="Source"/> 屬性。
+    /// </summary>
+    public static readonly StyledProperty<string?> SourceProperty =
+        AvaloniaProperty.Register<MpvAvaloniaPlayer, string?>(nameof(Source));
+
+    /// <summary>
+    /// 識別 <see cref="Position"/> 屬性。
+    /// </summary>
+    public static readonly StyledProperty<TimeSpan> PositionProperty =
+        AvaloniaProperty.Register<MpvAvaloniaPlayer, TimeSpan>(nameof(Position));
+
+    /// <summary>
+    /// 識別 <see cref="Duration"/> 唯讀屬性。
+    /// </summary>
+    public static readonly DirectProperty<MpvAvaloniaPlayer, TimeSpan> DurationProperty =
+        AvaloniaProperty.RegisterDirect<MpvAvaloniaPlayer, TimeSpan>(nameof(Duration), control => control._duration);
+
+    /// <summary>
+    /// 識別 <see cref="Volume"/> 屬性。
+    /// </summary>
+    public static readonly StyledProperty<double> VolumeProperty =
+        AvaloniaProperty.Register<MpvAvaloniaPlayer, double>(nameof(Volume), 100.0);
+
+    /// <summary>
+    /// 識別 <see cref="IsPaused"/> 屬性。
+    /// </summary>
+    public static readonly StyledProperty<bool> IsPausedProperty =
+        AvaloniaProperty.Register<MpvAvaloniaPlayer, bool>(nameof(IsPaused));
+
+    /// <summary>
+    /// 識別 <see cref="IsMuted"/> 屬性。
+    /// </summary>
+    public static readonly StyledProperty<bool> IsMutedProperty =
+        AvaloniaProperty.Register<MpvAvaloniaPlayer, bool>(nameof(IsMuted));
+
+    /// <summary>
+    /// 識別 <see cref="PlaybackState"/> 唯讀屬性。
+    /// </summary>
+    public static readonly DirectProperty<MpvAvaloniaPlayer, MpvPlaybackState> PlaybackStateProperty =
+        AvaloniaProperty.RegisterDirect<MpvAvaloniaPlayer, MpvPlaybackState>(nameof(PlaybackState), control => control._playbackState);
+
+    /// <summary>
+    /// 由 <see cref="DurationProperty"/> 反射的目前媒體時長。
+    /// </summary>
+    private TimeSpan _duration;
+    /// <summary>
+    /// 由 <see cref="PlaybackStateProperty"/> 反射的目前播放狀態。
+    /// </summary>
+    private MpvPlaybackState _playbackState;
 
     /// <summary>
     /// 初始化 <see cref="MpvAvaloniaPlayer"/> 類別的新執行個體。
@@ -50,6 +112,240 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
         {
             Design.SetPreviewWith(this, CreateDesignPreview());
         }
+
+        SourceProperty.Changed.AddClassHandler<MpvAvaloniaPlayer>((control, args) => control.OnSourceChanged(args));
+        PositionProperty.Changed.AddClassHandler<MpvAvaloniaPlayer>((control, args) => control.OnPositionChanged(args));
+        VolumeProperty.Changed.AddClassHandler<MpvAvaloniaPlayer>((control, args) => control.OnVolumeChanged(args));
+        IsPausedProperty.Changed.AddClassHandler<MpvAvaloniaPlayer>((control, args) => control.OnIsPausedChanged(args));
+        IsMutedProperty.Changed.AddClassHandler<MpvAvaloniaPlayer>((control, args) => control.OnIsMutedChanged(args));
+
+        _playCommand = new MpvRelayCommand(ExecutePlay, CanExecutePlayerCommand);
+        _pauseCommand = new MpvRelayCommand(ExecutePause, CanExecutePlayerCommand);
+        _stopCommand = new MpvRelayCommand(ExecuteStop, CanExecutePlayerCommand);
+        _togglePauseCommand = new MpvRelayCommand(ExecuteTogglePause, CanExecutePlayerCommand);
+        _toggleMuteCommand = new MpvRelayCommand(ExecuteToggleMute, CanExecutePlayerCommand);
+    }
+
+    /// <summary>
+    /// 設定 <see cref="IsPaused"/> 為 <see langword="false"/> 開始或續播。
+    /// </summary>
+    private readonly MpvRelayCommand _playCommand;
+    /// <summary>
+    /// 設定 <see cref="IsPaused"/> 為 <see langword="true"/> 暫停。
+    /// </summary>
+    private readonly MpvRelayCommand _pauseCommand;
+    /// <summary>
+    /// 呼叫 <see cref="MpvPlayer.Stop()"/> 停止播放。
+    /// </summary>
+    private readonly MpvRelayCommand _stopCommand;
+    /// <summary>
+    /// 切換 <see cref="IsPaused"/>。
+    /// </summary>
+    private readonly MpvRelayCommand _togglePauseCommand;
+    /// <summary>
+    /// 切換 <see cref="IsMuted"/>。
+    /// </summary>
+    private readonly MpvRelayCommand _toggleMuteCommand;
+
+    /// <summary>
+    /// 取得讓播放器開始或續播的指令。
+    /// </summary>
+    /// <value>對應 mpv <c>pause=no</c>。</value>
+    public ICommand PlayCommand
+    {
+        get { return _playCommand; }
+    }
+
+    /// <summary>
+    /// 取得暫停播放的指令。
+    /// </summary>
+    /// <value>對應 mpv <c>pause=yes</c>。</value>
+    public ICommand PauseCommand
+    {
+        get { return _pauseCommand; }
+    }
+
+    /// <summary>
+    /// 取得停止播放的指令。
+    /// </summary>
+    /// <value>對應 mpv <c>stop</c>。</value>
+    public ICommand StopCommand
+    {
+        get { return _stopCommand; }
+    }
+
+    /// <summary>
+    /// 取得切換暫停狀態的指令。
+    /// </summary>
+    /// <value>切換 mpv <c>pause</c>。</value>
+    public ICommand TogglePauseCommand
+    {
+        get { return _togglePauseCommand; }
+    }
+
+    /// <summary>
+    /// 取得切換靜音狀態的指令。
+    /// </summary>
+    /// <value>切換 mpv <c>mute</c>。</value>
+    public ICommand ToggleMuteCommand
+    {
+        get { return _toggleMuteCommand; }
+    }
+
+    /// <summary>
+    /// 判斷指令目前是否有可用播放器。
+    /// </summary>
+    /// <returns>已綁定播放器時為 <see langword="true"/>。</returns>
+    private bool CanExecutePlayerCommand()
+    {
+        return _player != null;
+    }
+
+    /// <summary>
+    /// 執行 <see cref="PlayCommand"/>。
+    /// </summary>
+    private void ExecutePlay()
+    {
+        if (_player == null)
+        {
+            return;
+        }
+
+        try { _player.Pause = false; } catch (MpvException) { }
+    }
+
+    /// <summary>
+    /// 執行 <see cref="PauseCommand"/>。
+    /// </summary>
+    private void ExecutePause()
+    {
+        if (_player == null)
+        {
+            return;
+        }
+
+        try { _player.Pause = true; } catch (MpvException) { }
+    }
+
+    /// <summary>
+    /// 執行 <see cref="StopCommand"/>。
+    /// </summary>
+    private void ExecuteStop()
+    {
+        if (_player == null)
+        {
+            return;
+        }
+
+        try { _player.Stop(); } catch (MpvException) { }
+    }
+
+    /// <summary>
+    /// 執行 <see cref="TogglePauseCommand"/>。
+    /// </summary>
+    private void ExecuteTogglePause()
+    {
+        if (_player == null)
+        {
+            return;
+        }
+
+        try { _player.Pause = !_player.Pause; } catch (MpvException) { }
+    }
+
+    /// <summary>
+    /// 執行 <see cref="ToggleMuteCommand"/>。
+    /// </summary>
+    private void ExecuteToggleMute()
+    {
+        if (_player == null)
+        {
+            return;
+        }
+
+        try { _player.Mute = !_player.Mute; } catch (MpvException) { }
+    }
+
+    /// <summary>
+    /// 通知所有指令重新評估 <see cref="ICommand.CanExecute"/>。
+    /// </summary>
+    private void RaiseCommandsCanExecuteChanged()
+    {
+        _playCommand.RaiseCanExecuteChanged();
+        _pauseCommand.RaiseCanExecuteChanged();
+        _stopCommand.RaiseCanExecuteChanged();
+        _togglePauseCommand.RaiseCanExecuteChanged();
+        _toggleMuteCommand.RaiseCanExecuteChanged();
+    }
+
+    /// <summary>
+    /// 取得或設定要載入並播放的媒體來源。
+    /// </summary>
+    /// <value>檔案路徑或媒體網址；變更會自動載入新媒體。</value>
+    public string? Source
+    {
+        get { return GetValue(SourceProperty); }
+        set { SetValue(SourceProperty, value); }
+    }
+
+    /// <summary>
+    /// 取得或設定目前播放位置。
+    /// </summary>
+    /// <value>對應 mpv <c>time-pos</c>；雙向繫結時設值會觸發 seek。</value>
+    public TimeSpan Position
+    {
+        get { return GetValue(PositionProperty); }
+        set { SetValue(PositionProperty, value); }
+    }
+
+    /// <summary>
+    /// 取得目前媒體總時長。
+    /// </summary>
+    /// <value>對應 mpv <c>duration</c>。</value>
+    public TimeSpan Duration
+    {
+        get { return _duration; }
+        private set { SetAndRaise(DurationProperty, ref _duration, value); }
+    }
+
+    /// <summary>
+    /// 取得或設定音量。
+    /// </summary>
+    /// <value>對應 mpv <c>volume</c>，範圍 0–130；預設 100。</value>
+    public double Volume
+    {
+        get { return GetValue(VolumeProperty); }
+        set { SetValue(VolumeProperty, value); }
+    }
+
+    /// <summary>
+    /// 取得或設定是否暫停。
+    /// </summary>
+    /// <value>對應 mpv <c>pause</c>。</value>
+    public bool IsPaused
+    {
+        get { return GetValue(IsPausedProperty); }
+        set { SetValue(IsPausedProperty, value); }
+    }
+
+    /// <summary>
+    /// 取得或設定是否靜音。
+    /// </summary>
+    /// <value>對應 mpv <c>mute</c>。</value>
+    public bool IsMuted
+    {
+        get { return GetValue(IsMutedProperty); }
+        set { SetValue(IsMutedProperty, value); }
+    }
+
+    /// <summary>
+    /// 取得目前由 libmpv 事件聚合而成的播放狀態。
+    /// </summary>
+    /// <value>對應 <see cref="MpvPlayer.State"/>。</value>
+    public MpvPlaybackState PlaybackState
+    {
+        get { return _playbackState; }
+        private set { SetAndRaise(PlaybackStateProperty, ref _playbackState, value); }
     }
 
     /// <summary>
@@ -256,11 +552,278 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
             throw;
         }
 
+        AttachPlayerBindings(_player!);
+        RaiseCommandsCanExecuteChanged();
         PlayerCreated?.Invoke(this, EventArgs.Empty);
 
         if (_player != null && !string.IsNullOrWhiteSpace(_pendingSource))
         {
             _player.LoadFile(_pendingSource!, _pendingMode);
+        }
+    }
+
+    /// <summary>
+    /// 將控制項的繫結屬性與目前播放器雙向綁定。
+    /// </summary>
+    /// <param name="player">已初始化的播放器。</param>
+    private void AttachPlayerBindings(MpvPlayer player)
+    {
+        _propertyWatchers.Add(player.WatchProperty<bool>("pause").Subscribe(new MpvDpObserver<bool>(value => UpdateFromPlayer(IsPausedProperty, value))));
+        _propertyWatchers.Add(player.WatchProperty<bool>("mute").Subscribe(new MpvDpObserver<bool>(value => UpdateFromPlayer(IsMutedProperty, value))));
+        _propertyWatchers.Add(player.WatchProperty<double>("volume").Subscribe(new MpvDpObserver<double>(value => UpdateFromPlayer(VolumeProperty, value))));
+        _propertyWatchers.Add(player.WatchProperty<double>("time-pos").Subscribe(new MpvDpObserver<double>(value => UpdateFromPlayer(PositionProperty, TimeSpan.FromSeconds(value)))));
+        _propertyWatchers.Add(player.WatchProperty<double>("duration").Subscribe(new MpvDpObserver<double>(value => UpdateDurationFromPlayer(TimeSpan.FromSeconds(value)))));
+        player.StateChanged += OnPlayerStateChanged;
+
+        string? currentSource = Source;
+        if (!string.IsNullOrWhiteSpace(currentSource))
+        {
+            try
+            {
+                player.Load(new MpvMediaItem(currentSource!));
+            }
+            catch (MpvException)
+            {
+            }
+        }
+
+        if (IsPaused != player.Pause)
+        {
+            try { player.Pause = IsPaused; } catch (MpvException) { }
+        }
+
+        if (IsMuted != player.Mute)
+        {
+            try { player.Mute = IsMuted; } catch (MpvException) { }
+        }
+
+        if (Math.Abs(Volume - player.Volume) > 0.01)
+        {
+            try { player.Volume = Volume; } catch (MpvException) { }
+        }
+    }
+
+    /// <summary>
+    /// 在 UI 執行緒以「來自 player」的標記更新可讀寫 StyledProperty，避免回頭再寫 player 觸發迴圈。
+    /// </summary>
+    /// <typeparam name="T">屬性值型別。</typeparam>
+    /// <param name="property">要更新的 StyledProperty。</param>
+    /// <param name="value">新值。</param>
+    private void UpdateFromPlayer<T>(StyledProperty<T> property, T value)
+    {
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (Volatile.Read(ref _disposed))
+            {
+                return;
+            }
+
+            _suppressPlayerWrite = true;
+            try
+            {
+                SetValue(property, value);
+            }
+            finally
+            {
+                _suppressPlayerWrite = false;
+            }
+        });
+    }
+
+    /// <summary>
+    /// 在 UI 執行緒更新 <see cref="DurationProperty"/>。
+    /// </summary>
+    /// <param name="value">新值。</param>
+    private void UpdateDurationFromPlayer(TimeSpan value)
+    {
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (Volatile.Read(ref _disposed))
+            {
+                return;
+            }
+
+            Duration = value;
+        });
+    }
+
+    /// <summary>
+    /// 在 UI 執行緒更新 <see cref="PlaybackStateProperty"/>。
+    /// </summary>
+    /// <param name="value">新值。</param>
+    private void UpdatePlaybackStateFromPlayer(MpvPlaybackState value)
+    {
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (Volatile.Read(ref _disposed))
+            {
+                return;
+            }
+
+            PlaybackState = value;
+        });
+    }
+
+    /// <summary>
+    /// 處理 <see cref="MpvPlayer.StateChanged"/> 並把新狀態寫進 <see cref="PlaybackState"/>。
+    /// </summary>
+    /// <param name="sender">引發事件的播放器。</param>
+    /// <param name="state">新的播放狀態。</param>
+    private void OnPlayerStateChanged(object? sender, MpvPlaybackState state)
+    {
+        UpdatePlaybackStateFromPlayer(state);
+    }
+
+    /// <summary>
+    /// 處理 <see cref="SourceProperty"/> 變更：載入新媒體。
+    /// </summary>
+    /// <param name="args">屬性變更資料。</param>
+    private void OnSourceChanged(AvaloniaPropertyChangedEventArgs args)
+    {
+        if (_suppressPlayerWrite)
+        {
+            return;
+        }
+
+        string? newSource = args.GetNewValue<string?>();
+        _pendingSource = newSource;
+
+        if (string.IsNullOrWhiteSpace(newSource) || _player == null)
+        {
+            return;
+        }
+
+        try
+        {
+            _player.Load(new MpvMediaItem(newSource!));
+        }
+        catch (MpvException)
+        {
+        }
+    }
+
+    /// <summary>
+    /// 處理 <see cref="PositionProperty"/> 變更：seek 到指定位置。
+    /// </summary>
+    /// <param name="args">屬性變更資料。</param>
+    private void OnPositionChanged(AvaloniaPropertyChangedEventArgs args)
+    {
+        if (_suppressPlayerWrite || _player == null)
+        {
+            return;
+        }
+
+        try
+        {
+            _player.Seek(args.GetNewValue<TimeSpan>().TotalSeconds, "absolute");
+        }
+        catch (MpvException)
+        {
+        }
+    }
+
+    /// <summary>
+    /// 處理 <see cref="VolumeProperty"/> 變更：寫入 player。
+    /// </summary>
+    /// <param name="args">屬性變更資料。</param>
+    private void OnVolumeChanged(AvaloniaPropertyChangedEventArgs args)
+    {
+        if (_suppressPlayerWrite || _player == null)
+        {
+            return;
+        }
+
+        try
+        {
+            _player.Volume = args.GetNewValue<double>();
+        }
+        catch (MpvException)
+        {
+        }
+    }
+
+    /// <summary>
+    /// 處理 <see cref="IsPausedProperty"/> 變更：寫入 player。
+    /// </summary>
+    /// <param name="args">屬性變更資料。</param>
+    private void OnIsPausedChanged(AvaloniaPropertyChangedEventArgs args)
+    {
+        if (_suppressPlayerWrite || _player == null)
+        {
+            return;
+        }
+
+        try
+        {
+            _player.Pause = args.GetNewValue<bool>();
+        }
+        catch (MpvException)
+        {
+        }
+    }
+
+    /// <summary>
+    /// 處理 <see cref="IsMutedProperty"/> 變更：寫入 player。
+    /// </summary>
+    /// <param name="args">屬性變更資料。</param>
+    private void OnIsMutedChanged(AvaloniaPropertyChangedEventArgs args)
+    {
+        if (_suppressPlayerWrite || _player == null)
+        {
+            return;
+        }
+
+        try
+        {
+            _player.Mute = args.GetNewValue<bool>();
+        }
+        catch (MpvException)
+        {
+        }
+    }
+
+    /// <summary>
+    /// 提供將 <see cref="IObservable{T}"/> 訂閱包裝成委派的最小 observer。
+    /// </summary>
+    /// <typeparam name="T">屬性值型別。</typeparam>
+    private sealed class MpvDpObserver<T> : IObserver<T>
+    {
+        /// <summary>
+        /// 收到新值時要執行的委派。
+        /// </summary>
+        private readonly Action<T> _onNext;
+
+        /// <summary>
+        /// 初始化 <see cref="MpvDpObserver{T}"/> 類別的新執行個體。
+        /// </summary>
+        /// <param name="onNext">收到新值時要執行的委派。</param>
+        public MpvDpObserver(Action<T> onNext)
+        {
+            _onNext = onNext;
+        }
+
+        /// <summary>
+        /// 在訂閱因 player 釋放結束時通知；目前不做事。
+        /// </summary>
+        public void OnCompleted()
+        {
+        }
+
+        /// <summary>
+        /// 在訂閱收到例外狀況時通知；目前不做事。
+        /// </summary>
+        /// <param name="error">例外狀況。</param>
+        public void OnError(Exception error)
+        {
+        }
+
+        /// <summary>
+        /// 收到新值並轉發。
+        /// </summary>
+        /// <param name="value">新值。</param>
+        public void OnNext(T value)
+        {
+            _onNext(value);
         }
     }
 
@@ -348,8 +911,23 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
             return;
         }
 
+        _player.StateChanged -= OnPlayerStateChanged;
+        for (int index = 0; index < _propertyWatchers.Count; index++)
+        {
+            try
+            {
+                _propertyWatchers[index].Dispose();
+            }
+            catch (ObjectDisposedException)
+            {
+            }
+        }
+
+        _propertyWatchers.Clear();
+
         _player.Dispose();
         _player = null;
+        RaiseCommandsCanExecuteChanged();
     }
 
     /// <summary>
