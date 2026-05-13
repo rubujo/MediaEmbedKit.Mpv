@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using MediaEmbedKit.Mpv;
 using MediaEmbedKit.Mpv.Downloads;
@@ -7,30 +8,76 @@ using MediaEmbedKit.Mpv.Samples;
 namespace MediaEmbedKit.Mpv.Samples.ConsoleMinimal
 {
     /// <summary>
-    /// 提供核心播放器最小生命週期範例的進入點。
+    /// 提供核心播放器最小生命週期範例的進入點，並示範 MpvAppBuilder、MpvMediaItem、WatchProperty 等高階 API。
     /// </summary>
     internal static class Program
     {
         /// <summary>
         /// 執行 Console minimal sample。
         /// </summary>
-        /// <param name="args">第一個引數可指定要播放的檔案路徑或媒體網址。</param>
+        /// <param name="args">第一個非旗標引數可指定要播放的檔案路徑或媒體網址；可選旗標：<c>--runtime-check</c>、<c>--license-audit</c>、<c>--apply-staged</c>。</param>
         /// <returns>處理程序結束代碼。</returns>
         private static async Task<int> Main(string[] args)
         {
-            string source = args.Length > 0 ? args[0] : SampleRuntime.PlaybackUrl;
+            string? source = null;
+            bool runRuntimeCheck = false;
+            bool runLicenseAudit = false;
+            bool applyStaged = false;
+            for (int index = 0; index < args.Length; index++)
+            {
+                string arg = args[index];
+                if (string.Equals(arg, "--runtime-check", StringComparison.OrdinalIgnoreCase))
+                {
+                    runRuntimeCheck = true;
+                }
+                else if (string.Equals(arg, "--license-audit", StringComparison.OrdinalIgnoreCase))
+                {
+                    runLicenseAudit = true;
+                }
+                else if (string.Equals(arg, "--apply-staged", StringComparison.OrdinalIgnoreCase))
+                {
+                    applyStaged = true;
+                }
+                else if (source == null)
+                {
+                    source = arg;
+                }
+            }
+
+            source = source ?? SampleRuntime.PlaybackUrl;
+
             try
             {
                 Console.WriteLine("準備 Windows x64 runtime...");
-                MpvPlayerOptions options = await CreatePlayerOptionsAsync().ConfigureAwait(false);
+                string runtimeDirectory = await SampleRuntime.PrepareCoreRuntimeAsync().ConfigureAwait(false);
 
-                await using MpvPlayer player = new MpvPlayer(options);
+                if (applyStaged)
+                {
+                    ApplyStagedRuntimeUpdates(runtimeDirectory);
+                }
+
+                if (runRuntimeCheck)
+                {
+                    await PrintRuntimeHealthAsync(runtimeDirectory).ConfigureAwait(false);
+                }
+
+                if (runLicenseAudit)
+                {
+                    await PrintLicenseAuditAsync(runtimeDirectory).ConfigureAwait(false);
+                }
+
+                await using MpvPlayer player = await new MpvAppBuilder()
+                    .UseRuntime(runtimeDirectory)
+                    .UseYtdlpFormat(SampleRuntime.SmoothPlaybackYtdlpFormat)
+                    .UseHardwareDecoding()
+                    .BuildAsync()
+                    .ConfigureAwait(false);
+
                 player.EventReceived += PlayerEventReceived;
                 player.LogMessageReceived += PlayerLogMessageReceived;
                 player.FileLoaded += PlayerFileLoaded;
                 player.Shutdown += PlayerShutdown;
 
-                await player.InitializeAsync().ConfigureAwait(false);
                 MpvCapabilities capabilities = player.GetCapabilities();
                 Console.WriteLine(
                     "libmpv client API "
@@ -39,8 +86,13 @@ namespace MediaEmbedKit.Mpv.Samples.ConsoleMinimal
                     + capabilities.Protocols.Count.ToString()
                     + "，decoders="
                     + capabilities.Decoders.Count.ToString());
+
+                using IDisposable timePositionSubscription = player
+                    .WatchProperty<double>("time-pos")
+                    .Subscribe(new ConsoleTimePositionObserver());
+
                 Console.WriteLine("載入媒體：" + source);
-                player.LoadFile(source, MpvLoadFileMode.Replace);
+                player.Load(new MpvMediaItem(source));
 
                 await SampleRuntime.WaitForPlaybackAsync("ConsoleMinimalSample", () => player).ConfigureAwait(false);
                 Console.WriteLine("播放已開始，按 Enter 停止。");
@@ -64,26 +116,52 @@ namespace MediaEmbedKit.Mpv.Samples.ConsoleMinimal
         }
 
         /// <summary>
-        /// 透過公開 runtime helper 建立最小播放器選項。
+        /// 在 libmpv 載入前嘗試套用先前暫存的更新；若沒有暫存就略過。
         /// </summary>
-        /// <returns>可用於核心播放器的播放器選項。</returns>
-        private static async Task<MpvPlayerOptions> CreatePlayerOptionsAsync()
+        /// <param name="runtimeDirectory">執行階段資料夾。</param>
+        private static void ApplyStagedRuntimeUpdates(string runtimeDirectory)
         {
-            string runtimeDirectory = await SampleRuntime.PrepareCoreRuntimeAsync().ConfigureAwait(false);
-            MpvPlayerOptions options = MpvRuntimeInstaller.CreatePlayerOptions(runtimeDirectory);
-            ApplyPlaybackDefaults(options);
-            return options;
+            MpvLibraryUpdateScheduler scheduler = new MpvLibraryUpdateScheduler(runtimeDirectory);
+            MpvLibraryApplyResult result = scheduler.ApplyStagedOnStartup();
+            Console.WriteLine("[scheduler] " + result.Message);
         }
 
         /// <summary>
-        /// 套用適合網路範例播放的最小 mpv 選項。
+        /// 印出 <see cref="MpvRuntimeHealthCheck"/> 報告摘要。
         /// </summary>
-        /// <param name="options">要套用設定的播放器選項。</param>
-        private static void ApplyPlaybackDefaults(MpvPlayerOptions options)
+        /// <param name="runtimeDirectory">執行階段資料夾。</param>
+        /// <returns>代表分析流程的工作。</returns>
+        private static async Task PrintRuntimeHealthAsync(string runtimeDirectory)
         {
-            options.YtdlpFormat = SampleRuntime.SmoothPlaybackYtdlpFormat;
-            options.InitialOptions["ytdl-format"] = SampleRuntime.SmoothPlaybackYtdlpFormat;
-            options.InitialOptions["hwdec"] = "auto-safe";
+            MpvRuntimeHealthReport report = await MpvRuntimeHealthCheck.AnalyzeAsync(runtimeDirectory).ConfigureAwait(false);
+            Console.WriteLine(
+                "[health] libmpv=" + report.IsLibMpvPresent
+                + " yt-dlp=" + report.IsYtdlpPresent
+                + " ffmpeg=" + report.IsFFmpegPresent
+                + " ffprobe=" + report.IsFFprobePresent
+                + " deno=" + report.IsDenoPresent);
+            for (int index = 0; index < report.Errors.Count; index++)
+            {
+                Console.WriteLine("[health] " + report.Errors[index]);
+            }
+        }
+
+        /// <summary>
+        /// 印出 <see cref="MpvLicenseAuditor"/> 報告摘要。
+        /// </summary>
+        /// <param name="runtimeDirectory">執行階段資料夾。</param>
+        /// <returns>代表分析流程的工作。</returns>
+        private static async Task PrintLicenseAuditAsync(string runtimeDirectory)
+        {
+            MpvLicenseAuditReport report = await MpvLicenseAuditor.AnalyzeAsync(runtimeDirectory).ConfigureAwait(false);
+            Console.WriteLine(
+                "[license] libmpv=" + report.LibMpvLicense
+                + " ffmpeg=" + report.FFmpegLicense
+                + " overall=" + report.OverallLicense);
+            for (int index = 0; index < report.Warnings.Count; index++)
+            {
+                Console.WriteLine("[license] " + report.Warnings[index]);
+            }
         }
 
         /// <summary>
@@ -124,6 +202,41 @@ namespace MediaEmbedKit.Mpv.Samples.ConsoleMinimal
         private static void PlayerShutdown(object? sender, MpvEventArgs e)
         {
             Console.WriteLine("[lifecycle] shutdown");
+        }
+
+        /// <summary>
+        /// 以 <see cref="IObserver{T}"/> 形式接收 time-pos 變更並節流輸出到 stdout。
+        /// </summary>
+        private sealed class ConsoleTimePositionObserver : IObserver<double>
+        {
+            /// <summary>
+            /// 最近一次列印時間。
+            /// </summary>
+            private DateTimeOffset _lastPrintedAt = DateTimeOffset.MinValue;
+
+            /// <inheritdoc />
+            public void OnNext(double value)
+            {
+                if (DateTimeOffset.UtcNow - _lastPrintedAt < TimeSpan.FromSeconds(1))
+                {
+                    return;
+                }
+
+                _lastPrintedAt = DateTimeOffset.UtcNow;
+                Console.WriteLine("[time-pos] " + value.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture));
+            }
+
+            /// <inheritdoc />
+            public void OnCompleted()
+            {
+                Console.WriteLine("[time-pos] (subscription completed)");
+            }
+
+            /// <inheritdoc />
+            public void OnError(Exception error)
+            {
+                Console.WriteLine("[time-pos] error: " + error.Message);
+            }
         }
     }
 }
