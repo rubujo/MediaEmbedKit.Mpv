@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Microsoft.Extensions.Logging;
 
 namespace MediaEmbedKit.Mpv
 {
@@ -296,5 +297,16 @@ namespace MediaEmbedKit.Mpv
         /// </summary>
         /// <value>mpv 記錄等級文字，例如 <c>warn</c> 或 <c>info</c>。</value>
         public string LogLevel { get; set; }
+
+        /// <summary>
+        /// 取得或設定要把 libmpv 記錄訊息轉送過去的 <see cref="ILoggerFactory"/>。
+        /// </summary>
+        /// <value>要使用的 <see cref="ILoggerFactory"/>；未設定時不啟用 ILogger 整合。</value>
+        /// <remarks>
+        /// 若同時設定 <see cref="LogLevel"/> 與此屬性，<see cref="MpvPlayer"/> 會在初始化後
+        /// 訂閱 <c>LogMessageReceived</c> 並以對應的 <see cref="LogLevel"/> 轉送到
+        /// <see cref="ILogger"/>。
+        /// </remarks>
+        public ILoggerFactory? LoggerFactory { get; set; }
     }
 }

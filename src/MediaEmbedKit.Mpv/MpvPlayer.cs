@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using MediaEmbedKit.Mpv.Native;
 using MediaEmbedKit.Mpv.Render;
+using Microsoft.Extensions.Logging;
 
 namespace MediaEmbedKit.Mpv
 {
@@ -104,6 +105,74 @@ namespace MediaEmbedKit.Mpv
             _renderContexts = new List<IDisposable>();
             _streamRegistrations = new List<MpvStreamProtocolRegistration>();
             ApplyInitialOptions(options);
+            ConfigureLoggerRouting(options);
+        }
+
+        /// <summary>
+        /// 持有由 <see cref="MpvPlayerOptions.LoggerFactory"/> 衍生的記錄器；未啟用 ILogger 整合時為 <see langword="null"/>。
+        /// </summary>
+        private ILogger? _logger;
+
+        /// <summary>
+        /// 持有訂閱 libmpv 記錄訊息以轉送到 ILogger 的處理常式；用於釋放時取消訂閱。
+        /// </summary>
+        private EventHandler<MpvLogMessageEventArgs>? _loggerHandler;
+
+        /// <summary>
+        /// 依播放器選項建立 ILogger 並訂閱 <see cref="LogMessageReceived"/>。
+        /// </summary>
+        /// <param name="options">建立播放器時提供的選項。</param>
+        private void ConfigureLoggerRouting(MpvPlayerOptions options)
+        {
+            if (options.LoggerFactory == null)
+            {
+                return;
+            }
+
+            _logger = options.LoggerFactory.CreateLogger("MediaEmbedKit.Mpv");
+            _loggerHandler = delegate (object? sender, MpvLogMessageEventArgs e)
+            {
+                if (_logger == null)
+                {
+                    return;
+                }
+
+                LogLevel logLevel = MapMpvLogLevel(e.LogLevel);
+                if (!_logger.IsEnabled(logLevel))
+                {
+                    return;
+                }
+
+                _logger.Log(logLevel, "[mpv:{Prefix}] {Message}", e.Prefix, e.Text.TrimEnd());
+            };
+            LogMessageReceived += _loggerHandler;
+        }
+
+        /// <summary>
+        /// 將 libmpv 記錄等級轉換成 <see cref="Microsoft.Extensions.Logging.LogLevel"/>。
+        /// </summary>
+        /// <param name="level">libmpv 記錄等級。</param>
+        /// <returns>對應的 <see cref="Microsoft.Extensions.Logging.LogLevel"/>。</returns>
+        private static LogLevel MapMpvLogLevel(MpvLogLevel level)
+        {
+            switch (level)
+            {
+                case MpvLogLevel.Fatal:
+                    return LogLevel.Critical;
+                case MpvLogLevel.Error:
+                    return LogLevel.Error;
+                case MpvLogLevel.Warn:
+                    return LogLevel.Warning;
+                case MpvLogLevel.Info:
+                    return LogLevel.Information;
+                case MpvLogLevel.Verbose:
+                    return LogLevel.Debug;
+                case MpvLogLevel.Debug:
+                case MpvLogLevel.Trace:
+                    return LogLevel.Trace;
+                default:
+                    return LogLevel.None;
+            }
         }
 
         /// <summary>
@@ -1649,6 +1718,22 @@ namespace MediaEmbedKit.Mpv
         }
 
         /// <summary>
+        /// 使用 <see cref="MpvMediaItem"/> 載入播放項目。
+        /// </summary>
+        /// <param name="item">要載入的媒體項目；可帶 HTTP 標頭、起訖時間與 per-file 選項。</param>
+        /// <param name="mode">播放項目加入播放清單的方式。</param>
+        public void Load(MpvMediaItem item, MpvLoadFileMode mode = MpvLoadFileMode.Replace)
+        {
+            if (item == null)
+            {
+                throw new ArgumentNullException(nameof(item));
+            }
+
+            IDictionary<string, string> fileOptions = item.BuildFileOptions();
+            LoadFile(item.Source, mode, null, fileOptions.Count == 0 ? null : fileOptions);
+        }
+
+        /// <summary>
         /// 停止目前播放。
         /// </summary>
         public void Stop()
@@ -2979,6 +3064,45 @@ namespace MediaEmbedKit.Mpv
         }
 
         /// <summary>
+        /// 同步觀察屬性快取的鎖。
+        /// </summary>
+        private readonly object _propertyObservablesGate = new object();
+        /// <summary>
+        /// 已為此播放器建立的屬性觀察快照；以屬性名稱與格式作為索引鍵共用 libmpv 註冊。
+        /// </summary>
+        private readonly Dictionary<(string Name, MpvFormat Format), object> _propertyObservables =
+            new Dictionary<(string Name, MpvFormat Format), object>();
+
+        /// <summary>
+        /// 取得指定 libmpv 屬性的 <see cref="IObservable{T}"/>，多個訂閱者共享單一觀察註冊。
+        /// </summary>
+        /// <typeparam name="T">屬性值型別；支援 <see cref="double"/>、<see cref="long"/>、<see cref="bool"/>、<see cref="string"/> 與 <see cref="MpvNode"/>。</typeparam>
+        /// <param name="propertyName">要觀察的屬性名稱。</param>
+        /// <returns>會於每次屬性變更時呼叫 <see cref="IObserver{T}.OnNext"/> 的 <see cref="IObservable{T}"/>。</returns>
+        public IObservable<T> WatchProperty<T>(string propertyName)
+        {
+            EnsureNotDisposed();
+            if (string.IsNullOrWhiteSpace(propertyName))
+            {
+                throw new ArgumentException("屬性名稱不可為空白。", nameof(propertyName));
+            }
+
+            MpvFormat format = MpvPropertyFormatResolver.Resolve<T>();
+            (string Name, MpvFormat Format) key = (propertyName, format);
+            lock (_propertyObservablesGate)
+            {
+                if (_propertyObservables.TryGetValue(key, out object? existing) && existing is MpvPropertyObservable<T> reused)
+                {
+                    return reused;
+                }
+
+                MpvPropertyObservable<T> created = new MpvPropertyObservable<T>(this, propertyName, format);
+                _propertyObservables[key] = created;
+                return created;
+            }
+        }
+
+        /// <summary>
         /// 啟用或停用指定的 libmpv 事件。
         /// </summary>
         /// <param name="eventId">要設定的 libmpv 事件識別碼。</param>
@@ -3259,6 +3383,13 @@ namespace MediaEmbedKit.Mpv
             _streamRegistrations.Clear();
             _wakeupAction = null;
             _wakeupCallback = null;
+            if (_loggerHandler != null)
+            {
+                LogMessageReceived -= _loggerHandler;
+                _loggerHandler = null;
+            }
+
+            _logger = null;
         }
 
         /// <summary>

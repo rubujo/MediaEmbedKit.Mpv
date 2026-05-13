@@ -36,9 +36,55 @@ namespace MediaEmbedKit.Mpv.Tests
             runner.Add("未知平台安裝不觸發下載", VerifyUnknownPlatformInstallAsync);
             runner.Add("Windows 執行階段播放器選項", VerifyWindowsRuntimePlayerOptions);
             runner.Add("MpvCapabilities 查詢與防呆", VerifyMpvCapabilities);
+            runner.Add("MpvMediaItem 建構 per-file options", VerifyMpvMediaItemBuildFileOptions);
 
             await runner.RunAsync().ConfigureAwait(false);
             return runner.FailedCount == 0 ? 0 : 1;
+        }
+
+        /// <summary>
+        /// 驗證 <see cref="MpvMediaItem.BuildFileOptions"/> 會正確產生 mpv per-file options 字典。
+        /// </summary>
+        /// <returns>代表測試流程的工作。</returns>
+        private static Task VerifyMpvMediaItemBuildFileOptions()
+        {
+            MpvMediaItem empty = new MpvMediaItem("https://example.com/stream");
+            IDictionary<string, string> emptyOptions = empty.BuildFileOptions();
+            AssertEx.Equal(0, emptyOptions.Count, "預設媒體項目不應產生任何 per-file 選項");
+
+            MpvMediaItem populated = new MpvMediaItem("https://example.com/stream")
+            {
+                StartTime = TimeSpan.FromSeconds(12.5),
+                EndTime = TimeSpan.FromMinutes(2),
+                YtdlpFormatPreset = MpvYtdlpFormatPreset.UpTo720p
+            };
+            populated.Headers["User-Agent"] = "Mozilla/5.0";
+            populated.Headers["Referer"] = "https://example.com/page";
+            populated.Options["hwdec"] = "auto-safe";
+
+            IDictionary<string, string> options = populated.BuildFileOptions();
+            AssertEx.Equal("12.5", options["start"], "起始時間應以秒數表示");
+            AssertEx.Equal("120", options["end"], "結束時間應以秒數表示");
+            AssertEx.Equal("auto-safe", options["hwdec"], "額外 mpv 選項應原樣套用");
+            AssertEx.Equal("bestvideo*[height<=720]+bestaudio/best[height<=720]", options["ytdl-format"], "yt-dlp preset 應展開為 selector");
+            AssertEx.True(options["http-header-fields"].Contains("User-Agent: Mozilla/5.0"), "HTTP 標頭應以 mpv 格式串接");
+            AssertEx.True(options["http-header-fields"].Contains("Referer: https://example.com/page"), "HTTP 標頭應包含全部欄位");
+
+            MpvMediaItem customFormat = new MpvMediaItem("file.mp4")
+            {
+                YtdlpFormat = "bestvideo+bestaudio"
+            };
+            AssertEx.Equal("bestvideo+bestaudio", customFormat.BuildFileOptions()["ytdl-format"], "顯式 yt-dlp 格式優先於 preset");
+
+            AssertEx.Throws<ArgumentException>(
+                delegate
+                {
+                    MpvMediaItem invalid = new MpvMediaItem(" ");
+                    _ = invalid;
+                },
+                "媒體來源為空白應被拒絕");
+
+            return Task.CompletedTask;
         }
 
         /// <summary>
