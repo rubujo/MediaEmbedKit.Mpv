@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -39,16 +40,64 @@ namespace MediaEmbedKit.Mpv.Downloads
             options = options ?? new MpvWindowsBuildDownloadOptions();
             Directory.CreateDirectory(downloadDirectory);
 
-            Uri defaultApiUri = GetReleaseApiUri(options.Provider);
-            Uri apiUri = options.ReleaseApiUriOverride ?? defaultApiUri;
+            List<MpvWindowsBuildProvider> providerSequence = BuildProviderSequence(options);
+            List<Exception> failures = new List<Exception>();
+            for (int providerIndex = 0; providerIndex < providerSequence.Count; providerIndex++)
+            {
+                MpvWindowsBuildProvider candidateProvider = providerSequence[providerIndex];
+                cancellationToken.ThrowIfCancellationRequested();
+                try
+                {
+                    return await DownloadLatestLibMpvArchiveForProviderAsync(
+                        downloadDirectory,
+                        options,
+                        candidateProvider,
+                        cancellationToken).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch (Exception exception)
+                {
+                    failures.Add(new InvalidOperationException(candidateProvider + " 下載失敗：" + exception.Message, exception));
+                }
+            }
+
+            if (failures.Count == 1)
+            {
+                throw failures[0];
+            }
+
+            throw new AggregateException("所有 Windows libmpv 來源都下載失敗。", failures);
+        }
+
+        /// <summary>
+        /// 從指定 provider 下載最新 Windows libmpv 壓縮檔。
+        /// </summary>
+        /// <param name="downloadDirectory">壓縮檔要下載到的資料夾。</param>
+        /// <param name="options">Windows libmpv 建置下載選項。</param>
+        /// <param name="provider">要嘗試的 provider。</param>
+        /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
+        /// <returns>下載結果。</returns>
+        private static async Task<MpvWindowsBuildDownloadResult> DownloadLatestLibMpvArchiveForProviderAsync(
+            string downloadDirectory,
+            MpvWindowsBuildDownloadOptions options,
+            MpvWindowsBuildProvider provider,
+            CancellationToken cancellationToken)
+        {
+            Uri defaultApiUri = GetReleaseApiUri(provider);
+            Uri apiUri = provider == options.Provider && options.ReleaseApiUriOverride != null
+                ? options.ReleaseApiUriOverride
+                : defaultApiUri;
             GitHubRelease release = await GetLatestReleaseAsync(options, apiUri, cancellationToken).ConfigureAwait(false);
             GitHubReleaseAsset asset = SelectLibMpvAsset(release, options);
             DownloadUtility.ValidateLockedGitHubSource(
                 apiUri,
                 defaultApiUri,
                 asset.BrowserDownloadUrl,
-                GetRepositoryOwner(options.Provider),
-                GetRepositoryName(options.Provider),
+                GetRepositoryOwner(provider),
+                GetRepositoryName(provider),
                 options.LockReleaseSource);
 
             string archivePath = Path.Combine(downloadDirectory, asset.Name);
@@ -72,7 +121,7 @@ namespace MediaEmbedKit.Mpv.Downloads
                 asset.Name);
 
             return new MpvWindowsBuildDownloadResult(
-                options.Provider,
+                provider,
                 release.TagName,
                 asset.Name,
                 new Uri(asset.BrowserDownloadUrl),
@@ -80,6 +129,25 @@ namespace MediaEmbedKit.Mpv.Downloads
                 asset.Digest,
                 null,
                 null);
+        }
+
+        /// <summary>
+        /// 串接主 provider 與 fallback provider 為去重後的有序嘗試清單。
+        /// </summary>
+        /// <param name="options">Windows libmpv 建置下載選項。</param>
+        /// <returns>去重後的 provider 嘗試清單。</returns>
+        private static List<MpvWindowsBuildProvider> BuildProviderSequence(MpvWindowsBuildDownloadOptions options)
+        {
+            List<MpvWindowsBuildProvider> sequence = new List<MpvWindowsBuildProvider> { options.Provider };
+            foreach (MpvWindowsBuildProvider candidate in options.ProviderFallbackOrder)
+            {
+                if (!sequence.Contains(candidate))
+                {
+                    sequence.Add(candidate);
+                }
+            }
+
+            return sequence;
         }
 
         /// <summary>

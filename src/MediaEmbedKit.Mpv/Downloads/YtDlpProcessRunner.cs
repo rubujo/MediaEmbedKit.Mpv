@@ -128,6 +128,37 @@ namespace MediaEmbedKit.Mpv.Downloads
         }
 
         /// <summary>
+        /// 以 <see cref="IAsyncEnumerable{T}"/> 串流執行 yt-dlp。
+        /// </summary>
+        /// <param name="arguments">要傳給 yt-dlp 的引數集合。</param>
+        /// <param name="cancellationToken">取消列舉的 token；取消時會嘗試終止處理序。</param>
+        /// <returns>逐行回傳 yt-dlp 的輸出事件。</returns>
+        public IAsyncEnumerable<ExternalToolOutputEventArgs> StreamAsync(
+            IEnumerable<string> arguments,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            return _runner.StreamAsync(arguments, cancellationToken);
+        }
+
+        /// <summary>
+        /// 以 <see cref="IAsyncEnumerable{T}"/> 串流取得指定媒體網址的格式清單。
+        /// </summary>
+        /// <param name="url">要分析的媒體網址。</param>
+        /// <param name="cancellationToken">取消列舉的 token。</param>
+        /// <returns>逐行回傳 yt-dlp 格式清單命令的輸出事件。</returns>
+        public IAsyncEnumerable<ExternalToolOutputEventArgs> StreamFormatsAsync(
+            string url,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                throw new ArgumentException("媒體網址不可為空白。", nameof(url));
+            }
+
+            return _runner.StreamAsync(new[] { "--no-warnings", "--list-formats", url }, cancellationToken);
+        }
+
+        /// <summary>
         /// 建立明確指定 Deno 執行階段路徑時使用的 yt-dlp 引數值。
         /// </summary>
         /// <param name="denoPath">Deno 可執行檔路徑。</param>

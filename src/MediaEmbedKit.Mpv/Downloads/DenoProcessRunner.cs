@@ -89,5 +89,29 @@ namespace MediaEmbedKit.Mpv.Downloads
         {
             return RunAsync(new[] { "--version" }, timeout, cancellationToken);
         }
+
+        /// <summary>
+        /// 以 <see cref="IAsyncEnumerable{T}"/> 串流執行 Deno。
+        /// </summary>
+        /// <param name="arguments">要傳給 Deno 的引數集合。</param>
+        /// <param name="cancellationToken">取消列舉的 token；取消時會嘗試終止處理序。</param>
+        /// <returns>逐行回傳 Deno 的輸出事件。</returns>
+        public IAsyncEnumerable<ExternalToolOutputEventArgs> StreamAsync(
+            IEnumerable<string> arguments,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            return _runner.StreamAsync(arguments, cancellationToken);
+        }
+
+        /// <summary>
+        /// 以 <see cref="IAsyncEnumerable{T}"/> 串流取得 Deno 版本資訊。
+        /// </summary>
+        /// <param name="cancellationToken">取消列舉的 token。</param>
+        /// <returns>逐行回傳 Deno 版本命令的輸出事件。</returns>
+        public IAsyncEnumerable<ExternalToolOutputEventArgs> StreamVersionAsync(
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            return _runner.StreamAsync(new[] { "--version" }, cancellationToken);
+        }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace MediaEmbedKit.Mpv.Downloads
 {
@@ -18,7 +19,18 @@ namespace MediaEmbedKit.Mpv.Downloads
             LicensePreference = MpvWindowsBuildLicensePreference.Any;
             OverwriteExisting = false;
             VerificationPolicy = MpvNativeAssetVerificationPolicy.BestEffort;
+            ProviderFallbackOrder = new List<MpvWindowsBuildProvider>();
         }
+
+        /// <summary>
+        /// 取得 <see cref="Provider"/> 失敗時的備援嘗試順序。
+        /// </summary>
+        /// <value>下載失敗時要依序嘗試的備援 provider 清單；預設為空，呼叫端可加入備援 provider。</value>
+        /// <remarks>
+        /// 集合不包含 <see cref="Provider"/> 本身（會先嘗試 <see cref="Provider"/> 再依序嘗試此清單）。
+        /// 集合中重複出現的 provider 與 <see cref="Provider"/> 相同的項目會自動跳過。
+        /// </remarks>
+        public IList<MpvWindowsBuildProvider> ProviderFallbackOrder { get; }
 
         /// <summary>
         /// 取得或設定 Windows libmpv 建置來源提供者。
