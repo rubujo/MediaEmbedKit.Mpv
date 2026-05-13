@@ -60,6 +60,7 @@ MediaEmbedKit.Mpv 提供 .NET libmpv 包裝器與 Windows 桌面 UI 控制項。
 - 已提供本機發佈前驗證、NuGet 套件內容檢查、乾淨 consumer 建置驗證、GUI consumer 實際播放驗證、第一階段壓力測試與長時間 GUI 播放壓力測試腳本。
 - Windows UI 控制項設計階段檢查清單已由 `docs/DESIGN_TIME_CHECKLIST.md` 維護。
 - 高階 API 已提供 `MpvAppBuilder`、`MpvMediaItem`、`MpvPlayer.LoadAsync`、`MpvPlayer.WatchProperty<T>`、`MpvCapabilities`、`IAsyncDisposable`、`Microsoft.Extensions.Logging.Abstractions` 整合、`MpvServiceCollectionExtensions.AddMpvPlayer` 與 `AddMpvPlayerFactory`。
+- 高階 encoding API 已提供 `MpvEncodingOptions` (fluent + `*-add` 加值)、`MpvVideoCodecPreset` / `MpvAudioCodecPreset`、`MpvEncoder.EncodeAsync` / `EncodeTwoPassAsync`（含進度回報與兩階段 SVT-AV1 / libx264 / libx265 / libvpx 支援）、`MpvAppBuilder.UseEncodingTo`。
 - Runtime helper 已提供 `MpvLibraryUpdateScheduler` 暫存／套用／回滾、`MpvRuntimeHealthCheck` 啟動健檢、`MpvLicenseAuditor` 授權稽核、provider fallback、`YtDlpProcessRunner` / `DenoProcessRunner` / `ExternalToolProcessRunner` 的 `IAsyncEnumerable` 串流輸出。
 - 高階 API 與 ergonomics 詳細指南由 `docs/HIGH_LEVEL_API.md` 維護。
 - 5 個 UI 框架控制項共通的 `Source` / `Position` / `Duration` / `Volume` / `IsPaused` / `IsMuted` / `PlaybackState` 綁定屬性與 `PlayCommand` / `PauseCommand` / `StopCommand` / `TogglePauseCommand` / `ToggleMuteCommand` 等 `ICommand` 詳細說明由 `docs/CONTROLS_API.md` 維護。

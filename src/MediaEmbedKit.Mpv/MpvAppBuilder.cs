@@ -183,6 +183,24 @@ public sealed class MpvAppBuilder
 
 
     /// <summary>
+    /// 將 mpv encoding mode 選項套用到 builder 產生的 <see cref="MpvPlayerOptions"/>。
+    /// 注意：encoding mode 會接管視訊與音訊輸出；通常與 <see cref="UseHardwareDecoding"/> 共用時需評估解碼路徑是否影響輸出品質。
+    /// </summary>
+    /// <param name="encodingOptions">已配置好的 encoding mode 選項。</param>
+    /// <returns>目前 builder。</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="encodingOptions"/> 為 <see langword="null"/> 時擲出。</exception>
+    public MpvAppBuilder UseEncodingTo(MpvEncodingOptions encodingOptions)
+    {
+        if (encodingOptions == null)
+        {
+            throw new ArgumentNullException(nameof(encodingOptions));
+        }
+
+        _optionConfigurators.Add(options => encodingOptions.ApplyTo(options));
+        return this;
+    }
+
+    /// <summary>
     /// 取得一個進一步調整 <see cref="MpvPlayerOptions"/> 的入口，用於 builder 未直接支援的選項。
     /// </summary>
     /// <param name="configure">要執行的設定動作。</param>

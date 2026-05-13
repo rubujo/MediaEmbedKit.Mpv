@@ -134,6 +134,19 @@ internal static class Program
         {
             return VerifyRuntimeHealthCheckProbeAsync(runtimeDirectory);
         });
+        runner.Add("MpvEncoder AAC 編碼輸出與進度", delegate
+        {
+            return VerifyEncodeAacAsync(runtimeDirectory);
+        });
+        runner.Add("MpvEncoder Opus 編碼輸出", delegate
+        {
+            return VerifyEncodeOpusAsync(runtimeDirectory);
+        });
+        runner.Add("MpvEncoder 取消編碼中途", delegate
+        {
+            return VerifyEncodeCancellationAsync(runtimeDirectory);
+        });
+        runner.Add("MpvEncoder codec preset 解析", VerifyEncoderPresetResolution);
 
         await runner.RunAsync().ConfigureAwait(false);
         return runner.FailedCount == 0 ? 0 : 1;
@@ -399,6 +412,199 @@ internal static class Program
         IntegrationAssert.True(report.CanLoadLibMpv, "libmpv 應可載入。");
         IntegrationAssert.True(report.CanInitializePlayer, "應可建立並初始化播放器。");
         IntegrationAssert.True(!string.IsNullOrWhiteSpace(report.ClientApiVersion), "應回報 client API 版本。");
+    }
+
+    /// <summary>
+    /// 建立 encoding 測試專用的 <see cref="MpvPlayerOptions"/>：不覆寫 vo/ao 以免阻斷 encoding 管線。
+    /// </summary>
+    /// <param name="runtimeDirectory">包含 libmpv 的執行階段資料夾。</param>
+    /// <returns>未鎖定 vo/ao 的播放器選項。</returns>
+    private static MpvPlayerOptions CreateEncodingPlayerOptions(string runtimeDirectory)
+    {
+        MpvPlayerOptions options = MpvRuntimeInstaller.CreatePlayerOptions(runtimeDirectory);
+        options.EnableYtdlp = false;
+        options.EnableOsc = false;
+        options.EnableKeyboardInput = false;
+        options.EnableDefaultInputBindings = false;
+        options.LogLevel = "warn";
+        options.InitialOptions["terminal"] = "no";
+        return options;
+    }
+
+    /// <summary>
+    /// 把測試用 WAV 寫到暫存路徑並回傳路徑。
+    /// </summary>
+    /// <param name="duration">WAV 長度。</param>
+    /// <returns>暫存 WAV 路徑。</returns>
+    private static string WriteTempWav(TimeSpan duration)
+    {
+        string path = Path.Combine(Path.GetTempPath(), "mediaembedkit-encode-" + Guid.NewGuid().ToString("N") + ".wav");
+        File.WriteAllBytes(path, WaveGenerator.CreateSineWave(duration));
+        return path;
+    }
+
+    /// <summary>
+    /// 嘗試刪除指定檔案；無法刪除時忽略例外狀況。
+    /// </summary>
+    /// <param name="path">要刪除的檔案路徑。</param>
+    private static void TryDeleteFile(string path)
+    {
+        try
+        {
+            if (File.Exists(path))
+            {
+                File.Delete(path);
+            }
+        }
+        catch (IOException)
+        {
+        }
+        catch (UnauthorizedAccessException)
+        {
+        }
+    }
+
+    /// <summary>
+    /// 驗證 <see cref="MpvEncoder.EncodeAsync"/> 可把 WAV 轉成 AAC m4a 並輸出進度。
+    /// </summary>
+    /// <param name="runtimeDirectory">包含 libmpv 的執行階段資料夾。</param>
+    /// <returns>代表測試流程的工作。</returns>
+    private static async Task VerifyEncodeAacAsync(string runtimeDirectory)
+    {
+        string inputPath = WriteTempWav(TimeSpan.FromSeconds(2));
+        string outputPath = Path.Combine(Path.GetTempPath(), "mediaembedkit-encode-" + Guid.NewGuid().ToString("N") + ".m4a");
+        try
+        {
+            MpvEncodingOptions options = new MpvEncodingOptions(outputPath)
+                .AsAudioOnly()
+                .WithAudioCodec(MpvAudioCodecPreset.Aac)
+                .WithAudioCodecOption("b", "128k");
+
+            List<MpvEncodingProgress> snapshots = new List<MpvEncodingProgress>();
+            Progress<MpvEncodingProgress> progress = new Progress<MpvEncodingProgress>(snapshot => snapshots.Add(snapshot));
+            MpvEncodingResult result = await MpvEncoder.EncodeAsync(
+                inputPath,
+                options,
+                CreateEncodingPlayerOptions(runtimeDirectory),
+                progress).ConfigureAwait(false);
+
+            IntegrationAssert.True(result.Success, "AAC 編碼應成功完成。EndReason=" + result.EndReason + " ErrorCode=" + result.ErrorCode);
+            IntegrationAssert.True(result.OutputBytes > 0, "輸出檔案位元組數應大於 0。");
+            IntegrationAssert.Equal(MpvEndFileReason.EndOfFile, result.EndReason, "結束原因應為 EndOfFile。");
+        }
+        finally
+        {
+            TryDeleteFile(inputPath);
+            TryDeleteFile(outputPath);
+        }
+    }
+
+    /// <summary>
+    /// 驗證 <see cref="MpvEncoder.EncodeAsync"/> 可把 WAV 轉成 Opus webm。
+    /// </summary>
+    /// <param name="runtimeDirectory">包含 libmpv 的執行階段資料夾。</param>
+    /// <returns>代表測試流程的工作。</returns>
+    private static async Task VerifyEncodeOpusAsync(string runtimeDirectory)
+    {
+        string inputPath = WriteTempWav(TimeSpan.FromSeconds(2));
+        string outputPath = Path.Combine(Path.GetTempPath(), "mediaembedkit-encode-" + Guid.NewGuid().ToString("N") + ".ogg");
+        try
+        {
+            MpvEncodingOptions options = new MpvEncodingOptions(outputPath)
+                .AsAudioOnly()
+                .AsContainer("ogg")
+                .WithAudioCodec(MpvAudioCodecPreset.Opus)
+                .WithAudioCodecOption("b", "96k");
+
+            MpvEncodingResult result = await MpvEncoder.EncodeAsync(
+                inputPath,
+                options,
+                CreateEncodingPlayerOptions(runtimeDirectory)).ConfigureAwait(false);
+
+            IntegrationAssert.True(result.Success,
+                "Opus 編碼應成功完成。EndReason=" + result.EndReason
+                + " ErrorCode=" + result.ErrorCode
+                + " OutputBytes=" + result.OutputBytes);
+            IntegrationAssert.True(result.OutputBytes > 0, "輸出檔案位元組數應大於 0。");
+        }
+        finally
+        {
+            TryDeleteFile(inputPath);
+            TryDeleteFile(outputPath);
+        }
+    }
+
+    /// <summary>
+    /// 驗證 <see cref="MpvEncoder.EncodeAsync"/> 在 <see cref="CancellationToken"/> 觸發後會以非成功結果返回。
+    /// </summary>
+    /// <param name="runtimeDirectory">包含 libmpv 的執行階段資料夾。</param>
+    /// <returns>代表測試流程的工作。</returns>
+    private static async Task VerifyEncodeCancellationAsync(string runtimeDirectory)
+    {
+        string inputPath = WriteTempWav(TimeSpan.FromSeconds(120));
+        string outputPath = Path.Combine(Path.GetTempPath(), "mediaembedkit-encode-" + Guid.NewGuid().ToString("N") + ".m4a");
+        try
+        {
+            MpvEncodingOptions options = new MpvEncodingOptions(outputPath)
+                .AsAudioOnly()
+                .WithAudioCodec(MpvAudioCodecPreset.Aac);
+
+            using (CancellationTokenSource cts = new CancellationTokenSource())
+            {
+                Progress<MpvEncodingProgress> progress = new Progress<MpvEncodingProgress>(snapshot =>
+                {
+                    if (snapshot.Position > TimeSpan.Zero)
+                    {
+                        cts.Cancel();
+                    }
+                });
+
+                MpvEncodingResult result = await MpvEncoder.EncodeAsync(
+                    inputPath,
+                    options,
+                    CreateEncodingPlayerOptions(runtimeDirectory),
+                    progress: progress,
+                    cancellationToken: cts.Token).ConfigureAwait(false);
+
+                IntegrationAssert.True(
+                    result.EndReason == MpvEndFileReason.Stop || result.EndReason == MpvEndFileReason.Quit || result.EndReason == MpvEndFileReason.Error,
+                    "取消後 EndReason 應為 Stop/Quit/Error；實際=" + result.EndReason);
+            }
+        }
+        finally
+        {
+            TryDeleteFile(inputPath);
+            TryDeleteFile(outputPath);
+        }
+    }
+
+    /// <summary>
+    /// 驗證 <see cref="MpvEncodingOptions.ResolveVideoCodecName"/> / <see cref="MpvEncodingOptions.ResolveAudioCodecName"/>
+    /// 對全部列舉值都有正確的 ffmpeg encoder 名稱對應，不會擲出。
+    /// </summary>
+    /// <returns>代表測試流程的工作。</returns>
+    private static Task VerifyEncoderPresetResolution()
+    {
+        IntegrationAssert.Equal("libsvtav1", MpvEncodingOptions.ResolveVideoCodecName(MpvVideoCodecPreset.Av1), "Av1 預設應解析為 libsvtav1。");
+        IntegrationAssert.Equal("libx264", MpvEncodingOptions.ResolveVideoCodecName(MpvVideoCodecPreset.H264), "H264 預設應解析為 libx264。");
+        IntegrationAssert.Equal("hevc_nvenc", MpvEncodingOptions.ResolveVideoCodecName(MpvVideoCodecPreset.H265Nvenc), "H265Nvenc 預設應解析為 hevc_nvenc。");
+        IntegrationAssert.Equal("aac", MpvEncodingOptions.ResolveAudioCodecName(MpvAudioCodecPreset.Aac), "Aac 預設應解析為 aac。");
+        IntegrationAssert.Equal("libopus", MpvEncodingOptions.ResolveAudioCodecName(MpvAudioCodecPreset.Opus), "Opus 預設應解析為 libopus。");
+        IntegrationAssert.Equal("libmp3lame", MpvEncodingOptions.ResolveAudioCodecName(MpvAudioCodecPreset.Mp3), "Mp3 預設應解析為 libmp3lame。");
+
+        foreach (MpvVideoCodecPreset preset in (MpvVideoCodecPreset[])Enum.GetValues(typeof(MpvVideoCodecPreset)))
+        {
+            string name = MpvEncodingOptions.ResolveVideoCodecName(preset);
+            IntegrationAssert.True(!string.IsNullOrWhiteSpace(name), "視訊預設 " + preset + " 必須有對應名稱。");
+        }
+
+        foreach (MpvAudioCodecPreset preset in (MpvAudioCodecPreset[])Enum.GetValues(typeof(MpvAudioCodecPreset)))
+        {
+            string name = MpvEncodingOptions.ResolveAudioCodecName(preset);
+            IntegrationAssert.True(!string.IsNullOrWhiteSpace(name), "音訊預設 " + preset + " 必須有對應名稱。");
+        }
+
+        return Task.CompletedTask;
     }
 
     /// <summary>

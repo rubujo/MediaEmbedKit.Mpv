@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Text;
 
 namespace MediaEmbedKit.Mpv;
 
@@ -9,6 +10,19 @@ namespace MediaEmbedKit.Mpv;
 /// </summary>
 public sealed class MpvEncodingOptions
 {
+    /// <summary>
+    /// 累積的 muxer (ofopts) 加值清單；於序列化階段與 <see cref="ContainerFormatOptions"/> 合併。
+    /// </summary>
+    private readonly List<KeyValuePair<string, string>> _muxerAddOptions = new List<KeyValuePair<string, string>>();
+    /// <summary>
+    /// 累積的視訊編碼器 (ovcopts) 加值清單；於序列化階段與 <see cref="VideoCodecOptions"/> 合併。
+    /// </summary>
+    private readonly List<KeyValuePair<string, string>> _videoCodecAddOptions = new List<KeyValuePair<string, string>>();
+    /// <summary>
+    /// 累積的音訊編碼器 (oacopts) 加值清單；於序列化階段與 <see cref="AudioCodecOptions"/> 合併。
+    /// </summary>
+    private readonly List<KeyValuePair<string, string>> _audioCodecAddOptions = new List<KeyValuePair<string, string>>();
+
     /// <summary>
     /// 初始化 <see cref="MpvEncodingOptions"/> 類別的新執行個體。
     /// </summary>
@@ -106,6 +120,45 @@ public sealed class MpvEncodingOptions
     }
 
     /// <summary>
+    /// 以 <see cref="MpvVideoCodecPreset"/> 指定輸出視訊編碼器，內部會解析為對應的 ffmpeg encoder 名稱。
+    /// </summary>
+    /// <param name="preset">視訊編碼器預設值。</param>
+    /// <returns>目前的 encoding mode 選項。</returns>
+    public MpvEncodingOptions WithVideoCodec(MpvVideoCodecPreset preset)
+    {
+        return WithVideoCodec(ResolveVideoCodecName(preset));
+    }
+
+    /// <summary>
+    /// 將 <see cref="MpvVideoCodecPreset"/> 解析為對應的 ffmpeg encoder 名稱。
+    /// </summary>
+    /// <param name="preset">視訊編碼器預設值。</param>
+    /// <returns>對應 mpv <c>ovc</c> 的編碼器名稱。</returns>
+    /// <exception cref="ArgumentOutOfRangeException">傳入未支援的列舉值時擲出。</exception>
+    public static string ResolveVideoCodecName(MpvVideoCodecPreset preset)
+    {
+        switch (preset)
+        {
+            case MpvVideoCodecPreset.H264: return "libx264";
+            case MpvVideoCodecPreset.H264Nvenc: return "h264_nvenc";
+            case MpvVideoCodecPreset.H264Qsv: return "h264_qsv";
+            case MpvVideoCodecPreset.H264Amf: return "h264_amf";
+            case MpvVideoCodecPreset.H265: return "libx265";
+            case MpvVideoCodecPreset.H265Nvenc: return "hevc_nvenc";
+            case MpvVideoCodecPreset.H265Qsv: return "hevc_qsv";
+            case MpvVideoCodecPreset.H265Amf: return "hevc_amf";
+            case MpvVideoCodecPreset.Vp9: return "libvpx-vp9";
+            case MpvVideoCodecPreset.Av1: return "libsvtav1";
+            case MpvVideoCodecPreset.Av1Aom: return "libaom-av1";
+            case MpvVideoCodecPreset.Av1Nvenc: return "av1_nvenc";
+            case MpvVideoCodecPreset.Av1Qsv: return "av1_qsv";
+            case MpvVideoCodecPreset.Av1Amf: return "av1_amf";
+            default:
+                throw new ArgumentOutOfRangeException(nameof(preset), preset, "未支援的視訊編碼器預設值。");
+        }
+    }
+
+    /// <summary>
     /// 指定輸出音訊編碼器。
     /// </summary>
     /// <param name="codecName">mpv <c>oac</c> 選項使用的音訊編碼器名稱。</param>
@@ -138,6 +191,34 @@ public sealed class MpvEncodingOptions
 
         AudioCodecOptions = codecOptions;
         return this;
+    }
+
+    /// <summary>
+    /// 以 <see cref="MpvAudioCodecPreset"/> 指定輸出音訊編碼器，內部會解析為對應的 ffmpeg encoder 名稱。
+    /// </summary>
+    /// <param name="preset">音訊編碼器預設值。</param>
+    /// <returns>目前的 encoding mode 選項。</returns>
+    public MpvEncodingOptions WithAudioCodec(MpvAudioCodecPreset preset)
+    {
+        return WithAudioCodec(ResolveAudioCodecName(preset));
+    }
+
+    /// <summary>
+    /// 將 <see cref="MpvAudioCodecPreset"/> 解析為對應的 ffmpeg encoder 名稱。
+    /// </summary>
+    /// <param name="preset">音訊編碼器預設值。</param>
+    /// <returns>對應 mpv <c>oac</c> 的編碼器名稱。</returns>
+    /// <exception cref="ArgumentOutOfRangeException">傳入未支援的列舉值時擲出。</exception>
+    public static string ResolveAudioCodecName(MpvAudioCodecPreset preset)
+    {
+        switch (preset)
+        {
+            case MpvAudioCodecPreset.Aac: return "aac";
+            case MpvAudioCodecPreset.Opus: return "libopus";
+            case MpvAudioCodecPreset.Mp3: return "libmp3lame";
+            default:
+                throw new ArgumentOutOfRangeException(nameof(preset), preset, "未支援的音訊編碼器預設值。");
+        }
     }
 
     /// <summary>
@@ -192,6 +273,81 @@ public sealed class MpvEncodingOptions
 
         RemovedMetadata = metadata;
         return this;
+    }
+
+    /// <summary>
+    /// 將輸出設為僅音訊：套用 mpv <c>vid=no</c>，跳過視訊串流編碼。
+    /// </summary>
+    /// <returns>目前的 encoding mode 選項。</returns>
+    public MpvEncodingOptions AsAudioOnly()
+    {
+        return WithOption("vid", "no");
+    }
+
+    /// <summary>
+    /// 將輸出設為僅視訊：套用 mpv <c>aid=no</c>，跳過音訊串流編碼。
+    /// </summary>
+    /// <returns>目前的 encoding mode 選項。</returns>
+    public MpvEncodingOptions AsVideoOnly()
+    {
+        return WithOption("aid", "no");
+    }
+
+    /// <summary>
+    /// 追加單一 muxer 選項對應 mpv <c>ofopts-add</c>，最終會與 <see cref="ContainerFormatOptions"/> 合併輸出。
+    /// </summary>
+    /// <param name="name">libavformat muxer 選項名稱。</param>
+    /// <param name="value">libavformat muxer 選項值。</param>
+    /// <returns>目前的 encoding mode 選項。</returns>
+    public MpvEncodingOptions WithMuxerOption(string name, string value)
+    {
+        ValidateAdditiveOption(name, value);
+        _muxerAddOptions.Add(new KeyValuePair<string, string>(name, value));
+        return this;
+    }
+
+    /// <summary>
+    /// 追加單一視訊編碼器選項對應 mpv <c>ovcopts-add</c>，最終會與 <see cref="VideoCodecOptions"/> 合併輸出。
+    /// </summary>
+    /// <param name="name">libavcodec 視訊編碼器選項名稱。</param>
+    /// <param name="value">libavcodec 視訊編碼器選項值。</param>
+    /// <returns>目前的 encoding mode 選項。</returns>
+    public MpvEncodingOptions WithVideoCodecOption(string name, string value)
+    {
+        ValidateAdditiveOption(name, value);
+        _videoCodecAddOptions.Add(new KeyValuePair<string, string>(name, value));
+        return this;
+    }
+
+    /// <summary>
+    /// 追加單一音訊編碼器選項對應 mpv <c>oacopts-add</c>，最終會與 <see cref="AudioCodecOptions"/> 合併輸出。
+    /// </summary>
+    /// <param name="name">libavcodec 音訊編碼器選項名稱。</param>
+    /// <param name="value">libavcodec 音訊編碼器選項值。</param>
+    /// <returns>目前的 encoding mode 選項。</returns>
+    public MpvEncodingOptions WithAudioCodecOption(string name, string value)
+    {
+        ValidateAdditiveOption(name, value);
+        _audioCodecAddOptions.Add(new KeyValuePair<string, string>(name, value));
+        return this;
+    }
+
+    /// <summary>
+    /// 驗證附加選項的名稱與值不可為空白或 <see langword="null"/>。
+    /// </summary>
+    /// <param name="name">選項名稱。</param>
+    /// <param name="value">選項值。</param>
+    private static void ValidateAdditiveOption(string name, string value)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            throw new ArgumentException("選項名稱不可為空白。", nameof(name));
+        }
+
+        if (value == null)
+        {
+            throw new ArgumentNullException(nameof(value));
+        }
     }
 
     /// <summary>
@@ -347,11 +503,11 @@ public sealed class MpvEncodingOptions
         Dictionary<string, string> options = new Dictionary<string, string>(StringComparer.Ordinal);
         AddOption(options, "o", OutputPath);
         AddOptionalOption(options, "of", ContainerFormat);
-        AddOptionalOption(options, "ofopts", ContainerFormatOptions);
+        AddOptionalOption(options, "ofopts", CombineOptionString(ContainerFormatOptions, _muxerAddOptions));
         AddOptionalOption(options, "ovc", VideoCodec);
-        AddOptionalOption(options, "ovcopts", VideoCodecOptions);
+        AddOptionalOption(options, "ovcopts", CombineOptionString(VideoCodecOptions, _videoCodecAddOptions));
         AddOptionalOption(options, "oac", AudioCodec);
-        AddOptionalOption(options, "oacopts", AudioCodecOptions);
+        AddOptionalOption(options, "oacopts", CombineOptionString(AudioCodecOptions, _audioCodecAddOptions));
         AddOptionalOption(options, "orawts", CopyRawTimestamps);
         AddOptionalOption(options, "ocopy-metadata", CopyMetadata);
         AddOptionalOption(options, "oset-metadata", Metadata);
@@ -363,6 +519,41 @@ public sealed class MpvEncodingOptions
         }
 
         return options;
+    }
+
+    /// <summary>
+    /// 將原始 mpv 選項字串與累積的 <c>*-add</c> 對應項合併為單一 <c>k=v,k=v</c> 字串。
+    /// </summary>
+    /// <param name="raw">由 <c>WithContainerOptions</c> / <c>WithVideoCodec</c> 等設定的原始字串；可為 <see langword="null"/>。</param>
+    /// <param name="additions">透過 <c>WithMuxerOption</c> / <c>WithVideoCodecOption</c> / <c>WithAudioCodecOption</c> 累積的單一鍵值對。</param>
+    /// <returns>合併後的字串；無任何輸入時為 <see langword="null"/>。</returns>
+    private static string? CombineOptionString(string? raw, IReadOnlyList<KeyValuePair<string, string>> additions)
+    {
+        bool hasRaw = !string.IsNullOrWhiteSpace(raw);
+        if (!hasRaw && additions.Count == 0)
+        {
+            return null;
+        }
+
+        StringBuilder builder = new StringBuilder();
+        if (hasRaw)
+        {
+            builder.Append(raw);
+        }
+
+        for (int index = 0; index < additions.Count; index++)
+        {
+            if (builder.Length > 0)
+            {
+                builder.Append(',');
+            }
+
+            builder.Append(additions[index].Key);
+            builder.Append('=');
+            builder.Append(additions[index].Value);
+        }
+
+        return builder.ToString();
     }
 
     /// <summary>

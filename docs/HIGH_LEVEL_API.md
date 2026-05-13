@@ -158,6 +158,102 @@ await foreach (ExternalToolOutputEventArgs line in runner.StreamFormatsAsync(url
 }
 ```
 
+## Encoding（轉碼）高階 API
+
+mpv 的 encoding mode 允許把 player 當作一次性轉碼器：設定 `o=...` 等 `--o*` 選項後 `loadfile` 一次就會輸出檔案。本函式庫在此之上提供：
+
+- `MpvEncodingOptions`：fluent 設定容器、codec、metadata、`*-add` 變體與通用選項。
+- `MpvVideoCodecPreset` / `MpvAudioCodecPreset`：2026-05 Windows x64 build 實際內建編碼器的列舉預設。
+- `MpvEncoder.EncodeAsync`：管 player 生命週期、套用選項、`loadfile`、等 `EndFile`、回報 `IProgress<MpvEncodingProgress>`、回傳 `MpvEncodingResult`。
+- `MpvEncoder.EncodeTwoPassAsync`：為 libx264 / libx265 / libvpx-vp9 注入 `flags=+pass1` / `flags=+pass2` + `passlogfile`；對 `libsvtav1` 改用其原生 `pass=1` / `pass=2` 慣例。
+- `MpvAppBuilder.UseEncodingTo(...)`：在 builder 流程上直接套 encoding options。
+
+### 基線（2026-05）
+
+| 項目 | 版本 |
+| --- | --- |
+| mpv stable | `v0.41.0`（2025-12-21） |
+| FFmpeg（shinchiro / zhongfly build 內建） | `8.1.1 "Hoare"`（2026-05-04） + git master |
+| SVT-AV1 | `4.0`（2026-01-13） |
+
+可用編碼器（依 shinchiro 20260421 / zhongfly 2026-05-12 build）：
+
+- 視訊：`libx264` / `libx265` / `libvpx-vp9` / `libsvtav1` / `libaom-av1` / `*_nvenc` / `*_qsv` / `*_amf`
+- 音訊：`aac`（內建） / `libopus` / `libmp3lame`
+- 不含：`librav1e`、`libfdk_aac`（GPL build 未編入）
+
+### 單階段範例
+
+```csharp
+MpvEncodingOptions options = new MpvEncodingOptions(@"D:\out\clip.m4a")
+    .AsAudioOnly()
+    .WithAudioCodec(MpvAudioCodecPreset.Aac)
+    .WithAudioCodecOption("b", "192k");
+
+Progress<MpvEncodingProgress> progress = new Progress<MpvEncodingProgress>(p =>
+    Console.WriteLine($"{p.Percent:F1}%  pos={p.Position}  bytes={p.OutputBytes}"));
+
+MpvEncodingResult result = await MpvEncoder.EncodeAsync(
+    inputPath: @"D:\src\clip.wav",
+    encodingOptions: options,
+    playerOptions: MpvRuntimeInstaller.CreatePlayerOptions(runtimeDirectory),
+    progress: progress,
+    cancellationToken: cts.Token);
+
+if (!result.Success)
+{
+    Console.Error.WriteLine($"編碼失敗：reason={result.EndReason} err={result.ErrorCode}");
+}
+```
+
+`MpvEncodingProgress`：`Position` / `Duration` / `Percent` / `Elapsed` / `EstimatedRemaining` / `OutputBytes`。進度僅取自 `time-pos` / `percent-pos` / `duration` 三個 mpv 屬性；不採用 `video-bitrate` / `audio-bitrate`，因為它們是解碼端瞬時值而非 encoder 輸出。
+
+`MpvEncodingResult`：`Success` 僅在 `EndReason == EndOfFile` 且 `ErrorCode == Success` 且 `OutputBytes > 0` 時為 `true`。注意 mpv 對某些 corrupt input 會以 `EndOfFile` 完成，因此檢查 `ErrorCode` 與 `OutputBytes` 是必要的。
+
+### 兩階段範例（libx264）
+
+```csharp
+MpvEncodingOptions options = new MpvEncodingOptions(@"D:\out\clip.mp4")
+    .WithVideoCodec(MpvVideoCodecPreset.H264)
+    .WithVideoCodecOption("b", "4000k")
+    .WithAudioCodec(MpvAudioCodecPreset.Aac);
+
+MpvTwoPassEncodingResult result = await MpvEncoder.EncodeTwoPassAsync(
+    inputPath,
+    options,
+    playerOptions);
+```
+
+helper 會：
+1. 於 `Path.GetTempPath()/mediaembedkit-mpv-2pass-*` 建立暫存 `passlogfile`。
+2. 第一階段：輸出到 `NUL`（Windows）/`/dev/null`、`aid=no`、`ovcopts` 注入 `flags=+pass1,passlogfile=<temp>`。
+3. 第二階段：輸出到真正路徑、`flags=+pass2`。
+4. 完成或例外時清理整個 temp 資料夾。
+
+對 `MpvVideoCodecPreset.Av1`（解析為 `libsvtav1`）改用 `pass=1` / `pass=2` 對應 SVT-AV1 4.x 慣例，不再注入 `passlogfile`。
+
+### 整合到 `MpvAppBuilder`
+
+```csharp
+await using MpvPlayer encoder = await new MpvAppBuilder()
+    .UseRuntime(runtimeDirectory)
+    .UseEncodingTo(new MpvEncodingOptions(@"D:\out\clip.mp4")
+        .WithVideoCodec(MpvVideoCodecPreset.H264)
+        .WithAudioCodec(MpvAudioCodecPreset.Aac))
+    .BuildAsync();
+
+encoder.LoadFile(inputPath);
+// ...應用程式自行監聽 EndFile / Stop。
+```
+
+builder 路徑適合需要混合其他 `Use*` 設定（hwdec、yt-dlp 格式、logger）時使用；單純一次性轉碼仍建議直接走 `MpvEncoder.EncodeAsync`。
+
+### 常見陷阱
+
+- **不要** 設 `vo=null` / `ao=null` 給 encoding player：encoding profile 會自動把 `vo` / `ao` 設為 `lavc`，預先寫死 null 會阻斷編碼管線。
+- mpv 在 `EndFile` 之後才把最終 bytes flush 到檔案（觀察 log：`encoded ... bytes` 在 `Run command: quit` 之後才出現）；`MpvEncoder.EncodeAsync` 已先 dispose player 再讀檔案大小，自行包裝請仿照此順序。
+- 跳過音訊 / 視訊串流用 `vid=no` / `aid=no`（mpv API 名稱），不是 shell 的 `--no-audio` / `--no-video`（後者非 libmpv option API 接受的選項名稱）。
+
 ## 對照表
 
 | 舊式 | 新式 |
