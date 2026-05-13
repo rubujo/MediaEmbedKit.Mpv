@@ -128,7 +128,7 @@ public class MpvViewHandler : ViewHandler<MpvView, object>
             return;
         }
 
-        CopyPlayerOptions(platformView);
+        VirtualView.PlayerOptions.CopyTo(platformView.PlayerOptions);
         AttachPlatformWindow(platformView);
         UpdateOverlayContent();
         platformView.PlayerCreated += OnPlayerCreated;
@@ -290,43 +290,5 @@ public class MpvViewHandler : ViewHandler<MpvView, object>
         }
     }
 
-    /// <summary>
-    /// 將 MAUI 虛擬檢視的播放器選項複製到 Windows 平台控制項。
-    /// </summary>
-    /// <param name="platformView">要套用設定的 Windows 平台控制項。</param>
-    private void CopyPlayerOptions(MpvWinUiPlayer platformView)
-    {
-        platformView.PlayerOptions.MpvLibraryPath = VirtualView.PlayerOptions.MpvLibraryPath;
-        platformView.PlayerOptions.EnableDefaultInputBindings = VirtualView.PlayerOptions.EnableDefaultInputBindings;
-        platformView.PlayerOptions.EnableKeyboardInput = VirtualView.PlayerOptions.EnableKeyboardInput;
-        platformView.PlayerOptions.EnableOsc = VirtualView.PlayerOptions.EnableOsc;
-        platformView.PlayerOptions.EnableYtdlp = VirtualView.PlayerOptions.EnableYtdlp;
-        platformView.PlayerOptions.YtdlpPath = VirtualView.PlayerOptions.YtdlpPath;
-        platformView.PlayerOptions.YtdlpFormatPreset = VirtualView.PlayerOptions.YtdlpFormatPreset;
-        platformView.PlayerOptions.YtdlpFormat = VirtualView.PlayerOptions.YtdlpFormat;
-        platformView.PlayerOptions.ConfigDirectory = VirtualView.PlayerOptions.ConfigDirectory;
-        platformView.PlayerOptions.InputConfigFile = VirtualView.PlayerOptions.InputConfigFile;
-        platformView.PlayerOptions.LoadScripts = VirtualView.PlayerOptions.LoadScripts;
-        platformView.PlayerOptions.ToolDirectory = VirtualView.PlayerOptions.ToolDirectory;
-        platformView.PlayerOptions.LoadUserConfig = VirtualView.PlayerOptions.LoadUserConfig;
-        platformView.PlayerOptions.LogLevel = VirtualView.PlayerOptions.LogLevel;
-        platformView.PlayerOptions.ConfigFiles.Clear();
-        foreach (string configFile in VirtualView.PlayerOptions.ConfigFiles)
-        {
-            platformView.PlayerOptions.ConfigFiles.Add(configFile);
-        }
-
-        platformView.PlayerOptions.ScriptFiles.Clear();
-        foreach (string scriptFile in VirtualView.PlayerOptions.ScriptFiles)
-        {
-            platformView.PlayerOptions.ScriptFiles.Add(scriptFile);
-        }
-
-        platformView.PlayerOptions.InitialOptions.Clear();
-        foreach (System.Collections.Generic.KeyValuePair<string, string> option in VirtualView.PlayerOptions.InitialOptions)
-        {
-            platformView.PlayerOptions.InitialOptions[option.Key] = option.Value;
-        }
-    }
 #endif
 }

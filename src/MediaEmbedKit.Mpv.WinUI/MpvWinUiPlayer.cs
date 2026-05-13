@@ -283,7 +283,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
                 _hwndPlayer.PlayerCreated += BackendPlayerCreated;
             }
 
-            CopyPlayerOptions(PlayerOptions, _hwndPlayer.PlayerOptions);
+            PlayerOptions.CopyTo(_hwndPlayer.PlayerOptions);
             _hwndPlayer.OverlayContent = OverlayContent;
             _hwndPlayer.IsOverlayOpen = IsOverlayOpen;
             if (!Children.Contains(_hwndPlayer))
@@ -410,44 +410,4 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
         }
     }
 
-    /// <summary>
-    /// 將播放器建立選項複製到指定目標。
-    /// </summary>
-    /// <param name="source">來源播放器建立選項。</param>
-    /// <param name="target">目標播放器建立選項。</param>
-    private static void CopyPlayerOptions(MpvPlayerOptions source, MpvPlayerOptions target)
-    {
-        target.MpvLibraryPath = source.MpvLibraryPath;
-        target.EnableDefaultInputBindings = source.EnableDefaultInputBindings;
-        target.EnableKeyboardInput = source.EnableKeyboardInput;
-        target.EnableOsc = source.EnableOsc;
-        target.EnableYtdlp = source.EnableYtdlp;
-        target.YtdlpPath = source.YtdlpPath;
-        target.YtdlpFormatPreset = source.YtdlpFormatPreset;
-        target.YtdlpFormat = source.YtdlpFormat;
-        target.ConfigDirectory = source.ConfigDirectory;
-        target.InputConfigFile = source.InputConfigFile;
-        target.LoadScripts = source.LoadScripts;
-        target.ToolDirectory = source.ToolDirectory;
-        target.LoadUserConfig = source.LoadUserConfig;
-        target.LogLevel = source.LogLevel;
-
-        target.ConfigFiles.Clear();
-        foreach (string configFile in source.ConfigFiles)
-        {
-            target.ConfigFiles.Add(configFile);
-        }
-
-        target.ScriptFiles.Clear();
-        foreach (string scriptFile in source.ScriptFiles)
-        {
-            target.ScriptFiles.Add(scriptFile);
-        }
-
-        target.InitialOptions.Clear();
-        foreach (KeyValuePair<string, string> option in source.InitialOptions)
-        {
-            target.InitialOptions[option.Key] = option.Value;
-        }
-    }
 }

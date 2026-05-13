@@ -308,4 +308,61 @@ public sealed class MpvPlayerOptions
     /// <see cref="ILogger"/>。
     /// </remarks>
     public ILoggerFactory? LoggerFactory { get; set; }
+
+    /// <summary>
+    /// 將目前選項的所有欄位複製到指定目標。
+    /// </summary>
+    /// <param name="target">要套用設定的目標選項。</param>
+    /// <remarks>
+    /// 集合屬性（<see cref="ConfigFiles"/>、<see cref="ScriptFiles"/>、<see cref="InitialOptions"/>）
+    /// 採取目標先清空再依目前內容寫入的策略，確保目標與來源完全一致。
+    /// 此方法可在 UI 控制項把 framework 提供的可變 <see cref="MpvPlayerOptions"/>
+    /// 同步到 platform-specific 後端時使用。
+    /// </remarks>
+    public void CopyTo(MpvPlayerOptions target)
+    {
+        if (target == null)
+        {
+            throw new ArgumentNullException(nameof(target));
+        }
+
+        if (ReferenceEquals(this, target))
+        {
+            return;
+        }
+
+        target.MpvLibraryPath = MpvLibraryPath;
+        target.EnableDefaultInputBindings = EnableDefaultInputBindings;
+        target.EnableKeyboardInput = EnableKeyboardInput;
+        target.EnableOsc = EnableOsc;
+        target.EnableYtdlp = EnableYtdlp;
+        target.YtdlpPath = YtdlpPath;
+        target.YtdlpFormatPreset = YtdlpFormatPreset;
+        target.YtdlpFormat = YtdlpFormat;
+        target.ConfigDirectory = ConfigDirectory;
+        target.InputConfigFile = InputConfigFile;
+        target.LoadScripts = LoadScripts;
+        target.ToolDirectory = ToolDirectory;
+        target.LoadUserConfig = LoadUserConfig;
+        target.LogLevel = LogLevel;
+        target.LoggerFactory = LoggerFactory;
+
+        target.ConfigFiles.Clear();
+        foreach (string configFile in ConfigFiles)
+        {
+            target.ConfigFiles.Add(configFile);
+        }
+
+        target.ScriptFiles.Clear();
+        foreach (string scriptFile in ScriptFiles)
+        {
+            target.ScriptFiles.Add(scriptFile);
+        }
+
+        target.InitialOptions.Clear();
+        foreach (KeyValuePair<string, string> option in InitialOptions)
+        {
+            target.InitialOptions[option.Key] = option.Value;
+        }
+    }
 }

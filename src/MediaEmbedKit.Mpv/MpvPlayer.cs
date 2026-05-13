@@ -176,6 +176,49 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     }
 
     /// <summary>
+    /// 在聚合自 libmpv 事件的播放狀態變更時發生。
+    /// </summary>
+    public event EventHandler<MpvPlaybackState>? StateChanged;
+
+    /// <summary>
+    /// 取得目前由 libmpv 事件聚合而成的播放狀態。
+    /// </summary>
+    /// <value>目前 <see cref="MpvPlaybackState"/>；尚未初始化時為 <see cref="MpvPlaybackState.Idle"/>。</value>
+    public MpvPlaybackState State { get; private set; } = MpvPlaybackState.Idle;
+
+    /// <summary>
+    /// 將目前狀態轉換到新狀態並在改變時觸發 <see cref="StateChanged"/>。
+    /// </summary>
+    /// <param name="next">新的播放狀態。</param>
+    private void TransitionState(MpvPlaybackState next)
+    {
+        if (State == next)
+        {
+            return;
+        }
+
+        State = next;
+        EventHandler<MpvPlaybackState>? handler = StateChanged;
+        if (handler == null)
+        {
+            return;
+        }
+
+        Delegate[] invocationList = handler.GetInvocationList();
+        for (int index = 0; index < invocationList.Length; index++)
+        {
+            try
+            {
+                ((EventHandler<MpvPlaybackState>)invocationList[index]).Invoke(this, next);
+            }
+            catch
+            {
+                // 任一訂閱者錯誤不可中斷其他訂閱者，也不可中斷 libmpv 事件迴圈。
+            }
+        }
+    }
+
+    /// <summary>
     /// 在收到任何 libmpv 事件時發生。
     /// </summary>
     public event EventHandler<MpvEventArgs>? EventReceived;
@@ -4360,6 +4403,7 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
                 DispatchLogMessage(nativeEvent);
                 break;
             case MpvEventId.StartFile:
+                TransitionState(MpvPlaybackState.Loading);
                 DispatchStartFile(nativeEvent);
                 break;
             case MpvEventId.EndFile:
@@ -4372,9 +4416,15 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
                 DispatchHook(nativeEvent);
                 break;
             case MpvEventId.FileLoaded:
+                TransitionState(MpvPlaybackState.Playing);
                 DispatchManagedEvent(FileLoaded, args, nameof(FileLoaded));
                 break;
             case MpvEventId.Idle:
+                if (State != MpvPlaybackState.Ended && State != MpvPlaybackState.Error)
+                {
+                    TransitionState(MpvPlaybackState.Idle);
+                }
+
                 DispatchManagedEvent(Idle, args, nameof(Idle));
                 break;
             case MpvEventId.VideoReconfig:
@@ -4393,6 +4443,7 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
                 DispatchManagedEvent(QueueOverflow, args, nameof(QueueOverflow));
                 break;
             case MpvEventId.Shutdown:
+                TransitionState(MpvPlaybackState.Idle);
                 DispatchManagedEvent(Shutdown, args, nameof(Shutdown));
                 break;
         }
@@ -4623,6 +4674,7 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
         }
 
         MpvEventEndFile endFile = (MpvEventEndFile)Marshal.PtrToStructure(nativeEvent.Data, typeof(MpvEventEndFile))!;
+        TransitionState(endFile.Reason == MpvEndFileReason.Error ? MpvPlaybackState.Error : MpvPlaybackState.Ended);
         DispatchManagedEvent(EndFile, new MpvEndFileEventArgs(
             endFile.Reason,
             endFile.Error,

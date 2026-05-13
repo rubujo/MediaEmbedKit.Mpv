@@ -394,43 +394,7 @@ internal static class SampleRuntime
             throw new ArgumentNullException(nameof(source));
         }
 
-        if (target == null)
-        {
-            throw new ArgumentNullException(nameof(target));
-        }
-
-        target.MpvLibraryPath = source.MpvLibraryPath;
-        target.EnableDefaultInputBindings = source.EnableDefaultInputBindings;
-        target.EnableKeyboardInput = source.EnableKeyboardInput;
-        target.EnableOsc = source.EnableOsc;
-        target.EnableYtdlp = source.EnableYtdlp;
-        target.YtdlpPath = source.YtdlpPath;
-        target.YtdlpFormatPreset = source.YtdlpFormatPreset;
-        target.YtdlpFormat = source.YtdlpFormat;
-        target.ConfigDirectory = source.ConfigDirectory;
-        target.InputConfigFile = source.InputConfigFile;
-        target.LoadScripts = source.LoadScripts;
-        target.ToolDirectory = source.ToolDirectory;
-        target.LoadUserConfig = source.LoadUserConfig;
-        target.LogLevel = source.LogLevel;
-
-        target.ConfigFiles.Clear();
-        foreach (string configFile in source.ConfigFiles)
-        {
-            target.ConfigFiles.Add(configFile);
-        }
-
-        target.ScriptFiles.Clear();
-        foreach (string scriptFile in source.ScriptFiles)
-        {
-            target.ScriptFiles.Add(scriptFile);
-        }
-
-        target.InitialOptions.Clear();
-        foreach (KeyValuePair<string, string> option in source.InitialOptions)
-        {
-            target.InitialOptions[option.Key] = option.Value;
-        }
+        source.CopyTo(target);
     }
 
     /// <summary>

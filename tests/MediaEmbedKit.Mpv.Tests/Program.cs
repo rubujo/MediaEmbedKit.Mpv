@@ -46,6 +46,7 @@ internal static class Program
         runner.Add("ProviderFallbackOrder 預設為空集合", VerifyProviderFallbackOrderDefaults);
         runner.Add("MpvLicenseAuditor 分類授權狀態", VerifyMpvLicenseAuditorClassification);
         runner.Add("MpvMediaItem fluent helpers", VerifyMpvMediaItemFluentHelpers);
+        runner.Add("MpvPlayerOptions.CopyTo 全欄複製", VerifyMpvPlayerOptionsCopyTo);
 
         await runner.RunAsync().ConfigureAwait(false);
         return runner.FailedCount == 0 ? 0 : 1;
@@ -148,6 +149,51 @@ internal static class Program
         AssertEx.Throws<ArgumentException>(
             delegate { item.WithYtdlpFormat(" "); },
             "空白 yt-dlp selector 應被拒絕");
+
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// 驗證 <see cref="MpvPlayerOptions.CopyTo"/> 會把純值與集合欄位全部複製到目標。
+    /// </summary>
+    /// <returns>代表測試流程的工作。</returns>
+    private static Task VerifyMpvPlayerOptionsCopyTo()
+    {
+        MpvPlayerOptions source = new MpvPlayerOptions
+        {
+            MpvLibraryPath = "runtime/libmpv-2.dll",
+            EnableYtdlp = false,
+            YtdlpPath = "yt-dlp.exe",
+            YtdlpFormat = "bestvideo+bestaudio",
+            YtdlpFormatPreset = MpvYtdlpFormatPreset.Best,
+            ConfigDirectory = "runtime",
+            LoadUserConfig = true,
+            LogLevel = "info"
+        };
+        source.ConfigFiles.Add("mpv.conf");
+        source.ScriptFiles.Add("scripts/demo.lua");
+        source.InitialOptions["hwdec"] = "auto-safe";
+
+        MpvPlayerOptions target = new MpvPlayerOptions();
+        target.InitialOptions["legacy"] = "value";
+
+        source.CopyTo(target);
+
+        AssertEx.Equal("runtime/libmpv-2.dll", target.MpvLibraryPath ?? string.Empty, "MpvLibraryPath");
+        AssertEx.True(!target.EnableYtdlp, "EnableYtdlp");
+        AssertEx.Equal("yt-dlp.exe", target.YtdlpPath, "YtdlpPath");
+        AssertEx.Equal("bestvideo+bestaudio", target.YtdlpFormat ?? string.Empty, "YtdlpFormat");
+        AssertEx.Equal(MpvYtdlpFormatPreset.Best, target.YtdlpFormatPreset, "YtdlpFormatPreset");
+        AssertEx.Equal("info", target.LogLevel, "LogLevel");
+        AssertEx.Equal(1, target.ConfigFiles.Count, "ConfigFiles 數量");
+        AssertEx.Equal("mpv.conf", target.ConfigFiles[0], "ConfigFiles 內容");
+        AssertEx.Equal(1, target.ScriptFiles.Count, "ScriptFiles 數量");
+        AssertEx.Equal(1, target.InitialOptions.Count, "InitialOptions 應被清空後重填");
+        AssertEx.Equal("auto-safe", target.InitialOptions["hwdec"], "InitialOptions 內容");
+
+        AssertEx.Throws<ArgumentNullException>(
+            delegate { source.CopyTo(null!); },
+            "target 為 null 應被拒絕");
 
         return Task.CompletedTask;
     }

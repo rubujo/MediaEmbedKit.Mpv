@@ -14,7 +14,10 @@ namespace MediaEmbedKit.Mpv.WinUI;
 /// <summary>
 /// 提供 WinUI 3 用的高效能 HWND libmpv 播放控制項。
 /// </summary>
-public sealed class MpvWinUiHwndPlayer : Grid, IDisposable
+/// <remarks>
+/// 此型別為 <see cref="MpvWinUiPlayer"/> 的內部實作；應用程式不應直接使用。
+/// </remarks>
+internal sealed class MpvWinUiHwndPlayer : Grid, IDisposable
 {
     /// <summary>
     /// 識別 <see cref="OverlayContent"/> 相依性屬性。
