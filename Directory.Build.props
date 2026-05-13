@@ -6,6 +6,18 @@
     <Deterministic>true</Deterministic>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <AnalysisMode>Default</AnalysisMode>
+    <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+    <!--
+      抑制以下規則：
+      CA1711 — 型別名稱結尾不可為 'Stream' / 'Flags' 等。我方 P/Invoke 命名鏡像 mpv enum，
+              如 MpvScreenshotFlags 對應 mpv_screenshot_flags，刻意保留語意。
+      CA1720 — 識別項含類型名稱（Double / Int64 / String）。MpvFormat 列舉鏡像
+              MPV_FORMAT_* 命名，必須保留以對應 mpv header。
+    -->
+    <NoWarn>$(NoWarn);CA1711;CA1720</NoWarn>
     <Authors>MediaEmbedKit.Mpv contributors</Authors>
     <Company>MediaEmbedKit.Mpv contributors</Company>
     <Copyright>Copyright (c) 2026 MediaEmbedKit.Mpv contributors</Copyright>

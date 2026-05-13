@@ -38,6 +38,10 @@ internal static class Program
                 Run("Volume / IsPaused / IsMuted CLR setter round-trip", VerifyReadWriteRoundTrip);
                 Run("Source 設定觸發 OnSourceChanged 並更新 PendingSource", VerifySourceChangeFlow);
                 Run("Duration / PlaybackState 為 DirectProperty 唯讀 (外部 SetValue 不影響)", VerifyReadOnlyDirectProperties);
+                Run("Player 未附加時設定 DP 不擲例外（核心無 NRE 風險）", VerifyDpSetsTolerateNullPlayer);
+                Run("PlayerCreated 事件可訂閱／取消訂閱", VerifyPlayerCreatedSubscription);
+                Run("多個 StyledProperty 連續寫入保留最後值", VerifyMultiplePropertyWritesPreserveLastValue);
+                Run("Dispose 後重複呼叫不擲例外", VerifyDoubleDisposeIsSafe);
                 Console.WriteLine("Avalonia headless 測試完成：全部通過。");
             }
             catch (Exception ex)
@@ -141,6 +145,73 @@ internal static class Program
         // 由於 setter 為 private，外部無法寫入；初始值維持預設。
         Assert(player.Duration == TimeSpan.Zero, "Duration 應維持預設 TimeSpan.Zero");
         Assert(player.PlaybackState == MpvPlaybackState.Idle, "PlaybackState 應維持預設 Idle");
+    }
+
+    /// <summary>
+    /// 驗證在 player 未附加（無 libmpv）時對所有 DP 寫入皆不擲例外。
+    /// 對應 control 內 change handler 的 <c>_player == null</c> 守備路徑。
+    /// </summary>
+    private static void VerifyDpSetsTolerateNullPlayer()
+    {
+        MpvAvaloniaPlayer player = new MpvAvaloniaPlayer();
+        // 一次寫入全部可讀寫 DP，驗證 change handler 內 _player==null 守備正確運作。
+        player.Source = "https://example.invalid/file1.mp4";
+        player.Position = TimeSpan.FromSeconds(10);
+        player.Volume = 50.0;
+        player.IsPaused = true;
+        player.IsMuted = true;
+        // 再寫一次測「value didn't change」的早退路徑與「value changed」路徑混用。
+        player.Source = "https://example.invalid/file2.mp4";
+        player.Position = TimeSpan.FromSeconds(20);
+        player.Volume = 75.0;
+        player.IsPaused = false;
+        player.IsMuted = false;
+
+        // 仍應讀回最後值
+        Assert(player.Source == "https://example.invalid/file2.mp4", "Source 最後值不符");
+        Assert(player.Position == TimeSpan.FromSeconds(20), "Position 最後值不符");
+        Assert(player.Volume == 75.0, "Volume 最後值不符");
+        Assert(player.IsPaused == false, "IsPaused 最後值不符");
+        Assert(player.IsMuted == false, "IsMuted 最後值不符");
+    }
+
+    /// <summary>
+    /// 驗證 <see cref="MpvAvaloniaPlayer.PlayerCreated"/> 事件可訂閱與取消訂閱（不會 leak handler）。
+    /// </summary>
+    private static void VerifyPlayerCreatedSubscription()
+    {
+        MpvAvaloniaPlayer player = new MpvAvaloniaPlayer();
+        int callCount = 0;
+        EventHandler handler = (s, e) => callCount++;
+        player.PlayerCreated += handler;
+        player.PlayerCreated -= handler;
+        // 訂閱／取消後 callCount 應為 0；未實際附加 player 故事件本來就不會觸發。
+        Assert(callCount == 0, "尚未建立 player；callCount 應為 0");
+    }
+
+    /// <summary>
+    /// 驗證對同一 StyledProperty 連續寫入多個值後讀回最後一個值。
+    /// </summary>
+    private static void VerifyMultiplePropertyWritesPreserveLastValue()
+    {
+        MpvAvaloniaPlayer player = new MpvAvaloniaPlayer();
+        for (int index = 0; index < 50; index++)
+        {
+            player.Volume = (double)index;
+        }
+        Assert(player.Volume == 49.0, "連續寫入 50 次後 Volume 應為 49.0；實際=" + player.Volume);
+    }
+
+    /// <summary>
+    /// 驗證 <see cref="MpvAvaloniaPlayer.Dispose"/> 多次呼叫安全。
+    /// </summary>
+    private static void VerifyDoubleDisposeIsSafe()
+    {
+        MpvAvaloniaPlayer player = new MpvAvaloniaPlayer();
+        player.Dispose();
+        player.Dispose();
+        player.Dispose();
+        // 抵達此處表示三次 Dispose 都沒擲例外。
     }
 
     /// <summary>

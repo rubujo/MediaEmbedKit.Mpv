@@ -517,6 +517,87 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
+    /// 處理「Save as MP4」按鈕點選事件：以 <see cref="MpvEncoder.EncodeAsync"/> 把目前 URL 來源轉碼成 mp4 並回報進度。
+    /// </summary>
+    /// <param name="sender">引發事件的物件。</param>
+    /// <param name="e">事件資料。</param>
+    private async void SaveAsMp4Click(object sender, RoutedEventArgs e)
+    {
+        await RunFeatureAsync(() => EncodeCurrentSourceToMp4Async()).ConfigureAwait(true);
+    }
+
+    /// <summary>
+    /// 以 <see cref="MpvEncoder.EncodeAsync"/> 把 <see cref="UrlTextBox"/> 內容轉碼為 mp4。
+    /// 範例只取前 5 秒以避免長下載 / 編碼；輸出檔放在使用者 Videos 資料夾。
+    /// </summary>
+    /// <returns>代表編碼流程的工作。</returns>
+    private async Task EncodeCurrentSourceToMp4Async()
+    {
+        if (!_runtimeReady)
+        {
+            AppendEventLine(CreateLifecycleLine("Encode", "runtime 尚未就緒。"));
+            return;
+        }
+
+        string source = UrlTextBox.Text;
+        if (string.IsNullOrWhiteSpace(source))
+        {
+            AppendEventLine(CreateLifecycleLine("Encode", "請先在 URL 欄輸入來源。"));
+            return;
+        }
+
+        string videosFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyVideos);
+        if (string.IsNullOrWhiteSpace(videosFolder) || !System.IO.Directory.Exists(videosFolder))
+        {
+            videosFolder = System.IO.Path.GetTempPath();
+        }
+
+        string outputPath = System.IO.Path.Combine(
+            videosFolder,
+            "MediaEmbedKit-Encode-" + DateTime.Now.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture) + ".mp4");
+
+        AppendEventLine(CreateLifecycleLine("Encode", "輸出 → " + outputPath));
+
+        MpvEncodingOptions options = new MpvEncodingOptions(outputPath)
+            .WithStartTime(TimeSpan.Zero)
+            .WithLength(TimeSpan.FromSeconds(5))
+            .WithVideoCodec(MpvVideoCodecPreset.H264)
+            .WithVideoCodecOption("preset", "veryfast")
+            .WithVideoCodecOption("crf", "23")
+            .WithAudioCodec(MpvAudioCodecPreset.Aac)
+            .WithAudioCodecOption("b", "192k");
+
+        MpvPlayerOptions playerOptions = new MpvPlayerOptions();
+        SampleRuntime.CopyTo(SampleRuntime.PlayerOptions, playerOptions);
+        ApplySelectedYtdlpFormatToPlayerOptions(playerOptions);
+        playerOptions.LogLevel = "warn";
+
+        Progress<MpvEncodingProgress> progress = new Progress<MpvEncodingProgress>(snapshot =>
+        {
+            string percent = snapshot.Percent.HasValue
+                ? snapshot.Percent.Value.ToString("F1", CultureInfo.InvariantCulture)
+                : "--";
+            AppendEventLine(CreateLifecycleLine("Encode",
+                percent + "%  pos=" + snapshot.Position.ToString(@"mm\:ss") + "  bytes=" + snapshot.OutputBytes));
+        });
+
+        try
+        {
+            MpvEncodingResult result = await MpvEncoder.EncodeAsync(source, options, playerOptions, progress).ConfigureAwait(true);
+            string summary = "Success=" + result.Success
+                + " EndReason=" + result.EndReason
+                + " ErrorCode=" + result.ErrorCode
+                + " OutputBytes=" + result.OutputBytes
+                + " Elapsed=" + result.Elapsed.ToString(@"mm\:ss\.fff");
+            AppendEventLine(CreateLifecycleLine(result.Success ? "EncodeDone" : "EncodeFail", summary));
+        }
+        catch (Exception ex)
+        {
+            AppendEventLine(CreateLifecycleLine("EncodeError", ex.GetType().Name + ": " + ex.Message));
+        }
+    }
+
+    /// <summary>
     /// 處理 yt-dlp 更新按鈕點選事件。
     /// </summary>
     /// <param name="sender">引發事件的物件。</param>

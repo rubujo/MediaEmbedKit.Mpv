@@ -187,6 +187,26 @@ internal static class Program
         {
             return VerifyCancellationGracePeriodAsync(runtimeDirectory);
         });
+        runner.Add("MpvEncoder 硬體 encoder preset 可用性探測", delegate
+        {
+            return VerifyHardwareEncoderProbeAsync(runtimeDirectory);
+        });
+        runner.Add("MpvEncoder VP9 軟體 preset 編碼", delegate
+        {
+            return VerifyEncodeVp9Async(runtimeDirectory);
+        });
+        runner.Add("MpvEncoder libaom-av1 軟體 preset 編碼", delegate
+        {
+            return VerifyEncodeAv1AomAsync(runtimeDirectory);
+        });
+        runner.Add("MpvEncoder Concat 異格式輸入串接", delegate
+        {
+            return VerifyConcatenateMixedAsync(runtimeDirectory);
+        });
+        runner.Add("MpvEncoder 不存在輸入回傳合理錯誤", delegate
+        {
+            return VerifyEncodeMissingInputAsync(runtimeDirectory);
+        });
 
         await runner.RunAsync().ConfigureAwait(false);
         return runner.FailedCount == 0 ? 0 : 1;
@@ -1066,6 +1086,263 @@ internal static class Program
         finally
         {
             TryDeleteFile(inputPath);
+            TryDeleteFile(outputPath);
+        }
+    }
+
+    /// <summary>
+    /// 對 5 個硬體 encoder preset 做可用性探測：分別嘗試以該 preset 編碼 1 秒 lavfi 輸入，
+    /// 紀錄成功 / 失敗（缺驅動 / 缺硬體 / FFmpeg 沒編入皆視為「不可用」）。
+    /// 本測試不要求任何特定 preset 成功；只驗證我們的 helper 對全部 preset 不擲未處理例外。
+    /// </summary>
+    /// <param name="runtimeDirectory">執行階段資料夾。</param>
+    /// <returns>代表測試流程的工作。</returns>
+    private static async Task VerifyHardwareEncoderProbeAsync(string runtimeDirectory)
+    {
+        string? inputPath = await TryGenerateLavfiTestVideoAsync(runtimeDirectory, 1.0).ConfigureAwait(false);
+        if (inputPath == null)
+        {
+            Console.WriteLine("(略過：mpv av://lavfi 合成輸入不可用)");
+            return;
+        }
+
+        MpvVideoCodecPreset[] presets = new[]
+        {
+            MpvVideoCodecPreset.H264Nvenc,
+            MpvVideoCodecPreset.H264Qsv,
+            MpvVideoCodecPreset.H264Amf,
+            MpvVideoCodecPreset.H265Nvenc,
+            MpvVideoCodecPreset.Av1Nvenc
+        };
+
+        try
+        {
+            int available = 0;
+            int unavailable = 0;
+            foreach (MpvVideoCodecPreset preset in presets)
+            {
+                string outputPath = Path.Combine(Path.GetTempPath(), "mediaembedkit-hw-" + preset + "-" + Guid.NewGuid().ToString("N") + ".mp4");
+                try
+                {
+                    MpvEncodingOptions options = new MpvEncodingOptions(outputPath)
+                        .AsVideoOnly()
+                        .WithVideoCodec(preset);
+
+                    MpvEncodingResult result;
+                    try
+                    {
+                        result = await MpvEncoder.EncodeAsync(
+                            inputPath,
+                            options,
+                            CreateEncodingPlayerOptions(runtimeDirectory)).ConfigureAwait(false);
+                    }
+                    catch (MpvException)
+                    {
+                        result = null!;
+                    }
+
+                    if (result != null && result.Success)
+                    {
+                        available++;
+                        Console.WriteLine("[probe] " + preset + " = available (bytes=" + result.OutputBytes + ")");
+                    }
+                    else
+                    {
+                        unavailable++;
+                        Console.WriteLine("[probe] " + preset + " = unavailable");
+                    }
+                }
+                finally
+                {
+                    TryDeleteFile(outputPath);
+                }
+            }
+
+            Console.WriteLine("[probe] 硬體 encoder 可用 " + available + " / " + presets.Length + "（執行環境決定）");
+        }
+        finally
+        {
+            TryDeleteFile(inputPath);
+        }
+    }
+
+    /// <summary>
+    /// 驗證 <see cref="MpvVideoCodecPreset.Vp9"/> 軟體 preset 能完成編碼。
+    /// </summary>
+    /// <param name="runtimeDirectory">執行階段資料夾。</param>
+    /// <returns>代表測試流程的工作。</returns>
+    private static async Task VerifyEncodeVp9Async(string runtimeDirectory)
+    {
+        string? inputPath = await TryGenerateLavfiTestVideoAsync(runtimeDirectory, 1.0).ConfigureAwait(false);
+        if (inputPath == null)
+        {
+            Console.WriteLine("(略過：mpv av://lavfi 合成輸入不可用)");
+            return;
+        }
+
+        string outputPath = Path.Combine(Path.GetTempPath(), "mediaembedkit-vp9-" + Guid.NewGuid().ToString("N") + ".webm");
+        try
+        {
+            MpvEncodingOptions options = new MpvEncodingOptions(outputPath)
+                .AsVideoOnly()
+                .AsContainer("webm")
+                .WithVideoCodec(MpvVideoCodecPreset.Vp9)
+                .WithVideoCodecOption("deadline", "realtime")
+                .WithVideoCodecOption("cpu-used", "8");
+
+            MpvEncodingResult result = await MpvEncoder.EncodeAsync(
+                inputPath,
+                options,
+                CreateEncodingPlayerOptions(runtimeDirectory)).ConfigureAwait(false);
+
+            IntegrationAssert.True(result.Success,
+                "VP9 編碼應成功。EndReason=" + result.EndReason
+                + " ErrorCode=" + result.ErrorCode
+                + " OutputBytes=" + result.OutputBytes);
+            IntegrationAssert.True(result.OutputBytes > 0, "VP9 輸出位元組數應 > 0。");
+        }
+        finally
+        {
+            TryDeleteFile(inputPath);
+            TryDeleteFile(outputPath);
+        }
+    }
+
+    /// <summary>
+    /// 驗證 <see cref="MpvVideoCodecPreset.Av1Aom"/> 軟體 preset 能完成編碼。
+    /// </summary>
+    /// <param name="runtimeDirectory">執行階段資料夾。</param>
+    /// <returns>代表測試流程的工作。</returns>
+    private static async Task VerifyEncodeAv1AomAsync(string runtimeDirectory)
+    {
+        string? inputPath = await TryGenerateLavfiTestVideoAsync(runtimeDirectory, 1.0).ConfigureAwait(false);
+        if (inputPath == null)
+        {
+            Console.WriteLine("(略過：mpv av://lavfi 合成輸入不可用)");
+            return;
+        }
+
+        string outputPath = Path.Combine(Path.GetTempPath(), "mediaembedkit-av1aom-" + Guid.NewGuid().ToString("N") + ".mp4");
+        try
+        {
+            // libaom-av1 預設極慢；強制 cpu-used=8 + usage=realtime 控制時間在 30 秒內。
+            MpvEncodingOptions options = new MpvEncodingOptions(outputPath)
+                .AsVideoOnly()
+                .WithVideoCodec(MpvVideoCodecPreset.Av1Aom)
+                .WithVideoCodecOption("cpu-used", "8")
+                .WithVideoCodecOption("usage", "realtime");
+
+            MpvEncodingResult result = await MpvEncoder.EncodeAsync(
+                inputPath,
+                options,
+                CreateEncodingPlayerOptions(runtimeDirectory)).ConfigureAwait(false);
+
+            IntegrationAssert.True(result.Success,
+                "libaom-av1 編碼應成功。EndReason=" + result.EndReason
+                + " ErrorCode=" + result.ErrorCode
+                + " OutputBytes=" + result.OutputBytes);
+            IntegrationAssert.True(result.OutputBytes > 0, "libaom-av1 輸出位元組數應 > 0。");
+        }
+        finally
+        {
+            TryDeleteFile(inputPath);
+            TryDeleteFile(outputPath);
+        }
+    }
+
+    /// <summary>
+    /// 驗證 <see cref="MpvEncoder.ConcatenateAsync"/> 對「異格式輸入」(WAV + mp4 視訊抽離音軌) 仍可串接，
+    /// mpv EDL 解碼後一致重新編碼成單一輸出。
+    /// </summary>
+    /// <param name="runtimeDirectory">執行階段資料夾。</param>
+    /// <returns>代表測試流程的工作。</returns>
+    private static async Task VerifyConcatenateMixedAsync(string runtimeDirectory)
+    {
+        string wavPath = WriteTempWav(TimeSpan.FromSeconds(1));
+        string? videoPath = await TryGenerateLavfiTestVideoAsync(runtimeDirectory, 1.0).ConfigureAwait(false);
+        if (videoPath == null)
+        {
+            Console.WriteLine("(略過：mpv av://lavfi 合成輸入不可用)");
+            TryDeleteFile(wavPath);
+            return;
+        }
+
+        // 先把合成 mp4 解碼為 AAC m4a，確保 concat 兩端皆為音訊軌可拼接。
+        string mp4AudioPath = Path.Combine(Path.GetTempPath(), "mediaembedkit-mixedB-" + Guid.NewGuid().ToString("N") + ".m4a");
+        string outputPath = Path.Combine(Path.GetTempPath(), "mediaembedkit-concat-mixed-" + Guid.NewGuid().ToString("N") + ".m4a");
+        try
+        {
+            // mp4 (synthetic, video-only) 沒有音軌，直接 concat 會失敗；本測試的「異格式」指
+            // 一端為 WAV 容器、另一端為 m4a 容器，但都是 AAC 編碼。先把 WAV 轉成 m4a：
+            string wavAsAac = Path.Combine(Path.GetTempPath(), "mediaembedkit-mixedA-" + Guid.NewGuid().ToString("N") + ".m4a");
+            MpvEncodingResult prepA = await MpvEncoder.ExtractAudioAsync(
+                wavPath, wavAsAac, MpvAudioCodecPreset.Aac,
+                CreateEncodingPlayerOptions(runtimeDirectory)).ConfigureAwait(false);
+            IntegrationAssert.True(prepA.Success, "前置 WAV→m4a 應成功。");
+
+            // 用另一個 wav 直接送進 concat，模擬「WAV 容器 vs m4a 容器」混搭：
+            MpvEncodingOptions options = new MpvEncodingOptions(outputPath)
+                .AsAudioOnly()
+                .WithAudioCodec(MpvAudioCodecPreset.Aac);
+
+            MpvEncodingResult result = await MpvEncoder.ConcatenateAsync(
+                new[] { wavPath, wavAsAac },
+                options,
+                CreateEncodingPlayerOptions(runtimeDirectory)).ConfigureAwait(false);
+
+            IntegrationAssert.True(result.Success,
+                "Concat 異容器應成功。EndReason=" + result.EndReason
+                + " ErrorCode=" + result.ErrorCode
+                + " OutputBytes=" + result.OutputBytes);
+            IntegrationAssert.True(result.OutputBytes > 0, "輸出位元組數應 > 0。");
+            TryDeleteFile(wavAsAac);
+        }
+        finally
+        {
+            TryDeleteFile(wavPath);
+            TryDeleteFile(videoPath);
+            TryDeleteFile(mp4AudioPath);
+            TryDeleteFile(outputPath);
+        }
+    }
+
+    /// <summary>
+    /// 驗證 <see cref="MpvEncoder.EncodeAsync"/> 對「不存在的輸入路徑」回傳合理錯誤而非崩潰或永久卡住。
+    /// </summary>
+    /// <param name="runtimeDirectory">執行階段資料夾。</param>
+    /// <returns>代表測試流程的工作。</returns>
+    private static async Task VerifyEncodeMissingInputAsync(string runtimeDirectory)
+    {
+        string missingInput = Path.Combine(Path.GetTempPath(), "mediaembedkit-missing-" + Guid.NewGuid().ToString("N") + ".wav");
+        string outputPath = Path.Combine(Path.GetTempPath(), "mediaembedkit-missing-out-" + Guid.NewGuid().ToString("N") + ".m4a");
+        try
+        {
+            // 確保檔案真的不存在
+            if (File.Exists(missingInput))
+            {
+                File.Delete(missingInput);
+            }
+
+            MpvEncodingOptions options = new MpvEncodingOptions(outputPath)
+                .AsAudioOnly()
+                .WithAudioCodec(MpvAudioCodecPreset.Aac);
+
+            System.Diagnostics.Stopwatch stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            MpvEncodingResult result = await MpvEncoder.EncodeAsync(
+                missingInput,
+                options,
+                CreateEncodingPlayerOptions(runtimeDirectory)).ConfigureAwait(false);
+            stopwatch.Stop();
+
+            IntegrationAssert.True(stopwatch.Elapsed < TimeSpan.FromSeconds(30),
+                "對不存在輸入應於合理時間內回傳；實際=" + stopwatch.Elapsed);
+            IntegrationAssert.True(!result.Success,
+                "對不存在輸入不應回傳 Success=true；實際 Success=true。");
+            IntegrationAssert.True(result.EndReason == MpvEndFileReason.Error,
+                "對不存在輸入 EndReason 應為 Error；實際=" + result.EndReason);
+        }
+        finally
+        {
             TryDeleteFile(outputPath);
         }
     }

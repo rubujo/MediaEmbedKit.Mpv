@@ -75,9 +75,59 @@ internal static class Program
         {
             return VerifyLongRunMemoryLeakAsync(runtimeDirectory);
         });
+        runner.Add("WatchProperty 跨 thread 同時訂閱／取消", delegate
+        {
+            return VerifyWatchPropertyConcurrentAsync(runtimeDirectory);
+        });
 
         await runner.RunAsync().ConfigureAwait(false);
         return runner.FailedCount == 0 ? 0 : 1;
+    }
+
+    /// <summary>
+    /// 對同一 player 同屬性同時開多個訂閱／取消執行緒，驗證 WatchProperty 內部
+    /// 觀察者註冊機制在並發場景下不擲未處理例外、不卡死。
+    /// </summary>
+    /// <param name="runtimeDirectory">包含 libmpv 的執行階段資料夾。</param>
+    /// <returns>代表測試流程的工作。</returns>
+    private static async Task VerifyWatchPropertyConcurrentAsync(string runtimeDirectory)
+    {
+        using (MpvPlayer player = CreatePlayer(runtimeDirectory))
+        {
+            player.Initialize();
+
+            const int subscribeThreads = 4;
+            const int iterationsPerThread = 50;
+            using (CancellationTokenSource cts = new CancellationTokenSource(TimeSpan.FromSeconds(30)))
+            {
+                Task[] tasks = new Task[subscribeThreads];
+                for (int threadIndex = 0; threadIndex < subscribeThreads; threadIndex++)
+                {
+                    tasks[threadIndex] = Task.Run(() =>
+                    {
+                        for (int iteration = 0; iteration < iterationsPerThread; iteration++)
+                        {
+                            if (cts.IsCancellationRequested)
+                            {
+                                return;
+                            }
+
+                            IObservable<double> obs = player.WatchProperty<double>("time-pos");
+                            IDisposable subscription = obs.Subscribe(new NoopObserver<double>());
+                            // 立即取消模擬「短訂閱壽命」競爭情境
+                            subscription.Dispose();
+                        }
+                    }, cts.Token);
+                }
+
+                await Task.WhenAll(tasks).ConfigureAwait(false);
+            }
+
+            // 再做一個長壽訂閱確認 player 仍可用
+            IDisposable finalSub = player.WatchProperty<double>("time-pos").Subscribe(new NoopObserver<double>());
+            finalSub.Dispose();
+            StressAssert.True(player.IsInitialized, "並發測試後 player 仍應可用。");
+        }
     }
 
     /// <summary>
@@ -105,16 +155,39 @@ internal static class Program
         GC.Collect();
         long baselineBytes = GC.GetTotalMemory(forceFullCollection: true);
 
-        for (int iteration = 0; iteration < LongRunLeakIterations; iteration++)
+        // 寫一段測試 WAV 給 LoadFile + WatchProperty 路徑使用。
+        string wavPath = Path.Combine(Path.GetTempPath(), "leak-probe-" + Guid.NewGuid().ToString("N") + ".wav");
+        File.WriteAllBytes(wavPath, WaveGenerator.CreateSineWave(TimeSpan.FromMilliseconds(500)));
+        try
         {
-            using (MpvPlayer player = CreatePlayer(runtimeDirectory))
+            for (int iteration = 0; iteration < LongRunLeakIterations; iteration++)
             {
-                player.Initialize();
-                StressAssert.True(player.IsInitialized, "iteration " + iteration + " 應完成初始化。");
-                // 觸發若干屬性讀取，確保 watch / property 路徑也被覆蓋。
-                _ = player.GetPropertyString("mpv-version");
-                _ = player.GetPropertyDouble("volume");
+                using (MpvPlayer player = CreatePlayer(runtimeDirectory))
+                {
+                    player.Initialize();
+                    StressAssert.True(player.IsInitialized, "iteration " + iteration + " 應完成初始化。");
+
+                    // 觸發若干屬性讀取，確保 property 路徑也被覆蓋。
+                    _ = player.GetPropertyString("mpv-version");
+                    _ = player.GetPropertyDouble("volume");
+
+                    // 加 WatchProperty 訂閱 / 取消，涵蓋 IObservable 路徑。
+                    IDisposable timePosSub = player.WatchProperty<double>("time-pos").Subscribe(new NoopObserver<double>());
+                    IDisposable pauseSub = player.WatchProperty<bool>("pause").Subscribe(new NoopObserver<bool>());
+
+                    // LoadFile + 短暫播放 + Stop，覆蓋媒體生命週期路徑。
+                    player.LoadFile(wavPath);
+                    // 不 await 完整播放（會慢），只允許進入 file-loaded 狀態。
+                    player.Stop();
+
+                    timePosSub.Dispose();
+                    pauseSub.Dispose();
+                }
             }
+        }
+        finally
+        {
+            try { File.Delete(wavPath); } catch (IOException) { }
         }
 
         // 終點取樣。
@@ -712,6 +785,30 @@ internal sealed class CancellableBlockingStream : Stream, IMpvStreamCancellation
 /// <summary>
 /// 建立測試用 WAV 音訊。
 /// </summary>
+/// <summary>
+/// 不做任何事的 <see cref="IObserver{T}"/>；用於只需「訂閱／取消」生命週期、不關心值的測試。
+/// </summary>
+/// <typeparam name="T">屬性值型別。</typeparam>
+internal sealed class NoopObserver<T> : IObserver<T>
+{
+    /// <inheritdoc />
+    public void OnNext(T value)
+    {
+        _ = value;
+    }
+
+    /// <inheritdoc />
+    public void OnCompleted()
+    {
+    }
+
+    /// <inheritdoc />
+    public void OnError(Exception error)
+    {
+        _ = error;
+    }
+}
+
 internal static class WaveGenerator
 {
     /// <summary>
