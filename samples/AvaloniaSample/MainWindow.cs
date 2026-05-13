@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -61,13 +63,17 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
         /// </summary>
         private readonly TextBlock _statusTextBlock;
         /// <summary>
-        /// 顯示 libmpv 事件與範例生命週期的文字框。
+        /// 顯示 libmpv 事件與範例生命週期的清單。
         /// </summary>
-        private readonly TextBox _eventTextBox;
+        private readonly ItemsControl _eventList;
+        /// <summary>
+        /// 承載事件清單的可捲動容器。
+        /// </summary>
+        private readonly ScrollViewer _eventScrollViewer;
         /// <summary>
         /// 顯示在 UI 的事件文字列集合。
         /// </summary>
-        private readonly List<string> _eventLines = new List<string>();
+        private readonly ObservableCollection<string> _eventLines = new ObservableCollection<string>();
         /// <summary>
         /// 範例進階功能控制器。
         /// </summary>
@@ -116,7 +122,6 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
             MinWidth = SampleRuntime.SampleWindowWidth;
             MinHeight = SampleRuntime.SampleWindowHeight;
             WindowStartupLocation = WindowStartupLocation.CenterScreen;
-            Background = Brushes.Black;
 
             _sourceBox = new TextBox
             {
@@ -147,21 +152,22 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
                 Margin = new Thickness(0, 0, SampleRuntime.SampleControlSpacing, 4),
                 Padding = new Thickness(8, 0),
                 VerticalAlignment = VerticalAlignment.Center,
-                Foreground = new SolidColorBrush(Color.Parse("#E6E6E6")),
-                Background = new SolidColorBrush(Color.Parse("#222222")),
                 Text = "播放器尚未初始化",
                 TextTrimming = TextTrimming.CharacterEllipsis
             };
 
-            _eventTextBox = new TextBox
+            _eventList = new ItemsControl
             {
-                Background = new SolidColorBrush(Color.Parse("#161616")),
-                Foreground = new SolidColorBrush(Color.Parse("#E6E6E6")),
+                ItemsSource = _eventLines,
                 FontFamily = new FontFamily("Consolas"),
-                FontSize = 12,
-                IsReadOnly = true,
-                AcceptsReturn = true,
-                TextWrapping = TextWrapping.NoWrap
+                FontSize = 12
+            };
+
+            _eventScrollViewer = new ScrollViewer
+            {
+                HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                Content = _eventList
             };
 
             _eventLogDispatcher = new SampleEventLogDispatcher(AppendEventLines, ScheduleEventLogFlush);
@@ -304,17 +310,10 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
                     new TextBlock
                     {
                         Text = message,
-                        TextWrapping = TextWrapping.Wrap,
-                        Foreground = Brushes.Black
+                        TextWrapping = TextWrapping.Wrap
                     },
                     closeButton
                 }
-            };
-
-            Border border = new Border
-            {
-                Background = Brushes.White,
-                Child = panel
             };
 
             closeButton.Click += (sender, e) =>
@@ -326,7 +325,7 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
                 }
             };
 
-            return border;
+            return panel;
         }
 
         /// <summary>
@@ -492,7 +491,6 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
         {
             Grid root = new Grid
             {
-                Background = Brushes.Black,
                 RowDefinitions =
                 {
                     new RowDefinition(new GridLength(SampleRuntime.SampleToolbarHeight, GridUnitType.Pixel)),
@@ -511,8 +509,8 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
             root.Children.Add(featurePanel);
             Grid.SetRow(playerSurface, 2);
             root.Children.Add(playerSurface);
-            Grid.SetRow(_eventTextBox, 3);
-            root.Children.Add(_eventTextBox);
+            Grid.SetRow(_eventScrollViewer, 3);
+            root.Children.Add(_eventScrollViewer);
             return root;
         }
 
@@ -554,7 +552,6 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
         {
             WrapPanel panel = new WrapPanel
             {
-                Background = new SolidColorBrush(Color.Parse("#181818")),
                 Margin = new Thickness(0),
                 VerticalAlignment = VerticalAlignment.Stretch,
                 HorizontalAlignment = HorizontalAlignment.Stretch,
@@ -590,7 +587,6 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
         {
             Grid playerSurface = new Grid
             {
-                Background = Brushes.Black,
                 RowDefinitions =
                 {
                     new RowDefinition(new GridLength(SampleRuntime.SampleAirspaceComparisonHeight, GridUnitType.Pixel)),
@@ -614,7 +610,6 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
         {
             Grid header = new Grid
             {
-                Background = new SolidColorBrush(Color.Parse("#101010")),
                 ColumnDefinitions =
                 {
                     new ColumnDefinition(new GridLength(1, GridUnitType.Star)),
@@ -622,8 +617,8 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
                 }
             };
 
-            Border safeHeader = CreateHeaderBadge("Avalonia OpenGL render API：同層組合", "#DD0078D4", new Thickness(16, 6, 8, 6));
-            Border normalHeader = CreateHeaderBadge("一般 Avalonia Overlay：同層展示", "#DD5C2D91", new Thickness(8, 6, 16, 6));
+            Border safeHeader = CreateHeaderBadge("Avalonia OpenGL render API：同層組合", SampleTheme.AccentBadgeArgb, new Thickness(16, 6, 8, 6));
+            Border normalHeader = CreateHeaderBadge("Avalonia Overlay：同層覆蓋示範", SampleTheme.ContrastBadgeArgb, new Thickness(8, 6, 16, 6));
             header.Children.Add(safeHeader);
             Grid.SetColumn(normalHeader, 1);
             header.Children.Add(normalHeader);
@@ -641,8 +636,8 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
                 Background = Brushes.Black
             };
 
-            Border safeOverlay = CreateOverlayBadge("OpenGL render API 同層覆蓋", "#DD0078D4", HorizontalAlignment.Left);
-            Border normalOverlay = CreateOverlayBadge("一般 Avalonia Overlay 同層展示", "#DD5C2D91", HorizontalAlignment.Right);
+            Border safeOverlay = CreateOverlayBadge("OpenGL render API：同層覆蓋", SampleTheme.AccentBadgeArgb, HorizontalAlignment.Left);
+            Border normalOverlay = CreateOverlayBadge("Avalonia Overlay：同層覆蓋", SampleTheme.ContrastBadgeArgb, HorizontalAlignment.Right);
             videoSurface.Children.Add(_playerHostContainer);
             videoSurface.Children.Add(safeOverlay);
             videoSurface.Children.Add(normalOverlay);
@@ -653,10 +648,10 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
         /// 建立播放區中的覆蓋層標籤。
         /// </summary>
         /// <param name="text">要顯示的標籤文字。</param>
-        /// <param name="background">標籤背景色彩。</param>
+        /// <param name="backgroundArgb">標籤背景色彩 ARGB。</param>
         /// <param name="alignment">標籤水平對齊方式。</param>
         /// <returns>已套用固定尺寸與色彩的覆蓋層標籤。</returns>
-        private static Border CreateOverlayBadge(string text, string background, HorizontalAlignment alignment)
+        private static Border CreateOverlayBadge(string text, int backgroundArgb, HorizontalAlignment alignment)
         {
             return new Border
             {
@@ -666,11 +661,11 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
                 HorizontalAlignment = alignment,
                 VerticalAlignment = VerticalAlignment.Top,
                 CornerRadius = new CornerRadius(4),
-                Background = new SolidColorBrush(Color.Parse(background)),
+                Background = new SolidColorBrush(ThemeColor(backgroundArgb)),
                 Child = new TextBlock
                 {
                     Text = text,
-                    Foreground = Brushes.White,
+                    Foreground = new SolidColorBrush(ThemeColor(SampleTheme.BadgeForegroundArgb)),
                     FontWeight = FontWeight.SemiBold,
                     HorizontalAlignment = HorizontalAlignment.Center,
                     VerticalAlignment = VerticalAlignment.Center
@@ -682,20 +677,20 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
         /// 建立 OpenGL 同層組合展示標題列。
         /// </summary>
         /// <param name="text">要顯示的標題文字。</param>
-        /// <param name="background">標題背景色彩。</param>
+        /// <param name="backgroundArgb">標題背景色彩 ARGB。</param>
         /// <param name="margin">標題外距。</param>
         /// <returns>已套用固定色彩與邊界的標題。</returns>
-        private static Border CreateHeaderBadge(string text, string background, Thickness margin)
+        private static Border CreateHeaderBadge(string text, int backgroundArgb, Thickness margin)
         {
             return new Border
             {
                 Margin = margin,
                 CornerRadius = new CornerRadius(4),
-                Background = new SolidColorBrush(Color.Parse(background)),
+                Background = new SolidColorBrush(ThemeColor(backgroundArgb)),
                 Child = new TextBlock
                 {
                     Text = text,
-                    Foreground = Brushes.White,
+                    Foreground = new SolidColorBrush(ThemeColor(SampleTheme.BadgeForegroundArgb)),
                     FontWeight = FontWeight.SemiBold,
                     HorizontalAlignment = HorizontalAlignment.Center,
                     VerticalAlignment = VerticalAlignment.Center
@@ -808,20 +803,22 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
         }
 
         /// <summary>
-        /// 批次加入事件文字列到 UI 文字框。
+        /// 批次加入事件文字列到 UI 清單。
         /// </summary>
         /// <param name="lines">要加入事件清單的文字列集合。</param>
         private void AppendEventLines(IReadOnlyList<string> lines)
         {
-            _eventLines.AddRange(lines);
+            foreach (string line in lines)
+            {
+                _eventLines.Add(line);
+            }
+
             while (_eventLines.Count > EventLogLimit)
             {
                 _eventLines.RemoveAt(0);
             }
 
-            string text = string.Join(Environment.NewLine, _eventLines);
-            _eventTextBox.Text = text;
-            _eventTextBox.CaretIndex = text.Length;
+            _eventScrollViewer.ScrollToEnd();
         }
 
         /// <summary>
@@ -902,11 +899,6 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
             }
 
             comboBox.SelectedIndex = selectedIndex;
-            if (comboBox.SelectedItem is SampleYtdlpFormatChoice selectedChoice)
-            {
-                SampleFeatureController.ApplyYtdlpFormat(SampleRuntime.PlayerOptions, selectedChoice);
-            }
-
             comboBox.SelectionChanged += FormatComboBoxSelectionChanged;
             return comboBox;
         }
@@ -923,13 +915,19 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
                 Content = text,
                 MinWidth = SampleRuntime.SampleButtonWidth,
                 MinHeight = SampleRuntime.SampleButtonHeight,
-                Background = new SolidColorBrush(Color.Parse("#303030")),
-                BorderBrush = new SolidColorBrush(Color.Parse("#E0E0E0")),
-                BorderThickness = new Thickness(1),
-                Foreground = Brushes.White,
                 HorizontalContentAlignment = HorizontalAlignment.Center,
                 VerticalContentAlignment = VerticalAlignment.Center
             };
+        }
+
+        /// <summary>
+        /// 將 <see cref="SampleTheme"/> 的 ARGB 整數轉成 Avalonia 顏色。
+        /// </summary>
+        /// <param name="argb">要轉換的 ARGB 整數。</param>
+        /// <returns>對應的 Avalonia 顏色。</returns>
+        private static Color ThemeColor(int argb)
+        {
+            return Color.FromUInt32(unchecked((uint)argb));
         }
 
         /// <summary>
@@ -972,10 +970,6 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
                 Content = text,
                 Width = width,
                 Height = SampleRuntime.SampleButtonHeight,
-                Background = new SolidColorBrush(Color.Parse("#303030")),
-                BorderBrush = new SolidColorBrush(Color.Parse("#E0E0E0")),
-                BorderThickness = new Thickness(1),
-                Foreground = Brushes.White,
                 Margin = new Thickness(0, 4, SampleRuntime.SampleControlSpacing, 4),
                 HorizontalContentAlignment = HorizontalAlignment.Center,
                 VerticalContentAlignment = VerticalAlignment.Center

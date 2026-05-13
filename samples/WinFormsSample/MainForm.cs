@@ -126,16 +126,12 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
                 Height = SampleRuntime.SampleButtonHeight,
                 Text = "播放器尚未初始化",
                 TextAlign = ContentAlignment.MiddleLeft,
-                ForeColor = Color.Gainsboro,
-                BackColor = Color.FromArgb(28, 28, 28),
                 Margin = new Padding(0, 0, SampleRuntime.SampleControlSpacing, 0)
             };
 
             _eventListBox = new ListBox
             {
                 Dock = DockStyle.Fill,
-                BackColor = Color.FromArgb(22, 22, 22),
-                ForeColor = Color.Gainsboro,
                 Font = new Font(FontFamily.GenericMonospace, 8.25f),
                 HorizontalScrollbar = true,
                 IntegralHeight = false
@@ -440,7 +436,6 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
                 Dock = DockStyle.Top,
                 Height = SampleRuntime.SampleToolbarHeight,
                 Padding = new Padding(SampleRuntime.SampleControlPadding),
-                BackColor = Color.FromArgb(17, 17, 17),
                 ColumnCount = 4,
                 RowCount = 1
             };
@@ -466,7 +461,6 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
             {
                 Dock = DockStyle.Fill,
                 Padding = new Padding(SampleRuntime.SampleControlPadding, 4, SampleRuntime.SampleControlPadding, 4),
-                BackColor = Color.FromArgb(18, 18, 18),
                 WrapContents = true,
                 AutoScroll = false
             };
@@ -521,14 +515,13 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
             TableLayoutPanel panel = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
-                BackColor = Color.FromArgb(16, 16, 16),
                 ColumnCount = 2,
                 RowCount = 1
             };
             panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
             panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
-            panel.Controls.Add(CreateHeaderBadge("WinForms HWND 播放區：控制項同層展示", Color.FromArgb(0, 120, 212), new Padding(16, 6, 8, 6)), 0, 0);
-            panel.Controls.Add(CreateHeaderBadge("WinForms Z-order 對照：一般 Label 覆蓋", Color.FromArgb(92, 45, 145), new Padding(8, 6, 16, 6)), 1, 0);
+            panel.Controls.Add(CreateHeaderBadge("WinForms HWND 播放區：控制項同層展示", ThemeColor(SampleTheme.AccentBadgeOpaqueArgb), new Padding(16, 6, 8, 6)), 0, 0);
+            panel.Controls.Add(CreateHeaderBadge("WinForms Z-order 對照：一般 Label 覆蓋", ThemeColor(SampleTheme.ContrastBadgeOpaqueArgb), new Padding(8, 6, 16, 6)), 1, 0);
             return panel;
         }
 
@@ -549,7 +542,7 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
                 AutoSize = false,
                 Text = "WinForms HWND 控制項覆蓋",
                 TextAlign = ContentAlignment.MiddleCenter,
-                BackColor = Color.FromArgb(0, 120, 212),
+                BackColor = ThemeColor(SampleTheme.AccentBadgeOpaqueArgb),
                 ForeColor = Color.White,
                 Width = SampleRuntime.SampleOverlayBadgeWidth,
                 Height = SampleRuntime.SampleOverlayBadgeHeight,
@@ -562,7 +555,7 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
                 AutoSize = false,
                 Text = "WinForms Label Z-order 對照",
                 TextAlign = ContentAlignment.MiddleCenter,
-                BackColor = Color.FromArgb(92, 45, 145),
+                BackColor = ThemeColor(SampleTheme.ContrastBadgeOpaqueArgb),
                 ForeColor = Color.White,
                 Width = SampleRuntime.SampleOverlayBadgeWidth,
                 Height = SampleRuntime.SampleOverlayBadgeHeight,
@@ -962,24 +955,27 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms
         /// <param name="button">要套用外觀的按鈕。</param>
         private static void ApplyButtonStyle(Button button)
         {
-            button.UseVisualStyleBackColor = false;
-            button.FlatStyle = FlatStyle.Flat;
-            button.BackColor = Color.FromArgb(48, 48, 48);
-            button.ForeColor = Color.White;
-            button.FlatAppearance.BorderColor = Color.FromArgb(224, 224, 224);
-            button.FlatAppearance.BorderSize = 1;
+            button.UseVisualStyleBackColor = true;
         }
 
         /// <summary>
-        /// 設定按鈕可用狀態並維持深色介面的可讀性。
+        /// 設定按鈕可用狀態。
         /// </summary>
         /// <param name="button">要設定的按鈕。</param>
         /// <param name="enabled">按鈕可操作時為 <see langword="true"/>。</param>
         private static void SetButtonEnabled(Button button, bool enabled)
         {
             button.Enabled = enabled;
-            button.BackColor = enabled ? Color.FromArgb(48, 48, 48) : Color.FromArgb(96, 96, 96);
-            button.ForeColor = Color.White;
+        }
+
+        /// <summary>
+        /// 將 <see cref="SampleTheme"/> 的 ARGB 整數轉成 WinForms 顏色物件。
+        /// </summary>
+        /// <param name="argb">要轉換的 ARGB 整數。</param>
+        /// <returns>對應的 WinForms 顏色物件。</returns>
+        private static Color ThemeColor(int argb)
+        {
+            return Color.FromArgb(argb);
         }
     }
 }

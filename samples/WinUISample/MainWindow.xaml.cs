@@ -78,7 +78,6 @@ namespace MediaEmbedKit.Mpv.Samples.WinUI
         public MainWindow()
         {
             InitializeComponent();
-            ApplyButtonStyles();
             ResizeWindow();
             EventList.ItemsSource = _eventLines;
             SourceBox.Text = SampleRuntime.PlaybackUrl;
@@ -190,7 +189,7 @@ namespace MediaEmbedKit.Mpv.Samples.WinUI
                 Width = SampleRuntime.SampleOverlayBadgeWidth,
                 Height = SampleRuntime.SampleOverlayBadgeHeight,
                 Margin = new Thickness(16),
-                Background = new SolidColorBrush(ColorHelper.FromArgb(221, 0, 120, 212)),
+                Background = new SolidColorBrush(ThemeColor(SampleTheme.AccentBadgeArgb)),
                 CornerRadius = new CornerRadius(4),
                 IsHitTestVisible = false
             };
@@ -198,7 +197,7 @@ namespace MediaEmbedKit.Mpv.Samples.WinUI
             {
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center,
-                Foreground = new SolidColorBrush(Colors.White),
+                Foreground = new SolidColorBrush(ThemeColor(SampleTheme.BadgeForegroundArgb)),
                 FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
                 Text = "OverlayContent：AirSpace 安全覆蓋層"
             };
@@ -740,54 +739,16 @@ namespace MediaEmbedKit.Mpv.Samples.WinUI
             }
 
             FormatComboBox.SelectedIndex = selectedIndex;
-            if (FormatComboBox.SelectedItem is SampleYtdlpFormatChoice selectedChoice)
-            {
-                ApplySelectedYtdlpFormatToPlayerOptions(SampleRuntime.PlayerOptions);
-            }
         }
 
         /// <summary>
-        /// 對視窗內所有按鈕套用固定深色外觀。
+        /// 將 <see cref="SampleTheme"/> 的 ARGB 整數轉成 WinUI 顏色。
         /// </summary>
-        private void ApplyButtonStyles()
+        /// <param name="argb">要轉換的 ARGB 整數。</param>
+        /// <returns>對應的 WinUI 顏色。</returns>
+        private static Windows.UI.Color ThemeColor(int argb)
         {
-            DependencyObject? root = Content as DependencyObject;
-            if (root != null)
-            {
-                ApplyButtonStyles(root);
-            }
-        }
-
-        /// <summary>
-        /// 遞迴套用按鈕外觀。
-        /// </summary>
-        /// <param name="root">要掃描的視覺樹節點。</param>
-        private static void ApplyButtonStyles(DependencyObject root)
-        {
-            Button? button = root as Button;
-            if (button != null)
-            {
-                ApplyButtonStyle(button);
-            }
-
-            int childCount = VisualTreeHelper.GetChildrenCount(root);
-            for (int index = 0; index < childCount; index++)
-            {
-                DependencyObject child = VisualTreeHelper.GetChild(root, index);
-                ApplyButtonStyles(child);
-            }
-        }
-
-        /// <summary>
-        /// 套用單一按鈕的固定深色外觀。
-        /// </summary>
-        /// <param name="button">要套用外觀的按鈕。</param>
-        private static void ApplyButtonStyle(Button button)
-        {
-            button.Background = new SolidColorBrush(ColorHelper.FromArgb(255, 48, 48, 48));
-            button.BorderBrush = new SolidColorBrush(ColorHelper.FromArgb(255, 224, 224, 224));
-            button.BorderThickness = new Thickness(1);
-            button.Foreground = new SolidColorBrush(Colors.White);
+            return ColorHelper.FromArgb(SampleTheme.AlphaOf(argb), SampleTheme.RedOf(argb), SampleTheme.GreenOf(argb), SampleTheme.BlueOf(argb));
         }
 
         /// <summary>

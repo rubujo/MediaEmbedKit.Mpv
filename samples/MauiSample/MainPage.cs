@@ -119,7 +119,6 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
         public MainPage()
         {
             Title = "MediaEmbedKit.Mpv MAUI Sample";
-            BackgroundColor = Colors.Black;
 
             _sourceEntry = new Entry
             {
@@ -138,8 +137,6 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
                 WidthRequest = 380,
                 HeightRequest = SampleRuntime.SampleButtonHeight,
                 Padding = new Thickness(8, 0),
-                BackgroundColor = Color.FromArgb("#222222"),
-                TextColor = Color.FromArgb("#E6E6E6"),
                 VerticalTextAlignment = TextAlignment.Center,
                 LineBreakMode = LineBreakMode.TailTruncation
             };
@@ -157,8 +154,7 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
             _eventList = new CollectionView
             {
                 ItemsSource = _eventLines,
-                ItemTemplate = CreateEventTemplate(),
-                BackgroundColor = Color.FromArgb("#161616")
+                ItemTemplate = CreateEventTemplate()
             };
 
             _eventLogDispatcher = new SampleEventLogDispatcher(AppendEventLines, ScheduleEventLogFlush);
@@ -473,8 +469,7 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
                     new ColumnDefinition(new GridLength(SampleRuntime.SampleButtonWidth))
                 },
                 ColumnSpacing = SampleRuntime.SampleControlSpacing,
-                Padding = SampleRuntime.SampleControlPadding,
-                BackgroundColor = Color.FromArgb("#181818")
+                Padding = SampleRuntime.SampleControlPadding
             };
             controls.Add(_sourceEntry, 0, 0);
             controls.Add(_loadButton, 1, 0);
@@ -494,8 +489,7 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
                 Direction = FlexDirection.Row,
                 Wrap = FlexWrap.Wrap,
                 AlignItems = FlexAlignItems.Center,
-                Padding = new Thickness(SampleRuntime.SampleControlPadding, 4),
-                BackgroundColor = Color.FromArgb("#181818")
+                Padding = new Thickness(SampleRuntime.SampleControlPadding, 4)
             };
 
             panel.Children.Add(_formatPicker);
@@ -527,7 +521,6 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
         {
             Grid playerSurface = new Grid
             {
-                BackgroundColor = Colors.Black,
                 RowDefinitions =
                 {
                     new RowDefinition(new GridLength(SampleRuntime.SampleAirspaceComparisonHeight)),
@@ -548,7 +541,6 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
         {
             Grid header = new Grid
             {
-                BackgroundColor = Color.FromArgb("#101010"),
                 ColumnDefinitions =
                 {
                     new ColumnDefinition(GridLength.Star),
@@ -556,8 +548,8 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
                 }
             };
 
-            header.Add(CreateHeaderBadge("控制項 OverlayView：可覆蓋 HWND", Color.FromArgb("#DD0078D4"), new Thickness(16, 6, 8, 6)), 0, 0);
-            header.Add(CreateHeaderBadge("一般 MAUI Overlay 嘗試覆蓋同一個 HWND", Color.FromArgb("#DD5C2D91"), new Thickness(8, 6, 16, 6)), 1, 0);
+            header.Add(CreateHeaderBadge("控制項 OverlayView：可覆蓋 HWND", ThemeColor(SampleTheme.AccentBadgeArgb), new Thickness(16, 6, 8, 6)), 0, 0);
+            header.Add(CreateHeaderBadge("一般 MAUI Overlay 嘗試覆蓋同一個 HWND", ThemeColor(SampleTheme.ContrastBadgeArgb), new Thickness(8, 6, 16, 6)), 1, 0);
             return header;
         }
 
@@ -572,7 +564,7 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
                 BackgroundColor = Colors.Black
             };
 
-            Label normalOverlay = CreateOverlayBadge("一般 MAUI Overlay：AirSpace 對照", Color.FromArgb("#DD5C2D91"));
+            Label normalOverlay = CreateOverlayBadge("一般 MAUI Overlay：AirSpace 對照", ThemeColor(SampleTheme.ContrastBadgeArgb));
             normalOverlay.ZIndex = 10;
             surface.Add(_playerHostContainer, 0, 0);
             surface.Add(normalOverlay, 0, 0);
@@ -640,8 +632,8 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
                 WidthRequest = SampleRuntime.SampleOverlayBadgeWidth,
                 HeightRequest = SampleRuntime.SampleOverlayBadgeHeight,
                 Margin = new Thickness(16),
-                BackgroundColor = Color.FromArgb("#DD0078D4"),
-                TextColor = Colors.White,
+                BackgroundColor = ThemeColor(SampleTheme.AccentBadgeArgb),
+                TextColor = ThemeColor(SampleTheme.BadgeForegroundArgb),
                 FontAttributes = FontAttributes.Bold,
                 HorizontalOptions = LayoutOptions.Start,
                 VerticalOptions = LayoutOptions.Start,
@@ -852,9 +844,7 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
             {
                 WidthRequest = 132,
                 HeightRequest = SampleRuntime.SampleButtonHeight,
-                Margin = new Thickness(0, 0, SampleRuntime.SampleControlSpacing, 4),
-                TextColor = Color.FromArgb("#E6E6E6"),
-                BackgroundColor = Color.FromArgb("#222222")
+                Margin = new Thickness(0, 0, SampleRuntime.SampleControlSpacing, 4)
             };
 
             SampleYtdlpFormatChoice defaultChoice = SampleFeatureController.CreateDefaultYtdlpFormatChoice();
@@ -870,11 +860,6 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
             }
 
             picker.SelectedIndex = selectedIndex;
-            if (selectedIndex >= 0 && selectedIndex < _formatChoices.Count)
-            {
-                SampleFeatureController.ApplyYtdlpFormat(SampleRuntime.PlayerOptions, _formatChoices[selectedIndex]);
-            }
-
             picker.SelectedIndexChanged += FormatPickerSelectedIndexChanged;
             _runtimeControls.Add(picker);
             return picker;
@@ -892,7 +877,6 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
                 {
                     FontFamily = "Consolas",
                     FontSize = 12,
-                    TextColor = Color.FromArgb("#E6E6E6"),
                     Padding = new Thickness(4, 1)
                 };
                 label.SetBinding(Label.TextProperty, ".");
@@ -912,10 +896,6 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
                 Text = text,
                 WidthRequest = SampleRuntime.SampleButtonWidth,
                 HeightRequest = SampleRuntime.SampleButtonHeight,
-                BackgroundColor = Color.FromArgb("#303030"),
-                BorderColor = Color.FromArgb("#E0E0E0"),
-                BorderWidth = 1,
-                TextColor = Colors.White,
                 HorizontalOptions = LayoutOptions.Fill,
                 VerticalOptions = LayoutOptions.Center
             };
@@ -961,16 +941,22 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
                 Text = text,
                 WidthRequest = width,
                 HeightRequest = SampleRuntime.SampleButtonHeight,
-                BackgroundColor = Color.FromArgb("#303030"),
-                BorderColor = Color.FromArgb("#E0E0E0"),
-                BorderWidth = 1,
-                TextColor = Colors.White,
                 Margin = new Thickness(0, 0, SampleRuntime.SampleControlSpacing, 4),
                 HorizontalOptions = LayoutOptions.Start,
                 VerticalOptions = LayoutOptions.Center
             };
             _runtimeControls.Add(button);
             return button;
+        }
+
+        /// <summary>
+        /// 將 <see cref="SampleTheme"/> 的 ARGB 整數轉成 MAUI 顏色。
+        /// </summary>
+        /// <param name="argb">要轉換的 ARGB 整數。</param>
+        /// <returns>對應的 MAUI 顏色。</returns>
+        private static Color ThemeColor(int argb)
+        {
+            return Color.FromRgba(SampleTheme.RedOf(argb), SampleTheme.GreenOf(argb), SampleTheme.BlueOf(argb), SampleTheme.AlphaOf(argb));
         }
 
         /// <summary>

@@ -27,7 +27,7 @@ WinForms、WPF、WinUI 3 與 .NET MAUI Windows 使用 HWND `wid` 後端。Avalon
 
 `MpvAvaloniaPlayer` 使用 Avalonia `OpenGlControlBase` 與 libmpv OpenGL render API。它不是 HWND `wid` 嵌入後端。
 
-`MpvAvaloniaPlayer` 是建議使用的對外控制項名稱。`MpvAvaloniaOpenGlPlayer` 保留為明確後端類型，供需要直接表達 OpenGL render API 後端的程式碼使用。
+OpenGL render API 是目前 Avalonia 後端的實作細節，未額外暴露獨立類型；應用程式統一使用 `MpvAvaloniaPlayer`。
 
 ## WinUI 3
 

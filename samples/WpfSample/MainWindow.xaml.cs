@@ -35,10 +35,6 @@ namespace MediaEmbedKit.Mpv.Samples.Wpf
         /// </summary>
         private readonly SampleFeatureController _features;
         /// <summary>
-        /// 顯示在 UI 的事件文字列集合。
-        /// </summary>
-        private readonly List<string> _eventLines = new List<string>();
-        /// <summary>
         /// 背景讀取並批次套用狀態列文字的分派器。
         /// </summary>
         private readonly SampleStatusUpdateDispatcher _statusDispatcher;
@@ -209,7 +205,7 @@ namespace MediaEmbedKit.Mpv.Samples.Wpf
                 HorizontalAlignment = HorizontalAlignment.Left,
                 VerticalAlignment = VerticalAlignment.Top,
                 Margin = new Thickness(16),
-                Background = new SolidColorBrush(Color.FromArgb(221, 0, 120, 212)),
+                Background = new SolidColorBrush(ThemeColor(SampleTheme.AccentBadgeArgb)),
                 CornerRadius = new CornerRadius(4)
             };
             badge.Child = new TextBlock
@@ -222,6 +218,16 @@ namespace MediaEmbedKit.Mpv.Samples.Wpf
             };
             root.Children.Add(badge);
             return root;
+        }
+
+        /// <summary>
+        /// 將 <see cref="SampleTheme"/> 的 ARGB 整數轉成 WPF 顏色物件。
+        /// </summary>
+        /// <param name="argb">要轉換的 ARGB 整數。</param>
+        /// <returns>對應的 WPF 顏色物件。</returns>
+        private static Color ThemeColor(int argb)
+        {
+            return Color.FromArgb(SampleTheme.AlphaOf(argb), SampleTheme.RedOf(argb), SampleTheme.GreenOf(argb), SampleTheme.BlueOf(argb));
         }
 
         /// <summary>
@@ -637,20 +643,34 @@ namespace MediaEmbedKit.Mpv.Samples.Wpf
         }
 
         /// <summary>
-        /// 批次加入事件文字列到 UI 文字框。
+        /// 批次加入事件文字列到 UI 清單。
         /// </summary>
         /// <param name="lines">要加入事件清單的文字列集合。</param>
         private void AppendEventLines(IReadOnlyList<string> lines)
         {
-            _eventLines.AddRange(lines);
-            while (_eventLines.Count > EventLogLimit)
+            EventListBox.BeginInit();
+            try
             {
-                _eventLines.RemoveAt(0);
+                foreach (string line in lines)
+                {
+                    EventListBox.Items.Add(line);
+                }
+
+                while (EventListBox.Items.Count > EventLogLimit)
+                {
+                    EventListBox.Items.RemoveAt(0);
+                }
+            }
+            finally
+            {
+                EventListBox.EndInit();
             }
 
-            EventTextBox.Text = string.Join(Environment.NewLine, _eventLines);
-            EventTextBox.CaretIndex = EventTextBox.Text.Length;
-            EventTextBox.ScrollToEnd();
+            if (EventListBox.Items.Count > 0)
+            {
+                object lastItem = EventListBox.Items[EventListBox.Items.Count - 1]!;
+                EventListBox.ScrollIntoView(lastItem);
+            }
         }
 
         /// <summary>
@@ -729,10 +749,6 @@ namespace MediaEmbedKit.Mpv.Samples.Wpf
             }
 
             FormatComboBox.SelectedIndex = selectedIndex;
-            if (FormatComboBox.SelectedItem is SampleYtdlpFormatChoice selectedChoice)
-            {
-                ApplySelectedYtdlpFormatToPlayerOptions(SampleRuntime.PlayerOptions);
-            }
         }
     }
 }

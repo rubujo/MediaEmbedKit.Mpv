@@ -1,5 +1,6 @@
 ﻿using Microsoft.Maui.Controls;
 using System;
+using System.Threading;
 
 namespace MediaEmbedKit.Mpv.Samples.Maui
 {
@@ -22,8 +23,14 @@ namespace MediaEmbedKit.Mpv.Samples.Maui
                 Width = SampleRuntime.SampleWindowWidth,
                 Height = SampleRuntime.SampleWindowHeight
             };
+            int destroyed = 0;
             window.Destroying += delegate (object? sender, EventArgs e)
             {
+                if (Interlocked.Exchange(ref destroyed, 1) != 0)
+                {
+                    return;
+                }
+
                 page.Dispose();
             };
 

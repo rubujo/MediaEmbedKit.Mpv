@@ -1,6 +1,5 @@
 ﻿using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Styling;
 using Avalonia.Themes.Fluent;
 
 namespace MediaEmbedKit.Mpv.Samples.Avalonia
@@ -16,7 +15,6 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
         public override void Initialize()
         {
             Styles.Add(new FluentTheme());
-            RequestedThemeVariant = ThemeVariant.Dark;
         }
 
         /// <summary>
