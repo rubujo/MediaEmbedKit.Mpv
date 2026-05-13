@@ -24,13 +24,21 @@ namespace MediaEmbedKit.Mpv.Samples.ConsoleMinimal
                 Console.WriteLine("準備 Windows x64 runtime...");
                 MpvPlayerOptions options = await CreatePlayerOptionsAsync().ConfigureAwait(false);
 
-                using MpvPlayer player = new MpvPlayer(options);
+                await using MpvPlayer player = new MpvPlayer(options);
                 player.EventReceived += PlayerEventReceived;
                 player.LogMessageReceived += PlayerLogMessageReceived;
                 player.FileLoaded += PlayerFileLoaded;
                 player.Shutdown += PlayerShutdown;
 
-                player.Initialize();
+                await player.InitializeAsync().ConfigureAwait(false);
+                MpvCapabilities capabilities = player.GetCapabilities();
+                Console.WriteLine(
+                    "libmpv client API "
+                    + capabilities.ClientApiVersion.ToString()
+                    + "，protocols="
+                    + capabilities.Protocols.Count.ToString()
+                    + "，decoders="
+                    + capabilities.Decoders.Count.ToString());
                 Console.WriteLine("載入媒體：" + source);
                 player.LoadFile(source, MpvLoadFileMode.Replace);
 

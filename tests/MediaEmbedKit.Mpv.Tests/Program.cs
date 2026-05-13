@@ -35,9 +35,38 @@ namespace MediaEmbedKit.Mpv.Tests
             runner.Add("執行階段來源 catalog 收斂", VerifyRuntimeCatalogs);
             runner.Add("未知平台安裝不觸發下載", VerifyUnknownPlatformInstallAsync);
             runner.Add("Windows 執行階段播放器選項", VerifyWindowsRuntimePlayerOptions);
+            runner.Add("MpvCapabilities 查詢與防呆", VerifyMpvCapabilities);
 
             await runner.RunAsync().ConfigureAwait(false);
             return runner.FailedCount == 0 ? 0 : 1;
+        }
+
+        /// <summary>
+        /// 驗證 <see cref="MpvCapabilities"/> POCO 的查詢方法與防呆行為。
+        /// </summary>
+        /// <returns>代表測試流程的工作。</returns>
+        private static Task VerifyMpvCapabilities()
+        {
+            MpvCapabilities capabilities = new MpvCapabilities(
+                new Version(2, 5),
+                "mpv 0.41.0",
+                "--enable-libmpv --enable-vulkan",
+                new[] { "file", "http", "https", "ytdl" },
+                Array.Empty<MpvDecoderInfo>(),
+                new[] { "mp4", "matroska", "mpegts" });
+
+            AssertEx.Equal(new Version(2, 5), capabilities.ClientApiVersion, "client API 版本");
+            AssertEx.Equal("mpv 0.41.0", capabilities.MpvVersion, "mpv 版本字串");
+            AssertEx.Equal(4, capabilities.Protocols.Count, "通訊協定數量");
+            AssertEx.Equal(3, capabilities.Demuxers.Count, "demuxer 數量");
+            AssertEx.True(capabilities.SupportsProtocol("https"), "應支援 https 協定");
+            AssertEx.True(capabilities.SupportsProtocol("HTTPS"), "協定查詢應忽略大小寫");
+            AssertEx.True(!capabilities.SupportsProtocol("rtmp"), "未列入的協定應回報不支援");
+            AssertEx.True(!capabilities.SupportsProtocol(string.Empty), "空白協定應回報不支援");
+            AssertEx.True(capabilities.ContainsDemuxer("mp4"), "應包含 mp4 demuxer");
+            AssertEx.True(!capabilities.ContainsDemuxer("flv"), "未列入的 demuxer 應回報不存在");
+            AssertEx.True(!capabilities.ContainsDecoder("h264"), "空解碼器清單應回報不存在");
+            return Task.CompletedTask;
         }
 
         /// <summary>

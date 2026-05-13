@@ -15,7 +15,7 @@ namespace MediaEmbedKit.Mpv
     /// <summary>
     /// 封裝單一 libmpv 用戶端執行個體，並提供命令、屬性與事件 API。
     /// </summary>
-    public sealed class MpvPlayer : IDisposable
+    public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     {
         /// <summary>
         /// 保存 libmpv 用戶端的安全控制代碼。
@@ -393,6 +393,41 @@ namespace MediaEmbedKit.Mpv
         }
 
         /// <summary>
+        /// 取得目前 libmpv 用戶端可用功能的一次性快照。
+        /// </summary>
+        /// <returns>包含協定、解碼器、demuxer 與版本資訊的 <see cref="MpvCapabilities"/>。</returns>
+        public MpvCapabilities GetCapabilities()
+        {
+            EnsureNotDisposed();
+            uint rawVersion = ClientApiVersion();
+            Version clientApiVersion = new Version((int)((rawVersion >> 16) & 0xFFFF), (int)(rawVersion & 0xFFFF));
+            string mpvVersion = TryGetPropertyString("mpv-version");
+            string mpvConfiguration = TryGetPropertyString("mpv-configuration");
+            IReadOnlyList<string> protocols = GetProtocols();
+            IReadOnlyList<MpvDecoderInfo> decoders = GetDecoders();
+            IReadOnlyList<string> demuxers = GetDemuxers();
+            return new MpvCapabilities(clientApiVersion, mpvVersion, mpvConfiguration, protocols, decoders, demuxers);
+        }
+
+        /// <summary>
+        /// 嘗試讀取字串屬性；屬性不存在或暫時無法存取時傳回空字串。
+        /// </summary>
+        /// <param name="name">要讀取的屬性名稱。</param>
+        /// <returns>屬性值；失敗時為空字串。</returns>
+        private string TryGetPropertyString(string name)
+        {
+            try
+            {
+                string? value = GetPropertyString(name);
+                return value ?? string.Empty;
+            }
+            catch (MpvException)
+            {
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
         /// 取得 libmpv 目前單調時間。
         /// </summary>
         /// <returns>以奈秒表示的 libmpv 時間。</returns>
@@ -438,6 +473,31 @@ namespace MediaEmbedKit.Mpv
             {
                 StartEventLoop();
             }
+        }
+
+        /// <summary>
+        /// 非同步初始化 libmpv 用戶端並啟動事件迴圈。
+        /// </summary>
+        /// <param name="cancellationToken">取消初始化要求的 token。</param>
+        /// <returns>代表初始化流程的工作。</returns>
+        /// <remarks>
+        /// 取消 token 只在開始呼叫 <c>mpv_initialize</c> 之前生效；libmpv 本身為同步介面，
+        /// 一旦進入 native 初始化即無法中途中止。
+        /// </remarks>
+        public Task InitializeAsync(CancellationToken cancellationToken = default)
+        {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return Task.FromCanceled(cancellationToken);
+            }
+
+            return Task.Run(
+                () =>
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    Initialize();
+                },
+                cancellationToken);
         }
 
         /// <summary>
@@ -3070,6 +3130,80 @@ namespace MediaEmbedKit.Mpv
             using (NativeHandleLease handleLease = AcquireNativeHandle())
             {
                 MpvError.ThrowIfError(MpvNative.mpv_stream_cb_add_ro(handleLease.Handle, protocolName, userData, openCallback));
+            }
+        }
+
+        /// <summary>
+        /// 非同步釋放 libmpv 用戶端，先嘗試讓 libmpv 完成 quit 並等候 Shutdown 事件後再同步釋放資源。
+        /// </summary>
+        /// <returns>代表非同步釋放流程的 <see cref="ValueTask"/>。</returns>
+        public async ValueTask DisposeAsync()
+        {
+            if (Volatile.Read(ref _disposed))
+            {
+                return;
+            }
+
+            await ShutdownAsync(TimeSpan.FromSeconds(2), CancellationToken.None).ConfigureAwait(false);
+            Dispose();
+        }
+
+        /// <summary>
+        /// 嘗試讓 libmpv 完成播放並接收 Shutdown 事件，提供同步 <see cref="Dispose"/> 前的 graceful 收尾。
+        /// </summary>
+        /// <param name="timeout">等待 Shutdown 事件的逾時時間；<see langword="null"/> 時使用 2 秒。</param>
+        /// <param name="cancellationToken">取消等候的 token。</param>
+        /// <returns>代表 graceful shutdown 等候流程的工作。</returns>
+        public async Task ShutdownAsync(TimeSpan? timeout = null, CancellationToken cancellationToken = default)
+        {
+            if (Volatile.Read(ref _disposed))
+            {
+                return;
+            }
+
+            if (!Volatile.Read(ref _initialized))
+            {
+                return;
+            }
+
+            TaskCompletionSource<bool> shutdownSignal = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            EventHandler<MpvEventArgs> handler = delegate (object? sender, MpvEventArgs e)
+            {
+                shutdownSignal.TrySetResult(true);
+            };
+
+            Shutdown += handler;
+            try
+            {
+                try
+                {
+                    Command("quit");
+                }
+                catch (MpvException)
+                {
+                }
+                catch (ObjectDisposedException)
+                {
+                    return;
+                }
+
+                TimeSpan waitFor = timeout ?? TimeSpan.FromSeconds(2);
+                using (CancellationTokenSource linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
+                {
+                    if (waitFor > TimeSpan.Zero)
+                    {
+                        linked.CancelAfter(waitFor);
+                    }
+
+                    using (linked.Token.Register(static state => ((TaskCompletionSource<bool>)state!).TrySetResult(false), shutdownSignal))
+                    {
+                        await shutdownSignal.Task.ConfigureAwait(false);
+                    }
+                }
+            }
+            finally
+            {
+                Shutdown -= handler;
             }
         }
 
