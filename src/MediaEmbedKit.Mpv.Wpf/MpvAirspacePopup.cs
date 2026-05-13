@@ -191,6 +191,7 @@ public sealed class MpvAirspacePopup : IDisposable
             _window.LocationChanged -= WindowChanged;
             _window.SizeChanged -= WindowChanged;
             _window.StateChanged -= WindowChanged;
+            _window.DpiChanged -= WindowDpiChanged;
         }
 
         _window = window;
@@ -200,6 +201,7 @@ public sealed class MpvAirspacePopup : IDisposable
             _window.LocationChanged += WindowChanged;
             _window.SizeChanged += WindowChanged;
             _window.StateChanged += WindowChanged;
+            _window.DpiChanged += WindowDpiChanged;
         }
     }
 
@@ -209,6 +211,16 @@ public sealed class MpvAirspacePopup : IDisposable
     /// <param name="sender">引發事件的物件。</param>
     /// <param name="e">事件資料。</param>
     private void WindowChanged(object? sender, EventArgs e)
+    {
+        RequestUpdateBounds();
+    }
+
+    /// <summary>
+    /// 在所屬視窗 DPI 變更時更新 Popup 邊界，確保跨螢幕拖曳後仍正確對齊。
+    /// </summary>
+    /// <param name="sender">引發事件的物件。</param>
+    /// <param name="e">DPI 變更事件資料。</param>
+    private void WindowDpiChanged(object? sender, DpiChangedEventArgs e)
     {
         RequestUpdateBounds();
     }

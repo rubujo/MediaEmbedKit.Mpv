@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -120,12 +121,12 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// </summary>
     public void Dispose()
     {
-        if (_disposed)
+        if (Volatile.Read(ref _disposed))
         {
             return;
         }
 
-        _disposed = true;
+        Volatile.Write(ref _disposed, true);
         DisposeRenderContext();
         DisposePlayer();
     }
@@ -169,21 +170,37 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// </summary>
     /// <param name="gl">Avalonia 提供的 OpenGL 函式介面。</param>
     /// <param name="fb">Avalonia 提供的 OpenGL framebuffer 物件識別碼。</param>
+    /// <remarks>
+    /// 透過抓取 <see cref="_renderContext"/> 到 local 變數後使用，避免在
+    /// libmpv 執行緒觸發 dispose 與 UI 執行緒同時繪製時，
+    /// 對 render context 形成 use-after-dispose。
+    /// </remarks>
     protected override void OnOpenGlRender(GlInterface gl, int fb)
     {
-        if (Design.IsDesignMode || _renderContext == null || _disposed)
+        if (Design.IsDesignMode)
+        {
+            return;
+        }
+
+        if (Volatile.Read(ref _disposed))
+        {
+            return;
+        }
+
+        MpvOpenGlRenderContext? renderContext = _renderContext;
+        if (renderContext == null)
         {
             return;
         }
 
         _renderQueued = false;
-        _renderContext.Update();
+        renderContext.Update();
 
         double renderScaling = GetRenderScaling();
         int width = Math.Max(1, (int)Math.Round(Bounds.Width * renderScaling));
         int height = Math.Max(1, (int)Math.Round(Bounds.Height * renderScaling));
-        _renderContext.Render(fb, width, height, flipY: true);
-        _renderContext.ReportSwap();
+        renderContext.Render(fb, width, height, flipY: true);
+        renderContext.ReportSwap();
     }
 
     /// <summary>
@@ -276,9 +293,13 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// </summary>
     /// <param name="sender">引發事件的物件。</param>
     /// <param name="e">事件資料。</param>
+    /// <remarks>
+    /// 此回呼由 libmpv 內部執行緒觸發；只讀寫旗標並 post 到 UI 執行緒，
+    /// 不直接存取 render context，避免在 dispose 後形成 race。
+    /// </remarks>
     private void RenderContextUpdateAvailable(object? sender, EventArgs e)
     {
-        if (_disposed || _renderQueued)
+        if (Volatile.Read(ref _disposed) || _renderQueued)
         {
             return;
         }
@@ -292,7 +313,7 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// </summary>
     private void RequestRenderIfAlive()
     {
-        if (_disposed || _renderContext == null)
+        if (Volatile.Read(ref _disposed) || _renderContext == null)
         {
             _renderQueued = false;
             return;
@@ -336,7 +357,7 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// </summary>
     private void EnsureNotDisposed()
     {
-        if (_disposed)
+        if (Volatile.Read(ref _disposed))
         {
             throw new ObjectDisposedException(GetType().FullName);
         }

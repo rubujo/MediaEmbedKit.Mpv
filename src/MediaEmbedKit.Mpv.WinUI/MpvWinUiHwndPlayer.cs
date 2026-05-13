@@ -103,6 +103,10 @@ public sealed class MpvWinUiHwndPlayer : Grid, IDisposable
     /// </summary>
     private bool _boundsUpdateQueued;
     /// <summary>
+    /// 已訂閱 <see cref="XamlRoot.Changed"/> 的 root；用於 DPI 變更時重算邊界。
+    /// </summary>
+    private XamlRoot? _subscribedXamlRoot;
+    /// <summary>
     /// 表示目前控制項是否已釋放。
     /// </summary>
     private bool _disposed;
@@ -274,6 +278,7 @@ public sealed class MpvWinUiHwndPlayer : Grid, IDisposable
         Loaded -= OnLoaded;
         Unloaded -= OnUnloaded;
         SizeChanged -= OnSizeChanged;
+        UnsubscribeXamlRootChanged();
         DetachWindowClosedHandler();
         ReleasePlayer();
         DestroyOverlayWindow();
@@ -295,6 +300,7 @@ public sealed class MpvWinUiHwndPlayer : Grid, IDisposable
         EnsureVideoWindow();
         EnsurePlayer();
         EnsureOverlayWindow();
+        SubscribeXamlRootChanged();
     }
 
     /// <summary>
@@ -304,9 +310,50 @@ public sealed class MpvWinUiHwndPlayer : Grid, IDisposable
     /// <param name="e">事件資料。</param>
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
+        UnsubscribeXamlRootChanged();
         ReleasePlayer();
         DestroyOverlayWindow();
         DestroyVideoWindow();
+    }
+
+    /// <summary>
+    /// 訂閱 <see cref="XamlRoot.Changed"/> 事件以在 DPI 或視覺根變更時重算原生子視窗邊界。
+    /// </summary>
+    private void SubscribeXamlRootChanged()
+    {
+        XamlRoot? root = XamlRoot;
+        if (root == null || ReferenceEquals(root, _subscribedXamlRoot))
+        {
+            return;
+        }
+
+        UnsubscribeXamlRootChanged();
+        _subscribedXamlRoot = root;
+        _subscribedXamlRoot.Changed += XamlRootChanged;
+    }
+
+    /// <summary>
+    /// 移除 <see cref="XamlRoot.Changed"/> 事件訂閱。
+    /// </summary>
+    private void UnsubscribeXamlRootChanged()
+    {
+        if (_subscribedXamlRoot == null)
+        {
+            return;
+        }
+
+        _subscribedXamlRoot.Changed -= XamlRootChanged;
+        _subscribedXamlRoot = null;
+    }
+
+    /// <summary>
+    /// 在 <see cref="XamlRoot"/> 變更（含 DPI 變更）時重算原生子視窗邊界。
+    /// </summary>
+    /// <param name="sender">引發事件的 <see cref="XamlRoot"/>。</param>
+    /// <param name="args">變更事件資料。</param>
+    private void XamlRootChanged(XamlRoot sender, XamlRootChangedEventArgs args)
+    {
+        ScheduleWindowBoundsUpdate();
     }
 
     /// <summary>
