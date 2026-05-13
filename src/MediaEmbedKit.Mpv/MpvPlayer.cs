@@ -311,6 +311,11 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 在已觀察的播放軌清單變更時發生。
     /// </summary>
+    /// <remarks>
+    /// 此事件由內部觀察 mpv <c>track-list</c> 屬性變更後合成，**不依賴** libmpv 已從事件列表中
+    /// 移除的 <see cref="MpvEventId.TracksChanged"/>（事件 ID 9）。因此此 API 不會隨 mpv 版本
+    /// 升級而失效，使用者只需訂閱本事件即可。
+    /// </remarks>
     public event EventHandler<MpvTracksChangedEventArgs>? TracksChanged;
 
     /// <summary>
