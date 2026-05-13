@@ -2,7 +2,7 @@
 
 MediaEmbedKit.Mpv 是 .NET libmpv 包裝器與 Windows 桌面 UI 控制項專案。專案提供核心 libmpv C API 包裝、常用高階播放 API、Windows x64 執行階段資產 helper，以及 WinForms、WPF、Avalonia、WinUI 3 與 .NET MAUI Windows 範例。
 
-本專案不是 mpv、yt-dlp、Deno 或其相關建置提供者的官方專案。`MediaEmbedKit` 是本專案名稱；`Mpv` 僅表示本專案與 mpv/libmpv 的整合目標。
+本專案不是 mpv、yt-dlp、Deno、FFmpeg 或其相關建置提供者的官方專案。`MediaEmbedKit` 是本專案名稱；`Mpv` 僅表示本專案與 mpv/libmpv 的整合目標。
 
 ## AI 產製聲明
 
@@ -36,7 +36,7 @@ AI 產製內容可能包含缺漏、錯誤假設或未涵蓋的邊界情境。�
 - 通用 command、property、node 與 event 入口。
 - 常用高階播放 API：播放狀態、音量、速度、播放清單、章節、軌道、字幕、OSD、截圖、濾鏡、輸入事件、script message、薄型 fluent options API 與 mpv encoding mode 附帶輸出。
 - OpenGL render API、software render API 與 stream callback 的核心包裝。
-- Windows x64 runtime helper，可由使用者明確下載或更新 `libmpv-2.dll`、`yt-dlp.exe` 與 `deno.exe`。
+- Windows x64 runtime helper，可由使用者明確下載或更新 `libmpv-2.dll`、`yt-dlp.exe`、`deno.exe`、`ffmpeg.exe` 與 `ffprobe.exe`。
 - yt-dlp 格式預設值與自訂 selector。
 - yt-dlp 與 Deno 外部處理序執行器，可接收 stdout/stderr 事件。
 - WinForms、WPF、Avalonia、WinUI 3 與 MAUI Windows 範例。
@@ -111,7 +111,7 @@ dotnet run --project .\tests\MediaEmbedKit.Mpv.PlaybackSmoke\MediaEmbedKit.Mpv.P
 .\tools\Invoke-GuiConsumerPlaybackValidation.ps1 -Seconds 20
 ```
 
-整合測試與播放冒煙測試需要 Windows x64 原生執行階段。URL 播放需要 `yt-dlp.exe` 可被 mpv 找到，或透過 `MpvPlayerOptions.YtdlpPath` 指定。
+整合測試與播放冒煙測試需要 Windows x64 原生執行階段。URL 播放需要 `yt-dlp.exe` 可被 mpv 找到，或透過 `MpvPlayerOptions.YtdlpPath` 指定。預設 runtime helper 也會準備 yt-dlp 建議使用的 `ffmpeg.exe` 與 `ffprobe.exe`；如不需要，可設定 `MpvWindowsRuntimeDownloadOptions.IncludeFFmpeg = false`。
 
 發佈前可執行本機驗證腳本：
 
@@ -147,4 +147,4 @@ GUI consumer 實際播放驗證會以本機 NuGet 套件建立臨時 consumer sa
 
 本儲存庫中的受控原始碼與文件採用 CC0-1.0。第三方原生執行階段二進位檔不簽入本儲存庫，也不因本專案授權而改變其授權條款。
 
-散發 mpv/libmpv、yt-dlp、Deno 或其相依項目前，請自行確認授權與合規義務。詳細資訊請參閱 `THIRD_PARTY_NOTICES.md`。
+散發 mpv/libmpv、yt-dlp、Deno、FFmpeg 或其相依項目前，請自行確認授權與合規義務。FFmpeg-Builds 目前使用 GPL build；本專案只提供下載 helper，不將該二進位檔納入 NuGet 套件。詳細資訊請參閱 `THIRD_PARTY_NOTICES.md`。

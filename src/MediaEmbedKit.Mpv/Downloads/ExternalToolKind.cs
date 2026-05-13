@@ -12,6 +12,10 @@
         /// <summary>
         /// Deno 執行階段工具。
         /// </summary>
-        Deno = 1
+        Deno = 1,
+        /// <summary>
+        /// FFmpeg 與 FFprobe 媒體處理工具。
+        /// </summary>
+        FFmpeg = 2
     }
 }

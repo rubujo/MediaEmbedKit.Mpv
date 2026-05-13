@@ -6,7 +6,7 @@
 
 - 先執行 `dotnet build .\MediaEmbedKit.Mpv.slnx --configuration Release`，確認控制項組件可被設計工具載入。
 - 設計工具載入控制項時，不得呼叫 runtime helper。
-- 設計工具載入控制項時，不得載入 `libmpv-2.dll`、啟動 yt-dlp 或啟動 Deno。
+- 設計工具載入控制項時，不得載入 `libmpv-2.dll`、啟動 yt-dlp、啟動 Deno 或啟動 FFmpeg。
 - 設計工具應顯示替代預覽內容或維持可選取、可調整大小的控制項外框。
 - 設計工具關閉或重新整理時，不應產生未處理例外。
 

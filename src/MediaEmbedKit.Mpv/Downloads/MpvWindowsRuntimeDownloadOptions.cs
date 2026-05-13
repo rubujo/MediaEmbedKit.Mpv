@@ -13,8 +13,10 @@
             Mpv = new MpvWindowsBuildDownloadOptions();
             YtDlp = new YtDlpDownloadOptions();
             Deno = new DenoDownloadOptions();
+            FFmpeg = new FFmpegDownloadOptions();
             IncludeYtDlp = true;
             IncludeDeno = true;
+            IncludeFFmpeg = true;
             LoadLibMpv = true;
         }
 
@@ -37,6 +39,12 @@
         public DenoDownloadOptions Deno { get; private set; }
 
         /// <summary>
+        /// 取得 yt-dlp 專用 FFmpeg Windows x64 建置下載選項。
+        /// </summary>
+        /// <value>FFmpeg 下載選項。</value>
+        public FFmpegDownloadOptions FFmpeg { get; private set; }
+
+        /// <summary>
         /// 取得或設定是否包含 yt-dlp 可執行檔。
         /// </summary>
         /// <value>下載或更新 yt-dlp 時為 <see langword="true"/>。</value>
@@ -47,6 +55,12 @@
         /// </summary>
         /// <value>下載或更新 Deno 時為 <see langword="true"/>。</value>
         public bool IncludeDeno { get; set; }
+
+        /// <summary>
+        /// 取得或設定是否包含 yt-dlp 專用 FFmpeg 與 FFprobe 可執行檔。
+        /// </summary>
+        /// <value>下載或更新 FFmpeg 與 FFprobe 時為 <see langword="true"/>。</value>
+        public bool IncludeFFmpeg { get; set; }
 
         /// <summary>
         /// 取得或設定完成下載後是否載入 libmpv。

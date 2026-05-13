@@ -12,25 +12,34 @@
         /// <param name="libMpvPath">libmpv 檔案路徑。</param>
         /// <param name="ytDlpPath">yt-dlp 可執行檔路徑。</param>
         /// <param name="denoPath">Deno 可執行檔路徑。</param>
+        /// <param name="ffmpegPath">FFmpeg 可執行檔路徑。</param>
+        /// <param name="ffprobePath">FFprobe 可執行檔路徑。</param>
         /// <param name="mpv">libmpv 下載結果。</param>
         /// <param name="ytDlp">yt-dlp 下載結果。</param>
         /// <param name="deno">Deno 下載結果。</param>
+        /// <param name="ffmpeg">FFmpeg 下載結果。</param>
         internal MpvWindowsRuntimeDownloadResult(
             string runtimeDirectory,
             string libMpvPath,
             string? ytDlpPath,
             string? denoPath,
+            string? ffmpegPath,
+            string? ffprobePath,
             MpvWindowsBuildDownloadResult mpv,
             YtDlpDownloadResult? ytDlp,
-            DenoDownloadResult? deno)
+            DenoDownloadResult? deno,
+            FFmpegDownloadResult? ffmpeg)
         {
             RuntimeDirectory = runtimeDirectory;
             LibMpvPath = libMpvPath;
             YtDlpPath = ytDlpPath;
             DenoPath = denoPath;
+            FFmpegPath = ffmpegPath;
+            FFprobePath = ffprobePath;
             Mpv = mpv;
             YtDlp = ytDlp;
             Deno = deno;
+            FFmpeg = ffmpeg;
         }
 
         /// <summary>
@@ -58,6 +67,18 @@
         public string? DenoPath { get; private set; }
 
         /// <summary>
+        /// 取得 FFmpeg 可執行檔路徑。
+        /// </summary>
+        /// <value>FFmpeg 可執行檔路徑；未安裝時為 <see langword="null"/>。</value>
+        public string? FFmpegPath { get; private set; }
+
+        /// <summary>
+        /// 取得 FFprobe 可執行檔路徑。
+        /// </summary>
+        /// <value>FFprobe 可執行檔路徑；未安裝時為 <see langword="null"/>。</value>
+        public string? FFprobePath { get; private set; }
+
+        /// <summary>
         /// 取得 libmpv 下載結果。
         /// </summary>
         /// <value>libmpv 下載結果。</value>
@@ -74,5 +95,11 @@
         /// </summary>
         /// <value>Deno 下載結果；未安裝時為 <see langword="null"/>。</value>
         public DenoDownloadResult? Deno { get; private set; }
+
+        /// <summary>
+        /// 取得 FFmpeg 下載結果。
+        /// </summary>
+        /// <value>FFmpeg 下載結果；未安裝時為 <see langword="null"/>。</value>
+        public FFmpegDownloadResult? FFmpeg { get; private set; }
     }
 }

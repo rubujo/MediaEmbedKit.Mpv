@@ -35,3 +35,5 @@ Windows x64 發佈前驗證以本機 release gate 為準：
 ```
 
 核心 API 測試、原生整合測試、NuGet 套件內容、乾淨 consumer 建置、Console minimal 播放與 GUI consumer 播放都應在發佈前通過。WinForms、WPF、Avalonia、WinUI 3 與 MAUI Windows 範例需以 YouTube 測試網址播放到指定秒數後正常關閉。
+
+Windows x64 runtime helper 目前支援 `libmpv-2.dll`、`yt-dlp.exe`、`deno.exe`、`ffmpeg.exe` 與 `ffprobe.exe` 的同層配置。FFmpeg 來源限定為 yt-dlp `FFmpeg-Builds` Windows x64 GPL build；NuGet 套件不包含任何第三方 runtime 二進位檔。

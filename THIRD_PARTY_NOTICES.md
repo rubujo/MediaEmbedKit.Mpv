@@ -1,6 +1,6 @@
 # 第三方注意事項
 
-MediaEmbedKit.Mpv 是獨立 .NET 包裝器與控制項專案，不是 mpv、yt-dlp 或 Deno 官方專案。
+MediaEmbedKit.Mpv 是獨立 .NET 包裝器與控制項專案，不是 mpv、yt-dlp、Deno 或 FFmpeg 官方專案。
 
 本儲存庫不簽入第三方執行階段二進位檔。受控原始碼與文件採用 CC0-1.0；此授權不涵蓋應用程式下載、載入或散發的第三方元件。
 
@@ -24,3 +24,10 @@ MediaEmbedKit.Mpv 是獨立 .NET 包裝器與控制項專案，不是 mpv、yt-d
 - 網站：https://deno.com/
 - 授權：請參閱上游儲存庫。
 - helper 行為：只有在應用程式明確呼叫時，才會下載或更新外部 `deno.exe`。
+
+## FFmpeg / FFmpeg-Builds
+
+- 專案：https://github.com/FFmpeg/FFmpeg
+- yt-dlp 建置來源：https://github.com/yt-dlp/FFmpeg-Builds
+- 授權：請依 FFmpeg 與實際建置內容判定；yt-dlp FFmpeg-Builds 目前提供 GPL build。
+- helper 行為：只有在應用程式明確呼叫時，才會下載或更新外部 `ffmpeg.exe` 與 `ffprobe.exe`。本專案 NuGet 套件不包含 FFmpeg 二進位檔。

@@ -56,7 +56,7 @@ namespace MediaEmbedKit.Mpv
         /// <summary>
         /// 指定外部工具所在的資料夾。
         /// </summary>
-        /// <param name="toolDirectory">包含 yt-dlp 或 Deno 等工具的資料夾。</param>
+        /// <param name="toolDirectory">包含 yt-dlp、Deno、FFmpeg 或 FFprobe 等工具的資料夾。</param>
         /// <returns>目前的播放器選項。</returns>
         public MpvPlayerOptions UseToolDirectory(string toolDirectory)
         {
@@ -282,7 +282,7 @@ namespace MediaEmbedKit.Mpv
         /// <summary>
         /// 取得或設定外部工具所在的工作資料夾。
         /// </summary>
-        /// <value>包含 yt-dlp 或 Deno 等外部工具的資料夾。</value>
+        /// <value>包含 yt-dlp、Deno、FFmpeg 或 FFprobe 等外部工具的資料夾。</value>
         public string? ToolDirectory { get; set; }
 
         /// <summary>

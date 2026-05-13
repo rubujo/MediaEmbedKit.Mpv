@@ -16,7 +16,7 @@ dotnet run --project .\tests\MediaEmbedKit.Mpv.Tests\MediaEmbedKit.Mpv.Tests.csp
 dotnet run --project .\tests\MediaEmbedKit.Mpv.IntegrationTests\MediaEmbedKit.Mpv.IntegrationTests.csproj
 ```
 
-此測試需要 Windows x64 `libmpv-2.dll`，涵蓋初始化、屬性、錯誤路徑、本機播放事件與 stream callback。
+此測試需要 Windows x64 `libmpv-2.dll`，涵蓋初始化、屬性、錯誤路徑、本機播放事件、stream callback 與 FFmpeg-Builds 下載驗證。
 
 ## 播放冒煙測試
 

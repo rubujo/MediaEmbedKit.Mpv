@@ -1,4 +1,4 @@
-﻿param(
+param(
     [string] $Configuration = "Release",
     [string] $OutputDirectory = "artifacts/packages"
 )
@@ -52,7 +52,10 @@ $expectedPackageIds = @(
 $forbiddenRuntimeFiles = @(
     "libmpv-2.dll",
     "yt-dlp.exe",
-    "deno.exe"
+    "deno.exe",
+    "ffmpeg.exe",
+    "ffprobe.exe",
+    "ffmpeg-master-latest-win64-gpl.zip"
 )
 
 foreach ($packageId in $expectedPackageIds) {

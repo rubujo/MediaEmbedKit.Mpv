@@ -77,6 +77,7 @@ namespace MediaEmbedKit.Mpv.IntegrationTests
             {
                 return VerifyStreamCallbackErrorAndCancellationAsync(runtimeDirectory);
             });
+            runner.Add("FFmpeg-Builds 下載與版本執行", VerifyFFmpegDownloadAndExecutionAsync);
 
             await runner.RunAsync().ConfigureAwait(false);
             return runner.FailedCount == 0 ? 0 : 1;
@@ -657,6 +658,44 @@ namespace MediaEmbedKit.Mpv.IntegrationTests
         }
 
         /// <summary>
+        /// 驗證 yt-dlp FFmpeg-Builds 可下載、驗證 checksum，並執行 FFmpeg 與 FFprobe。
+        /// </summary>
+        /// <returns>代表測試流程的工作。</returns>
+        private static async Task VerifyFFmpegDownloadAndExecutionAsync()
+        {
+            string runtimeDirectory = Path.Combine(Path.GetTempPath(), "MediaEmbedKit.Mpv.FFmpegIntegration", "win-x64");
+            FFmpegDownloadOptions options = new FFmpegDownloadOptions
+            {
+                VerificationPolicy = MpvNativeAssetVerificationPolicy.RequireProviderChecksum
+            };
+            FFmpegDownloadResult result = await FFmpegDownloader.DownloadAndExtractLatestAsync(runtimeDirectory, options).ConfigureAwait(false);
+
+            IntegrationAssert.True(File.Exists(result.FFmpegPath), "FFmpeg 應解壓縮到 runtime 根目錄。");
+            IntegrationAssert.True(File.Exists(result.FFprobePath), "FFprobe 應解壓縮到 runtime 根目錄。");
+            IntegrationAssert.True(File.Exists(result.ArchivePath), "FFmpeg-Builds 壓縮檔應保留於 runtime 根目錄。");
+
+            await VerifyExternalToolVersionAsync(result.FFmpegPath, "FFmpeg").ConfigureAwait(false);
+            await VerifyExternalToolVersionAsync(result.FFprobePath, "FFprobe").ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// 驗證外部工具可執行並正常回報版本資訊。
+        /// </summary>
+        /// <param name="executablePath">要執行的外部工具路徑。</param>
+        /// <param name="toolName">外部工具顯示名稱。</param>
+        /// <returns>代表測試流程的工作。</returns>
+        private static async Task VerifyExternalToolVersionAsync(string executablePath, string toolName)
+        {
+            ExternalToolProcessRunner runner = new ExternalToolProcessRunner(executablePath);
+            ExternalToolProcessResult result = await runner.RunAsync(new[] { "-version" }, TimeSpan.FromSeconds(30)).ConfigureAwait(false);
+            IntegrationAssert.Equal(0, result.ExitCode, toolName + " 版本命令結束代碼");
+            IntegrationAssert.True(
+                result.StandardOutput.IndexOf(toolName, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                result.StandardError.IndexOf(toolName, StringComparison.OrdinalIgnoreCase) >= 0,
+                toolName + " 版本輸出應包含工具名稱。");
+        }
+
+        /// <summary>
         /// 建立測試用播放器。
         /// </summary>
         /// <param name="runtimeDirectory">包含 libmpv 的執行階段資料夾。</param>
@@ -802,6 +841,7 @@ namespace MediaEmbedKit.Mpv.IntegrationTests
                 MpvRuntimeInstallOptions options = new MpvRuntimeInstallOptions();
                 options.Windows.IncludeYtDlp = false;
                 options.Windows.IncludeDeno = false;
+                options.Windows.IncludeFFmpeg = false;
                 options.Windows.LoadLibMpv = false;
 
                 MpvRuntimeInstallResult result = await MpvRuntimeInstaller.InstallOrUpdateAsync(runtimeDirectory, options).ConfigureAwait(false);

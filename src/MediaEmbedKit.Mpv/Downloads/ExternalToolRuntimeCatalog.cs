@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace MediaEmbedKit.Mpv.Downloads
 {
     /// <summary>
-    /// 提供 yt-dlp 與 Deno 執行階段來源的靜態 catalog。
+    /// 提供 yt-dlp、Deno 與 FFmpeg 執行階段來源的靜態 catalog。
     /// </summary>
     public static class ExternalToolRuntimeCatalog
     {
@@ -45,6 +45,15 @@ namespace MediaEmbedKit.Mpv.Downloads
         }
 
         /// <summary>
+        /// 取得 yt-dlp FFmpeg-Builds GitHub 發行頁面 URI。
+        /// </summary>
+        /// <value>yt-dlp FFmpeg-Builds GitHub 發行頁面 URI。</value>
+        public static Uri FFmpegBuildsReleases
+        {
+            get { return new Uri("https://github.com/yt-dlp/FFmpeg-Builds/releases"); }
+        }
+
+        /// <summary>
         /// 取得指定外部工具與平台的執行階段來源清單。
         /// </summary>
         /// <param name="tool">要查詢的外部工具種類。</param>
@@ -56,6 +65,8 @@ namespace MediaEmbedKit.Mpv.Downloads
             {
                 case ExternalToolKind.Deno:
                     return GetDenoSources(platform);
+                case ExternalToolKind.FFmpeg:
+                    return GetFFmpegSources(platform);
                 default:
                     return GetYtDlpSources(platform);
             }
@@ -104,6 +115,22 @@ namespace MediaEmbedKit.Mpv.Downloads
         }
 
         /// <summary>
+        /// 取得指定平台的 FFmpeg 執行階段來源清單。
+        /// </summary>
+        /// <param name="platform">要查詢的平台。</param>
+        /// <returns>FFmpeg 執行階段來源清單。</returns>
+        private static IReadOnlyList<ExternalToolRuntimeSource> GetFFmpegSources(MpvNativeRuntimePlatform platform)
+        {
+            switch (platform)
+            {
+                case MpvNativeRuntimePlatform.Windows:
+                    return FFmpegWindowsSources;
+                default:
+                    return Array.Empty<ExternalToolRuntimeSource>();
+            }
+        }
+
+        /// <summary>
         /// Windows 平台可使用的 yt-dlp 執行階段來源。
         /// </summary>
         private static readonly IReadOnlyList<ExternalToolRuntimeSource> YtDlpWindowsSources = new[]
@@ -135,6 +162,23 @@ namespace MediaEmbedKit.Mpv.Downloads
                 true,
                 "deno.exe upgrade",
                 "Implemented by DenoDownloader for Windows x64.")
+        };
+
+        /// <summary>
+        /// Windows 平台可使用的 FFmpeg 執行階段來源。
+        /// </summary>
+        private static readonly IReadOnlyList<ExternalToolRuntimeSource> FFmpegWindowsSources = new[]
+        {
+            new ExternalToolRuntimeSource(
+                ExternalToolKind.FFmpeg,
+                MpvNativeRuntimePlatform.Windows,
+                "yt-dlp FFmpeg-Builds Windows x64 GPL",
+                FFmpegBuildsReleases,
+                FFmpegDownloader.WindowsX64AssetName,
+                MpvNativeRuntimeSupportStatus.Supported,
+                false,
+                string.Empty,
+                "Implemented by FFmpegDownloader for Windows x64; update by re-running the downloader.")
         };
 
     }

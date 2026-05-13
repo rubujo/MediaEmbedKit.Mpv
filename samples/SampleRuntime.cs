@@ -148,7 +148,7 @@ namespace MediaEmbedKit.Mpv.Samples
         /// <summary>
         /// 取得範例執行階段資料夾。
         /// </summary>
-        /// <value>包含 libmpv、yt-dlp、Deno 與範例輔助檔案的資料夾。</value>
+        /// <value>包含 libmpv、yt-dlp、Deno、FFmpeg 與範例輔助檔案的資料夾。</value>
         internal static string RuntimeDirectory
         {
             get
@@ -184,6 +184,24 @@ namespace MediaEmbedKit.Mpv.Samples
         internal static string DenoPath
         {
             get { return Path.Combine(RuntimeDirectory, "deno.exe"); }
+        }
+
+        /// <summary>
+        /// 取得範例使用的 FFmpeg 可執行檔路徑。
+        /// </summary>
+        /// <value>FFmpeg 可執行檔完整路徑。</value>
+        internal static string FFmpegPath
+        {
+            get { return Path.Combine(RuntimeDirectory, "ffmpeg.exe"); }
+        }
+
+        /// <summary>
+        /// 取得範例使用的 FFprobe 可執行檔路徑。
+        /// </summary>
+        /// <value>FFprobe 可執行檔完整路徑。</value>
+        internal static string FFprobePath
+        {
+            get { return Path.Combine(RuntimeDirectory, "ffprobe.exe"); }
         }
 
         /// <summary>
@@ -307,12 +325,14 @@ namespace MediaEmbedKit.Mpv.Samples
         /// 判斷指定資料夾是否已包含範例播放需要的 Windows 執行階段檔案。
         /// </summary>
         /// <param name="runtimeDirectory">要檢查的執行階段資料夾。</param>
-        /// <returns>資料夾包含 libmpv、yt-dlp 與 Deno 時為 <see langword="true"/>。</returns>
+        /// <returns>資料夾包含 libmpv、yt-dlp、Deno、FFmpeg 與 FFprobe 時為 <see langword="true"/>。</returns>
         private static bool HasCompleteRuntime(string runtimeDirectory)
         {
             return File.Exists(Path.Combine(runtimeDirectory, "libmpv-2.dll"))
                 && File.Exists(Path.Combine(runtimeDirectory, "yt-dlp.exe"))
-                && File.Exists(Path.Combine(runtimeDirectory, "deno.exe"));
+                && File.Exists(Path.Combine(runtimeDirectory, "deno.exe"))
+                && File.Exists(Path.Combine(runtimeDirectory, "ffmpeg.exe"))
+                && File.Exists(Path.Combine(runtimeDirectory, "ffprobe.exe"));
         }
 
         /// <summary>

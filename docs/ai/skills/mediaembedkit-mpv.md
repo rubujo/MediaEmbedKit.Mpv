@@ -25,7 +25,7 @@
 - Avalonia 使用 Windows x64 OpenGL render API 後端。
 - 控制項建構函式不得下載 runtime asset。
 - libmpv 更新需在已載入時暫存並提示重新啟動，不得實作處理序內 hot reload。
-- runtime helper 可同層管理 `libmpv-2.dll`、`yt-dlp.exe` 與 `deno.exe`。
+- runtime helper 可同層管理 `libmpv-2.dll`、`yt-dlp.exe`、`deno.exe`、`ffmpeg.exe` 與 `ffprobe.exe`。
 - yt-dlp 格式控制使用 `MpvYtdlpFormatPreset`、`MpvYtdlpFormatSelector` 或自訂 selector。
 - C# XML 註解只能使用正體中文，且不得共用註解。
 - 區域變數、`using` 陳述式與 `foreach` 迴圈變數使用明確型別；只有必要時才使用 `var`。

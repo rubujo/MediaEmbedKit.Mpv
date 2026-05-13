@@ -55,7 +55,7 @@
 - 每個可發佈專案都產生唯一 `.nupkg`。
 - 套件包含 `README.md` 與 `THIRD_PARTY_NOTICES.md`。
 - 套件包含受控組件。
-- 套件不包含 `libmpv-2.dll`、`yt-dlp.exe` 或 `deno.exe`。
+- 套件不包含 `libmpv-2.dll`、`yt-dlp.exe`、`deno.exe`、`ffmpeg.exe`、`ffprobe.exe` 或 FFmpeg-Builds 壓縮檔。
 
 ## 乾淨 consumer 檢查
 
@@ -111,4 +111,4 @@ GUI 播放相關腳本會在啟動視窗前先準備共用 runtime 資料夾，�
 - 確認 package version 與 release notes。
 - 確認第三方授權與散發義務。
 - 依 `docs/DESIGN_TIME_CHECKLIST.md` 確認 WinForms、WPF、WinUI 3、MAUI Windows 與 Avalonia 設計階段行為。
-- 確認 NuGet 套件不包含 `libmpv-2.dll`、`yt-dlp.exe` 或 `deno.exe`。
+- 確認 NuGet 套件不包含 `libmpv-2.dll`、`yt-dlp.exe`、`deno.exe`、`ffmpeg.exe`、`ffprobe.exe` 或 FFmpeg-Builds 壓縮檔。

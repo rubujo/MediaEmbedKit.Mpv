@@ -30,6 +30,7 @@ namespace MediaEmbedKit.Mpv.Tests
             runner.Add("native asset checksum 解析", VerifyNativeAssetChecksumParsing);
             runner.Add("native asset 來源鎖定驗證", VerifyNativeAssetSourceLockValidation);
             runner.Add("runtime 下載驗證策略預設值", VerifyRuntimeVerificationOptionDefaults);
+            runner.Add("Windows runtime FFmpeg 選項預設值", VerifyWindowsRuntimeFFmpegOptionDefaults);
             runner.Add("播放器選項預設值", VerifyPlayerOptionDefaults);
             runner.Add("執行階段來源 catalog 收斂", VerifyRuntimeCatalogs);
             runner.Add("未知平台安裝不觸發下載", VerifyUnknownPlatformInstallAsync);
@@ -311,7 +312,7 @@ namespace MediaEmbedKit.Mpv.Tests
         }
 
         /// <summary>
-        /// 驗證 GNU 風格 checksum 檔案解析支援 yt-dlp 與 Deno 常見格式。
+        /// 驗證 GNU 風格 checksum 檔案解析支援 yt-dlp、Deno 與 FFmpeg 常見格式。
         /// </summary>
         /// <returns>代表測試流程的工作。</returns>
         private static Task VerifyNativeAssetChecksumParsing()
@@ -325,6 +326,9 @@ namespace MediaEmbedKit.Mpv.Tests
 
             string denoChecksumText = expected + "  deno-x86_64-pc-windows-msvc.zip";
             AssertEx.Equal(expected, DownloadUtility.FindSha256InChecksumText(denoChecksumText, "deno-x86_64-pc-windows-msvc.zip"), "Deno checksum 解析");
+
+            string ffmpegChecksumText = expected + "  " + FFmpegDownloader.WindowsX64AssetName;
+            AssertEx.Equal(expected, DownloadUtility.FindSha256InChecksumText(ffmpegChecksumText, FFmpegDownloader.WindowsX64AssetName), "FFmpeg checksum 解析");
 
             string singleChecksumText = expected;
             AssertEx.Equal(expected, DownloadUtility.FindSha256InChecksumText(singleChecksumText, "asset.zip"), "單一 checksum 解析");
@@ -391,17 +395,34 @@ namespace MediaEmbedKit.Mpv.Tests
         {
             YtDlpDownloadOptions ytDlp = new YtDlpDownloadOptions();
             DenoDownloadOptions deno = new DenoDownloadOptions();
+            FFmpegDownloadOptions ffmpeg = new FFmpegDownloadOptions();
             MpvWindowsBuildDownloadOptions libMpv = new MpvWindowsBuildDownloadOptions();
 
             AssertEx.Equal(MpvNativeAssetVerificationPolicy.BestEffort, ytDlp.VerificationPolicy, "yt-dlp 驗證策略預設值");
             AssertEx.Equal(MpvNativeAssetVerificationPolicy.BestEffort, deno.VerificationPolicy, "Deno 驗證策略預設值");
+            AssertEx.Equal(MpvNativeAssetVerificationPolicy.BestEffort, ffmpeg.VerificationPolicy, "FFmpeg 驗證策略預設值");
             AssertEx.Equal(MpvNativeAssetVerificationPolicy.BestEffort, libMpv.VerificationPolicy, "libmpv 驗證策略預設值");
             AssertEx.True(ytDlp.VerifyDigest, "yt-dlp 應預設驗證可用 digest。");
             AssertEx.True(deno.VerifyDigest, "Deno 應預設驗證可用 digest。");
+            AssertEx.True(ffmpeg.VerifyDigest, "FFmpeg 應預設驗證可用 digest。");
             AssertEx.True(libMpv.VerifyDigest, "libmpv 應預設驗證可用 digest。");
             AssertEx.False(ytDlp.LockReleaseSource, "yt-dlp 不應預設鎖定來源。");
             AssertEx.False(deno.LockReleaseSource, "Deno 不應預設鎖定來源。");
+            AssertEx.False(ffmpeg.LockReleaseSource, "FFmpeg 不應預設鎖定來源。");
             AssertEx.False(libMpv.LockReleaseSource, "libmpv 不應預設鎖定來源。");
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// 驗證 Windows runtime helper 預設包含 FFmpeg，且可由呼叫端關閉。
+        /// </summary>
+        /// <returns>代表測試流程的工作。</returns>
+        private static Task VerifyWindowsRuntimeFFmpegOptionDefaults()
+        {
+            MpvWindowsRuntimeDownloadOptions options = new MpvWindowsRuntimeDownloadOptions();
+            AssertEx.True(options.IncludeFFmpeg, "Windows runtime 預設應包含 FFmpeg。");
+            options.IncludeFFmpeg = false;
+            AssertEx.False(options.IncludeFFmpeg, "Windows runtime 應允許關閉 FFmpeg 下載。");
             return Task.CompletedTask;
         }
 
@@ -440,12 +461,18 @@ namespace MediaEmbedKit.Mpv.Tests
 
             IReadOnlyList<ExternalToolRuntimeSource> ytDlpSources = ExternalToolRuntimeCatalog.GetSources(ExternalToolKind.YtDlp, MpvNativeRuntimePlatform.Windows);
             IReadOnlyList<ExternalToolRuntimeSource> denoSources = ExternalToolRuntimeCatalog.GetSources(ExternalToolKind.Deno, MpvNativeRuntimePlatform.Windows);
+            IReadOnlyList<ExternalToolRuntimeSource> ffmpegSources = ExternalToolRuntimeCatalog.GetSources(ExternalToolKind.FFmpeg, MpvNativeRuntimePlatform.Windows);
             IReadOnlyList<ExternalToolRuntimeSource> unknownToolSources = ExternalToolRuntimeCatalog.GetSources(ExternalToolKind.YtDlp, MpvNativeRuntimePlatform.Unknown);
+            IReadOnlyList<ExternalToolRuntimeSource> unknownFFmpegSources = ExternalToolRuntimeCatalog.GetSources(ExternalToolKind.FFmpeg, MpvNativeRuntimePlatform.Unknown);
             AssertEx.Equal(1, ytDlpSources.Count, "Windows yt-dlp 來源數量");
             AssertEx.Equal(1, denoSources.Count, "Windows Deno 來源數量");
+            AssertEx.Equal(1, ffmpegSources.Count, "Windows FFmpeg 來源數量");
             AssertEx.Equal(0, unknownToolSources.Count, "未知平台外部工具來源數量");
+            AssertEx.Equal(0, unknownFFmpegSources.Count, "未知平台 FFmpeg 來源數量");
             AssertEx.True(ytDlpSources[0].SupportsSelfUpdate, "yt-dlp 應提供自我更新命令。");
             AssertEx.True(denoSources[0].SupportsSelfUpdate, "Deno 應提供自我更新命令。");
+            AssertEx.False(ffmpegSources[0].SupportsSelfUpdate, "FFmpeg 不應宣告內建自我更新命令。");
+            AssertEx.Equal(FFmpegDownloader.WindowsX64AssetName, ffmpegSources[0].AssetName, "FFmpeg catalog 應指向 Windows x64 GPL 資產。");
             return Task.CompletedTask;
         }
 

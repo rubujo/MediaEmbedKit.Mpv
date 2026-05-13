@@ -11,6 +11,8 @@ runtime/
 ├── libmpv-2.dll
 ├── yt-dlp.exe
 ├── deno.exe
+├── ffmpeg.exe
+├── ffprobe.exe
 ├── mpv.conf
 ├── input.conf
 └── scripts/
@@ -28,7 +30,7 @@ runtime helper 預設保持相容模式：GitHub Releases API 提供 SHA-256 dig
 
 `LockReleaseSource = true` 會鎖定內建 GitHub repository 與下載 URL。啟用後，helper 會拒絕非預設 GitHub Releases API 或非預期 repository 的資產 URL。
 
-`yt-dlp` 支援使用 `SHA2-256SUMS` 驗證發行檔。Deno 支援使用發行資產同層的 `.sha256sum` 檔案驗證壓縮檔。shinchiro 與 zhongfly 目前未提供獨立 checksum 資產，因此 libmpv 生產下載應使用 `RequirePinnedSha256`、`ExpectedSha256` 與 `LockReleaseSource`。
+`yt-dlp` 支援使用 `SHA2-256SUMS` 驗證發行檔。Deno 支援使用發行資產同層的 `.sha256sum` 檔案驗證壓縮檔。yt-dlp FFmpeg-Builds 支援使用 `checksums.sha256` 驗證發行檔。shinchiro 與 zhongfly 目前未提供獨立 checksum 資產，因此 libmpv 生產下載應使用 `RequirePinnedSha256`、`ExpectedSha256` 與 `LockReleaseSource`。
 
 ## libmpv
 
@@ -64,6 +66,14 @@ Deno helper 支援 Windows x64 `deno.exe` 下載、自我更新與外部處理�
 
 需要使用 Deno 內建升級流程且要求 checksum 時，使用 `DenoDownloader.RunSelfUpgradeWithChecksumAsync(...)`。若要維持完整下載紀錄與來源鎖定，應使用 `DenoDownloader.DownloadAndExtractLatestAsync(...)` 搭配驗證政策。
 
+## FFmpeg
+
+FFmpeg helper 支援從 yt-dlp `FFmpeg-Builds` 下載 Windows x64 `ffmpeg-master-latest-win64-gpl.zip`，並將 `ffmpeg.exe` 與 `ffprobe.exe` 放在 runtime 資料夾根目錄。`MpvWindowsRuntimeDownloadOptions.IncludeFFmpeg` 預設為 `true`；不需要 FFmpeg 時可明確設為 `false`。
+
+FFmpeg 沒有本專案可呼叫的內建自我更新命令。若要更新，請重新呼叫 `FFmpegDownloader.DownloadAndExtractLatestAsync(...)` 或 `MpvWindowsRuntimeInstaller.InstallOrUpdateAsync(...)`，並於 `FFmpegDownloadOptions.OverwriteExisting = true` 時覆蓋既有檔案。
+
+yt-dlp 官方將 `ffmpeg` 與 `ffprobe` 列為 strongly recommended dependency；本 helper 僅將其視為 yt-dlp 附帶工具，不提供 FFmpeg wrapper、轉檔佇列或批次工作 API。
+
 ## mpv 設定與 scripts
 
 使用者可選擇讓 runtime 資料夾同時作為 mpv 設定資料夾。啟用後，核心會設定 `config-dir` 並載入同層 `mpv.conf`、`input.conf` 與 `scripts`。
@@ -85,4 +95,4 @@ MpvPlayerOptions options =
 
 ## 授權
 
-本專案受控原始碼採用 CC0-1.0。此授權不涵蓋 mpv/libmpv、yt-dlp、Deno 或其相依元件。helper 預設保持授權中立，使用者可透過 `MpvWindowsBuildDownloadOptions.LicensePreference` 指定 LGPL 或非 LGPL 偏好。
+本專案受控原始碼採用 CC0-1.0。此授權不涵蓋 mpv/libmpv、yt-dlp、Deno、FFmpeg 或其相依元件。helper 預設保持授權中立，使用者可透過 `MpvWindowsBuildDownloadOptions.LicensePreference` 指定 LGPL 或非 LGPL 偏好。yt-dlp FFmpeg-Builds 目前提供 GPL build；使用者散發該 runtime 前應自行確認授權義務。

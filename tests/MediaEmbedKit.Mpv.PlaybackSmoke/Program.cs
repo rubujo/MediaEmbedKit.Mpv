@@ -193,7 +193,7 @@ namespace MediaEmbedKit.Mpv.PlaybackSmoke
                     await MpvRuntimeInstaller.InstallOrUpdateAsync(fullPath, options).ConfigureAwait(false);
                     if (!HasCompleteRuntime(fullPath))
                     {
-                        throw new InvalidOperationException("runtime 資料夾未包含 libmpv-2.dll、yt-dlp.exe 與 deno.exe。");
+                        throw new InvalidOperationException("runtime 資料夾未包含 libmpv-2.dll、yt-dlp.exe、deno.exe、ffmpeg.exe 與 ffprobe.exe。");
                     }
 
                     Console.WriteLine("[smoke] 共用 runtime 準備完成：" + fullPath);
@@ -210,7 +210,7 @@ namespace MediaEmbedKit.Mpv.PlaybackSmoke
             await MpvRuntimeInstaller.InstallOrUpdateAsync(fullPath, options).ConfigureAwait(false);
             if (!HasCompleteRuntime(fullPath))
             {
-                throw new InvalidOperationException("runtime 資料夾未包含 libmpv-2.dll、yt-dlp.exe 與 deno.exe。");
+                throw new InvalidOperationException("runtime 資料夾未包含 libmpv-2.dll、yt-dlp.exe、deno.exe、ffmpeg.exe 與 ffprobe.exe。");
             }
         }
 
@@ -223,7 +223,9 @@ namespace MediaEmbedKit.Mpv.PlaybackSmoke
         {
             return File.Exists(Path.Combine(runtimeDirectory, "libmpv-2.dll"))
                 && File.Exists(Path.Combine(runtimeDirectory, "yt-dlp.exe"))
-                && File.Exists(Path.Combine(runtimeDirectory, "deno.exe"));
+                && File.Exists(Path.Combine(runtimeDirectory, "deno.exe"))
+                && File.Exists(Path.Combine(runtimeDirectory, "ffmpeg.exe"))
+                && File.Exists(Path.Combine(runtimeDirectory, "ffprobe.exe"));
         }
     }
 

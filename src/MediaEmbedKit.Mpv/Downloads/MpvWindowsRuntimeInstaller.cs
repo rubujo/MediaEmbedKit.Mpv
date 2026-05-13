@@ -89,7 +89,7 @@ namespace MediaEmbedKit.Mpv.Downloads
         }
 
         /// <summary>
-        /// 安裝或更新 Windows 執行階段資料夾中的 libmpv、yt-dlp 與 Deno。
+        /// 安裝或更新 Windows 執行階段資料夾中的 libmpv、yt-dlp、Deno 與 FFmpeg。
         /// </summary>
         /// <param name="runtimeDirectory">要建立或更新的執行階段資料夾。</param>
         /// <param name="options">Windows 執行階段下載選項；未指定時使用預設選項。</param>
@@ -132,6 +132,15 @@ namespace MediaEmbedKit.Mpv.Downloads
                     cancellationToken).ConfigureAwait(false);
             }
 
+            FFmpegDownloadResult? ffmpeg = null;
+            if (options.IncludeFFmpeg)
+            {
+                ffmpeg = await FFmpegDownloader.DownloadAndExtractLatestAsync(
+                    runtimeDirectory,
+                    options.FFmpeg,
+                    cancellationToken).ConfigureAwait(false);
+            }
+
             if (options.LoadLibMpv)
             {
                 MpvLibraryLoader.Load(libMpvPath);
@@ -142,9 +151,12 @@ namespace MediaEmbedKit.Mpv.Downloads
                 libMpvPath,
                 ytDlp == null ? null : ytDlp.ExecutablePath,
                 deno == null ? null : deno.ExecutablePath,
+                ffmpeg == null ? null : ffmpeg.FFmpegPath,
+                ffmpeg == null ? null : ffmpeg.FFprobePath,
                 mpv,
                 ytDlp,
-                deno);
+                deno,
+                ffmpeg);
         }
 
         /// <summary>

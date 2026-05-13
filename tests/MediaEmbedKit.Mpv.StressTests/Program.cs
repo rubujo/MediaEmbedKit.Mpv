@@ -361,6 +361,7 @@ namespace MediaEmbedKit.Mpv.StressTests
                 MpvRuntimeInstallOptions options = new MpvRuntimeInstallOptions();
                 options.Windows.IncludeYtDlp = false;
                 options.Windows.IncludeDeno = false;
+                options.Windows.IncludeFFmpeg = false;
                 options.Windows.LoadLibMpv = false;
 
                 MpvRuntimeInstallResult result = await MpvRuntimeInstaller.InstallOrUpdateAsync(runtimeDirectory, options).ConfigureAwait(false);

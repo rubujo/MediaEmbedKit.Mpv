@@ -6,7 +6,7 @@
 | --- | --- |
 | 目標框架與平台狀態 | `docs/SUPPORT_MATRIX.md` |
 | UI 後端與 AirSpace 限制 | `docs/UI_BACKENDS.md` |
-| libmpv、yt-dlp、Deno runtime 政策 | `docs/RUNTIME_ASSETS.md` |
+| libmpv、yt-dlp、Deno、FFmpeg runtime 政策 | `docs/RUNTIME_ASSETS.md` |
 | libmpv C API 覆蓋與測試矩陣 | `docs/LIBMPV_C_API_TEST_MATRIX.md` |
 | 發佈前本機檢查 | `docs/RELEASE_CHECKLIST.md` |
 | Windows 設計階段檢查 | `docs/DESIGN_TIME_CHECKLIST.md` |
@@ -25,7 +25,7 @@ MediaEmbedKit.Mpv 提供 .NET libmpv 包裝器與 Windows 桌面 UI 控制項。
 - 核心 API 盡量保持平台中立。
 - 控制項建構函式與初始化流程不得自動下載第三方二進位檔。
 - `libmpv-2.dll` 載入後不可在同一處理序 hot reload；更新必須暫存並提示重新啟動。
-- Windows x64 runtime 資料夾可同層放置 `libmpv-2.dll`、`yt-dlp.exe`、`deno.exe`、mpv 設定檔與 scripts。
+- Windows x64 runtime 資料夾可同層放置 `libmpv-2.dll`、`yt-dlp.exe`、`deno.exe`、`ffmpeg.exe`、`ffprobe.exe`、mpv 設定檔與 scripts。
 - runtime helper 必須提供 SHA-256 驗證、來源鎖定與可由使用者選擇的驗證策略；生產環境不得只依賴未鎖定的 latest 下載。
 - 高階 API 可提供薄型 fluent helper，但不得引入會隱藏下載、初始化或釋放責任的 pipeline/flow 引擎。
 - WinForms、WPF、WinUI 3 與 MAUI Windows 主線控制項使用 HWND 後端。
@@ -39,7 +39,7 @@ MediaEmbedKit.Mpv 提供 .NET libmpv 包裝器與 Windows 桌面 UI 控制項。
 
 - 有可重複取得且可授權評估的 libmpv 原生執行階段來源。
 - runtime helper 可下載、指向或驗證該原生程式庫。
-- yt-dlp 與 Deno 也有相同平台與架構可用來源。
+- yt-dlp、Deno 與 FFmpeg 也有相同平台與架構可用來源。
 - UI 後端完成 surface、resize、生命週期、AirSpace 或組合限制處理。
 - 範例能以本機檔案與 URL 播放通過冒煙測試。
 - 文件、sample、solution 與 catalog 只列出已符合條件的目標。
@@ -53,7 +53,7 @@ MediaEmbedKit.Mpv 提供 .NET libmpv 包裝器與 Windows 桌面 UI 控制項。
 - WinForms/WPF 使用 Windows HWND 後端。
 - WinUI 3/MAUI Windows 使用 Windows HWND 後端。
 - Avalonia 使用 Windows x64 OpenGL render API 後端。
-- Windows x64 runtime helper 支援 libmpv、yt-dlp 與 Deno 下載、更新與同層配置。
+- Windows x64 runtime helper 支援 libmpv、yt-dlp、Deno 與 yt-dlp FFmpeg-Builds 下載、更新與同層配置。
 - 範例播放冒煙測試涵蓋 WinForms、WPF、Avalonia、WinUI 3 與 MAUI Windows。
 - 已提供本機發佈前驗證、NuGet 套件內容檢查、乾淨 consumer 建置驗證、GUI consumer 實際播放驗證、第一階段壓力測試與長時間 GUI 播放壓力測試腳本。
 - Windows UI 控制項設計階段檢查清單已由 `docs/DESIGN_TIME_CHECKLIST.md` 維護。
@@ -69,4 +69,4 @@ dotnet run --project .\tests\MediaEmbedKit.Mpv.IntegrationTests\MediaEmbedKit.Mp
 dotnet build .\MediaEmbedKit.Mpv.slnx
 ```
 
-整合測試需要 Windows x64 `libmpv-2.dll`。URL 播放需要 `yt-dlp.exe` 可被 mpv 找到，或透過 `MpvPlayerOptions.YtdlpPath` 指定。
+整合測試需要 Windows x64 `libmpv-2.dll`。URL 播放需要 `yt-dlp.exe` 可被 mpv 找到，或透過 `MpvPlayerOptions.YtdlpPath` 指定。FFmpeg-Builds 下載驗證需可連線至 GitHub Releases。

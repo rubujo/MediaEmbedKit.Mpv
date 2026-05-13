@@ -34,6 +34,7 @@
 - yt-dlp release files：https://github.com/yt-dlp/yt-dlp/blob/master/README.md#release-files
 - yt-dlp EJS：https://github.com/yt-dlp/yt-dlp/wiki/EJS
 - yt-dlp 外部 JavaScript runtime：https://github.com/yt-dlp/yt-dlp/issues/15012
+- yt-dlp FFmpeg-Builds：https://github.com/yt-dlp/FFmpeg-Builds
 - Deno 安裝：https://docs.deno.com/runtime/getting_started/installation/
 - Deno upgrade checksum：https://docs.deno.com/runtime/reference/cli/upgrade/#checksum-verification
 - Deno releases：https://github.com/denoland/deno/releases

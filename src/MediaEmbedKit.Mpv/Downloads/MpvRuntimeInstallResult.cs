@@ -103,5 +103,23 @@ namespace MediaEmbedKit.Mpv.Downloads
         {
             get { return Windows == null ? null : Windows.DenoPath; }
         }
+
+        /// <summary>
+        /// 取得安裝後的 FFmpeg 可執行檔路徑。
+        /// </summary>
+        /// <value>FFmpeg 可執行檔路徑；未安裝時為 <see langword="null"/>。</value>
+        public string? FFmpegPath
+        {
+            get { return Windows == null ? null : Windows.FFmpegPath; }
+        }
+
+        /// <summary>
+        /// 取得安裝後的 FFprobe 可執行檔路徑。
+        /// </summary>
+        /// <value>FFprobe 可執行檔路徑；未安裝時為 <see langword="null"/>。</value>
+        public string? FFprobePath
+        {
+            get { return Windows == null ? null : Windows.FFprobePath; }
+        }
     }
 }
