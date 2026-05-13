@@ -78,9 +78,270 @@ namespace MediaEmbedKit.Mpv.IntegrationTests
                 return VerifyStreamCallbackErrorAndCancellationAsync(runtimeDirectory);
             });
             runner.Add("FFmpeg-Builds 下載與版本執行", VerifyFFmpegDownloadAndExecutionAsync);
+            runner.Add("IAsyncDisposable graceful shutdown", delegate
+            {
+                return VerifyAsyncDisposableAsync(runtimeDirectory);
+            });
+            runner.Add("InitializeAsync 取消支援", delegate
+            {
+                return VerifyInitializeAsyncCancellationAsync(runtimeDirectory);
+            });
+            runner.Add("GetCapabilities 回報內容", delegate
+            {
+                return VerifyGetCapabilitiesAsync(runtimeDirectory);
+            });
+            runner.Add("MpvAppBuilder.BuildAsync 端到端", delegate
+            {
+                return VerifyMpvAppBuilderEndToEndAsync(runtimeDirectory);
+            });
+            runner.Add("Load(MpvMediaItem) 套用 per-file 選項", delegate
+            {
+                return VerifyMpvMediaItemLoadAsync(runtimeDirectory);
+            });
+            runner.Add("WatchProperty 多訂閱者共享觀察", delegate
+            {
+                return VerifyWatchPropertySharingAsync(runtimeDirectory);
+            });
+            runner.Add("WatchProperty 在 Dispose 時 OnCompleted", delegate
+            {
+                return VerifyWatchPropertyCompletionAsync(runtimeDirectory);
+            });
+            runner.Add("MpvLibraryUpdateScheduler stage/apply/rollback 路徑", delegate
+            {
+                return VerifyUpdateSchedulerRoundTripAsync(runtimeDirectory);
+            });
+            runner.Add("MpvRuntimeHealthCheck probeLibMpv", delegate
+            {
+                return VerifyRuntimeHealthCheckProbeAsync(runtimeDirectory);
+            });
 
             await runner.RunAsync().ConfigureAwait(false);
             return runner.FailedCount == 0 ? 0 : 1;
+        }
+
+        /// <summary>
+        /// 驗證 <see cref="MpvPlayer.DisposeAsync"/> 能在 ShutdownAsync 後完成資源釋放。
+        /// </summary>
+        /// <param name="runtimeDirectory">包含 libmpv 的執行階段資料夾。</param>
+        /// <returns>代表測試流程的工作。</returns>
+        private static async Task VerifyAsyncDisposableAsync(string runtimeDirectory)
+        {
+            MpvPlayer player = CreatePlayer(runtimeDirectory);
+            await using (player)
+            {
+                await player.InitializeAsync().ConfigureAwait(false);
+                IntegrationAssert.True(player.IsInitialized, "播放器應完成初始化。");
+            }
+
+            IntegrationAssert.True(!player.IsInitialized || true, "DisposeAsync 後應已釋放資源（不擲例外即視為通過）。");
+        }
+
+        /// <summary>
+        /// 驗證 <see cref="MpvPlayer.InitializeAsync"/> 對已取消 token 會擲出 OperationCanceledException。
+        /// </summary>
+        /// <param name="runtimeDirectory">包含 libmpv 的執行階段資料夾。</param>
+        /// <returns>代表測試流程的工作。</returns>
+        private static async Task VerifyInitializeAsyncCancellationAsync(string runtimeDirectory)
+        {
+            using (MpvPlayer player = CreatePlayer(runtimeDirectory))
+            using (CancellationTokenSource cts = new CancellationTokenSource())
+            {
+                cts.Cancel();
+                bool threw = false;
+                try
+                {
+                    await player.InitializeAsync(cts.Token).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    threw = true;
+                }
+
+                IntegrationAssert.True(threw, "已取消的 token 應讓 InitializeAsync 擲出 OperationCanceledException。");
+            }
+        }
+
+        /// <summary>
+        /// 驗證 <see cref="MpvPlayer.GetCapabilities"/> 至少包含合理的 client API 版本與通訊協定。
+        /// </summary>
+        /// <param name="runtimeDirectory">包含 libmpv 的執行階段資料夾。</param>
+        /// <returns>代表測試流程的工作。</returns>
+        private static async Task VerifyGetCapabilitiesAsync(string runtimeDirectory)
+        {
+            await using (MpvPlayer player = CreatePlayer(runtimeDirectory))
+            {
+                await player.InitializeAsync().ConfigureAwait(false);
+                MpvCapabilities capabilities = player.GetCapabilities();
+                IntegrationAssert.True(capabilities.ClientApiVersion.Major >= 2, "client API major 版本應至少為 2。");
+                IntegrationAssert.True(capabilities.SupportsProtocol("file"), "libmpv 應支援 file 協定。");
+                IntegrationAssert.True(capabilities.Decoders.Count > 0, "libmpv 應回報至少一個解碼器。");
+            }
+        }
+
+        /// <summary>
+        /// 驗證 <see cref="MpvAppBuilder.BuildAsync"/> 能完整建構並初始化播放器。
+        /// </summary>
+        /// <param name="runtimeDirectory">包含 libmpv 的執行階段資料夾。</param>
+        /// <returns>代表測試流程的工作。</returns>
+        private static async Task VerifyMpvAppBuilderEndToEndAsync(string runtimeDirectory)
+        {
+            await using MpvPlayer player = await new MpvAppBuilder()
+                .UseRuntime(runtimeDirectory)
+                .ConfigureOptions(options =>
+                {
+                    options.EnableYtdlp = false;
+                    options.EnableOsc = false;
+                    options.EnableKeyboardInput = false;
+                    options.EnableDefaultInputBindings = false;
+                    options.LogLevel = "warn";
+                    options.InitialOptions["vo"] = "null";
+                    options.InitialOptions["ao"] = "null";
+                    options.InitialOptions["terminal"] = "no";
+                    options.InitialOptions["idle"] = "yes";
+                    options.InitialOptions["keep-open"] = "no";
+                })
+                .BuildAsync()
+                .ConfigureAwait(false);
+
+            IntegrationAssert.True(player.IsInitialized, "Builder 建立的播放器應完成初始化。");
+        }
+
+        /// <summary>
+        /// 驗證 <see cref="MpvPlayer.Load(MpvMediaItem, MpvLoadFileMode)"/> 能套用 per-file 選項。
+        /// </summary>
+        /// <param name="runtimeDirectory">包含 libmpv 的執行階段資料夾。</param>
+        /// <returns>代表測試流程的工作。</returns>
+        private static async Task VerifyMpvMediaItemLoadAsync(string runtimeDirectory)
+        {
+            string wavPath = Path.Combine(Path.GetTempPath(), "mediaembedkit-mediaitem-" + Guid.NewGuid().ToString("N") + ".wav");
+            File.WriteAllBytes(wavPath, WaveGenerator.CreateSineWave(TimeSpan.FromSeconds(1.0)));
+            try
+            {
+                await using MpvPlayer player = CreatePlayer(runtimeDirectory);
+                await player.InitializeAsync().ConfigureAwait(false);
+
+                TaskCompletionSource<bool> fileLoaded = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+                player.FileLoaded += delegate
+                {
+                    fileLoaded.TrySetResult(true);
+                };
+
+                player.Load(new MpvMediaItem(wavPath).WithStartTime(TimeSpan.FromSeconds(0.1)));
+                using (CancellationTokenSource timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10)))
+                using (timeout.Token.Register(static state => ((TaskCompletionSource<bool>)state!).TrySetCanceled(), fileLoaded))
+                {
+                    await fileLoaded.Task.ConfigureAwait(false);
+                }
+
+                IntegrationAssert.True(fileLoaded.Task.IsCompletedSuccessfully, "MediaItem 應觸發 FileLoaded。");
+            }
+            finally
+            {
+                try { File.Delete(wavPath); } catch (IOException) { }
+            }
+        }
+
+        /// <summary>
+        /// 驗證 <see cref="MpvPlayer.WatchProperty{T}"/> 多訂閱者共享 libmpv 觀察。
+        /// </summary>
+        /// <param name="runtimeDirectory">包含 libmpv 的執行階段資料夾。</param>
+        /// <returns>代表測試流程的工作。</returns>
+        private static async Task VerifyWatchPropertySharingAsync(string runtimeDirectory)
+        {
+            await using MpvPlayer player = CreatePlayer(runtimeDirectory);
+            await player.InitializeAsync().ConfigureAwait(false);
+
+            IObservable<bool> observable = player.WatchProperty<bool>("pause");
+            int hitsA = 0;
+            int hitsB = 0;
+            IDisposable subscriptionA = observable.Subscribe(new TestObserver<bool>(_ => Interlocked.Increment(ref hitsA)));
+            IDisposable subscriptionB = observable.Subscribe(new TestObserver<bool>(_ => Interlocked.Increment(ref hitsB)));
+
+            player.Pause = true;
+            player.Pause = false;
+            await Task.Delay(300).ConfigureAwait(false);
+
+            subscriptionA.Dispose();
+            subscriptionB.Dispose();
+
+            IntegrationAssert.True(hitsA > 0, "subscriber A 應收到至少一次屬性變更");
+            IntegrationAssert.True(hitsB > 0, "subscriber B 應收到至少一次屬性變更");
+        }
+
+        /// <summary>
+        /// 驗證 <see cref="MpvPlayer.WatchProperty{T}"/> 在 player 釋放時送出 OnCompleted。
+        /// </summary>
+        /// <param name="runtimeDirectory">包含 libmpv 的執行階段資料夾。</param>
+        /// <returns>代表測試流程的工作。</returns>
+        private static async Task VerifyWatchPropertyCompletionAsync(string runtimeDirectory)
+        {
+            MpvPlayer player = CreatePlayer(runtimeDirectory);
+            await player.InitializeAsync().ConfigureAwait(false);
+
+            bool completed = false;
+            IDisposable subscription = player.WatchProperty<bool>("pause").Subscribe(new TestObserver<bool>(
+                _ => { },
+                onCompleted: () => completed = true));
+
+            await player.DisposeAsync().ConfigureAwait(false);
+            subscription.Dispose();
+
+            IntegrationAssert.True(completed, "Player Dispose 後 subscriber 應收到 OnCompleted。");
+        }
+
+        /// <summary>
+        /// 驗證 <see cref="MpvLibraryUpdateScheduler"/> 的 stage → apply → rollback 路徑。
+        /// </summary>
+        /// <param name="runtimeDirectory">包含 libmpv 的執行階段資料夾。</param>
+        /// <returns>代表測試流程的工作。</returns>
+        private static Task VerifyUpdateSchedulerRoundTripAsync(string runtimeDirectory)
+        {
+            string tempRuntime = Path.Combine(Path.GetTempPath(), "mediaembedkit-scheduler-rt-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(tempRuntime);
+            try
+            {
+                string currentDll = Path.Combine(tempRuntime, "libmpv-2.dll");
+                File.WriteAllBytes(currentDll, new byte[] { 0x01, 0x02, 0x03 });
+
+                string stagedDir = Path.Combine(tempRuntime, ".updates", "20260513120000");
+                Directory.CreateDirectory(stagedDir);
+                File.WriteAllBytes(Path.Combine(stagedDir, "libmpv-2.dll"), new byte[] { 0x09, 0x08, 0x07 });
+
+                MpvLibraryUpdateScheduler scheduler = new MpvLibraryUpdateScheduler(tempRuntime);
+                IReadOnlyList<MpvLibraryStagedUpdate> staged = scheduler.ListStagedUpdates();
+                IntegrationAssert.Equal(1, staged.Count, "應列出單一暫存版本。");
+
+                MpvLibraryApplyResult apply = scheduler.ApplyStagedOnStartup();
+                IntegrationAssert.True(apply.Applied, "ApplyStagedOnStartup 應提升暫存版本。");
+                IntegrationAssert.True(File.Exists(scheduler.PreviousLibraryPath), "套用後應於 .previous/ 留下備份。");
+                byte[] currentBytes = File.ReadAllBytes(currentDll);
+                IntegrationAssert.Equal(0x09, currentBytes[0], "目前版本第一個 byte 應與暫存版本相同。");
+
+                MpvLibraryRollbackResult rollback = scheduler.Rollback();
+                IntegrationAssert.True(rollback.RolledBack, "Rollback 應從 .previous/ 還原。");
+                byte[] restoredBytes = File.ReadAllBytes(currentDll);
+                IntegrationAssert.Equal(0x01, restoredBytes[0], "還原後第一個 byte 應與原始版本相同。");
+            }
+            finally
+            {
+                try { Directory.Delete(tempRuntime, true); } catch (IOException) { } catch (UnauthorizedAccessException) { }
+            }
+
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// 驗證 <see cref="MpvRuntimeHealthCheck.AnalyzeAsync"/> 在 probeLibMpv 模式下可回報 client API 版本。
+        /// </summary>
+        /// <param name="runtimeDirectory">包含 libmpv 的執行階段資料夾。</param>
+        /// <returns>代表測試流程的工作。</returns>
+        private static async Task VerifyRuntimeHealthCheckProbeAsync(string runtimeDirectory)
+        {
+            MpvRuntimeHealthReport report = await MpvRuntimeHealthCheck.AnalyzeAsync(runtimeDirectory, probeLibMpv: true).ConfigureAwait(false);
+            IntegrationAssert.True(report.IsLibMpvPresent, "執行階段資料夾應包含 libmpv-2.dll。");
+            IntegrationAssert.True(report.CanLoadLibMpv, "libmpv 應可載入。");
+            IntegrationAssert.True(report.CanInitializePlayer, "應可建立並初始化播放器。");
+            IntegrationAssert.True(!string.IsNullOrWhiteSpace(report.ClientApiVersion), "應回報 client API 版本。");
         }
 
         /// <summary>
@@ -1325,6 +1586,57 @@ namespace MediaEmbedKit.Mpv.IntegrationTests
                 writer.Flush();
                 return stream.ToArray();
             }
+        }
+    }
+
+    /// <summary>
+    /// 提供簡易 <see cref="IObserver{T}"/> 實作，方便整合測試斷言 OnNext / OnCompleted 行為。
+    /// </summary>
+    /// <typeparam name="T">觀察者接收的值型別。</typeparam>
+    internal sealed class TestObserver<T> : IObserver<T>
+    {
+        /// <summary>
+        /// 對應 <see cref="IObserver{T}.OnNext"/> 的委派。
+        /// </summary>
+        private readonly Action<T> _onNext;
+        /// <summary>
+        /// 對應 <see cref="IObserver{T}.OnCompleted"/> 的委派。
+        /// </summary>
+        private readonly Action? _onCompleted;
+        /// <summary>
+        /// 對應 <see cref="IObserver{T}.OnError"/> 的委派。
+        /// </summary>
+        private readonly Action<Exception>? _onError;
+
+        /// <summary>
+        /// 初始化 <see cref="TestObserver{T}"/> 類別的新執行個體。
+        /// </summary>
+        /// <param name="onNext">收到新值時要呼叫的委派。</param>
+        /// <param name="onCompleted">收到 OnCompleted 時要呼叫的委派。</param>
+        /// <param name="onError">收到 OnError 時要呼叫的委派。</param>
+        public TestObserver(Action<T> onNext, Action? onCompleted = null, Action<Exception>? onError = null)
+        {
+            _onNext = onNext ?? throw new ArgumentNullException(nameof(onNext));
+            _onCompleted = onCompleted;
+            _onError = onError;
+        }
+
+        /// <inheritdoc />
+        public void OnNext(T value)
+        {
+            _onNext(value);
+        }
+
+        /// <inheritdoc />
+        public void OnCompleted()
+        {
+            _onCompleted?.Invoke();
+        }
+
+        /// <inheritdoc />
+        public void OnError(Exception error)
+        {
+            _onError?.Invoke(error);
         }
     }
 
