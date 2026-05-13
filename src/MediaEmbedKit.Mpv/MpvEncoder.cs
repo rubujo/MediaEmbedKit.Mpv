@@ -367,7 +367,10 @@ public static class MpvEncoder
             _total = total;
         }
 
-        /// <inheritdoc />
+        /// <summary>
+        /// 將單一編碼進度快照轉換為切割流程進度並轉送到上游通道。
+        /// </summary>
+        /// <param name="value">目前段落的編碼進度快照。</param>
         public void Report(MpvEncodingProgress value)
         {
             _target.Report(new MpvSplitProgress(_index, _total, value));

@@ -15,7 +15,7 @@ public sealed class FFmpegDownloadOptions
         UserAgent = BrowserRequestHeaders.ChromeStableUserAgent;
         OverwriteExisting = false;
         VerifyDigest = true;
-        VerificationPolicy = MpvNativeAssetVerificationPolicy.BestEffort;
+        VerificationPolicy = MpvNativeAssetVerificationPolicy.RequireGitHubDigest;
     }
 
     /// <summary>

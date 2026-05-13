@@ -18,7 +18,7 @@ public sealed class MpvWindowsBuildDownloadOptions
         UserAgent = BrowserRequestHeaders.ChromeStableUserAgent;
         LicensePreference = MpvWindowsBuildLicensePreference.Any;
         OverwriteExisting = false;
-        VerificationPolicy = MpvNativeAssetVerificationPolicy.BestEffort;
+        VerificationPolicy = MpvNativeAssetVerificationPolicy.RequireGitHubDigest;
         ProviderFallbackOrder = new List<MpvWindowsBuildProvider>();
     }
 

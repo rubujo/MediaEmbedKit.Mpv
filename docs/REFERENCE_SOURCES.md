@@ -1,6 +1,6 @@
 # 參考來源
 
-本文件列出專案規範採用的主要來源。最後查核日期：2026-05-12。
+本文件列出專案規範採用的主要來源。最後查核日期：2026-05-13。
 
 ## libmpv 與 mpv
 
@@ -38,6 +38,7 @@
 - Deno 安裝：https://docs.deno.com/runtime/getting_started/installation/
 - Deno upgrade checksum：https://docs.deno.com/runtime/reference/cli/upgrade/#checksum-verification
 - Deno releases：https://github.com/denoland/deno/releases
+- Chrome VersionHistory API：https://developer.chrome.com/docs/web-platform/versionhistory/guide
 - GitHub release asset digest：https://github.blog/changelog/2025-06-03-releases-now-expose-digests-for-release-assets/
 
 ## AI Agent 與提交規範

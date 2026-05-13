@@ -11,7 +11,7 @@ internal static class BrowserRequestHeaders
     /// <summary>
     /// 專案預設模擬的 Chrome 穩定版完整版本。
     /// </summary>
-    public const string ChromeStableVersion = "148.0.7778.97";
+    public const string ChromeStableVersion = "148.0.7778.168";
     /// <summary>
     /// 專案預設模擬的 Chrome 穩定版主要版本。
     /// </summary>
@@ -21,7 +21,7 @@ internal static class BrowserRequestHeaders
     /// 專案預設的 Chrome 穩定版使用者代理字串。
     /// </summary>
     public const string ChromeStableUserAgent =
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.7778.97 Safari/537.36";
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.7778.168 Safari/537.36";
 
     /// <summary>
     /// 專案預設的 sec-ch-ua 用戶端提示標頭值。
@@ -33,7 +33,7 @@ internal static class BrowserRequestHeaders
     /// 專案預設的 sec-ch-ua-full-version-list 用戶端提示標頭值。
     /// </summary>
     public const string SecChUaFullVersionList =
-        "\"Chromium\";v=\"148.0.7778.97\", \"Google Chrome\";v=\"148.0.7778.97\", \"Not=A?Brand\";v=\"24.0.0.0\"";
+        "\"Chromium\";v=\"148.0.7778.168\", \"Google Chrome\";v=\"148.0.7778.168\", \"Not=A?Brand\";v=\"24.0.0.0\"";
 
     /// <summary>
     /// 專案預設的 sec-ch-ua-mobile 用戶端提示標頭值。

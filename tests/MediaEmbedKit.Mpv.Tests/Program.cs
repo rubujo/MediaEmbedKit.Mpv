@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 using MediaEmbedKit.Mpv.Downloads;
 using MediaEmbedKit.Mpv.Hosting;
@@ -32,6 +33,7 @@ internal static class Program
         runner.Add("native asset 釘選 SHA-256 驗證", VerifyNativeAssetPinnedSha256Validation);
         runner.Add("native asset checksum 解析", VerifyNativeAssetChecksumParsing);
         runner.Add("native asset 來源鎖定驗證", VerifyNativeAssetSourceLockValidation);
+        runner.Add("下載要求瀏覽器標頭", VerifyBrowserRequestHeaders);
         runner.Add("runtime 下載驗證策略預設值", VerifyRuntimeVerificationOptionDefaults);
         runner.Add("Windows runtime FFmpeg 選項預設值", VerifyWindowsRuntimeFFmpegOptionDefaults);
         runner.Add("播放器選項預設值", VerifyPlayerOptionDefaults);
@@ -899,7 +901,7 @@ internal static class Program
     }
 
     /// <summary>
-    /// 驗證 runtime 下載選項的驗證策略預設值保持相容。
+    /// 驗證 runtime 下載選項的驗證策略預設值要求 GitHub 發行資產摘要。
     /// </summary>
     /// <returns>代表測試流程的工作。</returns>
     private static Task VerifyRuntimeVerificationOptionDefaults()
@@ -909,10 +911,10 @@ internal static class Program
         FFmpegDownloadOptions ffmpeg = new FFmpegDownloadOptions();
         MpvWindowsBuildDownloadOptions libMpv = new MpvWindowsBuildDownloadOptions();
 
-        AssertEx.Equal(MpvNativeAssetVerificationPolicy.BestEffort, ytDlp.VerificationPolicy, "yt-dlp 驗證策略預設值");
-        AssertEx.Equal(MpvNativeAssetVerificationPolicy.BestEffort, deno.VerificationPolicy, "Deno 驗證策略預設值");
-        AssertEx.Equal(MpvNativeAssetVerificationPolicy.BestEffort, ffmpeg.VerificationPolicy, "FFmpeg 驗證策略預設值");
-        AssertEx.Equal(MpvNativeAssetVerificationPolicy.BestEffort, libMpv.VerificationPolicy, "libmpv 驗證策略預設值");
+        AssertEx.Equal(MpvNativeAssetVerificationPolicy.RequireGitHubDigest, ytDlp.VerificationPolicy, "yt-dlp 驗證策略預設值");
+        AssertEx.Equal(MpvNativeAssetVerificationPolicy.RequireGitHubDigest, deno.VerificationPolicy, "Deno 驗證策略預設值");
+        AssertEx.Equal(MpvNativeAssetVerificationPolicy.RequireGitHubDigest, ffmpeg.VerificationPolicy, "FFmpeg 驗證策略預設值");
+        AssertEx.Equal(MpvNativeAssetVerificationPolicy.RequireGitHubDigest, libMpv.VerificationPolicy, "libmpv 驗證策略預設值");
         AssertEx.True(ytDlp.VerifyDigest, "yt-dlp 應預設驗證可用 digest。");
         AssertEx.True(deno.VerifyDigest, "Deno 應預設驗證可用 digest。");
         AssertEx.True(ffmpeg.VerifyDigest, "FFmpeg 應預設驗證可用 digest。");
@@ -921,6 +923,38 @@ internal static class Program
         AssertEx.False(deno.LockReleaseSource, "Deno 不應預設鎖定來源。");
         AssertEx.False(ffmpeg.LockReleaseSource, "FFmpeg 不應預設鎖定來源。");
         AssertEx.False(libMpv.LockReleaseSource, "libmpv 不應預設鎖定來源。");
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// 驗證下載 helper 使用的預設瀏覽器標頭與 Chrome Stable 版本一致。
+    /// </summary>
+    /// <returns>代表測試流程的工作。</returns>
+    private static Task VerifyBrowserRequestHeaders()
+    {
+        using (HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, "https://example.invalid/"))
+        {
+            BrowserRequestHeaders.Apply(request.Headers, null);
+            AssertEx.Equal(
+                BrowserRequestHeaders.ChromeStableUserAgent,
+                request.Headers.UserAgent.ToString(),
+                "預設 User-Agent 應符合 Chrome Stable 常數。");
+            AssertEx.Equal(
+                BrowserRequestHeaders.SecChUa,
+                string.Join(", ", request.Headers.GetValues("sec-ch-ua")),
+                "sec-ch-ua 應符合 Chrome Stable major version。");
+            AssertEx.Equal(
+                BrowserRequestHeaders.SecChUaFullVersionList,
+                string.Join(", ", request.Headers.GetValues("sec-ch-ua-full-version-list")),
+                "sec-ch-ua-full-version-list 應符合 Chrome Stable full version。");
+            AssertEx.True(
+                BrowserRequestHeaders.ChromeStableUserAgent.Contains(BrowserRequestHeaders.ChromeStableVersion),
+                "User-Agent 應包含 Chrome Stable full version。");
+            AssertEx.True(
+                BrowserRequestHeaders.SecChUaFullVersionList.Contains(BrowserRequestHeaders.ChromeStableVersion),
+                "sec-ch-ua-full-version-list 應包含 Chrome Stable full version。");
+        }
+
         return Task.CompletedTask;
     }
 
