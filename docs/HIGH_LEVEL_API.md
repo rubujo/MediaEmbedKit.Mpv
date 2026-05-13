@@ -173,7 +173,7 @@ mpv 的 encoding mode 允許把 player 當作一次性轉碼器：設定 `o=...`
 | 項目 | 版本 |
 | --- | --- |
 | mpv stable | `v0.41.0`（2025-12-21） |
-| FFmpeg（shinchiro / zhongfly build 內建） | `8.1.1 "Hoare"`（2026-05-04） + git master |
+| FFmpeg（shinchiro / zhongfly build 內建） | git master commits（2026-04+，內含 SVT-AV1 two-pass patch `5ba2525`，2026-02-25）；對應 stable 為 FFmpeg 8.1 "Hoare"（2026-03-16） |
 | SVT-AV1 | `4.0`（2026-01-13） |
 
 可用編碼器（依 shinchiro 20260421 / zhongfly 2026-05-12 build）：
@@ -233,7 +233,7 @@ helper 會：
 3. 第二階段：輸出到真正路徑、`flags=+pass2`。
 4. 完成或例外時清理整個 temp 資料夾。
 
-對 `MpvVideoCodecPreset.Av1`（解析為 `libsvtav1`）改用 `pass=1` / `pass=2` 對應 SVT-AV1 4.x 慣例，不再注入 `passlogfile`。
+對 `MpvVideoCodecPreset.Av1`（解析為 `libsvtav1`）改用 `pass=1` / `pass=2` codec option，不注入 `passlogfile`。**此寫法需 FFmpeg master ≥ 2026-02-25**（FFmpeg commit [`5ba2525`](https://github.com/FFmpeg/FFmpeg/commit/5ba2525c7affc29cbd99e6266946b382d3fffe8b) "avcodec/libsvtav1: enable 2-pass encoding"），對應 stable 為 FFmpeg 8.1 "Hoare"（2026-03-16）若有 backport。shinchiro 20260421+ / zhongfly 2026-05+ build 都已內含；自備 FFmpeg 在較舊版本上 `pass=1/2` 對 libsvtav1 為 no-op（會靜默退化成單階段），請改用 FFmpeg 較新版本或用 `WithVideoCodecOption("svtav1-params", "passes=2:pass=N:stats=<file>")` 走 SVT-AV1 自身的兩階段控制。
 
 ### 整合到 `MpvAppBuilder`
 
@@ -269,7 +269,7 @@ builder 路徑適合需要混合其他 `Use*` 設定（hwdec、yt-dlp 格式、l
 | `MpvEncoder.ConcatenateAsync` | 多檔合併（會重新編碼） | mpv EDL `# mpv EDL v0` 暫存檔 |
 | `MpvEncoder.SplitAsync` | 依時間段切割成多檔 | 多次 `start=` / `end=` 編碼 |
 | `MpvEncodingOptions.WithStartTime` / `WithEndTime` / `WithLength` | 裁切 | `start` / `end` / `length` |
-| `WithKeyframeAccurateSeek` | 精準切點 | `hr-seek=yes` |
+| `WithFrameAccurateSeek` | 不限於 keyframe 的逐幀精準切點 | `hr-seek=yes` |
 | `WithBurnInSubtitleTrack(int)` / `WithExternalSubtitle(path)` | 字幕燒入 | `sid=` / `sub-files=` + `sub-visibility=yes` |
 | `WithVideoFilter` / `WithAudioFilter` / `WithLavfiComplex` | filter 逃生口 | `vf` / `af` / `lavfi-complex` |
 | `WithMetadataTag` / `WithoutMetadataTag` | metadata 個別增減 | 累積到 `oset-metadata` / `oremove-metadata` |

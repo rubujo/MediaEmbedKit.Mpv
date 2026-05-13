@@ -360,11 +360,15 @@ public sealed class MpvEncodingOptions
     }
 
     /// <summary>
-    /// 啟用 mpv <c>hr-seek=yes</c>（高精度搜尋），讓 <see cref="WithStartTime"/> 切點精確到 frame，
-    /// 代價是 mpv 必須解碼到目標時間。
+    /// 啟用 mpv <c>hr-seek=yes</c>（高精度搜尋），讓 <see cref="WithStartTime"/> 切點不限於 keyframe，
+    /// 精準到 frame；代價是 mpv 必須解碼到目標時間。
     /// </summary>
+    /// <remarks>
+    /// mpv 文件對 <c>--hr-seek</c> 的定義：「Select when to use precise seeks that are not limited
+    /// to keyframes」（不限於 keyframe 的精準搜尋）；值 <c>yes</c> 代表「Use precise seeks whenever possible」。
+    /// </remarks>
     /// <returns>目前的 encoding mode 選項。</returns>
-    public MpvEncodingOptions WithKeyframeAccurateSeek()
+    public MpvEncodingOptions WithFrameAccurateSeek()
     {
         return WithOption("hr-seek", "yes");
     }

@@ -169,7 +169,7 @@ public static class MpvEncoder
 
         MpvEncodingOptions options = new MpvEncodingOptions(outputPath)
             .WithStartTime(at)
-            .WithKeyframeAccurateSeek()
+            .WithFrameAccurateSeek()
             .AsVideoOnly()
             .WithOption("frames", "1");
         return EncodeAsync(inputPathOrUrl, options, playerOptions, progress: null, cancellationToken: cancellationToken);

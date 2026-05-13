@@ -1,8 +1,15 @@
 ﻿namespace MediaEmbedKit.Mpv;
 
 /// <summary>
-/// 定義 libmpv 事件識別碼。
+/// 定義 libmpv 事件識別碼，對齊 mpv master <c>include/mpv/client.h</c> 的 <c>mpv_event_id</c>。
 /// </summary>
+/// <remarks>
+/// 數值 9、10、12、13、15 是 mpv 早期版本曾使用、現已從事件列表中移除的 ID
+/// （前 <c>TracksChanged</c> / <c>TrackSwitched</c> / <c>Pause</c> / <c>Unpause</c> /
+/// <c>ScriptInputDispatch</c>）。新版 mpv 永遠不會發送這些 ID，本列舉刻意留下數值缺口
+/// 以對應 mpv header 配置。改以觀察對應屬性（<c>track-list</c> / <c>vid</c> / <c>aid</c> /
+/// <c>sid</c> / <c>pause</c>）取得相同資訊。
+/// </remarks>
 public enum MpvEventId
 {
     /// <summary>
@@ -42,43 +49,13 @@ public enum MpvEventId
     /// </summary>
     FileLoaded = 8,
     /// <summary>
-    /// 播放軌清單已變更。
-    /// </summary>
-    /// <remarks>mpv 已從事件列表中移除；改以觀察 <c>track-list</c> 屬性偵測變更。</remarks>
-    [System.Obsolete("mpv 已移除此事件；請改觀察 track-list 屬性。", error: false)]
-    TracksChanged = 9,
-    /// <summary>
-    /// 目前播放軌已切換。
-    /// </summary>
-    /// <remarks>mpv 已從事件列表中移除；改以觀察 <c>vid</c> / <c>aid</c> / <c>sid</c> 屬性偵測變更。</remarks>
-    [System.Obsolete("mpv 已移除此事件；請改觀察 vid / aid / sid 屬性。", error: false)]
-    TrackSwitched = 10,
-    /// <summary>
     /// libmpv 進入閒置狀態。
     /// </summary>
     Idle = 11,
     /// <summary>
-    /// 播放已暫停。
-    /// </summary>
-    /// <remarks>mpv 已從事件列表中移除；改以觀察 <c>pause</c> 屬性偵測變更。</remarks>
-    [System.Obsolete("mpv 已移除此事件；請改觀察 pause 屬性。", error: false)]
-    Pause = 12,
-    /// <summary>
-    /// 播放已取消暫停。
-    /// </summary>
-    /// <remarks>mpv 已從事件列表中移除；改以觀察 <c>pause</c> 屬性偵測變更。</remarks>
-    [System.Obsolete("mpv 已移除此事件；請改觀察 pause 屬性。", error: false)]
-    Unpause = 13,
-    /// <summary>
     /// libmpv 產生週期性刻度事件。
     /// </summary>
     Tick = 14,
-    /// <summary>
-    /// 指令碼輸入分派事件已發生。
-    /// </summary>
-    /// <remarks>mpv 已從事件列表中移除；用戶端輸入請改透過 <c>mpv_command</c> 或腳本系統。</remarks>
-    [System.Obsolete("mpv 已移除此事件；不會再被觸發。", error: false)]
-    ScriptInputDispatch = 15,
     /// <summary>
     /// libmpv 用戶端訊息已送達。
     /// </summary>
