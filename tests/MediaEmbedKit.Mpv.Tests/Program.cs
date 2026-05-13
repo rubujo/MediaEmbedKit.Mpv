@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using MediaEmbedKit.Mpv.Downloads;
+using MediaEmbedKit.Mpv.Hosting;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace MediaEmbedKit.Mpv.Tests
 {
@@ -39,9 +42,54 @@ namespace MediaEmbedKit.Mpv.Tests
             runner.Add("MpvMediaItem 建構 per-file options", VerifyMpvMediaItemBuildFileOptions);
             runner.Add("MpvRuntimeHealthCheck 缺檔資料夾報告", VerifyMpvRuntimeHealthCheckMissingFiles);
             runner.Add("MpvLibraryUpdateScheduler 路徑與列舉", VerifyMpvLibraryUpdateSchedulerLayout);
+            runner.Add("DI 擴充註冊播放器工廠", VerifyDependencyInjectionExtensions);
 
             await runner.RunAsync().ConfigureAwait(false);
             return runner.FailedCount == 0 ? 0 : 1;
+        }
+
+        /// <summary>
+        /// 驗證 <see cref="MpvServiceCollectionExtensions.AddMpvPlayerFactory"/> 與
+        /// <see cref="MpvServiceCollectionExtensions.AddMpvPlayer"/> 會把對應服務登錄到容器。
+        /// </summary>
+        /// <returns>代表測試流程的工作。</returns>
+        private static Task VerifyDependencyInjectionExtensions()
+        {
+            ServiceCollection servicesA = new ServiceCollection();
+            MpvServiceCollectionExtensions.AddMpvPlayerFactory(servicesA, builder => builder.UseHardwareDecoding());
+
+            ServiceProvider providerA = servicesA.BuildServiceProvider();
+            try
+            {
+                Func<Task<MpvPlayer>>? factoryA = providerA.GetService<Func<Task<MpvPlayer>>>();
+                AssertEx.True(factoryA != null, "AddMpvPlayerFactory 應註冊 Func<Task<MpvPlayer>>");
+
+                ServiceCollection servicesB = new ServiceCollection();
+                MpvServiceCollectionExtensions.AddMpvPlayer(servicesB, builder => builder.UseHardwareDecoding());
+                ServiceDescriptor playerDescriptor = servicesB.Single(descriptor => descriptor.ServiceType == typeof(MpvPlayer));
+                AssertEx.Equal(ServiceLifetime.Singleton, playerDescriptor.Lifetime, "AddMpvPlayer 應註冊為 singleton");
+                AssertEx.True(playerDescriptor.ImplementationFactory != null, "AddMpvPlayer 應透過工廠註冊");
+
+                AssertEx.Throws<ArgumentNullException>(
+                    delegate
+                    {
+                        MpvServiceCollectionExtensions.AddMpvPlayer(null!, builder => { });
+                    },
+                    "services 為 null 應被拒絕");
+
+                AssertEx.Throws<ArgumentNullException>(
+                    delegate
+                    {
+                        MpvServiceCollectionExtensions.AddMpvPlayer(new ServiceCollection(), null!);
+                    },
+                    "configure 為 null 應被拒絕");
+            }
+            finally
+            {
+                providerA.Dispose();
+            }
+
+            return Task.CompletedTask;
         }
 
         /// <summary>
