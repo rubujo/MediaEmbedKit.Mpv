@@ -212,6 +212,9 @@ if (!result.Success)
 
 ### 兩階段範例（libx264）
 
+> **兩階段選項完整性**：呼叫 `EncodeTwoPassAsync` 時，所有透過 `WithVideoCodecOption` / `WithAudioCodecOption` / `WithMuxerOption` / `WithMetadataTag` / `WithoutMetadataTag` 累加的選項都會被原樣傳遞到第一階段與第二階段。這是 libx264 / libx265 / libvpx 兩階段 rate-control 正確運作的前提（兩階段必須拿到相同的編碼參數，第二階段才能用第一階段產生的統計資料）。
+
+
 ```csharp
 MpvEncodingOptions options = new MpvEncodingOptions(@"D:\out\clip.mp4")
     .WithVideoCodec(MpvVideoCodecPreset.H264)

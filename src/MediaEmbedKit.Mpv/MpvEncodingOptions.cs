@@ -631,6 +631,31 @@ public sealed class MpvEncodingOptions
     public IDictionary<string, string> AdditionalOptions { get; private set; }
 
     /// <summary>
+    /// 把目前實例累積的全部內部清單（metadata / muxer / video codec / audio codec 加值項）
+    /// 複製到另一個 <see cref="MpvEncodingOptions"/> 實例。
+    /// </summary>
+    /// <param name="target">要寫入的目標選項。</param>
+    /// <remarks>
+    /// 用於 <see cref="MpvEncoder.EncodeTwoPassAsync"/> 的階段選項複製：因為公開屬性
+    /// 不涵蓋 <c>WithVideoCodecOption</c> / <c>WithAudioCodecOption</c> /
+    /// <c>WithMuxerOption</c> / <c>WithMetadataTag</c> / <c>WithoutMetadataTag</c>
+    /// 累加的清單，必須單獨複製避免兩階段遺失 codec 參數。
+    /// </remarks>
+    internal void CopyAccumulatedListsTo(MpvEncodingOptions target)
+    {
+        if (target == null)
+        {
+            throw new ArgumentNullException(nameof(target));
+        }
+
+        target._muxerAddOptions.AddRange(_muxerAddOptions);
+        target._videoCodecAddOptions.AddRange(_videoCodecAddOptions);
+        target._audioCodecAddOptions.AddRange(_audioCodecAddOptions);
+        target._metadataAddTags.AddRange(_metadataAddTags);
+        target._metadataRemoveTags.AddRange(_metadataRemoveTags);
+    }
+
+    /// <summary>
     /// 將 encoding mode 選項套用到播放器選項。
     /// </summary>
     /// <param name="playerOptions">要修改的播放器選項。</param>

@@ -20,6 +20,12 @@ public static class MpvEncoder
     private static readonly TimeSpan ProgressSamplingInterval = TimeSpan.FromMilliseconds(250);
 
     /// <summary>
+    /// 取消後等待 libmpv 主動發送 <c>EndFile</c> 的最長時間；
+    /// 逾時則由 helper 自行終止等待，避免因 libmpv 未發事件而永久卡住。
+    /// </summary>
+    private static readonly TimeSpan CancellationGracePeriod = TimeSpan.FromSeconds(3);
+
+    /// <summary>
     /// 以非同步方式編碼單一輸入並寫出到 <see cref="MpvEncodingOptions.OutputPath"/>。
     /// </summary>
     /// <param name="inputPathOrUrl">輸入媒體的檔案路徑或網址。</param>
@@ -516,6 +522,8 @@ public static class MpvEncoder
             clone.AdditionalOptions[option.Key] = option.Value;
         }
 
+        source.CopyAccumulatedListsTo(clone);
+
         if (isSvtAv1)
         {
             clone.WithVideoCodecOption("pass", passNumber.ToString(System.Globalization.CultureInfo.InvariantCulture));
@@ -595,7 +603,8 @@ public static class MpvEncoder
         TaskCompletionSource<MpvEndFileEventArgs> completion =
             new TaskCompletionSource<MpvEndFileEventArgs>(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        MpvEndFileEventArgs endEvent;
+        MpvEndFileEventArgs? endEvent = null;
+        bool cancellationGraceExpired = false;
         TimeSpan elapsed;
         MpvPlayer player = new MpvPlayer(effectiveOptions);
         try
@@ -620,7 +629,12 @@ public static class MpvEncoder
                     using (cancellationToken.Register(static state => SafeStop((MpvPlayer)state!), player))
                     {
                         player.LoadFile(inputPathOrUrl);
-                        endEvent = await completion.Task.ConfigureAwait(false);
+                        endEvent = await WaitForEndFileAsync(completion, cancellationToken).ConfigureAwait(false);
+                        if (endEvent == null)
+                        {
+                            cancellationGraceExpired = true;
+                        }
+
                         stopwatch.Stop();
                         progressCts.Cancel();
                         try
@@ -645,7 +659,65 @@ public static class MpvEncoder
             player.Dispose();
         }
 
+        if (endEvent == null)
+        {
+            return BuildCancelledResult(encodingOptions.OutputPath, elapsed, cancellationGraceExpired);
+        }
+
         return BuildResult(endEvent, encodingOptions.OutputPath, elapsed);
+    }
+
+    /// <summary>
+    /// 等待 libmpv 發送 <c>EndFile</c>；當 <paramref name="cancellationToken"/> 觸發後，
+    /// 最多再等 <see cref="CancellationGracePeriod"/> 讓 libmpv 自行收尾。
+    /// 逾時則回傳 <see langword="null"/>，呼叫端據此產生取消結果。
+    /// </summary>
+    /// <param name="completion">由 <c>EndFile</c> handler 完成的 TCS。</param>
+    /// <param name="cancellationToken">使用者傳入的取消權杖。</param>
+    /// <returns>收到的 <see cref="MpvEndFileEventArgs"/>；逾時取消時為 <see langword="null"/>。</returns>
+    private static async Task<MpvEndFileEventArgs?> WaitForEndFileAsync(
+        TaskCompletionSource<MpvEndFileEventArgs> completion,
+        CancellationToken cancellationToken)
+    {
+        if (!cancellationToken.CanBeCanceled)
+        {
+            return await completion.Task.ConfigureAwait(false);
+        }
+
+        Task<MpvEndFileEventArgs> waitTask = completion.Task;
+        TaskCompletionSource<bool> cancellationTcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        using (cancellationToken.Register(static state => ((TaskCompletionSource<bool>)state!).TrySetResult(true), cancellationTcs))
+        {
+            Task firstStage = await Task.WhenAny(waitTask, cancellationTcs.Task).ConfigureAwait(false);
+            if (firstStage == waitTask)
+            {
+                return await waitTask.ConfigureAwait(false);
+            }
+        }
+
+        // CT 已觸發；給 libmpv CancellationGracePeriod 收尾。
+        Task delay = Task.Delay(CancellationGracePeriod);
+        Task finished = await Task.WhenAny(waitTask, delay).ConfigureAwait(false);
+        if (finished == waitTask)
+        {
+            return await waitTask.ConfigureAwait(false);
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// 為取消（或寬限期逾時）情境建立 <see cref="MpvEncodingResult"/>。
+    /// </summary>
+    /// <param name="outputPath">輸出檔案路徑。</param>
+    /// <param name="elapsed">取消當下的耗時。</param>
+    /// <param name="graceExpired">是否因 grace period 逾時而非 mpv 主動結束。</param>
+    /// <returns>對應取消的結果。</returns>
+    private static MpvEncodingResult BuildCancelledResult(string outputPath, TimeSpan elapsed, bool graceExpired)
+    {
+        MpvErrorCode errorCode = graceExpired ? MpvErrorCode.Generic : MpvErrorCode.Success;
+        long outputBytes = TryReadOutputBytes(outputPath);
+        return new MpvEncodingResult(false, MpvEndFileReason.Stop, errorCode, outputPath, outputBytes, elapsed);
     }
 
     /// <summary>

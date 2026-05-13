@@ -252,11 +252,73 @@ public sealed class MpvRuntimeHealthReport
     public IReadOnlyList<string> Errors { get; }
 
     /// <summary>
-    /// 取得整體執行階段是否處於可用狀態。
+    /// 取得整體執行階段是否處於可用狀態（核心 libmpv 可用）。
     /// </summary>
     /// <value>libmpv 存在且未發現錯誤時為 <see langword="true"/>。</value>
+    /// <remarks>
+    /// 「Healthy」表示「能播媒體」的最小條件；要判斷「完整 runtime 已就緒」
+    /// （含後處理工具）請改用 <see cref="IsComplete"/> 或 <see cref="IsHealthyFor"/>。
+    /// </remarks>
     public bool IsHealthy
     {
         get { return IsLibMpvPresent && Errors.Count == 0; }
+    }
+
+    /// <summary>
+    /// 取得整體執行階段是否為「完整 runtime」，亦即除核心 libmpv 外，
+    /// yt-dlp / deno / ffmpeg / ffprobe 等附帶工具也都齊備。
+    /// </summary>
+    /// <value>核心 libmpv 與全部附帶工具皆就緒時為 <see langword="true"/>。</value>
+    /// <remarks>
+    /// 適合用來判斷「能下載 URL + 後處理」的場景。若應用程式僅需播放本機檔，
+    /// 用 <see cref="IsHealthy"/> 即可；若需自訂必備工具子集，請用 <see cref="IsHealthyFor"/>。
+    /// </remarks>
+    public bool IsComplete
+    {
+        get
+        {
+            return IsHealthy
+                && IsYtdlpPresent
+                && IsDenoPresent
+                && IsFFmpegPresent
+                && IsFFprobePresent;
+        }
+    }
+
+    /// <summary>
+    /// 依使用者指定的「必備工具集合」評估執行階段是否符合健康條件。
+    /// 任何指定工具缺少即回傳 <see langword="false"/>；核心 libmpv 永遠必備，
+    /// 無需在 <paramref name="requiredTools"/> 中重複列出。
+    /// </summary>
+    /// <param name="requiredTools">必備附帶工具集合。</param>
+    /// <returns>所有指定工具皆存在且核心 libmpv 健康時為 <see langword="true"/>。</returns>
+    public bool IsHealthyFor(MpvRuntimeTools requiredTools)
+    {
+        if (!IsHealthy)
+        {
+            return false;
+        }
+
+        if ((requiredTools & MpvRuntimeTools.YtDlp) != 0 && !IsYtdlpPresent)
+        {
+            return false;
+        }
+
+        if ((requiredTools & MpvRuntimeTools.Deno) != 0 && !IsDenoPresent)
+        {
+            return false;
+        }
+
+        if ((requiredTools & MpvRuntimeTools.FFmpeg) != 0 && !IsFFmpegPresent)
+        {
+            return false;
+        }
+
+        if ((requiredTools & MpvRuntimeTools.FFprobe) != 0 && !IsFFprobePresent)
+        {
+            return false;
+        }
+
+        return true;
     }
 }

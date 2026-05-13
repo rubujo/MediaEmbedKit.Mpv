@@ -48,6 +48,8 @@ internal static class Program
         runner.Add("MpvMediaItem fluent helpers", VerifyMpvMediaItemFluentHelpers);
         runner.Add("MpvPlayerOptions.CopyTo 全欄複製", VerifyMpvPlayerOptionsCopyTo);
         runner.Add("MpvRelayCommand CanExecute/Execute/RaiseCanExecuteChanged", VerifyMpvRelayCommand);
+        runner.Add("MpvEncodingOptions two-pass clone 內部累積清單", VerifyEncodingOptionsTwoPassClone);
+        runner.Add("MpvRuntimeHealthReport IsComplete / IsHealthyFor", VerifyMpvRuntimeHealthReportSemantics);
 
         await runner.RunAsync().ConfigureAwait(false);
         return runner.FailedCount == 0 ? 0 : 1;
@@ -150,6 +152,128 @@ internal static class Program
         AssertEx.Throws<ArgumentException>(
             delegate { item.WithYtdlpFormat(" "); },
             "空白 yt-dlp selector 應被拒絕");
+
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// 驗證 <see cref="MpvEncodingOptions"/> 在兩階段（two-pass）clone 流程中
+    /// 會把內部累積的 <c>WithMuxerOption</c> / <c>WithVideoCodecOption</c> /
+    /// <c>WithAudioCodecOption</c> / <c>WithMetadataTag</c> / <c>WithoutMetadataTag</c>
+    /// 清單全部複製到 clone，避免兩階段遺失 codec 參數。
+    /// </summary>
+    /// <returns>代表測試流程的工作。</returns>
+    private static Task VerifyEncodingOptionsTwoPassClone()
+    {
+        MpvEncodingOptions source = new MpvEncodingOptions("out.mp4")
+            .WithVideoCodec(MpvVideoCodecPreset.H264)
+            .WithVideoCodecOption("b", "4000k")
+            .WithVideoCodecOption("profile", "high")
+            .WithAudioCodec(MpvAudioCodecPreset.Aac)
+            .WithAudioCodecOption("b", "192k")
+            .WithMuxerOption("movflags", "+faststart")
+            .WithMetadataTag("title", "Phase 14 Verification")
+            .WithMetadataTag("artist", "Tests")
+            .WithoutMetadataTag("comment");
+
+        System.Collections.Generic.IReadOnlyDictionary<string, string> sourceDict = source.ToOptionDictionary();
+        AssertEx.True(sourceDict.ContainsKey("ovcopts"), "source 應產生 ovcopts。");
+        AssertEx.True(sourceDict["ovcopts"].Contains("b=4000k"), "source ovcopts 應含 b=4000k。");
+        AssertEx.True(sourceDict["ovcopts"].Contains("profile=high"), "source ovcopts 應含 profile=high。");
+        AssertEx.True(sourceDict.ContainsKey("oacopts") && sourceDict["oacopts"].Contains("b=192k"), "source oacopts 應含 b=192k。");
+        AssertEx.True(sourceDict.ContainsKey("ofopts") && sourceDict["ofopts"].Contains("movflags=+faststart"), "source ofopts 應含 movflags=+faststart。");
+        AssertEx.True(sourceDict.ContainsKey("oset-metadata") && sourceDict["oset-metadata"].Contains("title=Phase 14 Verification"), "source oset-metadata 應含 title。");
+        AssertEx.True(sourceDict.ContainsKey("oremove-metadata") && sourceDict["oremove-metadata"].Contains("comment"), "source oremove-metadata 應含 comment。");
+
+        // 模擬 ClonePassOptions 的核心動作：建新實例、複製公開屬性與累積清單。
+        MpvEncodingOptions clone = new MpvEncodingOptions("pass1.mp4");
+        clone.VideoCodec = source.VideoCodec;
+        clone.VideoCodecOptions = source.VideoCodecOptions;
+        clone.AudioCodec = source.AudioCodec;
+        clone.AudioCodecOptions = source.AudioCodecOptions;
+        clone.ContainerFormat = source.ContainerFormat;
+        clone.ContainerFormatOptions = source.ContainerFormatOptions;
+        clone.CopyRawTimestamps = source.CopyRawTimestamps;
+        clone.CopyMetadata = source.CopyMetadata;
+        clone.Metadata = source.Metadata;
+        clone.RemovedMetadata = source.RemovedMetadata;
+        foreach (System.Collections.Generic.KeyValuePair<string, string> entry in source.AdditionalOptions)
+        {
+            clone.AdditionalOptions[entry.Key] = entry.Value;
+        }
+
+        typeof(MpvEncodingOptions)
+            .GetMethod("CopyAccumulatedListsTo", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!
+            .Invoke(source, new object[] { clone });
+
+        System.Collections.Generic.IReadOnlyDictionary<string, string> cloneDict = clone.ToOptionDictionary();
+        AssertEx.True(cloneDict.ContainsKey("ovcopts") && cloneDict["ovcopts"].Contains("b=4000k"), "clone ovcopts 應含 b=4000k（不應遺失）。");
+        AssertEx.True(cloneDict["ovcopts"].Contains("profile=high"), "clone ovcopts 應含 profile=high（不應遺失）。");
+        AssertEx.True(cloneDict["oacopts"].Contains("b=192k"), "clone oacopts 應含 b=192k（不應遺失）。");
+        AssertEx.True(cloneDict["ofopts"].Contains("movflags=+faststart"), "clone ofopts 應含 movflags=+faststart（不應遺失）。");
+        AssertEx.True(cloneDict["oset-metadata"].Contains("title=Phase 14 Verification"), "clone oset-metadata 應含 title（不應遺失）。");
+        AssertEx.True(cloneDict["oremove-metadata"].Contains("comment"), "clone oremove-metadata 應含 comment（不應遺失）。");
+
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// 驗證 <see cref="MpvRuntimeHealthReport.IsHealthy"/> / <see cref="MpvRuntimeHealthReport.IsComplete"/>
+    /// 與 <see cref="MpvRuntimeHealthReport.IsHealthyFor"/> 的語意。
+    /// </summary>
+    /// <returns>代表測試流程的工作。</returns>
+    private static Task VerifyMpvRuntimeHealthReportSemantics()
+    {
+        // 透過反射叫 internal 建構式建立 fixture report。
+        System.Reflection.ConstructorInfo? ctor = typeof(MpvRuntimeHealthReport)
+            .GetConstructor(
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
+                binder: null,
+                new[]
+                {
+                    typeof(string),
+                    typeof(bool), typeof(bool), typeof(bool),
+                    typeof(string),
+                    typeof(bool), typeof(bool), typeof(bool), typeof(bool),
+                    typeof(IReadOnlyList<string>)
+                },
+                modifiers: null);
+        AssertEx.True(ctor != null, "MpvRuntimeHealthReport internal ctor 應存在。");
+
+        IReadOnlyList<string> empty = new List<string>();
+
+        MpvRuntimeHealthReport coreOnly = (MpvRuntimeHealthReport)ctor!.Invoke(new object?[]
+        {
+            "C:/fake", true, true, true, "2.5",
+            false, false, false, false,
+            empty
+        });
+        AssertEx.True(coreOnly.IsHealthy, "core libmpv 齊備應 IsHealthy=true。");
+        AssertEx.True(!coreOnly.IsComplete, "缺附帶工具應 IsComplete=false。");
+        AssertEx.True(coreOnly.IsHealthyFor(MpvRuntimeTools.None), "None 要求僅檢查核心。");
+        AssertEx.True(!coreOnly.IsHealthyFor(MpvRuntimeTools.FFmpeg), "缺 ffmpeg 應 IsHealthyFor(FFmpeg)=false。");
+        AssertEx.True(!coreOnly.IsHealthyFor(MpvRuntimeTools.All), "缺全部附帶工具應 IsHealthyFor(All)=false。");
+
+        MpvRuntimeHealthReport allTools = (MpvRuntimeHealthReport)ctor!.Invoke(new object?[]
+        {
+            "C:/fake", true, true, true, "2.5",
+            true, true, true, true,
+            empty
+        });
+        AssertEx.True(allTools.IsHealthy, "全部齊備應 IsHealthy=true。");
+        AssertEx.True(allTools.IsComplete, "全部齊備應 IsComplete=true。");
+        AssertEx.True(allTools.IsHealthyFor(MpvRuntimeTools.All), "全部齊備應 IsHealthyFor(All)=true。");
+        AssertEx.True(allTools.IsHealthyFor(MpvRuntimeTools.YtDlp | MpvRuntimeTools.FFmpeg), "子集合也應通過。");
+
+        MpvRuntimeHealthReport coreBroken = (MpvRuntimeHealthReport)ctor!.Invoke(new object?[]
+        {
+            "C:/fake", true, false, false, null,
+            true, true, true, true,
+            new List<string> { "libmpv 載入失敗" } as IReadOnlyList<string>
+        });
+        AssertEx.True(!coreBroken.IsHealthy, "有 errors 不應 IsHealthy。");
+        AssertEx.True(!coreBroken.IsComplete, "IsHealthy=false 必然 IsComplete=false。");
+        AssertEx.True(!coreBroken.IsHealthyFor(MpvRuntimeTools.None), "core 故障時即使無附帶工具要求也應失敗。");
 
         return Task.CompletedTask;
     }
