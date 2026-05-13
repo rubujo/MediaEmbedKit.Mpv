@@ -24,10 +24,10 @@ runtime/
 
 runtime helper 預設要求 GitHub Releases API 提供 `sha256:` digest，並驗證下載內容與該 digest 相符。若需要自訂 mirror、舊 release 或內部測試來源，可由呼叫端明確改用 `BestEffort` 相容模式。
 
-- `MpvNativeAssetVerificationPolicy.BestEffort`：GitHub Releases API 提供 SHA-256 digest 時會驗證，未提供時不阻擋下載；僅建議用於自訂來源或相容情境。
-- `MpvNativeAssetVerificationPolicy.RequireGitHubDigest`：要求 GitHub 發行資產必須提供 `sha256:` digest。
+- `MpvNativeAssetVerificationPolicy.RequireGitHubDigest`（**預設值**）：要求 GitHub 發行資產必須提供 `sha256:` digest，下載內容必須驗證一致。
 - `MpvNativeAssetVerificationPolicy.RequireProviderChecksum`：要求 GitHub digest 與 provider 發行的 checksum 檔案同時通過驗證。
 - `MpvNativeAssetVerificationPolicy.RequirePinnedSha256`：要求呼叫端提供 `ExpectedSha256`，以下載內容的 SHA-256 值作為鎖定紀錄。
+- `MpvNativeAssetVerificationPolicy.BestEffort`：GitHub Releases API 提供 SHA-256 digest 時會驗證，未提供時不阻擋下載；**僅作為自訂來源或相容情境**的退路，不再作為預設。
 
 `LockReleaseSource = true` 會鎖定內建 GitHub repository 與下載 URL。啟用後，helper 會拒絕非預設 GitHub Releases API 或非預期 repository 的資產 URL。
 
@@ -60,6 +60,12 @@ Windows x64 helper 可從 shinchiro `mpv-winbuild-cmake` 與 zhongfly `mpv-winbu
 所有套用流程均以 `MpvLibraryLoader.IsLoaded` 守備，避免處理序內 hot reload。
 
 `MpvRuntimeHealthCheck.AnalyzeAsync(runtimeDirectory, probeLibMpv: bool)` 報告：libmpv 是否存在與可載入、是否能建立並初始化 player、yt-dlp / Deno / FFmpeg / FFprobe 是否齊備。`probeLibMpv` 預設關閉以避免無意間在啟動流程觸發 libmpv 載入。
+
+`MpvRuntimeHealthReport` 提供兩層健康語意，避免「能播媒體」與「完整 runtime 就緒」被混為一談：
+
+- `IsHealthy`：核心 libmpv 已存在且無錯誤紀錄，「能播媒體」的最小條件。
+- `IsComplete`：`IsHealthy` 且 yt-dlp / Deno / FFmpeg / FFprobe **全部齊備**；對應「能下載 URL + 後處理」場景。
+- `IsHealthyFor(MpvRuntimeTools required)`：以 `[Flags]` 列舉自訂必備工具子集，例如 `MpvRuntimeTools.YtDlp | MpvRuntimeTools.FFmpeg`。核心 libmpv 永遠必備，不需在參數中重複列出。`MpvRuntimeTools.None` 等價於只檢查 `IsHealthy`、`MpvRuntimeTools.All` 等價於 `IsComplete`。
 
 ## 授權稽核
 

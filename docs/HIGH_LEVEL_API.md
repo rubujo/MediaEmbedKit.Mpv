@@ -210,6 +210,17 @@ if (!result.Success)
 
 `MpvEncodingResult`：`Success` 僅在 `EndReason == EndOfFile` 且 `ErrorCode == Success` 且 `OutputBytes > 0` 時為 `true`。注意 mpv 對某些 corrupt input 會以 `EndOfFile` 完成，因此檢查 `ErrorCode` 與 `OutputBytes` 是必要的。
 
+#### 取消行為
+
+呼叫端傳入觸發的 `CancellationToken` 後，helper 會：
+
+1. 對 player 呼叫 `Stop()`，請 libmpv 主動結束（通常會發出 `EndFile` with `Reason=Stop`）。
+2. 等待 libmpv 自發 `EndFile` 事件，**最多 3 秒寬限期**（`CancellationGracePeriod`）；多數情況遠少於此時間。
+3. 收到 `EndFile` → 走正常 `BuildResult` 路徑，`MpvEncodingResult.EndReason` 反映 libmpv 回報的真實原因（通常 `Stop`）。
+4. 寬限期逾時（libmpv 因任何原因未發 `EndFile`）→ 走 `BuildCancelledResult`，回傳 `Success=false` / `EndReason=Stop` / `ErrorCode=Generic`，避免 `await EncodeAsync` 永遠卡住。
+
+換言之：**取消會以結果（result）回報，不會擲出 `OperationCanceledException`**。呼叫端判讀 `result.Success == false && result.EndReason != EndOfFile` 即為取消／失敗路徑。
+
 ### 兩階段範例（libx264）
 
 > **兩階段選項完整性**：呼叫 `EncodeTwoPassAsync` 時，所有透過 `WithVideoCodecOption` / `WithAudioCodecOption` / `WithMuxerOption` / `WithMetadataTag` / `WithoutMetadataTag` 累加的選項都會被原樣傳遞到第一階段與第二階段。這是 libx264 / libx265 / libvpx 兩階段 rate-control 正確運作的前提（兩階段必須拿到相同的編碼參數，第二階段才能用第一階段產生的統計資料）。
@@ -269,7 +280,7 @@ builder 路徑適合需要混合其他 `Use*` 設定（hwdec、yt-dlp 格式、l
 | `MpvEncoder.ConcatenateAsync` | 多檔合併（會重新編碼） | mpv EDL `# mpv EDL v0` 暫存檔 |
 | `MpvEncoder.SplitAsync` | 依時間段切割成多檔 | 多次 `start=` / `end=` 編碼 |
 | `MpvEncodingOptions.WithStartTime` / `WithEndTime` / `WithLength` | 裁切 | `start` / `end` / `length` |
-| `WithFrameAccurateSeek` | 不限於 keyframe 的逐幀精準切點 | `hr-seek=yes` |
+| `WithFrameAccurateSeek` | 不限於 keyframe 的逐幀精準切點 | `hr-seek=yes` （此方法由舊名 `WithKeyframeAccurateSeek` 命名顛倒修正而來；pre-release 直接 rename，無 obsolete alias） |
 | `WithBurnInSubtitleTrack(int)` / `WithExternalSubtitle(path)` | 字幕燒入 | `sid=` / `sub-files=` + `sub-visibility=yes` |
 | `WithVideoFilter` / `WithAudioFilter` / `WithLavfiComplex` | filter 逃生口 | `vf` / `af` / `lavfi-complex` |
 | `WithMetadataTag` / `WithoutMetadataTag` | metadata 個別增減 | 累積到 `oset-metadata` / `oremove-metadata` |

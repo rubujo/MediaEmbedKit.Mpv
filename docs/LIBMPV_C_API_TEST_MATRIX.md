@@ -7,7 +7,7 @@
 | 項目 | 狀態 |
 | --- | --- |
 | 官方基準 | mpv v0.41.0 |
-| provider 對齊 | shinchiro `20260421` / mpv `5921fe5`；zhongfly `2026-05-11-7732c305a5` / mpv `7732c305a5` |
+| provider 對齊 | shinchiro `20260421` / mpv `5921fe5`；zhongfly `2026-05-13-37f4edffaf` / mpv `37f4edffaf` |
 | 公開匯出函式 | 官方標頭 54 個；`MpvNative` P/Invoke 54 個 |
 | 列舉與旗標 | `MpvErrorCode`、`MpvFormat`、`MpvLogLevel`、`MpvEndFileReason`、render 相關列舉已對齊 v0.41.0 |
 | 原生資料結構 | 事件、節點、stream callback、OpenGL、DRM、render frame info 與 `mpv_byte_array` 皆有受控對應 |
@@ -24,12 +24,12 @@
 | 非同步命令 | `CommandAsync()`、`AbortAsyncCommand()`、`CommandReply` | 已驗證成功、錯誤回覆、命令回覆事件與取消未知要求後的後續命令穩定性。 |
 | 屬性 | `GetProperty*()`、`SetProperty*()`、常用強型別屬性 | 已驗證字串、旗標、數值、節點、格式錯誤與常用播放屬性。 |
 | 觀察屬性 | `ObserveProperty()`、`UnobserveProperty()`、`PropertyChanged` | 已驗證 `time-pos`、`pause`、`track-list` 與取消觀察。 |
-| 事件 | `EventReceived`、typed event、`EventNodeReceived` | 已驗證 StartFile、FileLoaded、EndFile、CommandReply、ClientMessage、Hook、LogMessage、PropertyChange、TracksChanged、EventNodeReceived 與 Shutdown。 |
+| 事件 | `EventReceived`、typed event、`EventNodeReceived` | 已驗證 StartFile、FileLoaded、EndFile、CommandReply、ClientMessage、Hook、LogMessage、PropertyChange、EventNodeReceived 與 Shutdown。`MpvPlayer.TracksChanged` 由 PropertyChange 觀察 `track-list` 屬性合成。`MpvEventId` 對齊 mpv master 配置，數值 9 / 10 / 12 / 13 / 15 為 mpv 已從 enum 移除的歷史 ID（前 `TRACKS_CHANGED` / `TRACK_SWITCHED` / `PAUSE` / `UNPAUSE` / `SCRIPT_INPUT_DISPATCH`），刻意保留缺口、改以對應屬性觀察取代。 |
 | hook 與 wakeup | `AddHook()`、`ContinueHook()`、`Wakeup()` | 已驗證 hook 觸發與繼續流程；事件迴圈 wakeup 由播放器生命週期覆蓋。 |
 
 ## render.h 與 render_gl.h
 
-已比對 provider git build `5921fe5` 與 `7732c305a5`，未發現相對 stable v0.41.0 的公開 header 形狀差異。
+已比對 provider git build `5921fe5` 與 `37f4edffaf`，未發現相對 stable v0.41.0 的公開 header 形狀差異。
 
 | 區域 | 受控入口 | 驗證狀態 |
 | --- | --- | --- |

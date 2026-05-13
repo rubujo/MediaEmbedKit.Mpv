@@ -32,14 +32,16 @@ AI 產製內容可能包含缺漏、錯誤假設或未涵蓋的邊界情境。�
 
 ## 功能概要
 
-- libmpv stable v0.41.0 公開 C API 包裝。
+- libmpv stable v0.41.0 公開 C API 包裝（54/54 函式對齊 mpv master）。
 - 通用 command、property、node 與 event 入口。
-- 常用高階播放 API：播放狀態、音量、速度、播放清單、章節、軌道、字幕、OSD、截圖、濾鏡、輸入事件、script message、薄型 fluent options API 與 mpv encoding mode 附帶輸出。
+- 高階播放 API：`MpvAppBuilder` fluent 建構、`MpvMediaItem` per-file 選項、`LoadAsync`、`WatchProperty<T>`、`MpvCapabilities`、`IAsyncDisposable`、`Microsoft.Extensions.Logging.Abstractions` 整合、`MpvServiceCollectionExtensions.AddMpvPlayer` / `AddMpvPlayerFactory`；以及播放狀態、音量、速度、播放清單、章節、軌道、字幕、OSD、截圖、濾鏡、輸入事件、script message。
+- 高階 encoding API：`MpvEncoder.EncodeAsync` / `EncodeTwoPassAsync` 一站式轉碼（含 `IProgress<MpvEncodingProgress>` 進度與 `CancellationToken` 支援，取消含 3 秒 grace period 並以結果回報）、`RemuxAsync` stream-copy 重新封裝、`ExtractAudioAsync` / `ExtractVideoAsync` 單軌抽取、`ExtractFrameAsync` / `ExtractFramesAsync` 影格抽圖、`ConcatenateAsync`（EDL）多檔串接、`SplitAsync` 多段切割、`MpvAppBuilder.UseEncodingTo` 整合、`MpvVideoCodecPreset` / `MpvAudioCodecPreset`（含 `Copy` stream-copy）。
+- 五個 UI 框架控制項共通綁定屬性（Source / Position / Duration / Volume / IsPaused / IsMuted / PlaybackState）與 MVVM Commands（Play / Pause / Stop / TogglePause / ToggleMute），詳見 `docs/CONTROLS_API.md`。
 - OpenGL render API、software render API 與 stream callback 的核心包裝。
-- Windows x64 runtime helper，可由使用者明確下載或更新 `libmpv-2.dll`、`yt-dlp.exe`、`deno.exe`、`ffmpeg.exe` 與 `ffprobe.exe`。
-- yt-dlp 格式預設值與自訂 selector。
-- yt-dlp 與 Deno 外部處理序執行器，可接收 stdout/stderr 事件。
-- WinForms、WPF、Avalonia、WinUI 3 與 MAUI Windows 範例。
+- Windows x64 runtime helper：`MpvLibraryUpdateScheduler` stage / apply / rollback、`MpvRuntimeHealthCheck`（含 `IsHealthy` / `IsComplete` / `IsHealthyFor(MpvRuntimeTools)` 健康語意拆分）、`MpvLicenseAuditor`、provider fallback；可由使用者明確下載或更新 `libmpv-2.dll`、`yt-dlp.exe`、`deno.exe`、`ffmpeg.exe` 與 `ffprobe.exe`。
+- 預設下載驗證政策為 `RequireGitHubDigest`（GitHub Releases API 提供的 `sha256:` digest 必須驗證一致）；可選 `RequireProviderChecksum` / `RequirePinnedSha256` 或 `BestEffort` 相容模式。
+- yt-dlp 格式預設值與自訂 selector；yt-dlp / Deno / FFmpeg / ffprobe 外部處理序執行器（`StreamAsync` 即時消費 stdout/stderr）。
+- WinForms、WPF、Avalonia、WinUI 3 與 MAUI Windows 範例（含 MVVM 綁定示範區）。
 
 ## 基本使用
 
@@ -66,24 +68,36 @@ MpvPlayerOptions options =
         loadRuntimeConfiguration: true);
 ```
 
-若要使用 mpv encoding mode 進行簡單輸出，可在初始化前套用 `MpvEncodingOptions`：
+若要使用 mpv encoding mode 進行簡單輸出，推薦使用 `MpvEncoder.EncodeAsync` 一站式 API（自行管理短生命週期 player、套用選項、await `EndFile`、回報進度）：
 
 ```csharp
-MpvEncodingOptions encoding = MpvEncodingOptions.ToFile(outputPath)
+MpvEncodingOptions encoding = new MpvEncodingOptions(outputPath)
     .AsMp4()
-    .WithVideoCodec("libx264", "crf=23")
-    .WithAudioCodec("aac");
+    .WithVideoCodec(MpvVideoCodecPreset.H264)
+    .WithVideoCodecOption("crf", "23")
+    .WithAudioCodec(MpvAudioCodecPreset.Aac);
 
-MpvPlayerOptions options = new MpvPlayerOptions()
-    .UseYtdlpFormat(MpvYtdlpFormatPreset.UpTo1080p)
-    .UseEncoding(encoding);
+MpvPlayerOptions playerOptions =
+    MpvWindowsRuntimeInstaller.CreatePlayerOptions(runtime.RuntimeDirectory);
 
-using MpvPlayer player = new MpvPlayer(options);
-player.Initialize();
-player.LoadFile(inputPath);
+Progress<MpvEncodingProgress> progress = new Progress<MpvEncodingProgress>(p =>
+    Console.WriteLine($"{p.Percent:F1}%  pos={p.Position}  bytes={p.OutputBytes}"));
+
+MpvEncodingResult result = await MpvEncoder.EncodeAsync(
+    inputPath,
+    encoding,
+    playerOptions,
+    progress);
+
+if (!result.Success)
+{
+    Console.Error.WriteLine($"編碼失敗：reason={result.EndReason} err={result.ErrorCode}");
+}
 ```
 
-encoding mode 屬於 mpv 的附帶能力。本專案只包裝 mpv 相關選項，不提供正式轉檔佇列、硬體編碼策略、批次重試或完整轉檔診斷。
+兩階段、stream-copy、抽取音訊／視訊／影格、多檔串接（EDL）、多段切割、字幕 burn-in 等場景請參考 `docs/HIGH_LEVEL_API.md` Encoding 段。
+
+encoding mode 屬於 mpv 的附帶能力，本專案在其之上提供 C# 友善的高階入口；mpv 結構性不支援的場景（多軌輸出 / HLS-DASH 切片 / 字幕匯出 / 原檔 in-place 編輯）請改用 FFmpeg。
 
 高階 API 採薄型 helper 設計：常用設定可用 fluent 方式組合，但播放器初始化、runtime 下載與資源釋放仍由應用程式明確控制。
 
@@ -137,6 +151,8 @@ GUI consumer 實際播放驗證會以本機 NuGet 套件建立臨時 consumer sa
 - `docs/SUPPORT_MATRIX.md`：目標框架與支援狀態。
 - `docs/UI_BACKENDS.md`：UI 後端與 AirSpace 限制。
 - `docs/RUNTIME_ASSETS.md`：runtime 下載與更新政策。
+- `docs/HIGH_LEVEL_API.md`：高階 API 與 encoding 操作指南。
+- `docs/CONTROLS_API.md`：五個 UI 框架控制項共通綁定屬性與 Commands。
 - `docs/LIBMPV_C_API_TEST_MATRIX.md`：C API 覆蓋與驗證矩陣。
 - `docs/RELEASE_CHECKLIST.md`：發佈前本機檢查。
 - `docs/DESIGN_TIME_CHECKLIST.md`：Windows UI 控制項設計階段檢查。

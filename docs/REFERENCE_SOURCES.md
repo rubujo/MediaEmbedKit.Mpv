@@ -41,6 +41,15 @@
 - Chrome VersionHistory API：https://developer.chrome.com/docs/web-platform/versionhistory/guide
 - GitHub release asset digest：https://github.blog/changelog/2025-06-03-releases-now-expose-digests-for-release-assets/
 
+## Encoding 與編碼器
+
+- mpv encoding 文件：https://github.com/mpv-player/mpv/blob/master/DOCS/encoding.rst
+- mpv encode 選項：https://github.com/mpv-player/mpv/blob/master/DOCS/man/encode.rst
+- mpv EDL v0：https://github.com/mpv-player/mpv/blob/master/DOCS/edl-mpv.rst
+- FFmpeg ffmpeg-codecs：https://ffmpeg.org/ffmpeg-codecs.html
+- FFmpeg libsvtav1 two-pass commit `5ba2525`（2026-02-25）：https://github.com/FFmpeg/FFmpeg/commit/5ba2525c7affc29cbd99e6266946b382d3fffe8b
+- SVT-AV1 releases：https://gitlab.com/AOMediaCodec/SVT-AV1/-/releases
+
 ## AI Agent 與提交規範
 
 - Codex `AGENTS.md`：https://developers.openai.com/codex/guides/agents-md
