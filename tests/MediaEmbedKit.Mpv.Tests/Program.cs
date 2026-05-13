@@ -216,6 +216,21 @@ internal static class Program
         AssertEx.True(cloneDict["oset-metadata"].Contains("title=Phase 14 Verification"), "clone oset-metadata 應含 title（不應遺失）。");
         AssertEx.True(cloneDict["oremove-metadata"].Contains("comment"), "clone oremove-metadata 應含 comment（不應遺失）。");
 
+        string passDirectory = Path.Combine(Path.GetTempPath(), "mediaembedkit-test-pass-" + Guid.NewGuid().ToString("N"));
+        string firstPassOutputPath = Path.Combine(passDirectory, "pass1.null");
+        string passlogPrefix = Path.Combine(passDirectory, "ffpass");
+        System.Reflection.MethodInfo clonePassOptions = typeof(MpvEncoder)
+            .GetMethod("ClonePassOptions", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic)!;
+        MpvEncodingOptions firstPass = (MpvEncodingOptions)clonePassOptions.Invoke(
+            null,
+            new object[] { source, firstPassOutputPath, 1, passlogPrefix, false })!;
+        IReadOnlyDictionary<string, string> firstPassDict = firstPass.ToOptionDictionary();
+        AssertEx.Equal(firstPassOutputPath, firstPassDict["o"], "第一階段輸出應位於暫存 pass 資料夾。");
+        AssertEx.Equal("null", firstPassDict["of"], "第一階段應明確使用 null muxer。");
+        AssertEx.Equal("no", firstPassDict["aid"], "第一階段應停用音訊。");
+        AssertEx.True(firstPassDict["ovcopts"].Contains("flags=+pass1"), "第一階段 ovcopts 應含 pass1。");
+        AssertEx.True(firstPassDict["ovcopts"].Contains("passlogfile=" + passlogPrefix), "第一階段 ovcopts 應含暫存 passlogfile。");
+
         return Task.CompletedTask;
     }
 

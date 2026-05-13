@@ -475,7 +475,8 @@ public static class MpvEncoder
 
         try
         {
-            MpvEncodingOptions firstPass = ClonePassOptions(encodingOptions, GetNullSinkPath(), passNumber: 1, passlogPrefix, isSvtAv1);
+            string firstPassOutputPath = Path.Combine(passlogDirectory, "pass1.null");
+            MpvEncodingOptions firstPass = ClonePassOptions(encodingOptions, firstPassOutputPath, passNumber: 1, passlogPrefix, isSvtAv1);
             MpvEncodingResult firstResult = await EncodeAsyncCore(inputPathOrUrl, firstPass, playerOptions, progress, cancellationToken).ConfigureAwait(false);
             if (cancellationToken.IsCancellationRequested || firstResult.EndReason != MpvEndFileReason.EndOfFile)
             {
@@ -542,24 +543,12 @@ public static class MpvEncoder
             clone.AudioCodec = null;
             clone.AudioCodecOptions = null;
             clone.WithOption("aid", "no");
-            // 第一階段輸出到 NUL（Windows）/ /dev/null；這兩個路徑都沒有副檔名，
-            // 必須明確指定 libavformat 的 null muxer，否則 mpv 會以
-            // [encode] format not found 終止。
+            // 第一階段使用暫存輸出路徑搭配 libavformat null muxer；
+            // 避免部分 encoder 依輸出基底名稱在目前工作目錄留下 pass log。
             clone.ContainerFormat = "null";
         }
 
         return clone;
-    }
-
-    /// <summary>
-    /// 取得 mpv 在第一階段 (pass 1) 使用的 null sink 輸出路徑。
-    /// </summary>
-    /// <returns>跨平台 null sink 路徑。</returns>
-    private static string GetNullSinkPath()
-    {
-        return System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows)
-            ? "NUL"
-            : "/dev/null";
     }
 
     /// <summary>

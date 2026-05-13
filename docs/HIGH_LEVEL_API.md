@@ -240,7 +240,7 @@ MpvTwoPassEncodingResult result = await MpvEncoder.EncodeTwoPassAsync(
 
 helper 會：
 1. 於 `Path.GetTempPath()/mediaembedkit-mpv-2pass-*` 建立暫存 `passlogfile`。
-2. 第一階段：輸出到 `NUL`（Windows）/`/dev/null`、`aid=no`、`ovcopts` 注入 `flags=+pass1,passlogfile=<temp>`。
+2. 第一階段：輸出到暫存資料夾內的 `pass1.null`，搭配 `of=null`、`aid=no`，並於 `ovcopts` 注入 `flags=+pass1,passlogfile=<temp>`。
 3. 第二階段：輸出到真正路徑、`flags=+pass2`。
 4. 完成或例外時清理整個 temp 資料夾。
 

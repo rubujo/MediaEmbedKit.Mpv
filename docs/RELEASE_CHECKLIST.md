@@ -10,7 +10,7 @@
 .\tools\Invoke-PreReleaseValidation.ps1
 ```
 
-此腳本是唯一主流程，預設使用 Release configuration，並依序執行還原、格式檢查、核心測試、整合測試、方案建置、NuGet 套件內容驗證與乾淨 consumer 專案驗證。
+此腳本是唯一主流程，預設使用 Release configuration，並依序執行還原、專案規範檢查、格式檢查、核心測試、整合測試、方案建置、NuGet 套件內容驗證與乾淨 consumer 專案驗證。
 
 完整 Windows release gate 會額外執行第一階段壓力測試、Console minimal 播放驗證、GUI consumer 實際播放驗證與 GUI 播放壓力測試：
 
@@ -22,7 +22,7 @@
 
 | 場景 | 大約耗時 | 額外磁碟需求 | 備註 |
 | --- | --- | --- | --- |
-| 不帶任何旗標的最小驗證 | 約 5–10 分鐘 | < 1 GB | 還原、格式、核心測試、整合測試、方案建置、套件驗證、consumer 驗證。 |
+| 不帶任何旗標的最小驗證 | 約 5–10 分鐘 | < 1 GB | 還原、專案規範檢查、格式、核心測試、整合測試、方案建置、套件驗證、consumer 驗證。 |
 | `-IncludeStressTests` | 加約 5–10 分鐘 | 與上同 | 第一階段壓力測試包含播放器重複建立與釋放。 |
 | `-IncludeConsoleMinimalPlaybackValidation` | 加約 1–2 分鐘 | 與上同 | 需 Windows x64 runtime；單次 console minimal 播放。 |
 | `-IncludeGuiConsumerPlaybackValidation` | 加約 10–15 分鐘 | 加約 2–3 GB | 為 5 個 GUI sample 各建一份臨時 consumer 專案、本機 NuGet 套件、實際開視窗播放。 |

@@ -175,6 +175,10 @@ internal static class Program
         {
             return VerifyEncodeTwoPassAsync(runtimeDirectory);
         });
+        runner.Add("MpvEncoder Two-pass 不污染目前工作目錄", delegate
+        {
+            return VerifyEncodeTwoPassDoesNotPolluteCurrentDirectoryAsync(runtimeDirectory);
+        });
         runner.Add("MpvEncoder ExtractFrame 抽影格", delegate
         {
             return VerifyExtractFrameAsync(runtimeDirectory);
@@ -526,6 +530,27 @@ internal static class Program
             if (File.Exists(path))
             {
                 File.Delete(path);
+            }
+        }
+        catch (IOException)
+        {
+        }
+        catch (UnauthorizedAccessException)
+        {
+        }
+    }
+
+    /// <summary>
+    /// 嘗試刪除指定資料夾；無法刪除時忽略例外狀況。
+    /// </summary>
+    /// <param name="path">要刪除的資料夾路徑。</param>
+    private static void TryDeleteDirectory(string path)
+    {
+        try
+        {
+            if (Directory.Exists(path))
+            {
+                Directory.Delete(path, true);
             }
         }
         catch (IOException)
@@ -976,6 +1001,52 @@ internal static class Program
         {
             TryDeleteFile(inputPath);
             TryDeleteFile(outputPath);
+        }
+    }
+
+    /// <summary>
+    /// 驗證 <see cref="MpvEncoder.EncodeTwoPassAsync"/> 不會在目前工作目錄留下 two-pass 統計檔。
+    /// </summary>
+    /// <param name="runtimeDirectory">執行階段資料夾。</param>
+    /// <returns>代表測試流程的工作。</returns>
+    private static async Task VerifyEncodeTwoPassDoesNotPolluteCurrentDirectoryAsync(string runtimeDirectory)
+    {
+        string? inputPath = await TryGenerateLavfiTestVideoAsync(runtimeDirectory, 1.0).ConfigureAwait(false);
+        if (inputPath == null)
+        {
+            Console.WriteLine("(略過：mpv av://lavfi 合成輸入不可用於此 build)");
+            return;
+        }
+
+        string workingDirectory = Path.Combine(Path.GetTempPath(), "mediaembedkit-cwd-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(workingDirectory);
+        string previousDirectory = Environment.CurrentDirectory;
+        try
+        {
+            Environment.CurrentDirectory = workingDirectory;
+            string outputPath = Path.Combine(workingDirectory, "twopass-output.mp4");
+            MpvEncodingOptions options = new MpvEncodingOptions(outputPath)
+                .AsVideoOnly()
+                .WithVideoCodec(MpvVideoCodecPreset.H264)
+                .WithVideoCodecOption("preset", "ultrafast")
+                .WithVideoCodecOption("b", "600k");
+
+            MpvTwoPassEncodingResult result = await MpvEncoder.EncodeTwoPassAsync(
+                inputPath,
+                options,
+                CreateEncodingPlayerOptions(runtimeDirectory)).ConfigureAwait(false);
+
+            IntegrationAssert.True(result.Success, "two-pass 編碼應成功完成。");
+            string[] logFiles = Directory.GetFiles(workingDirectory, "*.log", SearchOption.TopDirectoryOnly);
+            IntegrationAssert.True(
+                logFiles.Length == 0,
+                "two-pass 不應在目前工作目錄留下 log 檔；實際=" + string.Join(", ", logFiles));
+        }
+        finally
+        {
+            Environment.CurrentDirectory = previousDirectory;
+            TryDeleteFile(inputPath);
+            TryDeleteDirectory(workingDirectory);
         }
     }
 
@@ -2757,7 +2828,10 @@ internal sealed class SyncProgress<T> : IProgress<T>
         _handler = handler ?? throw new ArgumentNullException(nameof(handler));
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// 同步回報新的進度值。
+    /// </summary>
+    /// <param name="value">要傳遞給處理委派的進度值。</param>
     public void Report(T value)
     {
         _handler(value);

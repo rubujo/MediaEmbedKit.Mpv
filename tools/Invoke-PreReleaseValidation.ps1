@@ -76,6 +76,28 @@ function Invoke-Step {
     }
 }
 
+function Invoke-ProjectPolicyCheck {
+    $inheritdocMatches = & rg -n "<inheritdoc" src samples tests 2>$null
+    if ($LASTEXITCODE -eq 0) {
+        throw "C# XML 註解不得使用 <inheritdoc>。`n$($inheritdocMatches -join "`n")"
+    }
+
+    if ($LASTEXITCODE -gt 1) {
+        throw "無法執行 <inheritdoc> 搜尋。"
+    }
+
+    $commitSubject = & git log -1 --pretty=%s 2>$null
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "無法讀取 Git 提交主旨，略過提交格式檢查。"
+        return
+    }
+
+    $conventionalCommitSubjectPattern = '^(feat|fix|docs|refactor|test|build|chore|style|perf|ci|revert)(\([a-z0-9-]+\))?!?: .+'
+    if ($commitSubject -notmatch $conventionalCommitSubjectPattern) {
+        throw "最新提交主旨不符合專案慣例式提交規範：$commitSubject"
+    }
+}
+
 if ($DryRun) {
     Write-Host "DryRun 模式：以下步驟將會被預覽，不會真正執行。"
     Write-Host ("Configuration = {0}" -f $Configuration)
@@ -83,6 +105,7 @@ if ($DryRun) {
 }
 
 Invoke-Step "還原套件" { dotnet restore .\MediaEmbedKit.Mpv.slnx }
+Invoke-Step "專案規範檢查" { Invoke-ProjectPolicyCheck }
 Invoke-Step "格式檢查" { dotnet format .\MediaEmbedKit.Mpv.slnx --no-restore --verify-no-changes }
 Invoke-Step "核心測試" { dotnet run --project .\tests\MediaEmbedKit.Mpv.Tests\MediaEmbedKit.Mpv.Tests.csproj --configuration $Configuration --no-restore }
 

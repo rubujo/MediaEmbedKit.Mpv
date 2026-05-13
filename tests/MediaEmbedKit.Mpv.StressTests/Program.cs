@@ -783,26 +783,31 @@ internal sealed class CancellableBlockingStream : Stream, IMpvStreamCancellation
 }
 
 /// <summary>
-/// 建立測試用 WAV 音訊。
-/// </summary>
-/// <summary>
 /// 不做任何事的 <see cref="IObserver{T}"/>；用於只需「訂閱／取消」生命週期、不關心值的測試。
 /// </summary>
 /// <typeparam name="T">屬性值型別。</typeparam>
 internal sealed class NoopObserver<T> : IObserver<T>
 {
-    /// <inheritdoc />
+    /// <summary>
+    /// 接收新的屬性值；此測試觀察者會忽略該值。
+    /// </summary>
+    /// <param name="value">觀察到的屬性值。</param>
     public void OnNext(T value)
     {
         _ = value;
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// 接收觀察序列完成通知；此測試觀察者不需執行任何動作。
+    /// </summary>
     public void OnCompleted()
     {
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// 接收觀察序列錯誤通知；此測試觀察者會忽略該例外狀況。
+    /// </summary>
+    /// <param name="error">觀察序列回報的錯誤。</param>
     public void OnError(Exception error)
     {
         _ = error;
