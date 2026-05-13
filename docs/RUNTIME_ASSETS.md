@@ -45,6 +45,25 @@ Windows x64 helper 可從 shinchiro `mpv-winbuild-cmake` 與 zhongfly `mpv-winbu
 3. 回傳 `RequiresProcessRestart = true`。
 4. 由應用程式於下次啟動且載入 libmpv 前套用更新。
 
+`MpvWindowsBuildDownloadOptions.ProviderFallbackOrder` 可指定主要 provider 失敗時的備援嘗試順序；下載端會依序嘗試並把每個失敗收進 `AggregateException`，全部失敗才擲出。
+
+## 更新排程器與健康檢查
+
+`MpvLibraryUpdateScheduler` 將 libmpv-2.dll 的暫存／套用／回滾包成四階段：
+
+- `StageAsync(cancellationToken)` 下載最新 build 並暫存至 `.updates/<timestamp>/`。
+- `ApplyStagedOnStartup()` 在 libmpv 尚未載入時，把目前版本搬到 `.previous/`，再把暫存版本提升為使用版本。
+- `Rollback()` 從 `.previous/` 還原為使用版本。
+- `ListStagedUpdates()` / `PruneStagedUpdates()` 提供暫存稽核與清理。
+
+所有套用流程均以 `MpvLibraryLoader.IsLoaded` 守備，避免處理序內 hot reload。
+
+`MpvRuntimeHealthCheck.AnalyzeAsync(runtimeDirectory, probeLibMpv: bool)` 報告：libmpv 是否存在與可載入、是否能建立並初始化 player、yt-dlp / Deno / FFmpeg / FFprobe 是否齊備。`probeLibMpv` 預設關閉以避免無意間在啟動流程觸發 libmpv 載入。
+
+## 授權稽核
+
+`MpvLicenseAuditor.AnalyzeAsync(runtimeDirectory, probeLibMpv: bool)` 從 `mpv-configuration` 與 `ffmpeg -version` 輸出解析授權旗標，分類為 `Unknown` / `Lgpl` / `Gpl` / `NonFree`，並回報整體判定（以較嚴格者為準）。使用者散發 runtime 前應依此判定確認義務。
+
 ## yt-dlp
 
 yt-dlp helper 支援 Windows x64 `yt-dlp.exe` 下載、自我更新與路徑回填。應用程式可透過下列 API 控制 mpv 使用的格式：

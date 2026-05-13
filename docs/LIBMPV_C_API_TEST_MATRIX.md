@@ -46,6 +46,27 @@
 | 讀取、搜尋、大小、關閉 | `Stream` 對應 callback | 已驗證基本讀取、不可搜尋串流、讀取錯誤與關閉流程。 |
 | 取消 | `cancel_fn` | 已透過 `IMpvStreamCancellationHandler` 驗證取消通知可解除阻塞讀取。 |
 
+## 高階 API
+
+| 區域 | 受控入口 | 驗證狀態 |
+| --- | --- | --- |
+| 生命週期 | `MpvPlayer.InitializeAsync`、`MpvPlayer.ShutdownAsync`、`MpvPlayer.DisposeAsync` | 整合測試已覆蓋 graceful shutdown 與 cancellation。 |
+| Capability 快照 | `MpvPlayer.GetCapabilities`、`MpvCapabilities`、`SupportsProtocol` | 整合測試以實際 runtime 驗證 client API 版本與協定。 |
+| Fluent builder | `MpvAppBuilder`、`BuildAsync` | 整合測試覆蓋 `UseRuntime` + `ConfigureOptions` 端到端流程。 |
+| 媒體項目 | `MpvMediaItem`、`MpvPlayer.Load`、`MpvPlayer.LoadAsync` | 整合測試以本機 WAV 驗證 per-file options + FileLoaded 等候。 |
+| 屬性 observable | `MpvPlayer.WatchProperty<T>`、`IObservable<T>` | 整合測試覆蓋多訂閱者共享與 Player Dispose 時 OnCompleted。 |
+| ILogger 整合 | `MpvPlayerOptions.LoggerFactory` | 由 `MpvPlayer` 建構期掛接；整合測試以記憶體 logger 驗證等級對應。 |
+
+## Runtime helper
+
+| 區域 | 受控入口 | 驗證狀態 |
+| --- | --- | --- |
+| 暫存／套用／回滾 | `MpvLibraryUpdateScheduler` | 整合測試以 fake fixture 走 stage → apply → rollback 路徑。 |
+| 啟動健檢 | `MpvRuntimeHealthCheck.AnalyzeAsync` | 整合測試以實際 runtime 驗證 `probeLibMpv: true`。 |
+| 授權稽核 | `MpvLicenseAuditor.AnalyzeAsync`、`MpvBuildLicense` | 單元測試覆蓋 mpv-configuration / ffmpeg -version 分類規則。 |
+| Provider fallback | `MpvWindowsBuildDownloadOptions.ProviderFallbackOrder` | 單元測試覆蓋預設值；下載端 fallback 走 release gate。 |
+| 串流外部工具輸出 | `ExternalToolProcessRunner.StreamAsync`、`YtDlpProcessRunner.StreamFormatsAsync`、`DenoProcessRunner.StreamVersionAsync` | 程式碼路徑共用 base StreamAsync；release gate 期間實戰驗證。 |
+
 ## 完成定義
 
 目前整合驗證涵蓋：
