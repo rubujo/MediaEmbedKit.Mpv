@@ -530,6 +530,52 @@ public sealed partial class MainWindow : Window
     }
 
     /// <summary>
+    /// 處理 Save MP4 按鈕點選事件。
+    /// </summary>
+    /// <param name="sender">引發事件的物件。</param>
+    /// <param name="e">事件資料。</param>
+    private async void OnSaveMp4Clicked(object sender, RoutedEventArgs e)
+    {
+        await RunFeatureAsync(() => EncodeCurrentSourceToMp4Async()).ConfigureAwait(true);
+    }
+
+    /// <summary>
+    /// 以共用 <see cref="SampleEncodingHelper"/> 把當前 URL 來源前 5 秒轉碼成 mp4。
+    /// </summary>
+    /// <returns>代表編碼流程的工作。</returns>
+    private async System.Threading.Tasks.Task EncodeCurrentSourceToMp4Async()
+    {
+        if (!_runtimeReady)
+        {
+            AppendEventLine(CreateLifecycleLine("Encode", "runtime 尚未就緒。"));
+            return;
+        }
+
+        string source = SourceBox.Text;
+        if (string.IsNullOrWhiteSpace(source))
+        {
+            AppendEventLine(CreateLifecycleLine("Encode", "請先在 URL 欄輸入來源。"));
+            return;
+        }
+
+        MpvPlayerOptions playerOptions = new MpvPlayerOptions();
+        SampleRuntime.CopyTo(SampleRuntime.PlayerOptions, playerOptions);
+        ApplySelectedYtdlpFormatToPlayerOptions(playerOptions);
+
+        try
+        {
+            await SampleEncodingHelper.EncodeFirstFiveSecondsToMp4Async(
+                source,
+                playerOptions,
+                line => AppendEventLine(CreateLifecycleLine("Encode", line))).ConfigureAwait(true);
+        }
+        catch (Exception ex)
+        {
+            AppendEventLine(CreateLifecycleLine("EncodeError", ex.GetType().Name + ": " + ex.Message));
+        }
+    }
+
+    /// <summary>
     /// 處理 yt-dlp 更新按鈕點選事件。
     /// </summary>
     /// <param name="sender">引發事件的物件。</param>

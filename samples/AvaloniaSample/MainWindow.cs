@@ -434,6 +434,41 @@ public sealed class MainWindow : Window
     }
 
     /// <summary>
+    /// 以共用 <see cref="SampleEncodingHelper"/> 把當前 URL 來源前 5 秒轉碼成 mp4。
+    /// </summary>
+    /// <returns>代表編碼流程的工作。</returns>
+    private async Task EncodeCurrentSourceToMp4Async()
+    {
+        if (!EnsureRuntimeReady())
+        {
+            return;
+        }
+
+        string source = _sourceBox.Text ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(source))
+        {
+            AppendEventLine(CreateLifecycleLine("Encode", "請先在 URL 欄輸入來源。"));
+            return;
+        }
+
+        MpvPlayerOptions playerOptions = new MpvPlayerOptions();
+        SampleRuntime.CopyTo(SampleRuntime.PlayerOptions, playerOptions);
+        ApplySelectedYtdlpFormatToPlayerOptions(playerOptions);
+
+        try
+        {
+            await SampleEncodingHelper.EncodeFirstFiveSecondsToMp4Async(
+                source,
+                playerOptions,
+                line => AppendEventLine(CreateLifecycleLine("Encode", line))).ConfigureAwait(true);
+        }
+        catch (Exception ex)
+        {
+            AppendEventLine(CreateLifecycleLine("EncodeError", ex.GetType().Name + ": " + ex.Message));
+        }
+    }
+
+    /// <summary>
     /// 在格式選項變更時套用 yt-dlp 格式。
     /// </summary>
     /// <param name="sender">引發事件的物件。</param>
@@ -613,6 +648,7 @@ public sealed class MainWindow : Window
         secondaryRow.Children.Add(CreateAsyncFeatureButton("yt-dlp", () => _features.RunYtdlpDiagnosticsAsync(_sourceBox.Text ?? string.Empty)));
         secondaryRow.Children.Add(CreateAsyncFeatureButton("Deno", () => _features.RunDenoDiagnosticsAsync()));
         secondaryRow.Children.Add(CreateAsyncFeatureButton("FFmpeg", () => _features.RunFFmpegDiagnosticsAsync()));
+        secondaryRow.Children.Add(CreateAsyncFeatureButton("Save MP4", () => EncodeCurrentSourceToMp4Async(), SampleRuntime.SampleYtdlpUpdateButtonWidth));
         secondaryRow.Children.Add(CreateAsyncFeatureButton("Update yt", () => _features.RunYtdlpSelfUpdateAsync(), SampleRuntime.SampleYtdlpUpdateButtonWidth));
         secondaryRow.Children.Add(CreateAsyncFeatureButton("Update Deno", () => _features.RunDenoSelfUpgradeAsync(), SampleRuntime.SampleDenoUpdateButtonWidth));
 

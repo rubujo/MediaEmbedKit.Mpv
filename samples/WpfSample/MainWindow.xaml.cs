@@ -527,8 +527,7 @@ public partial class MainWindow : Window
     }
 
     /// <summary>
-    /// 以 <see cref="MpvEncoder.EncodeAsync"/> 把 <see cref="UrlTextBox"/> 內容轉碼為 mp4。
-    /// 範例只取前 5 秒以避免長下載 / 編碼；輸出檔放在使用者 Videos 資料夾。
+    /// 以共用 <see cref="SampleEncodingHelper"/> 把 <see cref="UrlTextBox"/> 內容轉碼為 mp4。
     /// </summary>
     /// <returns>代表編碼流程的工作。</returns>
     private async Task EncodeCurrentSourceToMp4Async()
@@ -546,50 +545,16 @@ public partial class MainWindow : Window
             return;
         }
 
-        string videosFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyVideos);
-        if (string.IsNullOrWhiteSpace(videosFolder) || !System.IO.Directory.Exists(videosFolder))
-        {
-            videosFolder = System.IO.Path.GetTempPath();
-        }
-
-        string outputPath = System.IO.Path.Combine(
-            videosFolder,
-            "MediaEmbedKit-Encode-" + DateTime.Now.ToString("yyyyMMdd-HHmmss", CultureInfo.InvariantCulture) + ".mp4");
-
-        AppendEventLine(CreateLifecycleLine("Encode", "輸出 → " + outputPath));
-
-        MpvEncodingOptions options = new MpvEncodingOptions(outputPath)
-            .WithStartTime(TimeSpan.Zero)
-            .WithLength(TimeSpan.FromSeconds(5))
-            .WithVideoCodec(MpvVideoCodecPreset.H264)
-            .WithVideoCodecOption("preset", "veryfast")
-            .WithVideoCodecOption("crf", "23")
-            .WithAudioCodec(MpvAudioCodecPreset.Aac)
-            .WithAudioCodecOption("b", "192k");
-
         MpvPlayerOptions playerOptions = new MpvPlayerOptions();
         SampleRuntime.CopyTo(SampleRuntime.PlayerOptions, playerOptions);
         ApplySelectedYtdlpFormatToPlayerOptions(playerOptions);
-        playerOptions.LogLevel = "warn";
-
-        Progress<MpvEncodingProgress> progress = new Progress<MpvEncodingProgress>(snapshot =>
-        {
-            string percent = snapshot.Percent.HasValue
-                ? snapshot.Percent.Value.ToString("F1", CultureInfo.InvariantCulture)
-                : "--";
-            AppendEventLine(CreateLifecycleLine("Encode",
-                percent + "%  pos=" + snapshot.Position.ToString(@"mm\:ss") + "  bytes=" + snapshot.OutputBytes));
-        });
 
         try
         {
-            MpvEncodingResult result = await MpvEncoder.EncodeAsync(source, options, playerOptions, progress).ConfigureAwait(true);
-            string summary = "Success=" + result.Success
-                + " EndReason=" + result.EndReason
-                + " ErrorCode=" + result.ErrorCode
-                + " OutputBytes=" + result.OutputBytes
-                + " Elapsed=" + result.Elapsed.ToString(@"mm\:ss\.fff");
-            AppendEventLine(CreateLifecycleLine(result.Success ? "EncodeDone" : "EncodeFail", summary));
+            await SampleEncodingHelper.EncodeFirstFiveSecondsToMp4Async(
+                source,
+                playerOptions,
+                line => AppendEventLine(CreateLifecycleLine("Encode", line))).ConfigureAwait(true);
         }
         catch (Exception ex)
         {

@@ -116,6 +116,10 @@
                         Height="32"
                         Content="FFmpeg"
                         Click="OnFFmpegClicked" />
+                <Button Width="100"
+                        Height="32"
+                        Content="Save MP4"
+                        Click="OnSaveMp4Clicked" />
                 <Button Width="88"
                         Height="32"
                         Content="Update yt"

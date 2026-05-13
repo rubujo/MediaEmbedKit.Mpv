@@ -15,6 +15,7 @@
     <Compile Include="..\SampleStatusUpdateDispatcher.cs" Link="SampleStatusUpdateDispatcher.cs" />
     <Compile Include="..\SamplePlayerEventBridge.cs" Link="SamplePlayerEventBridge.cs" />
     <Compile Include="..\SampleFeatureController.cs" Link="SampleFeatureController.cs" />
+    <Compile Include="..\SampleEncodingHelper.cs" Link="SampleEncodingHelper.cs" />
     <Compile Include="..\SampleAsyncFeatureGate.cs" Link="SampleAsyncFeatureGate.cs" />
     <Compile Include="..\SampleTheme.cs" Link="SampleTheme.cs" />
     <ProjectReference Include="..\..\src\MediaEmbedKit.Mpv.Wpf\MediaEmbedKit.Mpv.Wpf.csproj" />

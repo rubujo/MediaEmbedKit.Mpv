@@ -207,6 +207,18 @@ internal static class Program
         {
             return VerifyEncodeMissingInputAsync(runtimeDirectory);
         });
+        runner.Add("MpvEncoder Corrupt 輸入回傳合理錯誤", delegate
+        {
+            return VerifyEncodeCorruptInputAsync(runtimeDirectory);
+        });
+        runner.Add("MpvEncoder 輸出路徑無法寫入", delegate
+        {
+            return VerifyEncodeReadOnlyOutputAsync(runtimeDirectory);
+        });
+        runner.Add("MpvEncoder 長片段穩定性 (10 秒 lavfi)", delegate
+        {
+            return VerifyEncodeLongClipStabilityAsync(runtimeDirectory);
+        });
 
         await runner.RunAsync().ConfigureAwait(false);
         return runner.FailedCount == 0 ? 0 : 1;
@@ -1343,6 +1355,155 @@ internal static class Program
         }
         finally
         {
+            TryDeleteFile(outputPath);
+        }
+    }
+
+    /// <summary>
+    /// 驗證 <see cref="MpvEncoder.EncodeAsync"/> 對「亂碼／非媒體」輸入回傳合理錯誤而非崩潰。
+    /// </summary>
+    /// <param name="runtimeDirectory">執行階段資料夾。</param>
+    /// <returns>代表測試流程的工作。</returns>
+    private static async Task VerifyEncodeCorruptInputAsync(string runtimeDirectory)
+    {
+        string corruptInput = Path.Combine(Path.GetTempPath(), "mediaembedkit-corrupt-" + Guid.NewGuid().ToString("N") + ".wav");
+        string outputPath = Path.Combine(Path.GetTempPath(), "mediaembedkit-corrupt-out-" + Guid.NewGuid().ToString("N") + ".m4a");
+        try
+        {
+            // 寫入 512 bytes 亂碼，副檔名假裝 wav。
+            byte[] garbage = new byte[512];
+            new Random(0).NextBytes(garbage);
+            File.WriteAllBytes(corruptInput, garbage);
+
+            MpvEncodingOptions options = new MpvEncodingOptions(outputPath)
+                .AsAudioOnly()
+                .WithAudioCodec(MpvAudioCodecPreset.Aac);
+
+            System.Diagnostics.Stopwatch stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            MpvEncodingResult result = await MpvEncoder.EncodeAsync(
+                corruptInput,
+                options,
+                CreateEncodingPlayerOptions(runtimeDirectory)).ConfigureAwait(false);
+            stopwatch.Stop();
+
+            IntegrationAssert.True(stopwatch.Elapsed < TimeSpan.FromSeconds(30),
+                "Corrupt 輸入應於合理時間內回傳；實際=" + stopwatch.Elapsed);
+            IntegrationAssert.True(!result.Success,
+                "Corrupt 輸入不應回傳 Success=true。");
+            IntegrationAssert.True(result.EndReason == MpvEndFileReason.Error || result.OutputBytes == 0,
+                "Corrupt 輸入應 EndReason=Error 或 OutputBytes=0；實際 EndReason=" + result.EndReason + " OutputBytes=" + result.OutputBytes);
+        }
+        finally
+        {
+            TryDeleteFile(corruptInput);
+            TryDeleteFile(outputPath);
+        }
+    }
+
+    /// <summary>
+    /// 驗證 <see cref="MpvEncoder.EncodeAsync"/> 對「無法寫入的輸出路徑」回傳錯誤而非崩潰。
+    /// 採用建立同名資料夾來阻擋檔案建立，跨平台可靠。
+    /// </summary>
+    /// <param name="runtimeDirectory">執行階段資料夾。</param>
+    /// <returns>代表測試流程的工作。</returns>
+    private static async Task VerifyEncodeReadOnlyOutputAsync(string runtimeDirectory)
+    {
+        string inputPath = WriteTempWav(TimeSpan.FromSeconds(1));
+        string blockedPath = Path.Combine(Path.GetTempPath(), "mediaembedkit-blocked-" + Guid.NewGuid().ToString("N") + ".m4a");
+        try
+        {
+            // 建立同名資料夾佔位，逼 mpv 無法把它當檔案開來寫。
+            Directory.CreateDirectory(blockedPath);
+
+            MpvEncodingOptions options = new MpvEncodingOptions(blockedPath)
+                .AsAudioOnly()
+                .WithAudioCodec(MpvAudioCodecPreset.Aac);
+
+            System.Diagnostics.Stopwatch stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            MpvEncodingResult result = await MpvEncoder.EncodeAsync(
+                inputPath,
+                options,
+                CreateEncodingPlayerOptions(runtimeDirectory)).ConfigureAwait(false);
+            stopwatch.Stop();
+
+            IntegrationAssert.True(stopwatch.Elapsed < TimeSpan.FromSeconds(30),
+                "輸出路徑無法寫入應於合理時間內回傳；實際=" + stopwatch.Elapsed);
+            IntegrationAssert.True(!result.Success,
+                "輸出路徑被資料夾佔位時不應回傳 Success=true。");
+        }
+        finally
+        {
+            TryDeleteFile(inputPath);
+            try
+            {
+                if (Directory.Exists(blockedPath))
+                {
+                    Directory.Delete(blockedPath, true);
+                }
+            }
+            catch (IOException)
+            {
+            }
+        }
+    }
+
+    /// <summary>
+    /// 驗證 <see cref="MpvEncoder.EncodeAsync"/> 對 10 秒長片穩定完成（lavfi 合成輸入），
+    /// 並收到至少一次進度回報。作為「長片穩定性」的最小哨兵。
+    /// </summary>
+    /// <param name="runtimeDirectory">執行階段資料夾。</param>
+    /// <returns>代表測試流程的工作。</returns>
+    private static async Task VerifyEncodeLongClipStabilityAsync(string runtimeDirectory)
+    {
+        string? inputPath = await TryGenerateLavfiTestVideoAsync(runtimeDirectory, 10.0).ConfigureAwait(false);
+        if (inputPath == null)
+        {
+            Console.WriteLine("(略過：mpv av://lavfi 合成輸入不可用)");
+            return;
+        }
+
+        string outputPath = Path.Combine(Path.GetTempPath(), "mediaembedkit-long-" + Guid.NewGuid().ToString("N") + ".mp4");
+        try
+        {
+            MpvEncodingOptions options = new MpvEncodingOptions(outputPath)
+                .AsVideoOnly()
+                .WithVideoCodec(MpvVideoCodecPreset.H264)
+                .WithVideoCodecOption("preset", "ultrafast")
+                .WithVideoCodecOption("crf", "30");
+
+            int progressReports = 0;
+            // 使用同步 IProgress 實作避免 Progress<T> 透過 ThreadPool 非同步派發
+            // 造成 await 完成時 callback 仍在 queue 中。
+            SyncProgress<MpvEncodingProgress> progress = new SyncProgress<MpvEncodingProgress>(
+                _ => Interlocked.Increment(ref progressReports));
+
+            System.Diagnostics.Stopwatch stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            MpvEncodingResult result = await MpvEncoder.EncodeAsync(
+                inputPath,
+                options,
+                CreateEncodingPlayerOptions(runtimeDirectory),
+                progress).ConfigureAwait(false);
+            stopwatch.Stop();
+
+            IntegrationAssert.True(result.Success,
+                "10 秒長片應成功完成。EndReason=" + result.EndReason
+                + " ErrorCode=" + result.ErrorCode
+                + " OutputBytes=" + result.OutputBytes);
+            IntegrationAssert.True(result.OutputBytes > 0, "10 秒輸出位元組數應 > 0。");
+            // 10 秒來源在 ultrafast preset 下通常 < 30 秒完成；給 90 秒上限避免 CI 慢機器誤判。
+            IntegrationAssert.True(stopwatch.Elapsed < TimeSpan.FromSeconds(90),
+                "10 秒長片應於合理時間內完成；實際=" + stopwatch.Elapsed);
+            // 進度迴圈以 250ms 為取樣間隔；若編碼於第一個 tick 前完成則合法地不會回報。
+            // 只在編碼耗時超過 500ms 時要求至少一次進度。
+            if (stopwatch.Elapsed > TimeSpan.FromMilliseconds(500))
+            {
+                IntegrationAssert.True(progressReports > 0,
+                    "編碼耗時 > 500ms 應收到至少一次進度回報；實際=" + progressReports + " elapsed=" + stopwatch.Elapsed);
+            }
+        }
+        finally
+        {
+            TryDeleteFile(inputPath);
             TryDeleteFile(outputPath);
         }
     }
@@ -2570,6 +2731,36 @@ internal sealed class CancellableBlockingStream : Stream, IMpvStreamCancellation
         }
 
         base.Dispose(disposing);
+    }
+}
+
+/// <summary>
+/// 同步派發的 <see cref="IProgress{T}"/> 實作。
+/// 不同於 <see cref="System.Progress{T}"/>（依 SynchronizationContext 非同步派發），
+/// 本實作直接於 <see cref="Report"/> 內呼叫 handler，方便在測試中以「await 完成
+/// 後立即驗證 callback 已執行」的方式工作。
+/// </summary>
+/// <typeparam name="T">回報的進度值型別。</typeparam>
+internal sealed class SyncProgress<T> : IProgress<T>
+{
+    /// <summary>
+    /// 收到新值時要執行的委派。
+    /// </summary>
+    private readonly Action<T> _handler;
+
+    /// <summary>
+    /// 初始化同步 IProgress。
+    /// </summary>
+    /// <param name="handler">收到新值時要執行的委派。</param>
+    public SyncProgress(Action<T> handler)
+    {
+        _handler = handler ?? throw new ArgumentNullException(nameof(handler));
+    }
+
+    /// <inheritdoc />
+    public void Report(T value)
+    {
+        _handler(value);
     }
 }
 
