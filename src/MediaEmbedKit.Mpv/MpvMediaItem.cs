@@ -69,6 +69,91 @@ namespace MediaEmbedKit.Mpv
         public string? YtdlpFormat { get; set; }
 
         /// <summary>
+        /// 以 fluent 風格設定播放此媒體時要套用的起始時間。
+        /// </summary>
+        /// <param name="startTime">起始時間。</param>
+        /// <returns>目前媒體項目。</returns>
+        public MpvMediaItem WithStartTime(TimeSpan startTime)
+        {
+            StartTime = startTime;
+            return this;
+        }
+
+        /// <summary>
+        /// 以 fluent 風格設定播放此媒體時要套用的結束時間。
+        /// </summary>
+        /// <param name="endTime">結束時間。</param>
+        /// <returns>目前媒體項目。</returns>
+        public MpvMediaItem WithEndTime(TimeSpan endTime)
+        {
+            EndTime = endTime;
+            return this;
+        }
+
+        /// <summary>
+        /// 以 fluent 風格加入 HTTP 標頭。
+        /// </summary>
+        /// <param name="name">HTTP 標頭名稱。</param>
+        /// <param name="value">HTTP 標頭值。</param>
+        /// <returns>目前媒體項目。</returns>
+        public MpvMediaItem WithHeader(string name, string value)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                throw new ArgumentException("HTTP 標頭名稱不可為空白。", nameof(name));
+            }
+
+            Headers[name] = value ?? string.Empty;
+            return this;
+        }
+
+        /// <summary>
+        /// 以 fluent 風格加入只在播放此媒體時要套用的 mpv 選項。
+        /// </summary>
+        /// <param name="name">mpv 選項名稱。</param>
+        /// <param name="value">mpv 選項值。</param>
+        /// <returns>目前媒體項目。</returns>
+        public MpvMediaItem WithOption(string name, string value)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                throw new ArgumentException("mpv 選項名稱不可為空白。", nameof(name));
+            }
+
+            Options[name] = value ?? string.Empty;
+            return this;
+        }
+
+        /// <summary>
+        /// 以 fluent 風格設定只在播放此媒體時要套用的 yt-dlp 格式 selector。
+        /// </summary>
+        /// <param name="selector">yt-dlp 格式 selector。</param>
+        /// <returns>目前媒體項目。</returns>
+        public MpvMediaItem WithYtdlpFormat(string selector)
+        {
+            if (string.IsNullOrWhiteSpace(selector))
+            {
+                throw new ArgumentException("yt-dlp selector 不可為空白。", nameof(selector));
+            }
+
+            YtdlpFormat = selector;
+            YtdlpFormatPreset = null;
+            return this;
+        }
+
+        /// <summary>
+        /// 以 fluent 風格設定只在播放此媒體時要套用的 yt-dlp 格式預設值。
+        /// </summary>
+        /// <param name="preset">yt-dlp 格式預設值。</param>
+        /// <returns>目前媒體項目。</returns>
+        public MpvMediaItem WithYtdlpFormat(MpvYtdlpFormatPreset preset)
+        {
+            YtdlpFormatPreset = preset;
+            YtdlpFormat = null;
+            return this;
+        }
+
+        /// <summary>
         /// 將此 <see cref="MpvMediaItem"/> 的設定整理成可餵給 mpv <c>loadfile</c> 命令的 per-file 選項字典。
         /// </summary>
         /// <returns>包含起訖時間、HTTP 標頭、yt-dlp 格式與額外 mpv 選項的字典。</returns>

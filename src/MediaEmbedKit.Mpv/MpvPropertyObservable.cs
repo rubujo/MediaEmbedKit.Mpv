@@ -4,12 +4,23 @@ using System.Collections.Generic;
 namespace MediaEmbedKit.Mpv
 {
     /// <summary>
+    /// 提供 <see cref="MpvPlayer.Dispose"/> 通知所有泛型 <see cref="MpvPropertyObservable{T}"/> 終止的非泛型介面。
+    /// </summary>
+    internal interface IMpvPropertyObservableCompletion
+    {
+        /// <summary>
+        /// 對所有目前訂閱者送出 <see cref="IObserver{T}.OnCompleted"/> 並清除清單。
+        /// </summary>
+        void Complete();
+    }
+
+    /// <summary>
     /// 將 libmpv 屬性變更包裝成 <see cref="IObservable{T}"/> 的內部實作。
     /// 同一 <see cref="MpvPlayer"/> 內針對相同 (屬性名稱, 格式) 共用單一 libmpv 觀察識別碼，
     /// 多個 subscriber 透過 refcount 共享。
     /// </summary>
     /// <typeparam name="T">要觀察的屬性值型別。</typeparam>
-    internal sealed class MpvPropertyObservable<T> : IObservable<T>
+    internal sealed class MpvPropertyObservable<T> : IObservable<T>, IMpvPropertyObservableCompletion
     {
         /// <summary>
         /// 持有此觀察物件的 <see cref="MpvPlayer"/>。
@@ -116,6 +127,46 @@ namespace MediaEmbedKit.Mpv
             }
 
             return new Subscription(this, observer);
+        }
+
+        /// <summary>
+        /// 對所有目前訂閱者送出 <see cref="IObserver{T}.OnCompleted"/> 並清除清單。
+        /// 在 <see cref="MpvPlayer.Dispose"/> 時呼叫，通知 Rx-style consumer 觀察已終止。
+        /// </summary>
+        public void Complete()
+        {
+            IObserver<T>[] snapshot;
+            lock (_gate)
+            {
+                snapshot = _observers;
+                _observers = Array.Empty<IObserver<T>>();
+                _registered = false;
+                _observeId = 0;
+                if (_propertyChangedHandler != null)
+                {
+                    try
+                    {
+                        _player.PropertyChanged -= _propertyChangedHandler;
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                    }
+
+                    _propertyChangedHandler = null;
+                }
+            }
+
+            for (int index = 0; index < snapshot.Length; index++)
+            {
+                try
+                {
+                    snapshot[index].OnCompleted();
+                }
+                catch
+                {
+                    // 訂閱者錯誤不可中斷其他訂閱者。
+                }
+            }
         }
 
         /// <summary>

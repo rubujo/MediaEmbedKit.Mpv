@@ -1734,6 +1734,80 @@ namespace MediaEmbedKit.Mpv
         }
 
         /// <summary>
+        /// 使用 <see cref="MpvMediaItem"/> 載入播放項目，並等到 libmpv 完成載入或回報失敗。
+        /// </summary>
+        /// <param name="item">要載入的媒體項目。</param>
+        /// <param name="mode">播放項目加入播放清單的方式。</param>
+        /// <param name="timeout">等待 <c>FileLoaded</c> 事件的逾時時間；未指定時使用 30 秒。</param>
+        /// <param name="cancellationToken">取消等待的 token。</param>
+        /// <returns>代表載入流程的工作；libmpv 回報 <c>EndFile</c> 為錯誤時擲出 <see cref="MpvException"/>。</returns>
+        public Task LoadAsync(
+            MpvMediaItem item,
+            MpvLoadFileMode mode = MpvLoadFileMode.Replace,
+            TimeSpan? timeout = null,
+            CancellationToken cancellationToken = default)
+        {
+            if (item == null)
+            {
+                throw new ArgumentNullException(nameof(item));
+            }
+
+            return LoadAsyncCore(item, mode, timeout ?? TimeSpan.FromSeconds(30), cancellationToken);
+        }
+
+        /// <summary>
+        /// 執行 <see cref="LoadAsync(MpvMediaItem, MpvLoadFileMode, TimeSpan?, CancellationToken)"/> 的內部流程。
+        /// </summary>
+        /// <param name="item">要載入的媒體項目。</param>
+        /// <param name="mode">播放項目加入播放清單的方式。</param>
+        /// <param name="timeout">等待 <c>FileLoaded</c> 事件的逾時時間。</param>
+        /// <param name="cancellationToken">取消等待的 token。</param>
+        /// <returns>代表載入流程的工作。</returns>
+        private async Task LoadAsyncCore(
+            MpvMediaItem item,
+            MpvLoadFileMode mode,
+            TimeSpan timeout,
+            CancellationToken cancellationToken)
+        {
+            TaskCompletionSource<MpvException?> completion = new TaskCompletionSource<MpvException?>(TaskCreationOptions.RunContinuationsAsynchronously);
+            EventHandler<MpvEventArgs> fileLoadedHandler = delegate (object? sender, MpvEventArgs args)
+            {
+                completion.TrySetResult(null);
+            };
+            EventHandler<MpvEndFileEventArgs> endFileHandler = delegate (object? sender, MpvEndFileEventArgs args)
+            {
+                if (args.Reason == MpvEndFileReason.Error)
+                {
+                    completion.TrySetResult(new MpvException("libmpv 回報播放項目載入失敗：" + args.Reason));
+                }
+            };
+
+            FileLoaded += fileLoadedHandler;
+            EndFile += endFileHandler;
+            try
+            {
+                Load(item, mode);
+                using (CancellationTokenSource linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
+                {
+                    linked.CancelAfter(timeout);
+                    using (linked.Token.Register(static state => ((TaskCompletionSource<MpvException?>)state!).TrySetCanceled(), completion))
+                    {
+                        MpvException? failure = await completion.Task.ConfigureAwait(false);
+                        if (failure != null)
+                        {
+                            throw failure;
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                FileLoaded -= fileLoadedHandler;
+                EndFile -= endFileHandler;
+            }
+        }
+
+        /// <summary>
         /// 停止目前播放。
         /// </summary>
         public void Stop()
@@ -3390,6 +3464,40 @@ namespace MediaEmbedKit.Mpv
             }
 
             _logger = null;
+            CompletePropertyObservables();
+        }
+
+        /// <summary>
+        /// 對所有透過 <see cref="WatchProperty{T}"/> 建立的觀察送出 <see cref="IObserver{T}.OnCompleted"/>。
+        /// </summary>
+        private void CompletePropertyObservables()
+        {
+            List<IMpvPropertyObservableCompletion> snapshot;
+            lock (_propertyObservablesGate)
+            {
+                snapshot = new List<IMpvPropertyObservableCompletion>(_propertyObservables.Count);
+                foreach (KeyValuePair<(string Name, MpvFormat Format), object> pair in _propertyObservables)
+                {
+                    if (pair.Value is IMpvPropertyObservableCompletion completion)
+                    {
+                        snapshot.Add(completion);
+                    }
+                }
+
+                _propertyObservables.Clear();
+            }
+
+            foreach (IMpvPropertyObservableCompletion completion in snapshot)
+            {
+                try
+                {
+                    completion.Complete();
+                }
+                catch
+                {
+                    // 單一 observable 失敗不可中斷其他 observable。
+                }
+            }
         }
 
         /// <summary>

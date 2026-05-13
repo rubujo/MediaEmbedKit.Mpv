@@ -43,9 +43,113 @@ namespace MediaEmbedKit.Mpv.Tests
             runner.Add("MpvRuntimeHealthCheck 缺檔資料夾報告", VerifyMpvRuntimeHealthCheckMissingFiles);
             runner.Add("MpvLibraryUpdateScheduler 路徑與列舉", VerifyMpvLibraryUpdateSchedulerLayout);
             runner.Add("DI 擴充註冊播放器工廠", VerifyDependencyInjectionExtensions);
+            runner.Add("ProviderFallbackOrder 預設為空集合", VerifyProviderFallbackOrderDefaults);
+            runner.Add("MpvLicenseAuditor 分類授權狀態", VerifyMpvLicenseAuditorClassification);
+            runner.Add("MpvMediaItem fluent helpers", VerifyMpvMediaItemFluentHelpers);
 
             await runner.RunAsync().ConfigureAwait(false);
             return runner.FailedCount == 0 ? 0 : 1;
+        }
+
+        /// <summary>
+        /// 驗證 <see cref="MpvWindowsBuildDownloadOptions.ProviderFallbackOrder"/> 預設為空集合且為可變清單。
+        /// </summary>
+        /// <returns>代表測試流程的工作。</returns>
+        private static Task VerifyProviderFallbackOrderDefaults()
+        {
+            MpvWindowsBuildDownloadOptions options = new MpvWindowsBuildDownloadOptions();
+            AssertEx.Equal(0, options.ProviderFallbackOrder.Count, "ProviderFallbackOrder 預設應為空集合");
+            options.ProviderFallbackOrder.Add(MpvWindowsBuildProvider.Zhongfly);
+            AssertEx.Equal(1, options.ProviderFallbackOrder.Count, "ProviderFallbackOrder 應支援新增備援 provider");
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// 驗證 <see cref="MpvLicenseAuditor"/> 對常見 mpv 與 FFmpeg 設定字串的分類結果。
+        /// </summary>
+        /// <returns>代表測試流程的工作。</returns>
+        private static Task VerifyMpvLicenseAuditorClassification()
+        {
+            AssertEx.Equal(
+                MpvBuildLicense.Lgpl,
+                MpvLicenseAuditor.ClassifyMpvLicense("--enable-libmpv --enable-lgpl --enable-vulkan"),
+                "LGPL libmpv 設定應分類為 Lgpl");
+
+            AssertEx.Equal(
+                MpvBuildLicense.Gpl,
+                MpvLicenseAuditor.ClassifyMpvLicense("--enable-libmpv --enable-gpl"),
+                "GPL libmpv 設定應分類為 Gpl");
+
+            AssertEx.Equal(
+                MpvBuildLicense.NonFree,
+                MpvLicenseAuditor.ClassifyMpvLicense("--enable-libmpv --enable-gpl --enable-nonfree"),
+                "包含 nonfree 應分類為 NonFree");
+
+            AssertEx.Equal(
+                MpvBuildLicense.Unknown,
+                MpvLicenseAuditor.ClassifyMpvLicense(string.Empty),
+                "空白設定應分類為 Unknown");
+
+            AssertEx.Equal(
+                MpvBuildLicense.Gpl,
+                MpvLicenseAuditor.ClassifyFFmpegLicense("ffmpeg version 7.x ... --enable-gpl --enable-libx264"),
+                "FFmpeg GPL build 版本字串應分類為 Gpl");
+
+            AssertEx.Equal(
+                MpvBuildLicense.NonFree,
+                MpvLicenseAuditor.CombineLicenses(MpvBuildLicense.Lgpl, MpvBuildLicense.NonFree),
+                "整體授權狀態應以較嚴格者為準");
+
+            AssertEx.Equal(
+                MpvBuildLicense.Gpl,
+                MpvLicenseAuditor.CombineLicenses(MpvBuildLicense.Lgpl, MpvBuildLicense.Gpl),
+                "LGPL+GPL 應視為 GPL");
+
+            AssertEx.Equal(
+                MpvBuildLicense.Lgpl,
+                MpvLicenseAuditor.CombineLicenses(MpvBuildLicense.Lgpl, MpvBuildLicense.Lgpl),
+                "兩端皆 LGPL 應視為 LGPL");
+
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// 驗證 <see cref="MpvMediaItem"/> fluent helper 會正確套用設定並回傳目前實例。
+        /// </summary>
+        /// <returns>代表測試流程的工作。</returns>
+        private static Task VerifyMpvMediaItemFluentHelpers()
+        {
+            MpvMediaItem item = new MpvMediaItem("https://example.com/stream")
+                .WithStartTime(TimeSpan.FromSeconds(5))
+                .WithEndTime(TimeSpan.FromMinutes(1))
+                .WithHeader("User-Agent", "Mozilla/5.0")
+                .WithOption("hwdec", "auto-safe")
+                .WithYtdlpFormat(MpvYtdlpFormatPreset.UpTo720p);
+
+            AssertEx.Equal(TimeSpan.FromSeconds(5), item.StartTime.GetValueOrDefault(), "WithStartTime 應套用值");
+            AssertEx.Equal(TimeSpan.FromMinutes(1), item.EndTime.GetValueOrDefault(), "WithEndTime 應套用值");
+            AssertEx.Equal("Mozilla/5.0", item.Headers["User-Agent"], "WithHeader 應加入標頭");
+            AssertEx.Equal("auto-safe", item.Options["hwdec"], "WithOption 應加入選項");
+            AssertEx.Equal(MpvYtdlpFormatPreset.UpTo720p, item.YtdlpFormatPreset.GetValueOrDefault(), "WithYtdlpFormat(preset) 應套用 preset");
+            AssertEx.True(item.YtdlpFormat == null, "WithYtdlpFormat(preset) 應清除自訂 selector");
+
+            item.WithYtdlpFormat("bestvideo+bestaudio");
+            AssertEx.Equal("bestvideo+bestaudio", item.YtdlpFormat ?? string.Empty, "WithYtdlpFormat(string) 應套用 selector");
+            AssertEx.True(!item.YtdlpFormatPreset.HasValue, "WithYtdlpFormat(string) 應清除 preset");
+
+            AssertEx.Throws<ArgumentException>(
+                delegate { item.WithHeader(" ", "value"); },
+                "空白 HTTP 標頭名稱應被拒絕");
+
+            AssertEx.Throws<ArgumentException>(
+                delegate { item.WithOption(" ", "value"); },
+                "空白 mpv 選項名稱應被拒絕");
+
+            AssertEx.Throws<ArgumentException>(
+                delegate { item.WithYtdlpFormat(" "); },
+                "空白 yt-dlp selector 應被拒絕");
+
+            return Task.CompletedTask;
         }
 
         /// <summary>
