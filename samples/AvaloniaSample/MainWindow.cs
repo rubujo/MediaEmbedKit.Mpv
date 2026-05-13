@@ -39,6 +39,10 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
         /// </summary>
         private readonly List<Control> _runtimeControls = new List<Control>();
         /// <summary>
+        /// 非同步功能進行中需暫時禁用的功能按鈕清單。
+        /// </summary>
+        private readonly List<Button> _featureButtons = new List<Button>();
+        /// <summary>
         /// 讓使用者輸入檔案路徑或媒體網址的文字方塊。
         /// </summary>
         private readonly TextBox _sourceBox;
@@ -550,33 +554,52 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
         /// <returns>包含格式、狀態與 API 按鈕的功能列。</returns>
         private Control CreateFeaturePanel()
         {
-            WrapPanel panel = new WrapPanel
+            Grid panel = new Grid
             {
                 Margin = new Thickness(0),
-                VerticalAlignment = VerticalAlignment.Stretch,
-                HorizontalAlignment = HorizontalAlignment.Stretch,
-                Orientation = Orientation.Horizontal
+                RowDefinitions =
+                {
+                    new RowDefinition(new GridLength(40, GridUnitType.Pixel)),
+                    new RowDefinition(new GridLength(40, GridUnitType.Pixel))
+                }
             };
 
-            panel.Children.Add(_formatComboBox);
-            panel.Children.Add(_statusTextBlock);
-            panel.Children.Add(CreateFeatureButton("OSD", () => _features.ShowOsd()));
-            panel.Children.Add(CreateFeatureButton("-10s", () => _features.SeekRelative(-10)));
-            panel.Children.Add(CreateFeatureButton("+10s", () => _features.SeekRelative(10)));
-            panel.Children.Add(CreateFeatureButton("Vol-", () => _features.ChangeVolume(-5)));
-            panel.Children.Add(CreateFeatureButton("Vol+", () => _features.ChangeVolume(5)));
-            panel.Children.Add(CreateFeatureButton("Mute", () => _features.ToggleMute()));
-            panel.Children.Add(CreateFeatureButton("Speed", () => _features.CycleSpeed()));
-            panel.Children.Add(CreateFeatureButton("Sub", () => _features.AddSampleSubtitle()));
-            panel.Children.Add(CreateFeatureButton("Tracks", () => _features.DumpTracks()));
-            panel.Children.Add(CreateFeatureButton("Shot", () => _features.TakeScreenshot()));
-            panel.Children.Add(CreateFeatureButton("Config", () => _features.LoadSampleConfig()));
-            panel.Children.Add(CreateAsyncFeatureButton("Lua", () => _features.LoadSampleLuaScriptAsync()));
-            panel.Children.Add(CreateAsyncFeatureButton("yt-dlp", () => _features.RunYtdlpDiagnosticsAsync(_sourceBox.Text ?? string.Empty)));
-            panel.Children.Add(CreateAsyncFeatureButton("Deno", () => _features.RunDenoDiagnosticsAsync()));
-            panel.Children.Add(CreateAsyncFeatureButton("FFmpeg", () => _features.RunFFmpegDiagnosticsAsync()));
-            panel.Children.Add(CreateAsyncFeatureButton("Update yt", () => _features.RunYtdlpSelfUpdateAsync(), SampleRuntime.SampleYtdlpUpdateButtonWidth));
-            panel.Children.Add(CreateAsyncFeatureButton("Update Deno", () => _features.RunDenoSelfUpgradeAsync(), SampleRuntime.SampleDenoUpdateButtonWidth));
+            WrapPanel primaryRow = new WrapPanel
+            {
+                Margin = new Thickness(SampleRuntime.SampleControlPadding, 4, SampleRuntime.SampleControlPadding, 0),
+                VerticalAlignment = VerticalAlignment.Center,
+                Orientation = Orientation.Horizontal
+            };
+            primaryRow.Children.Add(_formatComboBox);
+            primaryRow.Children.Add(_statusTextBlock);
+            primaryRow.Children.Add(CreateFeatureButton("OSD", () => _features.ShowOsd()));
+            primaryRow.Children.Add(CreateFeatureButton("-10s", () => _features.SeekRelative(-10)));
+            primaryRow.Children.Add(CreateFeatureButton("+10s", () => _features.SeekRelative(10)));
+            primaryRow.Children.Add(CreateFeatureButton("Vol-", () => _features.ChangeVolume(-5)));
+            primaryRow.Children.Add(CreateFeatureButton("Vol+", () => _features.ChangeVolume(5)));
+            primaryRow.Children.Add(CreateFeatureButton("Mute", () => _features.ToggleMute()));
+            primaryRow.Children.Add(CreateFeatureButton("Speed", () => _features.CycleSpeed()));
+
+            WrapPanel secondaryRow = new WrapPanel
+            {
+                Margin = new Thickness(SampleRuntime.SampleControlPadding, 2, SampleRuntime.SampleControlPadding, 4),
+                VerticalAlignment = VerticalAlignment.Center,
+                Orientation = Orientation.Horizontal
+            };
+            secondaryRow.Children.Add(CreateFeatureButton("Sub", () => _features.AddSampleSubtitle()));
+            secondaryRow.Children.Add(CreateFeatureButton("Tracks", () => _features.DumpTracks()));
+            secondaryRow.Children.Add(CreateFeatureButton("Shot", () => _features.TakeScreenshot()));
+            secondaryRow.Children.Add(CreateFeatureButton("Config", () => _features.LoadSampleConfig()));
+            secondaryRow.Children.Add(CreateAsyncFeatureButton("Lua", () => _features.LoadSampleLuaScriptAsync()));
+            secondaryRow.Children.Add(CreateAsyncFeatureButton("yt-dlp", () => _features.RunYtdlpDiagnosticsAsync(_sourceBox.Text ?? string.Empty)));
+            secondaryRow.Children.Add(CreateAsyncFeatureButton("Deno", () => _features.RunDenoDiagnosticsAsync()));
+            secondaryRow.Children.Add(CreateAsyncFeatureButton("FFmpeg", () => _features.RunFFmpegDiagnosticsAsync()));
+            secondaryRow.Children.Add(CreateAsyncFeatureButton("Update yt", () => _features.RunYtdlpSelfUpdateAsync(), SampleRuntime.SampleYtdlpUpdateButtonWidth));
+            secondaryRow.Children.Add(CreateAsyncFeatureButton("Update Deno", () => _features.RunDenoSelfUpgradeAsync(), SampleRuntime.SampleDenoUpdateButtonWidth));
+
+            panel.Children.Add(primaryRow);
+            Grid.SetRow(secondaryRow, 1);
+            panel.Children.Add(secondaryRow);
             return panel;
         }
 
@@ -739,6 +762,7 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
                 return;
             }
 
+            SetFeatureButtonsEnabled(false);
             try
             {
                 await action().ConfigureAwait(true);
@@ -751,6 +775,22 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
             finally
             {
                 _asyncFeatureGate.Exit();
+                if (_runtimeReady)
+                {
+                    SetFeatureButtonsEnabled(true);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 設定非同步功能進行中需暫時禁用的按鈕是否可操作。
+        /// </summary>
+        /// <param name="enabled">按鈕可操作時為 <see langword="true"/>。</param>
+        private void SetFeatureButtonsEnabled(bool enabled)
+        {
+            foreach (Button button in _featureButtons)
+            {
+                button.IsEnabled = enabled;
             }
         }
 
@@ -976,6 +1016,7 @@ namespace MediaEmbedKit.Mpv.Samples.Avalonia
                 VerticalContentAlignment = VerticalAlignment.Center
             };
             _runtimeControls.Add(button);
+            _featureButtons.Add(button);
             return button;
         }
     }

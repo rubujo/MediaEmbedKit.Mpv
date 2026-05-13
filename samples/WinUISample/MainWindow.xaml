@@ -31,7 +31,8 @@
                     Click="OnStopClicked" />
         </Grid>
 
-        <Grid Grid.Row="1"
+        <Grid x:Name="FeaturePanelHost"
+              Grid.Row="1"
               RowDefinitions="40,40"
               Padding="8,4">
             <StackPanel Orientation="Horizontal"

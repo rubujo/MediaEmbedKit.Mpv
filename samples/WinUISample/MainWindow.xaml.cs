@@ -60,6 +60,10 @@ namespace MediaEmbedKit.Mpv.Samples.WinUI
         /// </summary>
         private readonly SampleAsyncFeatureGate _asyncFeatureGate = new SampleAsyncFeatureGate();
         /// <summary>
+        /// 非同步功能進行中需暫時禁用的功能按鈕清單。
+        /// </summary>
+        private readonly List<Button> _featureButtons = new List<Button>();
+        /// <summary>
         /// 紀錄範例 runtime 是否已完成初始化。
         /// </summary>
         private bool _runtimeReady;
@@ -279,6 +283,8 @@ namespace MediaEmbedKit.Mpv.Samples.WinUI
                     rootElement.Loaded -= RootLoaded;
                 }
 
+                _featureButtons.Clear();
+                RegisterFeatureButtons(FeaturePanelHost);
                 SetRuntimeControlsEnabled(false);
                 AppendEventLine(CreateLifecycleLine("Loaded", "視窗內容已載入，準備初始化範例 runtime。"));
                 bool initialized = await InitializeRuntimeAsync().ConfigureAwait(true);
@@ -582,6 +588,7 @@ namespace MediaEmbedKit.Mpv.Samples.WinUI
                 return;
             }
 
+            SetFeatureButtonsEnabled(false);
             try
             {
                 await action().ConfigureAwait(true);
@@ -594,6 +601,10 @@ namespace MediaEmbedKit.Mpv.Samples.WinUI
             finally
             {
                 _asyncFeatureGate.Exit();
+                if (_runtimeReady)
+                {
+                    SetFeatureButtonsEnabled(true);
+                }
             }
         }
 
@@ -643,6 +654,41 @@ namespace MediaEmbedKit.Mpv.Samples.WinUI
             for (int index = 0; index < childCount; index++)
             {
                 SetRuntimeControlsEnabled(VisualTreeHelper.GetChild(root, index), enabled);
+            }
+        }
+
+        /// <summary>
+        /// 遞迴登錄非同步功能進行中需暫時禁用的按鈕。
+        /// </summary>
+        /// <param name="root">要掃描的視覺樹節點。</param>
+        private void RegisterFeatureButtons(DependencyObject? root)
+        {
+            if (root == null)
+            {
+                return;
+            }
+
+            if (root is Button button)
+            {
+                _featureButtons.Add(button);
+            }
+
+            int childCount = VisualTreeHelper.GetChildrenCount(root);
+            for (int index = 0; index < childCount; index++)
+            {
+                RegisterFeatureButtons(VisualTreeHelper.GetChild(root, index));
+            }
+        }
+
+        /// <summary>
+        /// 設定非同步功能進行中需暫時禁用的按鈕是否可操作。
+        /// </summary>
+        /// <param name="enabled">按鈕可操作時為 <see langword="true"/>。</param>
+        private void SetFeatureButtonsEnabled(bool enabled)
+        {
+            foreach (Button button in _featureButtons)
+            {
+                button.IsEnabled = enabled;
             }
         }
 

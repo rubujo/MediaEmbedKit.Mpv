@@ -48,7 +48,8 @@
                     Click="StopClick" />
         </Grid>
 
-        <Grid Grid.Row="1"
+        <Grid x:Name="FeaturePanelHost"
+              Grid.Row="1"
               Margin="0">
             <Grid.RowDefinitions>
                 <RowDefinition Height="40" />

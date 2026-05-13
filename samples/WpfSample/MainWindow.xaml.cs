@@ -31,6 +31,10 @@ namespace MediaEmbedKit.Mpv.Samples.Wpf
         /// </summary>
         private readonly List<Control> _runtimeControls = new List<Control>();
         /// <summary>
+        /// 非同步功能進行中需暫時禁用的功能按鈕清單。
+        /// </summary>
+        private readonly List<Button> _featureButtons = new List<Button>();
+        /// <summary>
         /// 範例進階功能控制器。
         /// </summary>
         private readonly SampleFeatureController _features;
@@ -108,7 +112,9 @@ namespace MediaEmbedKit.Mpv.Samples.Wpf
             try
             {
                 _runtimeControls.Clear();
+                _featureButtons.Clear();
                 RegisterRuntimeControls(this);
+                RegisterFeatureButtons(FeaturePanelHost);
                 SetRuntimeControlsEnabled(false);
                 AppendEventLine(CreateLifecycleLine("Loaded", "視窗已載入，準備初始化範例 runtime。"));
                 bool initialized = await InitializeRuntimeAsync().ConfigureAwait(true);
@@ -569,6 +575,7 @@ namespace MediaEmbedKit.Mpv.Samples.Wpf
                 return;
             }
 
+            SetFeatureButtonsEnabled(false);
             try
             {
                 await action().ConfigureAwait(true);
@@ -581,6 +588,10 @@ namespace MediaEmbedKit.Mpv.Samples.Wpf
             finally
             {
                 _asyncFeatureGate.Exit();
+                if (_runtimeReady)
+                {
+                    SetFeatureButtonsEnabled(true);
+                }
             }
         }
 
@@ -619,6 +630,25 @@ namespace MediaEmbedKit.Mpv.Samples.Wpf
         }
 
         /// <summary>
+        /// 遞迴登錄非同步功能進行中需暫時禁用的按鈕。
+        /// </summary>
+        /// <param name="dependencyObject">要掃描的視覺樹節點。</param>
+        private void RegisterFeatureButtons(DependencyObject dependencyObject)
+        {
+            Button? button = dependencyObject as Button;
+            if (button != null)
+            {
+                _featureButtons.Add(button);
+            }
+
+            int childCount = VisualTreeHelper.GetChildrenCount(dependencyObject);
+            for (int index = 0; index < childCount; index++)
+            {
+                RegisterFeatureButtons(VisualTreeHelper.GetChild(dependencyObject, index));
+            }
+        }
+
+        /// <summary>
         /// 設定 runtime 相關控制項是否可操作。
         /// </summary>
         /// <param name="enabled">控制項可操作時為 <see langword="true"/>。</param>
@@ -627,6 +657,18 @@ namespace MediaEmbedKit.Mpv.Samples.Wpf
             foreach (Control control in _runtimeControls)
             {
                 control.IsEnabled = enabled;
+            }
+        }
+
+        /// <summary>
+        /// 設定非同步功能進行中需暫時禁用的按鈕是否可操作。
+        /// </summary>
+        /// <param name="enabled">按鈕可操作時為 <see langword="true"/>。</param>
+        private void SetFeatureButtonsEnabled(bool enabled)
+        {
+            foreach (Button button in _featureButtons)
+            {
+                button.IsEnabled = enabled;
             }
         }
 
