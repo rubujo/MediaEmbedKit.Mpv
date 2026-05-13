@@ -8,6 +8,7 @@ param(
     [switch] $IncludeGuiConsumerPlaybackValidation,
     [switch] $IncludeGuiPlaybackStress,
     [switch] $IncludeWindowsReleaseGate,
+    [switch] $DryRun,
     [string] $RuntimeDirectory = ".tmp/gui-playback-runtime",
     [double] $GuiPlaybackSeconds = 20,
     [int] $GuiPlaybackIterations = 1,
@@ -51,6 +52,11 @@ function Invoke-Step {
         [scriptblock] $Body
     )
 
+    if ($DryRun) {
+        Write-Host "[DryRun] -> $Name"
+        return
+    }
+
     Write-Host "==> $Name"
     $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
     try {
@@ -68,6 +74,12 @@ function Invoke-Step {
     finally {
         $stopwatch.Stop()
     }
+}
+
+if ($DryRun) {
+    Write-Host "DryRun 模式：以下步驟將會被預覽，不會真正執行。"
+    Write-Host ("Configuration = {0}" -f $Configuration)
+    Write-Host ("RuntimeDirectory = {0}" -f $resolvedRuntimeDirectory)
 }
 
 Invoke-Step "還原套件" { dotnet restore .\MediaEmbedKit.Mpv.slnx }
@@ -118,4 +130,9 @@ if ($IncludeGuiPlaybackStress) {
     Invoke-Step "GUI 播放壓力測試" { & .\tools\Invoke-GuiPlaybackStress.ps1 -Configuration $Configuration -RuntimeDirectory $resolvedRuntimeDirectory -Seconds $GuiPlaybackSeconds -Iterations $GuiPlaybackIterations -TimeoutSeconds $GuiPlaybackTimeoutSeconds }
 }
 
-Write-Host "發佈前本機驗證完成。"
+if ($DryRun) {
+    Write-Host "DryRun 模式結束：以上為預計執行步驟清單。"
+}
+else {
+    Write-Host "發佈前本機驗證完成。"
+}
