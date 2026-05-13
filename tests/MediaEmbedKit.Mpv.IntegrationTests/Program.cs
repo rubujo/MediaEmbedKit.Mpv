@@ -1621,19 +1621,27 @@ internal sealed class TestObserver<T> : IObserver<T>
         _onError = onError;
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// 將新值轉發到建構時提供的 onNext 委派。
+    /// </summary>
+    /// <param name="value">觀察者收到的新值。</param>
     public void OnNext(T value)
     {
         _onNext(value);
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// 將 OnCompleted 通知轉發到建構時提供的 onCompleted 委派（若有）。
+    /// </summary>
     public void OnCompleted()
     {
         _onCompleted?.Invoke();
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// 將 OnError 通知轉發到建構時提供的 onError 委派（若有）。
+    /// </summary>
+    /// <param name="error">觀察者收到的例外狀況。</param>
     public void OnError(Exception error)
     {
         _onError?.Invoke(error);

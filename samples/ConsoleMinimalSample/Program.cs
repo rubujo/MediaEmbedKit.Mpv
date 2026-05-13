@@ -214,7 +214,10 @@ internal static class Program
         /// </summary>
         private DateTimeOffset _lastPrintedAt = DateTimeOffset.MinValue;
 
-        /// <inheritdoc />
+        /// <summary>
+        /// 接收 time-pos 的新值並節流輸出到 stdout。
+        /// </summary>
+        /// <param name="value">最新的 time-pos 屬性值。</param>
         public void OnNext(double value)
         {
             if (DateTimeOffset.UtcNow - _lastPrintedAt < TimeSpan.FromSeconds(1))
@@ -226,13 +229,18 @@ internal static class Program
             Console.WriteLine("[time-pos] " + value.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture));
         }
 
-        /// <inheritdoc />
+        /// <summary>
+        /// 在訂閱因 player 釋放而結束時通知 stdout。
+        /// </summary>
         public void OnCompleted()
         {
             Console.WriteLine("[time-pos] (subscription completed)");
         }
 
-        /// <inheritdoc />
+        /// <summary>
+        /// 在訂閱收到例外狀況時通知 stdout。
+        /// </summary>
+        /// <param name="error">訂閱觀察到的例外狀況。</param>
         public void OnError(Exception error)
         {
             Console.WriteLine("[time-pos] error: " + error.Message);
