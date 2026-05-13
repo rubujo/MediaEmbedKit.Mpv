@@ -144,6 +144,11 @@
                         Margin="0,0,8,0"
                         Content="Deno"
                         Click="DenoClick" />
+                <Button Width="76"
+                        Height="32"
+                        Margin="0,0,8,0"
+                        Content="FFmpeg"
+                        Click="FFmpegClick" />
                 <Button Width="88"
                         Height="32"
                         Margin="0,0,8,0"

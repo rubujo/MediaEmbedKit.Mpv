@@ -111,6 +111,10 @@
                         Height="32"
                         Content="Deno"
                         Click="OnDenoClicked" />
+                <Button Width="76"
+                        Height="32"
+                        Content="FFmpeg"
+                        Click="OnFFmpegClicked" />
                 <Button Width="88"
                         Height="32"
                         Content="Update yt"

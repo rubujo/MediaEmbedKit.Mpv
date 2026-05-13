@@ -513,6 +513,16 @@ namespace MediaEmbedKit.Mpv.Samples.WinUI
         }
 
         /// <summary>
+        /// 處理 FFmpeg 診斷按鈕點選事件。
+        /// </summary>
+        /// <param name="sender">引發事件的物件。</param>
+        /// <param name="e">事件資料。</param>
+        private async void OnFFmpegClicked(object sender, RoutedEventArgs e)
+        {
+            await RunFeatureAsync(() => _features.RunFFmpegDiagnosticsAsync()).ConfigureAwait(true);
+        }
+
+        /// <summary>
         /// 處理 yt-dlp 更新按鈕點選事件。
         /// </summary>
         /// <param name="sender">引發事件的物件。</param>

@@ -351,6 +351,52 @@ namespace MediaEmbedKit.Mpv.Samples
         }
 
         /// <summary>
+        /// 執行 FFmpeg 與 FFprobe 診斷命令並輸出版本資訊。
+        /// </summary>
+        /// <returns>代表診斷流程的工作。</returns>
+        public async Task RunFFmpegDiagnosticsAsync()
+        {
+            Append("ffmpeg", "版本：" + (FFmpegDownloader.GetInstalledVersion(SampleRuntime.FFmpegPath) ?? "無法讀取"));
+            Append("ffprobe", "版本：" + (FFmpegDownloader.GetInstalledVersion(SampleRuntime.FFprobePath) ?? "無法讀取"));
+
+            await RunExternalToolAsync("ffmpeg", SampleRuntime.FFmpegPath, new[] { "-hide_banner", "-version" }).ConfigureAwait(false);
+            await RunExternalToolAsync("ffprobe", SampleRuntime.FFprobePath, new[] { "-hide_banner", "-version" }).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// 以共用流程執行外部工具並輸出結果。
+        /// </summary>
+        /// <param name="category">事件分類名稱。</param>
+        /// <param name="executablePath">外部工具可執行檔路徑。</param>
+        /// <param name="arguments">要傳給外部工具的引數集合。</param>
+        /// <returns>代表執行流程的工作。</returns>
+        private async Task RunExternalToolAsync(string category, string executablePath, IReadOnlyList<string> arguments)
+        {
+            ExternalToolProcessRunner runner = new ExternalToolProcessRunner(executablePath)
+            {
+                WorkingDirectory = SampleRuntime.RuntimeDirectory
+            };
+            int emittedLines = 0;
+            EventHandler<ExternalToolOutputEventArgs> handler = delegate (object? sender, ExternalToolOutputEventArgs e)
+            {
+                int lineNumber = Interlocked.Increment(ref emittedLines);
+                AppendExternalToolOutput(category, e, lineNumber);
+            };
+            runner.OutputReceived += handler;
+            ExternalToolProcessResult result;
+            try
+            {
+                result = await runner.RunAsync(arguments, TimeSpan.FromSeconds(30), CancellationToken.None).ConfigureAwait(false);
+            }
+            finally
+            {
+                runner.OutputReceived -= handler;
+            }
+
+            AppendProcessResult(category, result);
+        }
+
+        /// <summary>
         /// 執行 yt-dlp 自我更新命令。
         /// </summary>
         /// <returns>代表更新流程的工作。</returns>
