@@ -2,6 +2,29 @@
 
 本專案目前僅列入已完成基本建置、runtime 來源與範例驗證的 Windows x64 目標。未列入本文件者不提供支援承諾。
 
+## 平台支援判準
+
+一個平台會被列入下方支援矩陣，前提是同時滿足三項條件：
+
+1. **C# UI framework 可在該平台執行**：至少有一個本專案目前支援的 UI 套件（WinForms / WPF / Avalonia / WinUI 3 / .NET MAUI）在該平台可實際執行。
+2. **libmpv 有可程式化取得的 runtime**：該平台有公開、可散佈的 libmpv 二進位資產，且至少滿足以下其一：
+   - 有 GitHub Release 提供穩定命名的二進位資產（本專案 runtime helper 直接下載與驗證）；或
+   - 有作業系統官方套件管理器套件，使用者預期會自行安裝（本專案不提供 runtime helper，僅以 `DllImport` 名稱解析機制接上）。
+3. **mpv 上游聲明支援該平台**：mpv 自家 [`mpv.io/installation`](https://mpv.io/installation/) 與 `mpv-player/mpv` 文件對該平台有正式記載。
+
+不同時滿足上述三項的平台不列入 roadmap。已知不滿足的例子：
+
+| 平台 | 不滿足的條件 | 說明 |
+| --- | --- | --- |
+| iOS / iPadOS | (2) | 雖有 `media-kit/libmpv-darwin-build` 等社群 build，但 App Store 散佈受 GPL 限制 |
+| Tizen | (2)(3) | 無 first-party libmpv runtime |
+| Browser / WebAssembly | (2)(3) | libmpv 無法在瀏覽器執行 |
+
+「runtime helper 不適用」的特殊案例（雖可程式化取得但採不同支援哲學）：
+
+- **Linux**：libmpv 透過 distro 套件管理器（`apt` / `dnf` / `pacman`）安裝；本專案不提供 runtime helper，而是要求使用者已安裝 `libmpv1` / `libmpv-dev`（或對等套件），程式以 `DllImport("libmpv-2")` + `NativeLibrary` 名稱解析接上。
+- **Android**：[`mpv-android/mpv-android`](https://github.com/mpv-android/mpv-android/releases) 把 libmpv `.so` 打包在 APK 中而非獨立散佈；要支援需要重新設計 packaging 模型。
+
 ## 目標框架
 
 | 套件 | 目標框架 | 狀態 |
