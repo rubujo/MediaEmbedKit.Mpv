@@ -31,7 +31,7 @@ runtime helper 預設要求 GitHub Releases API 提供 `sha256:` digest，並驗
 
 `LockReleaseSource = true` 會鎖定內建 GitHub repository 與下載 URL。啟用後，helper 會拒絕非預設 GitHub Releases API 或非預期 repository 的資產 URL。
 
-`yt-dlp` 支援使用 `SHA2-256SUMS` 驗證發行檔。Deno 支援使用發行資產同層的 `.sha256sum` 檔案驗證壓縮檔。yt-dlp FFmpeg-Builds 支援使用 `checksums.sha256` 驗證發行檔。shinchiro 目前未提供獨立 checksum 資產；zhongfly 提供 `sha256.txt`，但本輪尚未將它納入 `RequireProviderChecksum` 路徑。因此 libmpv 更嚴格的生產下載仍應使用 `RequirePinnedSha256`、`ExpectedSha256` 與 `LockReleaseSource`。
+`yt-dlp` 支援使用 `SHA2-256SUMS` 驗證發行檔。Deno 支援使用發行資產同層的 `.sha256sum` 檔案驗證壓縮檔。yt-dlp FFmpeg-Builds 支援使用 `checksums.sha256` 驗證發行檔。libmpv 的 shinchiro 與 zhongfly provider 不在 `RequireProviderChecksum` 支援範圍內；更嚴格的生產下載請使用 `RequirePinnedSha256`、`ExpectedSha256` 與 `LockReleaseSource`。
 
 ## libmpv
 
