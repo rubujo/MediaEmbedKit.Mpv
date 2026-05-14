@@ -1751,8 +1751,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
         _wakeupAction = callback;
         if (callback == null)
         {
-            _wakeupCallback = null;
+            // 先請 libmpv 解除註冊，再讓 _wakeupCallback 失去最後一個強參考，
+            // 避免 native 仍可能呼叫到已被 GC 的委派。
+            MpvNative.MpvWakeupCallback? previousCallback = _wakeupCallback;
             InvokeNative(handle => MpvNative.mpv_set_wakeup_callback(handle, null, IntPtr.Zero));
+            GC.KeepAlive(previousCallback);
+            _wakeupCallback = null;
             return;
         }
 
@@ -3644,6 +3648,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
         }
         finally
         {
+            // 在 wakeupHandle 釋放與 _wakeupCallback 改寫 (下方) 之前，
+            // 把 callback 委派視為 reachable，防止 native 與受控狀態之間的競合視窗。
+            GC.KeepAlive(_wakeupCallback);
             wakeupHandle?.Dispose();
         }
 

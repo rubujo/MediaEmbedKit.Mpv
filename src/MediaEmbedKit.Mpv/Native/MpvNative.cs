@@ -35,59 +35,37 @@ internal static partial class MpvNative
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     internal delegate void MpvWakeupCallback(IntPtr context);
 
-    // -------- 委派／陣列參數的 P/Invoke：兩種 TFM 均保留 DllImport --------
-
-    /// <summary>
-    /// 設定 libmpv 事件喚醒通知回呼。
-    /// </summary>
-    /// <param name="ctx">libmpv 用戶端控制代碼。</param>
-    /// <param name="callback">事件喚醒通知回呼。</param>
-    /// <param name="callbackContext">傳回回呼的內容指標。</param>
-    [DllImport(LibraryName, CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-    internal static extern void mpv_set_wakeup_callback(IntPtr ctx, MpvWakeupCallback? callback, IntPtr callbackContext);
-
-    /// <summary>
-    /// 註冊 libmpv 自訂唯讀串流通訊協定。
-    /// </summary>
-    /// <param name="ctx">libmpv 用戶端控制代碼。</param>
-    /// <param name="protocol">不含 <c>://</c> 的通訊協定前置詞 UTF-8 指標。</param>
-    /// <param name="userData">傳回開啟回呼的使用者資料指標。</param>
-    /// <param name="openCallback">建立串流執行個體的開啟回呼。</param>
-    /// <returns>libmpv 錯誤碼。</returns>
-    [DllImport(LibraryName, CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-    internal static extern int mpv_stream_cb_add_ro(IntPtr ctx, IntPtr protocol, IntPtr userData, MpvStreamOpenCallback openCallback);
-
-    /// <summary>
-    /// 設定 libmpv render API 更新通知回呼。
-    /// </summary>
-    /// <param name="ctx">render API 內容指標。</param>
-    /// <param name="callback">更新通知回呼。</param>
-    /// <param name="callbackContext">傳回回呼的內容指標。</param>
-    [DllImport(LibraryName, CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-    internal static extern void mpv_render_context_set_update_callback(IntPtr ctx, MpvRenderUpdateCallback? callback, IntPtr callbackContext);
-
-    /// <summary>
-    /// 建立 libmpv render API 內容。
-    /// </summary>
-    /// <param name="result">接收 render API 內容指標的輸出變數。</param>
-    /// <param name="mpv">libmpv 用戶端控制代碼。</param>
-    /// <param name="parameters">render API 建立參數陣列。</param>
-    /// <returns>libmpv 錯誤碼。</returns>
-    [DllImport(LibraryName, CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-    internal static extern int mpv_render_context_create(out IntPtr result, IntPtr mpv, [In] MpvRenderParam[] parameters);
-
-    /// <summary>
-    /// 要求 libmpv render API 繪製目前影格。
-    /// </summary>
-    /// <param name="ctx">render API 內容指標。</param>
-    /// <param name="parameters">render API 繪製參數陣列。</param>
-    /// <returns>libmpv 錯誤碼。</returns>
-    [DllImport(LibraryName, CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
-    internal static extern int mpv_render_context_render(IntPtr ctx, [In] MpvRenderParam[] parameters);
-
-    // -------- Blittable P/Invoke：net7.0+ 走 LibraryImport，舊版走 DllImport --------
+    // -------- 含委派／陣列參數的入口：在 helper 內集中做 marshal 後呼叫 native --------
+    //
+    // 設計理由：LibraryImport 不直接支援 managed delegate 與 ref/[In] 陣列 marshalling，
+    // 但呼叫端用「delegate 欄位 + array」是慣用且乾淨的形式。本檔將 P/Invoke 簽名統一改成
+    // 純 IntPtr（blittable，符合 LibraryImport 限制），並在同檔提供 internal helper（沿用
+    // 原 native 名稱）為呼叫端遮蔽 Marshal.GetFunctionPointerForDelegate / GCHandle.Alloc(Pinned)
+    // 與 GC.KeepAlive 細節。
 
 #if NET7_0_OR_GREATER
+
+    [LibraryImport(LibraryName, EntryPoint = "mpv_set_wakeup_callback")]
+    [UnmanagedCallConv(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static partial void mpv_set_wakeup_callback_native(IntPtr ctx, IntPtr callback, IntPtr callbackContext);
+
+    [LibraryImport(LibraryName, EntryPoint = "mpv_stream_cb_add_ro")]
+    [UnmanagedCallConv(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static partial int mpv_stream_cb_add_ro_native(IntPtr ctx, IntPtr protocol, IntPtr userData, IntPtr openCallback);
+
+    [LibraryImport(LibraryName, EntryPoint = "mpv_render_context_set_update_callback")]
+    [UnmanagedCallConv(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static partial void mpv_render_context_set_update_callback_native(IntPtr ctx, IntPtr callback, IntPtr callbackContext);
+
+    [LibraryImport(LibraryName, EntryPoint = "mpv_render_context_create")]
+    [UnmanagedCallConv(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static partial int mpv_render_context_create_native(out IntPtr result, IntPtr mpv, IntPtr parameters);
+
+    [LibraryImport(LibraryName, EntryPoint = "mpv_render_context_render")]
+    [UnmanagedCallConv(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static partial int mpv_render_context_render_native(IntPtr ctx, IntPtr parameters);
+
+
 
     /// <summary>
     /// 取得 libmpv 用戶端 API 版本。
@@ -720,6 +698,21 @@ internal static partial class MpvNative
 
 #else
 
+    [DllImport(LibraryName, EntryPoint = "mpv_set_wakeup_callback", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+    private static extern void mpv_set_wakeup_callback_native(IntPtr ctx, IntPtr callback, IntPtr callbackContext);
+
+    [DllImport(LibraryName, EntryPoint = "mpv_stream_cb_add_ro", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+    private static extern int mpv_stream_cb_add_ro_native(IntPtr ctx, IntPtr protocol, IntPtr userData, IntPtr openCallback);
+
+    [DllImport(LibraryName, EntryPoint = "mpv_render_context_set_update_callback", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+    private static extern void mpv_render_context_set_update_callback_native(IntPtr ctx, IntPtr callback, IntPtr callbackContext);
+
+    [DllImport(LibraryName, EntryPoint = "mpv_render_context_create", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+    private static extern int mpv_render_context_create_native(out IntPtr result, IntPtr mpv, IntPtr parameters);
+
+    [DllImport(LibraryName, EntryPoint = "mpv_render_context_render", CallingConvention = CallingConvention.Cdecl, ExactSpelling = true)]
+    private static extern int mpv_render_context_render_native(IntPtr ctx, IntPtr parameters);
+
     /// <summary>
     /// 取得 libmpv 用戶端 API 版本。
     /// </summary>
@@ -1289,6 +1282,124 @@ internal static partial class MpvNative
     internal static extern void mpv_render_context_free(IntPtr ctx);
 
 #endif
+
+    /// <summary>
+    /// 設定 libmpv 事件喚醒通知回呼。
+    /// </summary>
+    /// <param name="ctx">libmpv 用戶端控制代碼。</param>
+    /// <param name="callback">事件喚醒通知回呼；傳 <see langword="null"/> 表示解除註冊。</param>
+    /// <param name="callbackContext">傳回回呼的內容指標。</param>
+    /// <remarks>
+    /// 此 helper 集中處理 <see cref="Marshal.GetFunctionPointerForDelegate(System.Delegate)"/> 與
+    /// <see cref="GC.KeepAlive(object)"/>，呼叫端只負責保存 <paramref name="callback"/> 委派的強參考
+    /// （避免委派被 GC）。
+    /// </remarks>
+    internal static void mpv_set_wakeup_callback(IntPtr ctx, MpvWakeupCallback? callback, IntPtr callbackContext)
+    {
+        IntPtr pointer = callback == null ? IntPtr.Zero : Marshal.GetFunctionPointerForDelegate(callback);
+        mpv_set_wakeup_callback_native(ctx, pointer, callbackContext);
+        GC.KeepAlive(callback);
+    }
+
+    /// <summary>
+    /// 註冊 libmpv 自訂唯讀串流通訊協定。
+    /// </summary>
+    /// <param name="ctx">libmpv 用戶端控制代碼。</param>
+    /// <param name="protocol">不含 <c>://</c> 的通訊協定前置詞 UTF-8 指標。</param>
+    /// <param name="userData">傳回開啟回呼的使用者資料指標。</param>
+    /// <param name="openCallback">建立串流執行個體的開啟回呼委派。</param>
+    /// <returns>libmpv 錯誤碼。</returns>
+    /// <remarks>
+    /// 呼叫端必須以欄位或其他強參考形式持有 <paramref name="openCallback"/>，直到不再需要被
+    /// libmpv 呼叫為止；本 helper 僅在當次呼叫期間保證委派存活。
+    /// </remarks>
+    internal static int mpv_stream_cb_add_ro(IntPtr ctx, IntPtr protocol, IntPtr userData, MpvStreamOpenCallback openCallback)
+    {
+        if (openCallback == null)
+        {
+            throw new ArgumentNullException(nameof(openCallback));
+        }
+
+        IntPtr pointer = Marshal.GetFunctionPointerForDelegate(openCallback);
+        int result = mpv_stream_cb_add_ro_native(ctx, protocol, userData, pointer);
+        GC.KeepAlive(openCallback);
+        return result;
+    }
+
+    /// <summary>
+    /// 設定 libmpv render API 更新通知回呼。
+    /// </summary>
+    /// <param name="ctx">render API 內容指標。</param>
+    /// <param name="callback">更新通知回呼；傳 <see langword="null"/> 表示解除註冊。</param>
+    /// <param name="callbackContext">傳回回呼的內容指標。</param>
+    /// <remarks>
+    /// 此 helper 集中處理 <see cref="Marshal.GetFunctionPointerForDelegate(System.Delegate)"/> 與
+    /// <see cref="GC.KeepAlive(object)"/>，呼叫端只負責保存 <paramref name="callback"/> 委派的強參考
+    /// （避免委派被 GC）。
+    /// </remarks>
+    internal static void mpv_render_context_set_update_callback(IntPtr ctx, MpvRenderUpdateCallback? callback, IntPtr callbackContext)
+    {
+        IntPtr pointer = callback == null ? IntPtr.Zero : Marshal.GetFunctionPointerForDelegate(callback);
+        mpv_render_context_set_update_callback_native(ctx, pointer, callbackContext);
+        GC.KeepAlive(callback);
+    }
+
+    /// <summary>
+    /// 建立 libmpv render API 內容。
+    /// </summary>
+    /// <param name="result">接收 render API 內容指標的輸出變數。</param>
+    /// <param name="mpv">libmpv 用戶端控制代碼。</param>
+    /// <param name="parameters">render API 建立參數陣列（以 <c>MpvRenderParamType.Invalid</c> 為終止項）。</param>
+    /// <returns>libmpv 錯誤碼。</returns>
+    /// <remarks>
+    /// 此 helper 在呼叫期間將 <paramref name="parameters"/> 釘選（pinned），確保 libmpv 取得的指標
+    /// 在 mpv_render_context_create 回傳前不會因 GC 而移動。
+    /// </remarks>
+    internal static int mpv_render_context_create(out IntPtr result, IntPtr mpv, MpvRenderParam[] parameters)
+    {
+        if (parameters == null)
+        {
+            throw new ArgumentNullException(nameof(parameters));
+        }
+
+        GCHandle pinned = GCHandle.Alloc(parameters, GCHandleType.Pinned);
+        try
+        {
+            return mpv_render_context_create_native(out result, mpv, pinned.AddrOfPinnedObject());
+        }
+        finally
+        {
+            pinned.Free();
+        }
+    }
+
+    /// <summary>
+    /// 要求 libmpv render API 繪製目前影格。
+    /// </summary>
+    /// <param name="ctx">render API 內容指標。</param>
+    /// <param name="parameters">render API 繪製參數陣列（以 <c>MpvRenderParamType.Invalid</c> 為終止項）。</param>
+    /// <returns>libmpv 錯誤碼。</returns>
+    /// <remarks>
+    /// 此 helper 在呼叫期間將 <paramref name="parameters"/> 釘選（pinned），確保 libmpv 取得的指標
+    /// 在 mpv_render_context_render 回傳前不會因 GC 而移動。
+    /// </remarks>
+    internal static int mpv_render_context_render(IntPtr ctx, MpvRenderParam[] parameters)
+    {
+        if (parameters == null)
+        {
+            throw new ArgumentNullException(nameof(parameters));
+        }
+
+        GCHandle pinned = GCHandle.Alloc(parameters, GCHandleType.Pinned);
+        try
+        {
+            return mpv_render_context_render_native(ctx, pinned.AddrOfPinnedObject());
+        }
+        finally
+        {
+            pinned.Free();
+        }
+    }
 
     /// <summary>
     /// 將 libmpv 錯誤碼轉換為受控字串。

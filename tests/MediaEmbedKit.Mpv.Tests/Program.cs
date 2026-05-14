@@ -61,7 +61,7 @@ internal static class Program
         runner.Add("MpvRenderParamType.AmbientLight 已標 [Obsolete]", VerifyAmbientLightObsolete);
         runner.Add("MpvPlayer 提供 TryGetProperty* 系列", VerifyTryGetPropertySurface);
         runner.Add("MpvNative 在 net7.0+ 採用 LibraryImport", VerifyMpvNativeUsesLibraryImport);
-        runner.Add("MpvNative 委派／陣列入口保留 DllImport", VerifyMpvNativeDelegateAndArrayKeepDllImport);
+        runner.Add("MpvNative 委派／陣列 helper 在 net7.0+ 仍走 LibraryImport", VerifyMpvNativeHelperUsesLibraryImport);
 
         await runner.RunAsync().ConfigureAwait(false);
         return runner.FailedCount == 0 ? 0 : 1;
@@ -217,13 +217,41 @@ internal static class Program
     }
 
     /// <summary>
-    /// 驗證委派參數與 <c>[In] MpvRenderParam[]</c> 陣列參數的 5 個入口仍保留 <see cref="DllImportAttribute"/>
-    /// （兩種 TFM 均如此）；這 5 個入口會在後續 Phase 2 搭配呼叫端改造遷移到 LibraryImport。
+    /// 驗證原本含委派／陣列參數的 5 個入口已透過 <c>*_native</c> 私有 P/Invoke 統一改為純 IntPtr 簽名，
+    /// 並在 <c>net7.0</c> 以上同樣由 P/Invoke source generator 以 <see cref="LibraryImportAttribute"/> 包裝；
+    /// 同時上層 internal helper（沿用原 native 名稱）仍提供既有委派／陣列簽名給呼叫端，呼叫端 0 變更。
     /// </summary>
     /// <returns>代表測試流程的工作。</returns>
-    private static Task VerifyMpvNativeDelegateAndArrayKeepDllImport()
+    private static Task VerifyMpvNativeHelperUsesLibraryImport()
     {
-        string[] keepDllImport = new[]
+        string[] nativeEntries = new[]
+        {
+            "mpv_set_wakeup_callback_native",
+            "mpv_stream_cb_add_ro_native",
+            "mpv_render_context_set_update_callback_native",
+            "mpv_render_context_create_native",
+            "mpv_render_context_render_native"
+        };
+
+        foreach (string name in nativeEntries)
+        {
+            MethodInfo method = typeof(MpvNative).GetMethod(
+                name,
+                BindingFlags.NonPublic | BindingFlags.Static)
+                ?? throw new InvalidOperationException(name + " 私有 P/Invoke 入口應存在於 MpvNative。");
+#if NET7_0_OR_GREATER
+            AssertEx.True(
+                method.IsDefined(typeof(LibraryImportAttribute), inherit: false),
+                name + " 在 net7.0+ 應由 P/Invoke source generator 以 LibraryImport 包裝。");
+#else
+            AssertEx.True(
+                method.IsDefined(typeof(DllImportAttribute), inherit: false),
+                name + " 在舊版 TFM 應使用 DllImport。");
+#endif
+        }
+
+        // helper 維持原 native 名稱、保留 delegate / array 簽名給呼叫端：以「不掛任何 P/Invoke 屬性」為驗證。
+        string[] helperNames = new[]
         {
             "mpv_set_wakeup_callback",
             "mpv_stream_cb_add_ro",
@@ -232,15 +260,20 @@ internal static class Program
             "mpv_render_context_render"
         };
 
-        foreach (string name in keepDllImport)
+        foreach (string name in helperNames)
         {
-            MethodInfo method = typeof(MpvNative).GetMethod(
-                name,
-                BindingFlags.NonPublic | BindingFlags.Static)
-                ?? throw new InvalidOperationException(name + " 入口應存在於 MpvNative。");
-            AssertEx.True(
-                method.IsDefined(typeof(DllImportAttribute), inherit: false),
-                name + " 應保留 DllImport（含委派或陣列參數，尚未轉 LibraryImport）。");
+            MethodInfo[] candidates = typeof(MpvNative).GetMethods(BindingFlags.NonPublic | BindingFlags.Static)
+                .Where(m => m.Name == name).ToArray();
+            AssertEx.True(candidates.Length > 0, name + " helper 應存在於 MpvNative。");
+            foreach (MethodInfo helper in candidates)
+            {
+                AssertEx.False(
+                    helper.IsDefined(typeof(DllImportAttribute), inherit: false),
+                    name + " helper 不應直接掛 DllImport（應透過 *_native 私有入口）。");
+                AssertEx.False(
+                    helper.IsDefined(typeof(LibraryImportAttribute), inherit: false),
+                    name + " helper 不應直接掛 LibraryImport（應透過 *_native 私有入口）。");
+            }
         }
 
         return Task.CompletedTask;
