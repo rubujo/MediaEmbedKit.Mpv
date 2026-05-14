@@ -60,6 +60,17 @@ Windows x64 發佈前驗證以本機 release gate 為準：
 
 核心 API 測試、原生整合測試、NuGet 套件內容、乾淨 consumer 建置、Console minimal 播放與 GUI consumer 播放都應在發佈前通過。WinForms、WPF、Avalonia、WinUI 3 與 MAUI Windows 範例需以 YouTube 測試網址播放到指定秒數後正常關閉。
 
-**ARM64 物理機驗證尚未納入本機 release gate**：目前 ARM64 路徑為程式碼層級就緒（架構偵測、資產對應、catalog 與單元測試完整），但未在 ARM64 物理機跑過 release gate。雙 provider（shinchiro / zhongfly）對 ARM64 都提供 `mpv-dev-aarch64-*.7z`，命名規範與 x64 一致；風險點為硬體 encoder probe 預期回報 unavailable 與少數 `MpvEncoder` 硬體 preset 整合測試會 skip。
+### 實機驗證範圍
+
+| 維度 | 已驗證 | 未驗證 |
+| --- | --- | --- |
+| OS 版本 | Windows 11 Pro for Workstations 10.0.26200 | Windows 10、其他 Windows 11 build、Windows Server |
+| 架構 | x64（開發機） | ARM64（程式碼路徑完整、資產對應有單元測試覆蓋，但未實機跑過） |
+
+未在表中的 OS 版本與架構**不在實機驗證範圍**。設計目標仍是支援 csproj 內 `TargetPlatformMinVersion` 宣告的所有版本（WinUI / MAUI 為 `10.0.17763.0`、WPF / WinForms 為 `.NET Framework 4.7.2+` 或 `.NET 8/10`），但實際相容性需由使用者在目標環境自行驗證。
+
+### libmpv header drift 檢查
+
+定期執行 [`tools/libmpv/Check-LibMpvHeaderDrift.ps1`](../tools/libmpv/Check-LibMpvHeaderDrift.ps1)（建議每月或每季）追蹤 shinchiro / zhongfly 的 mpv git build 是否引入新的 public header 變更。偵測到變更時須評估是否更新 [`src/MediaEmbedKit.Mpv/Native/MpvNative.cs`](../src/MediaEmbedKit.Mpv/Native/MpvNative.cs) 與 [`docs/runtime/libmpv-git-builds.json`](runtime/libmpv-git-builds.json)。
 
 Windows runtime helper 目前支援 `libmpv-2.dll`、`yt-dlp.exe`、`deno.exe`、`ffmpeg.exe` 與 `ffprobe.exe` 的同層配置，並依目前處理序架構自動選擇對應的 x64 / ARM64 資產。FFmpeg 來源限定為 yt-dlp `FFmpeg-Builds` Windows GPL build；NuGet 套件不包含任何第三方 runtime 二進位檔。

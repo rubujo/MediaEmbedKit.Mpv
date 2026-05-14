@@ -169,7 +169,7 @@ internal sealed class MpvNodeAllocation : IDisposable
     /// <returns>原生節點陣列指標。</returns>
     private IntPtr BuildValues(IReadOnlyList<MpvNode> items)
     {
-        int size = Marshal.SizeOf(typeof(NativeMpvNode));
+        int size = Marshal.SizeOf<NativeMpvNode>();
         IntPtr values = Marshal.AllocHGlobal(size * items.Count);
         _allocations.Add(values);
 
@@ -211,11 +211,11 @@ internal sealed class MpvNodeAllocation : IDisposable
     /// <typeparam name="T">要寫入的結構型別。</typeparam>
     /// <param name="value">要寫入的結構值。</param>
     /// <returns>包含指定結構的原生記憶體指標。</returns>
-    private IntPtr AllocStruct<T>(T value)
+    private IntPtr AllocStruct<T>(T value) where T : struct
     {
-        IntPtr pointer = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(T)));
+        IntPtr pointer = Marshal.AllocHGlobal(Marshal.SizeOf<T>());
         _allocations.Add(pointer);
-        Marshal.StructureToPtr(value!, pointer, false);
+        Marshal.StructureToPtr(value, pointer, false);
         return pointer;
     }
 }

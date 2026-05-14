@@ -15,6 +15,14 @@
       DllImport，不需要 unsafe。
     -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!--
+      66 / 66 P/Invoke 已透過 LibraryImport source generator 產生 marshalling，
+      MpvNodeMarshaller 等內部反射路徑已避免使用 type-name 反射；本核心套件對
+      trimming 與 NativeAOT 友善。消費端 (NativeAOT app / trim-published app)
+      可信賴本套件不會在 trim/AOT 後消失關鍵成員。
+    -->
+    <IsTrimmable>true</IsTrimmable>
+    <IsAotCompatible>true</IsAotCompatible>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETFramework'">
@@ -26,6 +34,7 @@
 
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' or '$(TargetFrameworkIdentifier)' == '.NETFramework'">
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" />
+    <PackageReference Include="System.Text.Json" />
   </ItemGroup>
 
   <ItemGroup>

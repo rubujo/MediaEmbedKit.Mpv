@@ -220,11 +220,11 @@ public sealed class MpvSoftwareRenderContext : IDisposable
         IntPtr infoPointer = IntPtr.Zero;
         try
         {
-            infoPointer = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(MpvRenderFrameInfo)));
+            infoPointer = Marshal.AllocHGlobal(Marshal.SizeOf<MpvRenderFrameInfo>());
             Marshal.StructureToPtr(new MpvRenderFrameInfo(), infoPointer, false);
             MpvRenderParam parameter = new MpvRenderParam(MpvRenderParamType.NextFrameInfo, infoPointer);
             MpvError.ThrowIfError(MpvNative.mpv_render_context_get_info(_context, parameter));
-            MpvRenderFrameInfo info = (MpvRenderFrameInfo)Marshal.PtrToStructure(infoPointer, typeof(MpvRenderFrameInfo))!;
+            MpvRenderFrameInfo info = Marshal.PtrToStructure<MpvRenderFrameInfo>(infoPointer);
             return new MpvRenderFrameInformation((MpvRenderFrameInfoFlags)info.Flags, info.TargetTime);
         }
         finally
@@ -398,10 +398,10 @@ public sealed class MpvSoftwareRenderContext : IDisposable
     /// <typeparam name="T">要寫入原生記憶體的結構型別。</typeparam>
     /// <param name="value">要寫入的結構值。</param>
     /// <returns>包含指定結構的原生記憶體指標。</returns>
-    private static IntPtr AllocStructure<T>(T value)
+    private static IntPtr AllocStructure<T>(T value) where T : struct
     {
-        IntPtr pointer = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(T)));
-        Marshal.StructureToPtr(value!, pointer, false);
+        IntPtr pointer = Marshal.AllocHGlobal(Marshal.SizeOf<T>());
+        Marshal.StructureToPtr(value, pointer, false);
         return pointer;
     }
 

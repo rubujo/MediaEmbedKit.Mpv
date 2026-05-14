@@ -4528,7 +4528,7 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
                 continue;
             }
 
-            MpvEvent nativeEvent = (MpvEvent)Marshal.PtrToStructure(eventPointer, typeof(MpvEvent))!;
+            MpvEvent nativeEvent = Marshal.PtrToStructure<MpvEvent>(eventPointer);
             DispatchEvent(eventPointer, nativeEvent);
 
             if (nativeEvent.EventId == MpvEventId.Shutdown)
@@ -4675,7 +4675,7 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
             return MpvNode.None();
         }
 
-        MpvEventCommand command = (MpvEventCommand)Marshal.PtrToStructure(nativeEvent.Data, typeof(MpvEventCommand))!;
+        MpvEventCommand command = Marshal.PtrToStructure<MpvEventCommand>(nativeEvent.Data);
         return MpvNode.FromNative(command.Result);
     }
 
@@ -4691,7 +4691,7 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
             return MpvNode.None();
         }
 
-        MpvEventProperty property = (MpvEventProperty)Marshal.PtrToStructure(nativeEvent.Data, typeof(MpvEventProperty))!;
+        MpvEventProperty property = Marshal.PtrToStructure<MpvEventProperty>(nativeEvent.Data);
         object? value = DecodePropertyValue(property);
         switch (property.Format)
         {
@@ -4755,7 +4755,7 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
             return;
         }
 
-        MpvEventProperty property = (MpvEventProperty)Marshal.PtrToStructure(nativeEvent.Data, typeof(MpvEventProperty))!;
+        MpvEventProperty property = Marshal.PtrToStructure<MpvEventProperty>(nativeEvent.Data);
         string name = Utf8StringMarshaller.PtrToString(property.Name) ?? string.Empty;
         object? value = DecodePropertyValue(property);
         DispatchManagedEvent(PropertyChanged, new MpvPropertyChangedEventArgs(nativeEvent.ReplyUserData, name, property.Format, value), nameof(PropertyChanged));
@@ -4791,7 +4791,7 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
                 Marshal.Copy(property.Data, bytes, 0, bytes.Length);
                 return BitConverter.ToDouble(bytes, 0);
             case MpvFormat.Node:
-                NativeMpvNode node = (NativeMpvNode)Marshal.PtrToStructure(property.Data, typeof(NativeMpvNode))!;
+                NativeMpvNode node = Marshal.PtrToStructure<NativeMpvNode>(property.Data);
                 return MpvNode.FromNative(node);
             default:
                 return null;
@@ -4809,7 +4809,7 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
             return;
         }
 
-        MpvEventLogMessage message = (MpvEventLogMessage)Marshal.PtrToStructure(nativeEvent.Data, typeof(MpvEventLogMessage))!;
+        MpvEventLogMessage message = Marshal.PtrToStructure<MpvEventLogMessage>(nativeEvent.Data);
         DispatchManagedEvent(LogMessageReceived, new MpvLogMessageEventArgs(
             Utf8StringMarshaller.PtrToString(message.Prefix) ?? string.Empty,
             Utf8StringMarshaller.PtrToString(message.Level) ?? string.Empty,
@@ -4828,7 +4828,7 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
             return;
         }
 
-        MpvEventStartFile startFile = (MpvEventStartFile)Marshal.PtrToStructure(nativeEvent.Data, typeof(MpvEventStartFile))!;
+        MpvEventStartFile startFile = Marshal.PtrToStructure<MpvEventStartFile>(nativeEvent.Data);
         DispatchManagedEvent(StartFile, new MpvStartFileEventArgs(startFile.PlaylistEntryId), nameof(StartFile));
     }
 
@@ -4843,7 +4843,7 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
             return;
         }
 
-        MpvEventEndFile endFile = (MpvEventEndFile)Marshal.PtrToStructure(nativeEvent.Data, typeof(MpvEventEndFile))!;
+        MpvEventEndFile endFile = Marshal.PtrToStructure<MpvEventEndFile>(nativeEvent.Data);
         TransitionState(endFile.Reason == MpvEndFileReason.Error ? MpvPlaybackState.Error : MpvPlaybackState.Ended);
         DispatchManagedEvent(EndFile, new MpvEndFileEventArgs(
             endFile.Reason,
@@ -4864,7 +4864,7 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
             return;
         }
 
-        MpvEventClientMessage message = (MpvEventClientMessage)Marshal.PtrToStructure(nativeEvent.Data, typeof(MpvEventClientMessage))!;
+        MpvEventClientMessage message = Marshal.PtrToStructure<MpvEventClientMessage>(nativeEvent.Data);
         DispatchManagedEvent(ClientMessage, new MpvClientMessageEventArgs(
             nativeEvent.Error,
             nativeEvent.ReplyUserData,
@@ -4882,7 +4882,7 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
             return;
         }
 
-        MpvEventHook hook = (MpvEventHook)Marshal.PtrToStructure(nativeEvent.Data, typeof(MpvEventHook))!;
+        MpvEventHook hook = Marshal.PtrToStructure<MpvEventHook>(nativeEvent.Data);
         DispatchManagedEvent(Hook, new MpvHookEventArgs(
             nativeEvent.Error,
             nativeEvent.ReplyUserData,

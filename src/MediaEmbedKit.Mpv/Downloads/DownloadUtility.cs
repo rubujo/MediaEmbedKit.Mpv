@@ -4,9 +4,9 @@ using System.IO;
 using System.IO.Compression;
 using System.Net.Http;
 using System.Runtime.InteropServices;
-using System.Runtime.Serialization.Json;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -48,8 +48,10 @@ internal static class DownloadUtility
             {
                 response.EnsureSuccessStatusCode();
                 Stream stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
-                DataContractJsonSerializer serializer = new DataContractJsonSerializer(typeof(GitHubRelease));
-                GitHubRelease? release = (GitHubRelease?)serializer.ReadObject(stream);
+                GitHubRelease? release = await JsonSerializer.DeserializeAsync(
+                    stream,
+                    GitHubReleaseJsonContext.Default.GitHubRelease,
+                    cancellationToken).ConfigureAwait(false);
                 if (release == null || release.Assets == null || release.Assets.Length == 0)
                 {
                     throw new InvalidOperationException("GitHub 發行資料未包含可下載資產。");

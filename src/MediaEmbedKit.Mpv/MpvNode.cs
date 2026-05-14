@@ -279,12 +279,12 @@ public sealed class MpvNode
             return Array.Empty<MpvNode>();
         }
 
-        NativeMpvNodeList list = (NativeMpvNodeList)Marshal.PtrToStructure(listPointer, typeof(NativeMpvNodeList))!;
+        NativeMpvNodeList list = Marshal.PtrToStructure<NativeMpvNodeList>(listPointer);
         List<MpvNode> result = new List<MpvNode>(Math.Max(0, list.Count));
-        int size = Marshal.SizeOf(typeof(NativeMpvNode));
+        int size = Marshal.SizeOf<NativeMpvNode>();
         for (int i = 0; i < list.Count; i++)
         {
-            NativeMpvNode item = (NativeMpvNode)Marshal.PtrToStructure(IntPtr.Add(list.Values, i * size), typeof(NativeMpvNode))!;
+            NativeMpvNode item = Marshal.PtrToStructure<NativeMpvNode>(IntPtr.Add(list.Values, i * size));
             result.Add(FromNative(item));
         }
 
@@ -303,14 +303,14 @@ public sealed class MpvNode
             return new Dictionary<string, MpvNode>();
         }
 
-        NativeMpvNodeList list = (NativeMpvNodeList)Marshal.PtrToStructure(listPointer, typeof(NativeMpvNodeList))!;
+        NativeMpvNodeList list = Marshal.PtrToStructure<NativeMpvNodeList>(listPointer);
         Dictionary<string, MpvNode> result = new Dictionary<string, MpvNode>(StringComparer.Ordinal);
-        int size = Marshal.SizeOf(typeof(NativeMpvNode));
+        int size = Marshal.SizeOf<NativeMpvNode>();
         for (int i = 0; i < list.Count; i++)
         {
             IntPtr keyPointer = Marshal.ReadIntPtr(list.Keys, i * IntPtr.Size);
             string key = Utf8StringMarshaller.PtrToString(keyPointer) ?? string.Empty;
-            NativeMpvNode value = (NativeMpvNode)Marshal.PtrToStructure(IntPtr.Add(list.Values, i * size), typeof(NativeMpvNode))!;
+            NativeMpvNode value = Marshal.PtrToStructure<NativeMpvNode>(IntPtr.Add(list.Values, i * size));
             result[key] = FromNative(value);
         }
 
@@ -329,7 +329,7 @@ public sealed class MpvNode
             return Array.Empty<byte>();
         }
 
-        NativeMpvByteArray byteArray = (NativeMpvByteArray)Marshal.PtrToStructure(byteArrayPointer, typeof(NativeMpvByteArray))!;
+        NativeMpvByteArray byteArray = Marshal.PtrToStructure<NativeMpvByteArray>(byteArrayPointer);
         int length = checked((int)byteArray.Size.ToUInt64());
         byte[] bytes = new byte[length];
         if (length > 0)
