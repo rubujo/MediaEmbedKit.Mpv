@@ -1,4 +1,6 @@
-﻿namespace MediaEmbedKit.Mpv.Render;
+﻿using System;
+
+namespace MediaEmbedKit.Mpv.Render;
 
 /// <summary>
 /// 定義 libmpv render API 參數型別。
@@ -36,6 +38,11 @@ public enum MpvRenderParamType
     /// <summary>
     /// 指定環境光參數。
     /// </summary>
+    /// <remarks>
+    /// libmpv 0.40（client API 版本 2.5）已將 <c>MPV_RENDER_PARAM_AMBIENT_LIGHT</c> 標記為 deprecated，且沒有替代品。
+    /// 詳見上游 <c>DOCS/client-api-changes.rst</c>。
+    /// </remarks>
+    [Obsolete("libmpv 0.40 已 deprecate MPV_RENDER_PARAM_AMBIENT_LIGHT，並無替代參數，新程式碼請勿再使用此參數型別。")]
     AmbientLight = 7,
     /// <summary>
     /// 指定 X11 顯示連線。

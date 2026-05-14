@@ -50,13 +50,17 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
         new PropertyMetadata(TimeSpan.Zero, PositionChanged));
 
     /// <summary>
-    /// 識別 <see cref="Duration"/> 相依性屬性（WinUI 無 RegisterReadOnly，使用一般註冊，但僅透過內部 SetValue 寫入）。
+    /// 識別 <see cref="Duration"/> 相依性屬性。
     /// </summary>
+    /// <remarks>
+    /// WinUI 3 沒有 WPF 的 <c>RegisterReadOnly</c> 等效 API；本控制項以 callback 在偵測到外部寫入時回退舊值，
+    /// 對呼叫端（XAML binding、<c>SetValue</c>）模擬唯讀語意。請只透過 <see cref="MpvPlayer"/> 的播放事件更新此屬性。
+    /// </remarks>
     public static readonly DependencyProperty DurationProperty = DependencyProperty.Register(
         nameof(Duration),
         typeof(TimeSpan),
         typeof(MpvWinUiPlayer),
-        new PropertyMetadata(TimeSpan.Zero));
+        new PropertyMetadata(TimeSpan.Zero, OnDurationChanged));
 
     /// <summary>
     /// 識別 <see cref="Volume"/> 相依性屬性。
@@ -86,13 +90,17 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
         new PropertyMetadata(false, IsMutedChanged));
 
     /// <summary>
-    /// 識別 <see cref="PlaybackState"/> 相依性屬性（WinUI 無 RegisterReadOnly，使用一般註冊，但僅透過內部 SetValue 寫入）。
+    /// 識別 <see cref="PlaybackState"/> 相依性屬性。
     /// </summary>
+    /// <remarks>
+    /// WinUI 3 沒有 WPF 的 <c>RegisterReadOnly</c> 等效 API；本控制項以 callback 在偵測到外部寫入時回退舊值，
+    /// 對呼叫端（XAML binding、<c>SetValue</c>）模擬唯讀語意。請只透過 <see cref="MpvPlayer"/> 的播放事件更新此屬性。
+    /// </remarks>
     public static readonly DependencyProperty PlaybackStateProperty = DependencyProperty.Register(
         nameof(PlaybackState),
         typeof(MpvPlaybackState),
         typeof(MpvWinUiPlayer),
-        new PropertyMetadata(MpvPlaybackState.Idle));
+        new PropertyMetadata(MpvPlaybackState.Idle, OnPlaybackStateChanged));
 
     /// <summary>
     /// HWND 播放後端。
@@ -404,6 +412,11 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// 取得目前媒體總時長。
     /// </summary>
     /// <value>對應 mpv <c>duration</c>。</value>
+    /// <remarks>
+    /// 對外語意為唯讀；WinUI 3 沒有 <c>RegisterReadOnly</c>，因此使用一般 <see cref="DependencyProperty"/>，
+    /// 但 <see cref="DurationProperty"/> 的 callback 會在偵測到非播放器來源的寫入時自動回退。請勿透過
+    /// XAML binding（<c>Mode=TwoWay</c>）或 <c>SetValue</c> 寫入此屬性。
+    /// </remarks>
     public TimeSpan Duration
     {
         get { return (TimeSpan)GetValue(DurationProperty); }
@@ -443,6 +456,11 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// 取得目前由 libmpv 事件聚合而成的播放狀態。
     /// </summary>
     /// <value>對應 <see cref="MpvPlayer.State"/>。</value>
+    /// <remarks>
+    /// 對外語意為唯讀；WinUI 3 沒有 <c>RegisterReadOnly</c>，因此使用一般 <see cref="DependencyProperty"/>，
+    /// 但 <see cref="PlaybackStateProperty"/> 的 callback 會在偵測到非播放器來源的寫入時自動回退。請勿透過
+    /// XAML binding（<c>Mode=TwoWay</c>）或 <c>SetValue</c> 寫入此屬性。
+    /// </remarks>
     public MpvPlaybackState PlaybackState
     {
         get { return (MpvPlaybackState)GetValue(PlaybackStateProperty); }
@@ -861,6 +879,66 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
         }
         catch (MpvException)
         {
+        }
+    }
+
+    /// <summary>
+    /// 處理 <see cref="DurationProperty"/> 變更：偵測到外部寫入時回退舊值，模擬唯讀語意。
+    /// </summary>
+    /// <param name="dependencyObject">屬性所屬的相依性物件。</param>
+    /// <param name="e">屬性變更資料。</param>
+    private static void OnDurationChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs e)
+    {
+        MpvWinUiPlayer control = (MpvWinUiPlayer)dependencyObject;
+        if (control._suppressPlayerWrite)
+        {
+            return;
+        }
+
+        TimeSpan oldValue = (TimeSpan)e.OldValue;
+        if (oldValue == (TimeSpan)e.NewValue)
+        {
+            return;
+        }
+
+        control._suppressPlayerWrite = true;
+        try
+        {
+            control.SetValue(DurationProperty, oldValue);
+        }
+        finally
+        {
+            control._suppressPlayerWrite = false;
+        }
+    }
+
+    /// <summary>
+    /// 處理 <see cref="PlaybackStateProperty"/> 變更：偵測到外部寫入時回退舊值，模擬唯讀語意。
+    /// </summary>
+    /// <param name="dependencyObject">屬性所屬的相依性物件。</param>
+    /// <param name="e">屬性變更資料。</param>
+    private static void OnPlaybackStateChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs e)
+    {
+        MpvWinUiPlayer control = (MpvWinUiPlayer)dependencyObject;
+        if (control._suppressPlayerWrite)
+        {
+            return;
+        }
+
+        MpvPlaybackState oldValue = (MpvPlaybackState)e.OldValue;
+        if (oldValue == (MpvPlaybackState)e.NewValue)
+        {
+            return;
+        }
+
+        control._suppressPlayerWrite = true;
+        try
+        {
+            control.SetValue(PlaybackStateProperty, oldValue);
+        }
+        finally
+        {
+            control._suppressPlayerWrite = false;
         }
     }
 

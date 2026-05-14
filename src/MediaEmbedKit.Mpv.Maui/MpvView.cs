@@ -12,6 +12,20 @@ namespace MediaEmbedKit.Mpv.Maui;
 /// <summary>
 /// 提供 .NET MAUI Windows 使用的 libmpv 播放檢視。
 /// </summary>
+/// <remarks>
+/// <para>
+/// 本檢視目前僅在 Windows 平台具備實際的播放實作；底層平台控制項是
+/// <see cref="MediaEmbedKit.Mpv.WinUI.MpvWinUiPlayer"/>，由
+/// <see cref="MpvViewHandler"/> 負責橋接。其他平台（Android、iOS、MacCatalyst、Tizen）
+/// 雖可建立 <see cref="MpvView"/> 與其 handler，但呼叫
+/// <see cref="MpvViewHandler.LoadFile(string, MpvLoadFileMode)"/> 等需要平台後端的 API
+/// 會擲回 <see cref="PlatformNotSupportedException"/>。
+/// </para>
+/// <para>
+/// 整體支援矩陣請參考 <c>docs/SUPPORT_MATRIX.md</c>；如需跨平台 libmpv，請改用核心
+/// <see cref="MediaEmbedKit.Mpv.MpvPlayer"/> 搭配自家的 native window 整合。
+/// </para>
+/// </remarks>
 public class MpvView : View
 {
     /// <summary>

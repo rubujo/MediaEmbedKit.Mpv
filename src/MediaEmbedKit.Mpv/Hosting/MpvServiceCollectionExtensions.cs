@@ -16,10 +16,15 @@ public static class MpvServiceCollectionExtensions
     /// <param name="configure">用來設定 <see cref="MpvAppBuilder"/> 的委派。</param>
     /// <returns>原始的 <see cref="IServiceCollection"/>，方便鏈式呼叫。</returns>
     /// <remarks>
+    /// 此多載在解析時以 <c>GetAwaiter().GetResult()</c> 同步等待 <see cref="MpvAppBuilder.BuildAsync(System.Threading.CancellationToken)"/>，
+    /// 在 <c>IHostedService.StartAsync</c>、ASP.NET Core 啟動或 UI 同步上下文中可能阻塞執行緒或造成死鎖。
+    /// 建議改用 <see cref="AddMpvPlayerFactory(IServiceCollection, Action{MpvAppBuilder})"/>，在
+    /// <c>IHostedService.StartAsync</c> 或啟動程式碼以 <c>await</c> 建構。
     /// <see cref="MpvPlayer"/> 為 singleton；服務容器釋放時會走 <see cref="IDisposable.Dispose"/>。
     /// 如需 graceful shutdown，請另外註冊 <c>IHostedService</c> 在停機時呼叫
     /// <c>MpvPlayer.ShutdownAsync</c> 並 <c>await using</c> 釋放。
     /// </remarks>
+    [Obsolete("AddMpvPlayer 會在服務解析時同步阻塞等待非同步建構，可能造成死鎖。請改用 AddMpvPlayerFactory，並於 IHostedService.StartAsync 等非同步流程中 await 建立 MpvPlayer。")]
     public static IServiceCollection AddMpvPlayer(this IServiceCollection services, Action<MpvAppBuilder> configure)
     {
         if (services == null)

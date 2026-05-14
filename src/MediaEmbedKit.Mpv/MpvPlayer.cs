@@ -16,6 +16,28 @@ namespace MediaEmbedKit.Mpv;
 /// <summary>
 /// 封裝單一 libmpv 用戶端執行個體，並提供命令、屬性與事件 API。
 /// </summary>
+/// <remarks>
+/// <para>
+/// <b>執行緒安全</b>：所有公開命令／屬性 API（<c>Command*</c>、<c>SetProperty*</c>、<c>GetProperty*</c>、
+/// <c>ObserveProperty</c>、<c>WatchProperty&lt;T&gt;</c>、<c>LoadFile</c>、<c>LoadAsync</c> 等）皆以內部
+/// 生命週期鎖（<c>_lifetimeGate</c>）與 <see cref="Native.SafeMpvHandle"/> 配合保護，可由任意執行緒
+/// 並行呼叫；釋放後再呼叫會擲回 <see cref="ObjectDisposedException"/>。
+/// </para>
+/// <para>
+/// <b>事件分派執行緒</b>：所有事件（<see cref="EventReceived"/>、<see cref="PropertyChanged"/>、
+/// <see cref="StateChanged"/>、<see cref="LogMessageReceived"/>、<see cref="EndFile"/>、
+/// <see cref="StartFile"/>、<see cref="FileLoaded"/>、<see cref="Hook"/>、
+/// <see cref="ClientMessage"/>、<see cref="CommandReply"/>、<see cref="TracksChanged"/> …）
+/// 都在 libmpv 私有的背景事件迴圈執行緒（<c>"libmpv event loop"</c>）上被觸發，<b>不是</b> UI 執行緒。
+/// 訂閱者若要更新 UI，請自行透過 WPF <c>Dispatcher</c>、WinUI <c>DispatcherQueue</c>、
+/// Avalonia <c>Dispatcher.UIThread</c>、WinForms <c>Control.BeginInvoke</c> 或 MAUI
+/// <c>Dispatcher</c> 切回 UI thread。
+/// </para>
+/// <para>
+/// 本專案 <c>WinForms / WPF / Avalonia / WinUI / MAUI</c> 各控制項皆已在內部完成 UI thread marshalling，
+/// 因此使用控制項的 <c>DependencyProperty</c> / <c>BindableProperty</c> 不需要額外處理執行緒。
+/// </para>
+/// </remarks>
 public sealed class MpvPlayer : IDisposable, IAsyncDisposable
 {
     /// <summary>
@@ -221,6 +243,10 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 在收到任何 libmpv 事件時發生。
     /// </summary>
+    /// <remarks>
+    /// 由 libmpv 私有的背景事件迴圈執行緒（<c>"libmpv event loop"</c>）觸發，<b>並非</b> UI 執行緒。
+    /// 訂閱者更新 UI 前請自行 marshal 至 UI thread；本專案各 UI 控制項已在內部完成此 marshalling。
+    /// </remarks>
     public event EventHandler<MpvEventArgs>? EventReceived;
 
     /// <summary>
@@ -241,6 +267,11 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 在已觀察的 libmpv 屬性變更時發生。
     /// </summary>
+    /// <remarks>
+    /// 由 libmpv 背景事件迴圈執行緒觸發，<b>並非</b> UI 執行緒。
+    /// 若僅需處理特定屬性，建議改用 <see cref="WatchProperty{T}(string)"/>，
+    /// 其同樣會在背景執行緒投遞，但具有強型別與每屬性訂閱共享註冊的優點。
+    /// </remarks>
     public event EventHandler<MpvPropertyChangedEventArgs>? PropertyChanged;
 
     /// <summary>
@@ -1056,6 +1087,126 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
             {
                 MpvNative.mpv_free_node_contents(ref value);
             }
+        }
+    }
+
+    /// <summary>
+    /// 嘗試以字串格式取得 libmpv 屬性值，不會在屬性不存在或暫時無法使用時擲回例外狀況。
+    /// </summary>
+    /// <param name="name">要讀取的 mpv 屬性名稱。</param>
+    /// <param name="value">找到時接收屬性字串值，否則為 <see langword="null"/>。</param>
+    /// <returns>成功讀取屬性值時為 <see langword="true"/>。</returns>
+    /// <remarks>
+    /// 僅吞下 <see cref="MpvErrorCode.PropertyNotFound"/> 與 <see cref="MpvErrorCode.PropertyUnavailable"/>；
+    /// 其他錯誤（含 <see cref="MpvErrorCode.Uninitialized"/>）仍會以 <see cref="MpvException"/> 擲回。
+    /// </remarks>
+    public bool TryGetPropertyString(string name, out string? value)
+    {
+        try
+        {
+            value = GetPropertyString(name);
+            return value != null;
+        }
+        catch (MpvException ex) when (IsUnavailablePropertyError(ex))
+        {
+            value = null;
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 嘗試以布林旗標格式取得 libmpv 屬性值，不會在屬性不存在或暫時無法使用時擲回例外狀況。
+    /// </summary>
+    /// <param name="name">要讀取的 mpv 屬性名稱。</param>
+    /// <param name="value">找到時接收屬性布林值，否則為 <see langword="false"/>。</param>
+    /// <returns>成功讀取屬性值時為 <see langword="true"/>。</returns>
+    /// <remarks>
+    /// 僅吞下 <see cref="MpvErrorCode.PropertyNotFound"/> 與 <see cref="MpvErrorCode.PropertyUnavailable"/>；
+    /// 其他錯誤（含 <see cref="MpvErrorCode.Uninitialized"/>、<see cref="MpvErrorCode.PropertyFormat"/>）仍會以 <see cref="MpvException"/> 擲回。
+    /// </remarks>
+    public bool TryGetPropertyFlag(string name, out bool value)
+    {
+        try
+        {
+            value = GetPropertyFlag(name);
+            return true;
+        }
+        catch (MpvException ex) when (IsUnavailablePropertyError(ex))
+        {
+            value = false;
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 嘗試以 64 位元整數格式取得 libmpv 屬性值，不會在屬性不存在或暫時無法使用時擲回例外狀況。
+    /// </summary>
+    /// <param name="name">要讀取的 mpv 屬性名稱。</param>
+    /// <param name="value">找到時接收屬性整數值，否則為 <c>0</c>。</param>
+    /// <returns>成功讀取屬性值時為 <see langword="true"/>。</returns>
+    /// <remarks>
+    /// 僅吞下 <see cref="MpvErrorCode.PropertyNotFound"/> 與 <see cref="MpvErrorCode.PropertyUnavailable"/>；
+    /// 其他錯誤（含 <see cref="MpvErrorCode.Uninitialized"/>、<see cref="MpvErrorCode.PropertyFormat"/>）仍會以 <see cref="MpvException"/> 擲回。
+    /// </remarks>
+    public bool TryGetPropertyInt64(string name, out long value)
+    {
+        try
+        {
+            value = GetPropertyInt64(name);
+            return true;
+        }
+        catch (MpvException ex) when (IsUnavailablePropertyError(ex))
+        {
+            value = 0;
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 嘗試以雙精確度浮點數格式取得 libmpv 屬性值，不會在屬性不存在或暫時無法使用時擲回例外狀況。
+    /// </summary>
+    /// <param name="name">要讀取的 mpv 屬性名稱。</param>
+    /// <param name="value">找到時接收屬性浮點值，否則為 <c>0</c>。</param>
+    /// <returns>成功讀取屬性值時為 <see langword="true"/>。</returns>
+    /// <remarks>
+    /// 僅吞下 <see cref="MpvErrorCode.PropertyNotFound"/> 與 <see cref="MpvErrorCode.PropertyUnavailable"/>；
+    /// 其他錯誤（含 <see cref="MpvErrorCode.Uninitialized"/>、<see cref="MpvErrorCode.PropertyFormat"/>）仍會以 <see cref="MpvException"/> 擲回。
+    /// </remarks>
+    public bool TryGetPropertyDouble(string name, out double value)
+    {
+        try
+        {
+            value = GetPropertyDouble(name);
+            return true;
+        }
+        catch (MpvException ex) when (IsUnavailablePropertyError(ex))
+        {
+            value = 0d;
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 嘗試以節點格式取得 libmpv 屬性值，不會在屬性不存在或暫時無法使用時擲回例外狀況。
+    /// </summary>
+    /// <param name="name">要讀取的 mpv 屬性名稱。</param>
+    /// <param name="value">找到時接收屬性節點資料，否則為空節點。</param>
+    /// <returns>成功讀取且節點非空時為 <see langword="true"/>。</returns>
+    /// <remarks>
+    /// 僅吞下 <see cref="MpvErrorCode.PropertyNotFound"/> 與 <see cref="MpvErrorCode.PropertyUnavailable"/>；
+    /// 其他錯誤（含 <see cref="MpvErrorCode.Uninitialized"/>）仍會以 <see cref="MpvException"/> 擲回。
+    /// </remarks>
+    public bool TryGetPropertyNode(string name, out MpvNode value)
+    {
+        try
+        {
+            value = GetPropertyNode(name);
+            return !value.IsNone;
+        }
+        catch (MpvException ex) when (IsUnavailablePropertyError(ex))
+        {
+            value = MpvNode.None();
+            return false;
         }
     }
 
@@ -3163,6 +3314,13 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <param name="name">要觀察的 mpv 屬性名稱。</param>
     /// <param name="format">屬性值要使用的 libmpv 資料格式。</param>
     /// <returns>可用於取消觀察的要求識別碼。</returns>
+    /// <remarks>
+    /// 這是 libmpv <c>mpv_observe_property</c> 的薄包裝；變更通知會以原始字串/節點形式
+    /// 透過 <see cref="PropertyChanged"/> 事件投遞，並由訂閱者自行解碼。
+    /// 若是新程式碼，建議改用強型別且多訂閱者共享註冊的
+    /// <see cref="WatchProperty{T}(string)"/>，可省去手動 <see cref="UnobserveProperty(ulong)"/>。
+    /// 詳見 <c>docs/HIGH_LEVEL_API.md</c> 的「ObserveProperty 與 WatchProperty 遷移」段。
+    /// </remarks>
     public ulong ObserveProperty(string name, MpvFormat format)
     {
         EnsureNotDisposed();

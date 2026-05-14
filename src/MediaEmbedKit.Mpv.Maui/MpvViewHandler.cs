@@ -10,6 +10,12 @@ namespace MediaEmbedKit.Mpv.Maui;
 /// <summary>
 /// 將 <see cref="MpvView"/> 對應到 Windows 平台的 WinUI AirSpace 安全 mpv 控制項。
 /// </summary>
+/// <remarks>
+/// 平台實作只在 <c>WINDOWS</c> 條件編譯下啟用；其他 MAUI 目標（Android、iOS、MacCatalyst、Tizen 等）
+/// 會編譯出一個僅持有 <see cref="object"/> 平台檢視的 stub handler，且
+/// <see cref="LoadFile(string, MpvLoadFileMode)"/> 與其他需要原生後端的方法皆會擲回
+/// <see cref="PlatformNotSupportedException"/>。詳見 <c>docs/SUPPORT_MATRIX.md</c>。
+/// </remarks>
 #if WINDOWS
 public class MpvViewHandler : ViewHandler<MpvView, MpvWinUiPlayer>
 #else

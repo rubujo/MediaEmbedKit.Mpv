@@ -63,6 +63,52 @@ IDisposable subscription = player
 
 目前支援的型別：`double` / `long` / `bool` / `string` / `MpvNode`。
 
+### ObserveProperty 與 WatchProperty 遷移
+
+`ObserveProperty(string, MpvFormat)` 是 libmpv `mpv_observe_property` 的薄包裝，仍可使用，但建議新程式碼改用 `WatchProperty<T>`。對應關係如下：
+
+| 舊式 | 新式 |
+| --- | --- |
+| `ulong id = player.ObserveProperty("time-pos", MpvFormat.Double);` 搭配 `player.PropertyChanged += ...;` 內手動 switch | `IDisposable sub = player.WatchProperty<double>("time-pos").Subscribe(...);` |
+| `player.UnobserveProperty(id);` | `sub.Dispose();` |
+| 共用 `PropertyChanged` 事件多屬性 routing | 每個屬性各自 `WatchProperty<T>`，內部以 `(Name, Format)` 作鍵共享單一 `ObserveProperty` 註冊 |
+
+`WatchProperty<T>` 不會取代 `PropertyChanged` 事件；若你需要監聽未事先 `WatchProperty<T>` 的任意屬性（例如 mpv script 觸發的自訂屬性），仍應使用 `PropertyChanged`。
+
+### TryGetProperty — 非例外風格
+
+`GetPropertyXxx` 預設在屬性不存在（`PropertyNotFound`）或暫時無法使用（`PropertyUnavailable`）時擲回 `MpvException`。對於可選屬性，使用 `TryGetProperty*` 多載可直接以布林結果回報：
+
+```csharp
+if (player.TryGetPropertyDouble("video-bitrate", out double bitrate))
+{
+    UpdateBitrate(bitrate);
+}
+```
+
+支援：`TryGetPropertyString`、`TryGetPropertyFlag`、`TryGetPropertyInt64`、`TryGetPropertyDouble`、`TryGetPropertyNode`。其他錯誤（例如未初始化、格式不匹配）仍會以 `MpvException` 擲回，因此這組 API 只吞下「屬性不存在／暫時無法使用」兩種錯誤碼。
+
+## 事件分派與執行緒模型
+
+libmpv 的事件迴圈跑在獨立的背景執行緒（`MpvPlayer` 內部命名為 `"libmpv event loop"`）。因此下列入口皆 **在背景執行緒** 觸發，而非 UI 執行緒：
+
+- 所有 `event EventHandler<T>`（`EventReceived` / `PropertyChanged` / `StateChanged` / `LogMessageReceived` / `EndFile` / `StartFile` / `FileLoaded` / `Hook` / `ClientMessage` / `CommandReply` / `TracksChanged` 等）
+- `WatchProperty<T>` 訂閱者的 `OnNext`
+
+如果是 console 或服務，直接處理即可；若要更新 UI，請自行 marshal 至 UI thread：
+
+| 框架 | 切回 UI thread 的方式 |
+| --- | --- |
+| WinForms | `Control.BeginInvoke(() => ...)` |
+| WPF | `Dispatcher.BeginInvoke(() => ...)` |
+| Avalonia | `Dispatcher.UIThread.Post(() => ...)` |
+| WinUI 3 | `DispatcherQueue.TryEnqueue(() => ...)` |
+| MAUI | `Microsoft.Maui.ApplicationModel.MainThread.BeginInvokeOnMainThread(() => ...)` 或 `IDispatcher.Dispatch(...)` |
+
+> 本專案 `MediaEmbedKit.Mpv.WinForms` / `.Wpf` / `.Avalonia` / `.WinUI` / `.Maui` 控制項已在內部完成 UI thread marshalling，使用其 `DependencyProperty` / `BindableProperty` 不必再手動切。
+
+命令 / 屬性 API（`Command*` / `SetProperty*` / `GetProperty*` / `LoadFile` / `LoadAsync` …）皆執行緒安全，可由任意執行緒並行呼叫；player 釋放後再呼叫會擲回 `ObjectDisposedException`。
+
 ## Microsoft.Extensions.Logging 整合
 
 ```csharp
@@ -89,15 +135,15 @@ libmpv 記錄等級對應：fatal → Critical、error → Error、warn → Warn
 ```csharp
 using MediaEmbedKit.Mpv.Hosting;
 
-services.AddMpvPlayer(builder => builder
+// 建議：以工廠形式註冊，於 IHostedService.StartAsync 中 await 建立。
+services.AddMpvPlayerFactory(builder => builder
     .UseRuntime(runtimeDirectory)
     .UseHardwareDecoding());
-
-// 或者以工廠形式註冊，配合 IHostedService：
-services.AddMpvPlayerFactory(builder => builder.UseRuntime(runtimeDirectory));
 ```
 
-`AddMpvPlayer` 註冊為 singleton；建構時透過 `MpvAppBuilder.BuildAsync().GetAwaiter().GetResult()` 阻塞建立。若應用程式啟動時間敏感，建議改用 `AddMpvPlayerFactory` 並在 `IHostedService.StartAsync` 中 await。
+`AddMpvPlayerFactory` 會註冊一個 `Func<Task<MpvPlayer>>`，由呼叫端在啟動流程（例如 `IHostedService.StartAsync`、應用程式啟動程式碼）以 `await` 建立並自行決定生命週期。
+
+> `AddMpvPlayer(...)` 同步多載仍存在，但已標 `[Obsolete]`。它會在服務解析時以 `GetAwaiter().GetResult()` 同步等待 `BuildAsync`，在 `IHostedService.StartAsync`、ASP.NET Core 啟動或有同步上下文（WinForms/WPF UI thread）時容易死鎖。請改用 `AddMpvPlayerFactory`。
 
 ## MpvCapabilities
 

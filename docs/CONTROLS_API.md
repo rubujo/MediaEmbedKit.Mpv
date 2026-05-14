@@ -35,6 +35,12 @@
 
 控制項以內部 `_suppressPlayerWrite` 旗標確保由 `player` 反射回來的值不會再寫回 `player`，避免循環抖動。setter / property-changed 回呼讀到旗標時直接 return。所有跨執行緒寫回都會 marshal 到 UI 執行緒（WPF `Dispatcher.BeginInvoke`、Avalonia `Dispatcher.UIThread.Post`、WinUI `DispatcherQueue.TryEnqueue`、MAUI `Dispatcher.Dispatch`、WinForms `Control.BeginInvoke`）。
 
+### 執行緒模型
+
+控制項已替您處理 libmpv 背景事件迴圈 → UI thread 的 marshalling，因此可以直接以一般 XAML / WinForms binding 使用上表所有屬性。
+
+但如果您**自行訂閱** `MpvPlayer.EventReceived` / `PropertyChanged` / `StateChanged`（控制項以外的事件），這些 callback 仍然在 libmpv 背景執行緒觸發，必須自行 marshal 至 UI thread 才能修改 UI 元素。詳見 `docs/HIGH_LEVEL_API.md` 的「事件分派與執行緒模型」。
+
 ## 共通 Commands
 
 所有控制項都提供下列 `System.Windows.Input.ICommand`，由 `MediaEmbedKit.Mpv.MpvRelayCommand` 包裝；`CanExecute` 與 player 生命週期同步，player 建立或釋放時會呼叫 `RaiseCanExecuteChanged`。
@@ -103,6 +109,6 @@ muteButton.Click += (_, _) => playerControl.ToggleMuteCommand.Execute(null);
 
 ## 注意事項
 
-- `MpvWinUiPlayer.Duration` 與 `PlaybackState` 在 WinUI 3 未提供 `RegisterReadOnly`，因此公開為一般 DP 但僅由控制項內部 `SetValue`；外部設值會立刻被下一次 player 觀察值覆寫。
-- `MpvView.PlayerCreated` 在跨平台 handler 連線後才觸發；綁定到 `Player` 屬性必須在 `PlayerCreated` 後讀取。
+- `MpvWinUiPlayer.Duration` 與 `PlaybackState` 在 WinUI 3 沒有 `RegisterReadOnly` 等效 API，因此公開為一般 DP；但 `DurationProperty` 與 `PlaybackStateProperty` 的 `PropertyChangedCallback` 會在偵測到非 player 來源寫入時立刻回退舊值，對呼叫端模擬唯讀語意。請勿透過 `Mode=TwoWay` binding 或 `SetValue` 寫入這兩個屬性。
+- `MpvView.PlayerCreated` 在跨平台 handler 連線後才觸發；綁定到 `Player` 屬性必須在 `PlayerCreated` 後讀取。MAUI 平台目前僅 Windows 提供實際播放後端，其他 MAUI 目標的 handler 為 stub，呼叫播放相關 API 會擲回 `PlatformNotSupportedException`，詳見 `docs/SUPPORT_MATRIX.md`。
 - `Position` 連續寫入會觸發大量 `seek`；建議搭配 `IsDragging` 一類旗標，只在使用者放開滑桿時寫值。

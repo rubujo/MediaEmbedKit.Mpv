@@ -8,6 +8,15 @@
     <Title>MediaEmbedKit.Mpv</Title>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net8.0' or '$(TargetFramework)' == 'net10.0'">
+    <!--
+      LibraryImport source generator 會生成含 unsafe block 的 marshalling 程式碼
+      （SYSLIB1062）；net8.0+ 走 LibraryImport 路徑時必須啟用。其他 TFM 仍走
+      DllImport，不需要 unsafe。
+    -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
   <ItemGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETFramework'">
     <Reference Include="System.IO.Compression" />
     <Reference Include="System.IO.Compression.FileSystem" />

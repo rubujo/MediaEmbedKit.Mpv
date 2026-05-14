@@ -3,9 +3,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using MediaEmbedKit.Mpv.Downloads;
 using MediaEmbedKit.Mpv.Hosting;
+using MediaEmbedKit.Mpv.Native;
+using MediaEmbedKit.Mpv.Render;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MediaEmbedKit.Mpv.Tests;
@@ -52,9 +56,194 @@ internal static class Program
         runner.Add("MpvRelayCommand CanExecute/Execute/RaiseCanExecuteChanged", VerifyMpvRelayCommand);
         runner.Add("MpvEncodingOptions two-pass clone 內部累積清單", VerifyEncodingOptionsTwoPassClone);
         runner.Add("MpvRuntimeHealthReport IsComplete / IsHealthyFor", VerifyMpvRuntimeHealthReportSemantics);
+        runner.Add("AddMpvPlayer 同步擴充已標 [Obsolete]", VerifyAddMpvPlayerObsolete);
+        runner.Add("AddMpvPlayerFactory 未標 [Obsolete]", VerifyAddMpvPlayerFactoryNotObsolete);
+        runner.Add("MpvRenderParamType.AmbientLight 已標 [Obsolete]", VerifyAmbientLightObsolete);
+        runner.Add("MpvPlayer 提供 TryGetProperty* 系列", VerifyTryGetPropertySurface);
+        runner.Add("MpvNative 在 net7.0+ 採用 LibraryImport", VerifyMpvNativeUsesLibraryImport);
+        runner.Add("MpvNative 委派／陣列入口保留 DllImport", VerifyMpvNativeDelegateAndArrayKeepDllImport);
 
         await runner.RunAsync().ConfigureAwait(false);
         return runner.FailedCount == 0 ? 0 : 1;
+    }
+
+    /// <summary>
+    /// 驗證 <see cref="MpvServiceCollectionExtensions.AddMpvPlayer"/> 同步多載已標記
+    /// <see cref="ObsoleteAttribute"/>，並建議改用工廠形式。
+    /// </summary>
+    /// <returns>代表測試流程的工作。</returns>
+    private static Task VerifyAddMpvPlayerObsolete()
+    {
+        MethodInfo? method = typeof(MpvServiceCollectionExtensions).GetMethod(
+            nameof(MpvServiceCollectionExtensions.AddMpvPlayer),
+            BindingFlags.Public | BindingFlags.Static);
+        AssertEx.True(method != null, "AddMpvPlayer 方法應存在。");
+        ObsoleteAttribute? obsolete = method!.GetCustomAttribute<ObsoleteAttribute>();
+        AssertEx.True(obsolete != null, "AddMpvPlayer 應已標 [Obsolete]，因為它在解析時會同步等待非同步建構。");
+        AssertEx.True(
+            obsolete!.Message != null && obsolete.Message.IndexOf("AddMpvPlayerFactory", StringComparison.Ordinal) >= 0,
+            "AddMpvPlayer 的 [Obsolete] 訊息應引導使用者改用 AddMpvPlayerFactory。");
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// 驗證 <see cref="MpvServiceCollectionExtensions.AddMpvPlayerFactory"/> 並未被標記為過時，
+    /// 仍是建議的 DI 註冊入口。
+    /// </summary>
+    /// <returns>代表測試流程的工作。</returns>
+    private static Task VerifyAddMpvPlayerFactoryNotObsolete()
+    {
+        MethodInfo? method = typeof(MpvServiceCollectionExtensions).GetMethod(
+            nameof(MpvServiceCollectionExtensions.AddMpvPlayerFactory),
+            BindingFlags.Public | BindingFlags.Static);
+        AssertEx.True(method != null, "AddMpvPlayerFactory 方法應存在。");
+        AssertEx.True(method!.GetCustomAttribute<ObsoleteAttribute>() == null,
+            "AddMpvPlayerFactory 不應被標 [Obsolete]；它是非同步建構的建議入口。");
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// 驗證 <see cref="MpvRenderParamType.AmbientLight"/> 已標 <see cref="ObsoleteAttribute"/>，
+    /// 對齊 libmpv 0.40 deprecation。
+    /// </summary>
+    /// <returns>代表測試流程的工作。</returns>
+    private static Task VerifyAmbientLightObsolete()
+    {
+#pragma warning disable CS0618 // 測試本身需要透過 nameof 引用已 deprecated 的列舉成員。
+        FieldInfo? field = typeof(MpvRenderParamType).GetField(
+            nameof(MpvRenderParamType.AmbientLight),
+            BindingFlags.Public | BindingFlags.Static);
+#pragma warning restore CS0618
+        AssertEx.True(field != null, "MpvRenderParamType.AmbientLight 列舉成員應存在。");
+        AssertEx.True(field!.GetCustomAttribute<ObsoleteAttribute>() != null,
+            "MpvRenderParamType.AmbientLight 應已標 [Obsolete]（libmpv 0.40 deprecation）。");
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// 驗證 <see cref="MpvPlayer"/> 提供 <c>TryGetProperty*</c> 系列方法，作為非例外的屬性讀取入口。
+    /// </summary>
+    /// <returns>代表測試流程的工作。</returns>
+    private static Task VerifyTryGetPropertySurface()
+    {
+        Type playerType = typeof(MpvPlayer);
+
+        AssertEx.True(
+            HasInstanceMethod(playerType, "TryGetPropertyString", typeof(string), typeof(string).MakeByRefType()),
+            "MpvPlayer 應提供 TryGetPropertyString(string, out string?)。");
+        AssertEx.True(
+            HasInstanceMethod(playerType, "TryGetPropertyFlag", typeof(string), typeof(bool).MakeByRefType()),
+            "MpvPlayer 應提供 TryGetPropertyFlag(string, out bool)。");
+        AssertEx.True(
+            HasInstanceMethod(playerType, "TryGetPropertyInt64", typeof(string), typeof(long).MakeByRefType()),
+            "MpvPlayer 應提供 TryGetPropertyInt64(string, out long)。");
+        AssertEx.True(
+            HasInstanceMethod(playerType, "TryGetPropertyDouble", typeof(string), typeof(double).MakeByRefType()),
+            "MpvPlayer 應提供 TryGetPropertyDouble(string, out double)。");
+        AssertEx.True(
+            HasInstanceMethod(playerType, "TryGetPropertyNode", typeof(string), typeof(MpvNode).MakeByRefType()),
+            "MpvPlayer 應提供 TryGetPropertyNode(string, out MpvNode)。");
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// 判斷型別是否含指定的執行個體方法。
+    /// </summary>
+    /// <param name="type">要查詢的型別。</param>
+    /// <param name="name">方法名稱。</param>
+    /// <param name="parameterTypes">方法參數型別（依宣告順序）。</param>
+    /// <returns>找到符合簽名的方法時為 <see langword="true"/>。</returns>
+    private static bool HasInstanceMethod(Type type, string name, params Type[] parameterTypes)
+    {
+        MethodInfo? method = type.GetMethod(
+            name,
+            BindingFlags.Public | BindingFlags.Instance,
+            binder: null,
+            types: parameterTypes,
+            modifiers: null);
+        return method != null && method.ReturnType == typeof(bool);
+    }
+
+    /// <summary>
+    /// 驗證在 <c>net7.0</c> 以上 <c>MpvNative</c> 的純 blittable 入口確實由 P/Invoke source generator
+    /// 以 <see cref="LibraryImportAttribute"/> 產生，<c>netstandard2.0</c> / <c>.NET Framework</c> 仍走
+    /// <see cref="DllImportAttribute"/>。
+    /// </summary>
+    /// <returns>代表測試流程的工作。</returns>
+    private static Task VerifyMpvNativeUsesLibraryImport()
+    {
+        string[] candidates = new[]
+        {
+            "mpv_create",
+            "mpv_initialize",
+            "mpv_terminate_destroy",
+            "mpv_get_property",
+            "mpv_set_property",
+            "mpv_observe_property",
+            "mpv_unobserve_property",
+            "mpv_command_node",
+            "mpv_request_event",
+            "mpv_wait_event",
+            "mpv_event_to_node",
+            "mpv_hook_add",
+            "mpv_hook_continue",
+            "mpv_render_context_set_parameter",
+            "mpv_render_context_update"
+        };
+
+        foreach (string name in candidates)
+        {
+            MethodInfo[] methods = typeof(MpvNative).GetMethods(BindingFlags.NonPublic | BindingFlags.Static)
+                .Where(m => m.Name == name).ToArray();
+            AssertEx.True(methods.Length > 0, name + " 入口應存在於 MpvNative。");
+
+            foreach (MethodInfo method in methods)
+            {
+#if NET7_0_OR_GREATER
+                // P/Invoke source generator 會在 partial method 上保留 LibraryImport，並另外生成
+                // 帶有 DllImport 的 implementation；因此這裡只驗證 LibraryImport 確實存在。
+                AssertEx.True(
+                    method.IsDefined(typeof(LibraryImportAttribute), inherit: false),
+                    name + " 在 net7.0+ 應由 P/Invoke source generator 以 LibraryImport 包裝。");
+#else
+                AssertEx.True(
+                    method.IsDefined(typeof(DllImportAttribute), inherit: false),
+                    name + " 在舊版 TFM 應使用 DllImport。");
+#endif
+            }
+        }
+
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// 驗證委派參數與 <c>[In] MpvRenderParam[]</c> 陣列參數的 5 個入口仍保留 <see cref="DllImportAttribute"/>
+    /// （兩種 TFM 均如此）；這 5 個入口會在後續 Phase 2 搭配呼叫端改造遷移到 LibraryImport。
+    /// </summary>
+    /// <returns>代表測試流程的工作。</returns>
+    private static Task VerifyMpvNativeDelegateAndArrayKeepDllImport()
+    {
+        string[] keepDllImport = new[]
+        {
+            "mpv_set_wakeup_callback",
+            "mpv_stream_cb_add_ro",
+            "mpv_render_context_set_update_callback",
+            "mpv_render_context_create",
+            "mpv_render_context_render"
+        };
+
+        foreach (string name in keepDllImport)
+        {
+            MethodInfo method = typeof(MpvNative).GetMethod(
+                name,
+                BindingFlags.NonPublic | BindingFlags.Static)
+                ?? throw new InvalidOperationException(name + " 入口應存在於 MpvNative。");
+            AssertEx.True(
+                method.IsDefined(typeof(DllImportAttribute), inherit: false),
+                name + " 應保留 DllImport（含委派或陣列參數，尚未轉 LibraryImport）。");
+        }
+
+        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -406,6 +595,7 @@ internal static class Program
             AssertEx.True(factoryA != null, "AddMpvPlayerFactory 應註冊 Func<Task<MpvPlayer>>");
 
             ServiceCollection servicesB = new ServiceCollection();
+#pragma warning disable CS0618 // 測試對已標 [Obsolete] 的 AddMpvPlayer 仍維持原有註冊語意。
             MpvServiceCollectionExtensions.AddMpvPlayer(servicesB, builder => builder.UseHardwareDecoding());
             ServiceDescriptor playerDescriptor = servicesB.Single(descriptor => descriptor.ServiceType == typeof(MpvPlayer));
             AssertEx.Equal(ServiceLifetime.Singleton, playerDescriptor.Lifetime, "AddMpvPlayer 應註冊為 singleton");
@@ -424,6 +614,7 @@ internal static class Program
                     MpvServiceCollectionExtensions.AddMpvPlayer(new ServiceCollection(), null!);
                 },
                 "configure 為 null 應被拒絕");
+#pragma warning restore CS0618
         }
         finally
         {

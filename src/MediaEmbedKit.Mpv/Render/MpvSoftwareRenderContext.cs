@@ -304,6 +304,11 @@ public sealed class MpvSoftwareRenderContext : IDisposable
     /// 設定環境光照度。
     /// </summary>
     /// <param name="lux">以 lux 表示的環境光照度。</param>
+    /// <remarks>
+    /// libmpv 0.40（client API 版本 2.5）已將對應的
+    /// <c>MPV_RENDER_PARAM_AMBIENT_LIGHT</c> 標記為 deprecated 且無替代品。
+    /// </remarks>
+    [Obsolete("libmpv 0.40 已 deprecate MPV_RENDER_PARAM_AMBIENT_LIGHT，並無替代參數；本方法已對應為 obsolete。")]
     public void SetAmbientLight(int lux)
     {
         EnsureNotDisposed();
@@ -311,7 +316,9 @@ public sealed class MpvSoftwareRenderContext : IDisposable
         try
         {
             valuePointer = AllocInt32(lux);
+#pragma warning disable CS0618 // 仍須把值傳給 libmpv 已 deprecated 的參數，保留以維持 ABI。
             SetParameter(MpvRenderParamType.AmbientLight, valuePointer);
+#pragma warning restore CS0618
         }
         finally
         {

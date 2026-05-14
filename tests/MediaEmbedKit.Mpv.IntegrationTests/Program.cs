@@ -2054,7 +2054,9 @@ internal static class Program
                     IntegrationAssert.True(update == MpvRenderUpdateFlags.None || (update & MpvRenderUpdateFlags.Frame) == MpvRenderUpdateFlags.Frame, "software render 更新旗標應可讀取。");
                     MpvRenderFrameInformation frame = context.GetNextFrameInformation();
                     IntegrationAssert.True(frame.TargetTime >= 0, "software render frame target time 應可讀取。");
+#pragma warning disable CS0618 // 仍須驗證已 deprecated 的 SetAmbientLight 在 software render context 上不會崩潰。
                     context.SetAmbientLight(100);
+#pragma warning restore CS0618
                     context.ClearIccProfile();
 
                     IntPtr buffer = Marshal.AllocHGlobal(16 * 16 * 4);
