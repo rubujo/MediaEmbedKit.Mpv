@@ -39,9 +39,9 @@ public sealed class MpvWindowsRuntimeDownloadOptions
     public DenoDownloadOptions Deno { get; private set; }
 
     /// <summary>
-    /// 取得 yt-dlp 專用 FFmpeg Windows x64 建置下載選項。
+    /// 取得 yt-dlp 專用 FFmpeg Windows 建置下載選項。
     /// </summary>
-    /// <value>FFmpeg 下載選項。</value>
+    /// <value>FFmpeg 下載選項；預設架構為目前處理序架構（x64 或 ARM64）。</value>
     public FFmpegDownloadOptions FFmpeg { get; private set; }
 
     /// <summary>

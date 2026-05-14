@@ -20,18 +20,18 @@
 
 MediaEmbedKit.Mpv 提供 .NET libmpv 包裝器與 Windows 桌面 UI 控制項。核心套件需覆蓋 libmpv stable v0.41.0 公開 C API，並提供常用高階播放 API。UI 套件不得重複宣告核心 P/Invoke。
 
-目前產品支援範圍為 Windows x64。未符合支援準則的平台、架構或 UI 後端不得列入支援矩陣。
+目前產品支援範圍為 Windows x64 與 Windows ARM64。未符合支援準則的平台、架構或 UI 後端不得列入支援矩陣。平台支援判準正式記載於 `docs/SUPPORT_MATRIX.md`「平台支援判準」段。
 
 ## 設計原則
 
 - 核心 API 盡量保持平台中立。
 - 控制項建構函式與初始化流程不得自動下載第三方二進位檔。
 - `libmpv-2.dll` 載入後不可在同一處理序 hot reload；更新必須暫存並提示重新啟動。
-- Windows x64 runtime 資料夾可同層放置 `libmpv-2.dll`、`yt-dlp.exe`、`deno.exe`、`ffmpeg.exe`、`ffprobe.exe`、mpv 設定檔與 scripts。
+- Windows x64 / ARM64 runtime 資料夾可同層放置 `libmpv-2.dll`、`yt-dlp.exe`、`deno.exe`、`ffmpeg.exe`、`ffprobe.exe`、mpv 設定檔與 scripts；helper 依目前處理序架構自動選擇對應資產。
 - runtime helper 必須提供 SHA-256 驗證、來源鎖定與可由使用者選擇的驗證策略；生產環境不得只依賴未鎖定的 latest 下載。
 - 高階 API 可提供薄型 fluent helper，但不得引入會隱藏下載、初始化或釋放責任的 pipeline/flow 引擎。
 - WinForms、WPF、WinUI 3 與 MAUI Windows 主線控制項使用 HWND 後端。
-- Avalonia 使用 Windows x64 OpenGL render API 後端。
+- Avalonia 使用 Windows x64 / ARM64 OpenGL render API 後端。
 - C# 區域變數、`using` 陳述式與 `foreach` 迴圈變數使用明確型別；只有必要時才使用 `var`。
 - 提交訊息必須遵循慣例式提交 1.0.0，且同時包含主旨與正文。
 
@@ -54,8 +54,8 @@ MediaEmbedKit.Mpv 提供 .NET libmpv 包裝器與 Windows 桌面 UI 控制項。
 - 已提供命令、屬性、節點、事件、render API、stream callback、mpv encoding mode 附帶輸出、薄型 fluent options API 與常用高階播放 API。
 - WinForms/WPF 使用 Windows HWND 後端。
 - WinUI 3/MAUI Windows 使用 Windows HWND 後端。
-- Avalonia 使用 Windows x64 OpenGL render API 後端。
-- Windows x64 runtime helper 支援 libmpv、yt-dlp、Deno 與 yt-dlp FFmpeg-Builds 下載、更新與同層配置。
+- Avalonia 使用 Windows x64 / ARM64 OpenGL render API 後端。
+- Windows x64 / ARM64 runtime helper 支援 libmpv、yt-dlp、Deno 與 yt-dlp FFmpeg-Builds 下載、更新與同層配置；架構依目前處理序自動偵測。
 - 範例播放冒煙測試涵蓋 WinForms、WPF、Avalonia、WinUI 3 與 MAUI Windows。
 - 已提供本機發佈前驗證、NuGet 套件內容檢查、乾淨 consumer 建置驗證、GUI consumer 實際播放驗證、第一階段壓力測試與長時間 GUI 播放壓力測試腳本。
 - Windows UI 控制項設計階段檢查清單已由 `docs/DESIGN_TIME_CHECKLIST.md` 維護。

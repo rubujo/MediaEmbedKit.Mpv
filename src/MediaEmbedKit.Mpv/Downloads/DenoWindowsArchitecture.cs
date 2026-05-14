@@ -11,7 +11,12 @@ public enum DenoWindowsArchitecture
     /// <summary>
     /// 64 位元 x86 Windows 發行檔。
     /// </summary>
-    X64 = 0
+    X64 = 0,
+
+    /// <summary>
+    /// 64 位元 ARM Windows 發行檔（aarch64-pc-windows-msvc）。
+    /// </summary>
+    Arm64 = 1,
 }
 
 /// <summary>
@@ -23,15 +28,22 @@ public static class DenoWindowsArchitectureExtensions
     /// 取得目前電腦適用的 Deno Windows 發行檔架構。
     /// </summary>
     /// <returns>目前電腦適用的 Deno Windows 架構。</returns>
+    /// <remarks>
+    /// 以 <see cref="RuntimeInformation.OSArchitecture"/> 為準（Deno 需與作業系統原生位元對齊；
+    /// x64 emulation 下仍建議下載 x64 binary 以避免來回轉換）。
+    /// </remarks>
     public static DenoWindowsArchitecture CurrentMachine()
     {
 #if NET5_0_OR_GREATER || NETSTANDARD2_0
-        if (RuntimeInformation.OSArchitecture != Architecture.X64)
+        switch (RuntimeInformation.OSArchitecture)
         {
-            throw new PlatformNotSupportedException("目前只支援 Windows x64 Deno runtime。");
+            case Architecture.X64:
+                return DenoWindowsArchitecture.X64;
+            case Architecture.Arm64:
+                return DenoWindowsArchitecture.Arm64;
+            default:
+                throw new PlatformNotSupportedException("目前只支援 Windows x64 與 ARM64 Deno runtime。");
         }
-
-        return DenoWindowsArchitecture.X64;
 #else
         return DenoWindowsArchitecture.X64;
 #endif
@@ -42,8 +54,19 @@ public static class DenoWindowsArchitectureExtensions
     /// </summary>
     /// <param name="architecture">要轉換的 Deno Windows 架構。</param>
     /// <returns>對應的 Deno 發行資產名稱。</returns>
+    /// <remarks>
+    /// Deno 自 2.7（2026-02）起對 Windows on ARM 提供官方 <c>aarch64-pc-windows-msvc</c> 建置。
+    /// </remarks>
     internal static string ToAssetName(this DenoWindowsArchitecture architecture)
     {
-        return "deno-x86_64-pc-windows-msvc.zip";
+        switch (architecture)
+        {
+            case DenoWindowsArchitecture.X64:
+                return "deno-x86_64-pc-windows-msvc.zip";
+            case DenoWindowsArchitecture.Arm64:
+                return "deno-aarch64-pc-windows-msvc.zip";
+            default:
+                throw new ArgumentOutOfRangeException(nameof(architecture), architecture, "未支援的 Deno Windows 架構。");
+        }
     }
 }

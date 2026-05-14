@@ -12,11 +12,18 @@ public sealed class FFmpegDownloadOptions
     /// </summary>
     public FFmpegDownloadOptions()
     {
+        Architecture = MpvWindowsArchitectureExtensions.CurrentProcess();
         UserAgent = BrowserRequestHeaders.ChromeStableUserAgent;
         OverwriteExisting = false;
         VerifyDigest = true;
         VerificationPolicy = MpvNativeAssetVerificationPolicy.RequireGitHubDigest;
     }
+
+    /// <summary>
+    /// 取得或設定要下載的 FFmpeg-Builds Windows 架構。
+    /// </summary>
+    /// <value>FFmpeg-Builds Windows 架構，預設為目前處理序架構。</value>
+    public MpvWindowsArchitecture Architecture { get; set; }
 
     /// <summary>
     /// 取得或設定是否覆寫已存在的 FFmpeg 執行檔與壓縮檔。

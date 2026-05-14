@@ -1,6 +1,6 @@
 # MediaEmbedKit.Mpv
 
-MediaEmbedKit.Mpv 是 .NET libmpv 包裝器與 Windows 桌面 UI 控制項專案。專案提供核心 libmpv C API 包裝、常用高階播放 API、Windows x64 執行階段資產 helper，以及 WinForms、WPF、Avalonia、WinUI 3 與 .NET MAUI Windows 範例。
+MediaEmbedKit.Mpv 是 .NET libmpv 包裝器與 Windows 桌面 UI 控制項專案。專案提供核心 libmpv C API 包裝、常用高階播放 API、Windows x64 / ARM64 執行階段資產 helper，以及 WinForms、WPF、Avalonia、WinUI 3 與 .NET MAUI Windows 範例。
 
 本專案不是 mpv、yt-dlp、Deno、FFmpeg 或其相關建置提供者的官方專案。`MediaEmbedKit` 是本專案名稱；`Mpv` 僅表示本專案與 mpv/libmpv 的整合目標。
 
@@ -17,14 +17,14 @@ AI 產製內容可能包含缺漏、錯誤假設或未涵蓋的邊界情境。�
 
 ## 支援範圍
 
-目前產品支援範圍收斂為 Windows x64。
+目前產品支援範圍收斂為 Windows x64 與 Windows ARM64。
 
 | 套件 | 狀態 |
 | --- | --- |
 | `MediaEmbedKit.Mpv` | 核心 API，支援 `netstandard2.0;net472;net48;net8.0;net10.0`。 |
 | `MediaEmbedKit.Mpv.WinForms` | Windows HWND 控制項。 |
 | `MediaEmbedKit.Mpv.Wpf` | `HwndHost` 控制項，內建 AirSpace 覆蓋層。 |
-| `MediaEmbedKit.Mpv.Avalonia` | Windows x64 OpenGL render API 控制項。 |
+| `MediaEmbedKit.Mpv.Avalonia` | Windows x64 / ARM64 OpenGL render API 控制項。 |
 | `MediaEmbedKit.Mpv.WinUI` | WinUI 3 Windows HWND 控制項。 |
 | `MediaEmbedKit.Mpv.Maui` | .NET MAUI Windows handler。 |
 
@@ -38,14 +38,14 @@ AI 產製內容可能包含缺漏、錯誤假設或未涵蓋的邊界情境。�
 - 高階 encoding API：`MpvEncoder.EncodeAsync` / `EncodeTwoPassAsync` 一站式轉碼（含 `IProgress<MpvEncodingProgress>` 進度與 `CancellationToken` 支援，取消含 3 秒 grace period 並以結果回報）、`RemuxAsync` stream-copy 重新封裝、`ExtractAudioAsync` / `ExtractVideoAsync` 單軌抽取、`ExtractFrameAsync` / `ExtractFramesAsync` 影格抽圖、`ConcatenateAsync`（EDL）多檔串接、`SplitAsync` 多段切割、`MpvAppBuilder.UseEncodingTo` 整合、`MpvVideoCodecPreset` / `MpvAudioCodecPreset`（含 `Copy` stream-copy）。
 - 五個 UI 框架控制項共通綁定屬性（Source / Position / Duration / Volume / IsPaused / IsMuted / PlaybackState）與 MVVM Commands（Play / Pause / Stop / TogglePause / ToggleMute），詳見 `docs/CONTROLS_API.md`。
 - OpenGL render API、software render API 與 stream callback 的核心包裝。
-- Windows x64 runtime helper：`MpvLibraryUpdateScheduler` stage / apply / rollback、`MpvRuntimeHealthCheck`（含 `IsHealthy` / `IsComplete` / `IsHealthyFor(MpvRuntimeTools)` 健康語意拆分）、`MpvLicenseAuditor`、provider fallback；可由使用者明確下載或更新 `libmpv-2.dll`、`yt-dlp.exe`、`deno.exe`、`ffmpeg.exe` 與 `ffprobe.exe`。
+- Windows x64 / ARM64 runtime helper：`MpvLibraryUpdateScheduler` stage / apply / rollback、`MpvRuntimeHealthCheck`（含 `IsHealthy` / `IsComplete` / `IsHealthyFor(MpvRuntimeTools)` 健康語意拆分）、`MpvLicenseAuditor`、provider fallback；可由使用者明確下載或更新 `libmpv-2.dll`、`yt-dlp.exe`、`deno.exe`、`ffmpeg.exe` 與 `ffprobe.exe`（架構依目前處理序自動偵測）。
 - 預設下載驗證政策為 `RequireGitHubDigest`（GitHub Releases API 提供的 `sha256:` digest 必須驗證一致）；可選 `RequireProviderChecksum` / `RequirePinnedSha256` 或 `BestEffort` 相容模式。
 - yt-dlp 格式預設值與自訂 selector；yt-dlp / Deno / FFmpeg / ffprobe 外部處理序執行器（`StreamAsync` 即時消費 stdout/stderr）。
 - WinForms、WPF、Avalonia、WinUI 3 與 MAUI Windows 範例（含 MVVM 綁定示範區）。
 
 ## 基本使用
 
-應用程式可自行部署 `libmpv-2.dll`，或明確呼叫 helper 建立 Windows x64 runtime 資料夾。
+應用程式可自行部署 `libmpv-2.dll`，或明確呼叫 helper 建立 Windows x64 / ARM64 runtime 資料夾（helper 依目前處理序架構自動選擇對應資產）。
 
 ```csharp
 MpvWindowsRuntimeDownloadResult runtime =

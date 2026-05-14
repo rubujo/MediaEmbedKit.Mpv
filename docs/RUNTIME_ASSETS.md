@@ -4,7 +4,7 @@
 
 ## 支援範圍
 
-目前 runtime helper 只支援 Windows x64。預設 runtime 資料夾配置如下：
+目前 runtime helper 支援 Windows x64 與 Windows ARM64；架構依目前處理序自動偵測（`MpvWindowsArchitectureExtensions.CurrentProcess()`），呼叫端也可在各 `*DownloadOptions.Architecture` 顯式覆寫以進行跨架構 staging。預設 runtime 資料夾配置如下：
 
 ```text
 runtime/
@@ -35,7 +35,7 @@ runtime helper 預設要求 GitHub Releases API 提供 `sha256:` digest，並驗
 
 ## libmpv
 
-Windows x64 helper 可從 shinchiro `mpv-winbuild-cmake` 與 zhongfly `mpv-winbuild` 下載 x64 `mpv-dev*.7z` 資產。這些來源是 mpv Windows git build，不是 mpv stable release。
+helper 可從 shinchiro `mpv-winbuild-cmake` 與 zhongfly `mpv-winbuild` 下載對應架構的 `mpv-dev-{token}-*.7z` 資產（x64 token 為 `x86_64`、ARM64 token 為 `aarch64`）。這些來源是 mpv Windows git build，不是 mpv stable release。兩個 provider 的命名規範完全相同，`ProviderFallbackOrder` 機制在 x64 與 ARM64 上行為一致。
 
 下載後必須驗證封存檔包含 `libmpv-2.dll`。provider 對齊狀態記錄於 `docs/runtime/libmpv-git-builds.json`。
 
@@ -73,7 +73,9 @@ Windows x64 helper 可從 shinchiro `mpv-winbuild-cmake` 與 zhongfly `mpv-winbu
 
 ## yt-dlp
 
-yt-dlp helper 支援 Windows x64 `yt-dlp.exe` 下載、自我更新與路徑回填。應用程式可透過下列 API 控制 mpv 使用的格式：
+yt-dlp helper 支援 Windows x64（`yt-dlp.exe`）與 ARM64（`yt-dlp_arm64.exe`，自 [2026-03-17 release](https://github.com/yt-dlp/yt-dlp/releases/tag/2026.03.17) 起）下載、自我更新與路徑回填。`MpvWindowsRuntimeInstaller` 會把下載的執行檔統一儲存為 `yt-dlp.exe`，讓 mpv 預設搜尋路徑與 `MpvPlayerOptions.YtdlpPath` 預設值在兩個架構上行為一致。
+
+應用程式可透過下列 API 控制 mpv 使用的格式：
 
 - `MpvPlayerOptions.YtdlpFormatPreset`
 - `MpvPlayerOptions.YtdlpFormat`
@@ -88,13 +90,13 @@ yt-dlp helper 支援 Windows x64 `yt-dlp.exe` 下載、自我更新與路徑回�
 
 ## Deno
 
-Deno helper 支援 Windows x64 `deno.exe` 下載、自我更新與外部處理序輸出事件。Deno 不是本機檔案播放的必要條件，但 yt-dlp YouTube EJS 情境可能需要外部 JavaScript runtime，因此 helper 預設與 `yt-dlp.exe` 同層準備 `deno.exe`。
+Deno helper 支援 Windows x64（`deno-x86_64-pc-windows-msvc.zip`）與 ARM64（`deno-aarch64-pc-windows-msvc.zip`，自 [Deno 2.7、2026-02 release](https://deno.com/blog/v2.7) 起官方提供）`deno.exe` 下載、自我更新與外部處理序輸出事件。Deno 不是本機檔案播放的必要條件，但 yt-dlp YouTube EJS 情境可能需要外部 JavaScript runtime，因此 helper 預設與 `yt-dlp.exe` 同層準備 `deno.exe`。
 
 需要使用 Deno 內建升級流程且要求 checksum 時，使用 `DenoDownloader.RunSelfUpgradeWithChecksumAsync(...)`。若要維持完整下載紀錄與來源鎖定，應使用 `DenoDownloader.DownloadAndExtractLatestAsync(...)` 搭配驗證政策。
 
 ## FFmpeg
 
-FFmpeg helper 支援從 yt-dlp `FFmpeg-Builds` 下載 Windows x64 `ffmpeg-master-latest-win64-gpl.zip`，並將 `ffmpeg.exe` 與 `ffprobe.exe` 放在 runtime 資料夾根目錄。`MpvWindowsRuntimeDownloadOptions.IncludeFFmpeg` 預設為 `true`；不需要 FFmpeg 時可明確設為 `false`。
+FFmpeg helper 支援從 yt-dlp `FFmpeg-Builds` 下載對應架構的 GPL build：x64 為 `ffmpeg-master-latest-win64-gpl.zip`、ARM64 為 `ffmpeg-master-latest-winarm64-gpl.zip`（兩者皆由 [yt-dlp/FFmpeg-Builds](https://github.com/yt-dlp/FFmpeg-Builds/releases) 與其上游 [BtbN/FFmpeg-Builds](https://github.com/BtbN/FFmpeg-Builds/releases) 自動產製）。下載後 `ffmpeg.exe` 與 `ffprobe.exe` 放在 runtime 資料夾根目錄。`MpvWindowsRuntimeDownloadOptions.IncludeFFmpeg` 預設為 `true`；不需要 FFmpeg 時可明確設為 `false`。`FFmpegDownloader.GetWindowsAssetName(MpvWindowsArchitecture)` 提供架構到資產名稱的 mapping。
 
 FFmpeg 沒有本專案可呼叫的內建自我更新命令。若要更新，請重新呼叫 `FFmpegDownloader.DownloadAndExtractLatestAsync(...)` 或 `MpvWindowsRuntimeInstaller.InstallOrUpdateAsync(...)`，並於 `FFmpegDownloadOptions.OverwriteExisting = true` 時覆蓋既有檔案。
 

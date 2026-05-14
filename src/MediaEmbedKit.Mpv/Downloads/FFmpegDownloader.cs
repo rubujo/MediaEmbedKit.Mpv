@@ -18,9 +18,32 @@ public static class FFmpegDownloader
     public const string WindowsX64AssetName = "ffmpeg-master-latest-win64-gpl.zip";
 
     /// <summary>
+    /// 預設 FFmpeg-Builds Windows ARM64 發行資產名稱。
+    /// </summary>
+    public const string WindowsArm64AssetName = "ffmpeg-master-latest-winarm64-gpl.zip";
+
+    /// <summary>
     /// FFmpeg-Builds 發行資產 checksum 檔案名稱。
     /// </summary>
     public const string ChecksumAssetName = "checksums.sha256";
+
+    /// <summary>
+    /// 取得指定 Windows 架構對應的 FFmpeg-Builds 發行資產檔名。
+    /// </summary>
+    /// <param name="architecture">FFmpeg-Builds 目標架構。</param>
+    /// <returns>對應的 FFmpeg-Builds 發行資產檔名。</returns>
+    public static string GetWindowsAssetName(MpvWindowsArchitecture architecture)
+    {
+        switch (architecture)
+        {
+            case MpvWindowsArchitecture.X64:
+                return WindowsX64AssetName;
+            case MpvWindowsArchitecture.Arm64:
+                return WindowsArm64AssetName;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(architecture), architecture, "未支援的 FFmpeg-Builds Windows 架構。");
+        }
+    }
 
     /// <summary>
     /// 下載並解壓縮最新 yt-dlp FFmpeg-Builds Windows x64 發行檔。
@@ -49,7 +72,7 @@ public static class FFmpegDownloader
             options.UserAgent,
             cancellationToken).ConfigureAwait(false);
 
-        GitHubReleaseAsset asset = SelectAsset(release);
+        GitHubReleaseAsset asset = SelectAsset(release, options.Architecture);
         DownloadUtility.ValidateLockedGitHubSource(
             apiUri,
             defaultApiUri,
@@ -194,16 +217,18 @@ public static class FFmpegDownloader
     }
 
     /// <summary>
-    /// 從 GitHub 發行資料選取 FFmpeg Windows x64 發行資產。
+    /// 從 GitHub 發行資料選取 FFmpeg 指定 Windows 架構的發行資產。
     /// </summary>
     /// <param name="release">GitHub 發行資料。</param>
-    /// <returns>符合 Windows x64 的 GitHub 發行資產。</returns>
-    private static GitHubReleaseAsset SelectAsset(GitHubRelease release)
+    /// <param name="architecture">要選取的 Windows 架構。</param>
+    /// <returns>符合指定 Windows 架構的 GitHub 發行資產。</returns>
+    private static GitHubReleaseAsset SelectAsset(GitHubRelease release, MpvWindowsArchitecture architecture)
     {
-        GitHubReleaseAsset? asset = release.Assets.FirstOrDefault(item => string.Equals(item.Name, WindowsX64AssetName, StringComparison.OrdinalIgnoreCase));
+        string expectedName = GetWindowsAssetName(architecture);
+        GitHubReleaseAsset? asset = release.Assets.FirstOrDefault(item => string.Equals(item.Name, expectedName, StringComparison.OrdinalIgnoreCase));
         if (asset == null)
         {
-            throw new InvalidOperationException("GitHub 發行資料中找不到 FFmpeg Windows x64 資產：" + release.TagName);
+            throw new InvalidOperationException("GitHub 發行資料中找不到 FFmpeg " + expectedName + " 資產：" + release.TagName);
         }
 
         return asset;

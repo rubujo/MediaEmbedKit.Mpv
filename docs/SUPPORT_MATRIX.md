@@ -1,6 +1,6 @@
 # 支援矩陣
 
-本專案目前僅列入已完成基本建置、runtime 來源與範例驗證的 Windows x64 目標。未列入本文件者不提供支援承諾。
+本專案目前僅列入已完成基本建置、runtime 來源與範例驗證的 Windows x64 / ARM64 目標。未列入本文件者不提供支援承諾。
 
 ## 平台支援判準
 
@@ -42,11 +42,25 @@
 
 | 平台 | UI 框架 | 狀態 | 原生程式庫 |
 | --- | --- | --- | --- |
-| Windows x64 | WinForms | 支援 | `libmpv-2.dll` |
-| Windows x64 | WPF | 支援 | `libmpv-2.dll` |
-| Windows x64 | Avalonia | 支援 | `libmpv-2.dll` |
-| Windows x64 | WinUI 3 | 支援 | `libmpv-2.dll` |
-| Windows x64 | .NET MAUI Windows | 支援 | `libmpv-2.dll` |
+| Windows x64 | WinForms / WPF / Avalonia / WinUI 3 / .NET MAUI Windows | 支援 | `libmpv-2.dll`（`mpv-dev-x86_64-*.7z`） |
+| Windows ARM64 | WinForms / WPF / Avalonia / WinUI 3 / .NET MAUI Windows | 支援（程式碼路徑就緒，待物理機驗證） | `libmpv-2.dll`（`mpv-dev-aarch64-*.7z`） |
+
+### Windows ARM64 注意事項
+
+- `.NET 8 / .NET 10` 在 ARM64 為原生 first-class 支援。
+- `net472` / `net48` 沒有原生 ARM64，Windows on ARM 上會走 x64 emulation；本專案不額外承諾 emulation 路徑下的效能或相容性。
+- 硬體編碼器（NVENC / Quick Sync / AMF）在主流 ARM64 Windows 裝置（Snapdragon X 等）上預期全部 unavailable；`MpvEncoder` 硬體 encoder preset probe 會回報 `unavailable`，使用者請走軟體 preset。Qualcomm Adreno 編解碼目前不在本專案 preset 內。
+
+### Runtime 資產來源（兩個架構皆有兩個 provider 備援）
+
+| 元件 | x64 資產 | ARM64 資產 |
+| --- | --- | --- |
+| libmpv | `mpv-dev-x86_64-*.7z` | `mpv-dev-aarch64-*.7z` |
+| FFmpeg | `ffmpeg-master-latest-win64-gpl.zip` | `ffmpeg-master-latest-winarm64-gpl.zip` |
+| yt-dlp | `yt-dlp.exe`（自 2026-03-17 起亦可走 ARM64 命名） | `yt-dlp_arm64.exe`（自 2026-03-17 起）|
+| Deno | `deno-x86_64-pc-windows-msvc.zip` | `deno-aarch64-pc-windows-msvc.zip`（自 Deno 2.7、2026-02 起）|
+
+libmpv 兩個架構皆由 [shinchiro/mpv-winbuild-cmake](https://github.com/shinchiro/mpv-winbuild-cmake/releases) 與 [zhongfly/mpv-winbuild](https://github.com/zhongfly/mpv-winbuild/releases) 提供，命名規範完全相同；既有 `ProviderFallbackOrder` 機制在兩個架構上行為一致。
 
 ## 驗證狀態
 
@@ -59,4 +73,6 @@ Windows x64 發佈前驗證以本機 release gate 為準：
 
 核心 API 測試、原生整合測試、NuGet 套件內容、乾淨 consumer 建置、Console minimal 播放與 GUI consumer 播放都應在發佈前通過。WinForms、WPF、Avalonia、WinUI 3 與 MAUI Windows 範例需以 YouTube 測試網址播放到指定秒數後正常關閉。
 
-Windows x64 runtime helper 目前支援 `libmpv-2.dll`、`yt-dlp.exe`、`deno.exe`、`ffmpeg.exe` 與 `ffprobe.exe` 的同層配置。FFmpeg 來源限定為 yt-dlp `FFmpeg-Builds` Windows x64 GPL build；NuGet 套件不包含任何第三方 runtime 二進位檔。
+**ARM64 物理機驗證尚未納入本機 release gate**：目前 ARM64 路徑為程式碼層級就緒（架構偵測、資產對應、catalog 與單元測試完整），但未在 ARM64 物理機跑過 release gate。雙 provider（shinchiro / zhongfly）對 ARM64 都提供 `mpv-dev-aarch64-*.7z`，命名規範與 x64 一致；風險點為硬體 encoder probe 預期回報 unavailable 與少數 `MpvEncoder` 硬體 preset 整合測試會 skip。
+
+Windows runtime helper 目前支援 `libmpv-2.dll`、`yt-dlp.exe`、`deno.exe`、`ffmpeg.exe` 與 `ffprobe.exe` 的同層配置，並依目前處理序架構自動選擇對應的 x64 / ARM64 資產。FFmpeg 來源限定為 yt-dlp `FFmpeg-Builds` Windows GPL build；NuGet 套件不包含任何第三方 runtime 二進位檔。

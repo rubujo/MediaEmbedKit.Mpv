@@ -60,6 +60,7 @@ internal static class Program
         runner.Add("MpvPlayer 提供 TryGetProperty* 系列", VerifyTryGetPropertySurface);
         runner.Add("MpvNative 在 net7.0+ 採用 LibraryImport", VerifyMpvNativeUsesLibraryImport);
         runner.Add("MpvNative 委派／陣列 helper 在 net7.0+ 仍走 LibraryImport", VerifyMpvNativeHelperUsesLibraryImport);
+        runner.Add("Windows ARM64 資產對應正確（libmpv / yt-dlp / Deno / FFmpeg）", VerifyWindowsArm64AssetMapping);
 
         await runner.RunAsync().ConfigureAwait(false);
         return runner.FailedCount == 0 ? 0 : 1;
@@ -1186,14 +1187,14 @@ internal static class Program
     }
 
     /// <summary>
-    /// 驗證目前 catalog 只宣告 Windows x64 來源。
+    /// 驗證 catalog 宣告 Windows x64 與 ARM64 來源，並維持兩種 provider（shinchiro / zhongfly）。
     /// </summary>
     /// <returns>代表測試流程的工作。</returns>
     private static Task VerifyRuntimeCatalogs()
     {
         IReadOnlyList<MpvNativeRuntimeSource> windowsSources = MpvNativeRuntimeCatalog.GetSources(MpvNativeRuntimePlatform.Windows);
         IReadOnlyList<MpvNativeRuntimeSource> unknownSources = MpvNativeRuntimeCatalog.GetSources(MpvNativeRuntimePlatform.Unknown);
-        AssertEx.Equal(2, windowsSources.Count, "Windows libmpv 來源數量");
+        AssertEx.Equal(2, windowsSources.Count, "Windows libmpv 來源數量（shinchiro + zhongfly）");
         AssertEx.Equal(0, unknownSources.Count, "未知平台 libmpv 來源數量");
         AssertEx.Equal(MpvNativeRuntimeSupportStatus.Supported, MpvNativeRuntimeCatalog.GetProjectSupportStatus(MpvNativeRuntimePlatform.Windows), "Windows 支援狀態");
         AssertEx.Equal(MpvNativeRuntimeSupportStatus.NotCataloged, MpvNativeRuntimeCatalog.GetProjectSupportStatus(MpvNativeRuntimePlatform.Unknown), "未知平台支援狀態");
@@ -1203,15 +1204,94 @@ internal static class Program
         IReadOnlyList<ExternalToolRuntimeSource> ffmpegSources = ExternalToolRuntimeCatalog.GetSources(ExternalToolKind.FFmpeg, MpvNativeRuntimePlatform.Windows);
         IReadOnlyList<ExternalToolRuntimeSource> unknownToolSources = ExternalToolRuntimeCatalog.GetSources(ExternalToolKind.YtDlp, MpvNativeRuntimePlatform.Unknown);
         IReadOnlyList<ExternalToolRuntimeSource> unknownFFmpegSources = ExternalToolRuntimeCatalog.GetSources(ExternalToolKind.FFmpeg, MpvNativeRuntimePlatform.Unknown);
-        AssertEx.Equal(1, ytDlpSources.Count, "Windows yt-dlp 來源數量");
-        AssertEx.Equal(1, denoSources.Count, "Windows Deno 來源數量");
-        AssertEx.Equal(1, ffmpegSources.Count, "Windows FFmpeg 來源數量");
+        AssertEx.Equal(2, ytDlpSources.Count, "Windows yt-dlp 來源數量（x64 + ARM64）");
+        AssertEx.Equal(2, denoSources.Count, "Windows Deno 來源數量（x64 + ARM64）");
+        AssertEx.Equal(2, ffmpegSources.Count, "Windows FFmpeg 來源數量（x64 + ARM64）");
         AssertEx.Equal(0, unknownToolSources.Count, "未知平台外部工具來源數量");
         AssertEx.Equal(0, unknownFFmpegSources.Count, "未知平台 FFmpeg 來源數量");
-        AssertEx.True(ytDlpSources[0].SupportsSelfUpdate, "yt-dlp 應提供自我更新命令。");
-        AssertEx.True(denoSources[0].SupportsSelfUpdate, "Deno 應提供自我更新命令。");
-        AssertEx.False(ffmpegSources[0].SupportsSelfUpdate, "FFmpeg 不應宣告內建自我更新命令。");
-        AssertEx.Equal(FFmpegDownloader.WindowsX64AssetName, ffmpegSources[0].AssetName, "FFmpeg catalog 應指向 Windows x64 GPL 資產。");
+
+        foreach (ExternalToolRuntimeSource source in ytDlpSources)
+        {
+            AssertEx.True(source.SupportsSelfUpdate, "yt-dlp 各架構均應提供自我更新命令。");
+        }
+
+        foreach (ExternalToolRuntimeSource source in denoSources)
+        {
+            AssertEx.True(source.SupportsSelfUpdate, "Deno 各架構均應提供自我更新命令。");
+        }
+
+        foreach (ExternalToolRuntimeSource source in ffmpegSources)
+        {
+            AssertEx.False(source.SupportsSelfUpdate, "FFmpeg 不應宣告內建自我更新命令。");
+        }
+
+        AssertEx.True(
+            ffmpegSources.Any(s => s.AssetName == FFmpegDownloader.WindowsX64AssetName),
+            "FFmpeg catalog 應含 Windows x64 GPL 資產。");
+        AssertEx.True(
+            ffmpegSources.Any(s => s.AssetName == FFmpegDownloader.WindowsArm64AssetName),
+            "FFmpeg catalog 應含 Windows ARM64 GPL 資產。");
+        AssertEx.True(
+            ytDlpSources.Any(s => s.AssetName == "yt-dlp.exe"),
+            "yt-dlp catalog 應含 x64 (yt-dlp.exe) 資產。");
+        AssertEx.True(
+            ytDlpSources.Any(s => s.AssetName == "yt-dlp_arm64.exe"),
+            "yt-dlp catalog 應含 ARM64 (yt-dlp_arm64.exe) 資產。");
+        AssertEx.True(
+            denoSources.Any(s => s.AssetName == "deno-x86_64-pc-windows-msvc.zip"),
+            "Deno catalog 應含 x64 資產。");
+        AssertEx.True(
+            denoSources.Any(s => s.AssetName == "deno-aarch64-pc-windows-msvc.zip"),
+            "Deno catalog 應含 ARM64 資產。");
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// 驗證 ARM64 架構在三個 Architecture enum 與 FFmpeg helper 中對應到正確的資產 token / 檔名。
+    /// </summary>
+    /// <returns>代表測試流程的工作。</returns>
+    private static Task VerifyWindowsArm64AssetMapping()
+    {
+        // libmpv：shinchiro / zhongfly 命名格式為 mpv-dev-{token}-*.7z
+        Type mpvArchExt = typeof(MpvWindowsArchitectureExtensions);
+        MethodInfo? mpvToken = mpvArchExt.GetMethod(
+            "ToAssetToken",
+            BindingFlags.NonPublic | BindingFlags.Static,
+            binder: null,
+            types: new[] { typeof(MpvWindowsArchitecture) },
+            modifiers: null);
+        AssertEx.True(mpvToken != null, "MpvWindowsArchitectureExtensions.ToAssetToken 應存在。");
+        AssertEx.Equal("x86_64", (string)mpvToken!.Invoke(null, new object[] { MpvWindowsArchitecture.X64 })!, "x64 token");
+        AssertEx.Equal("aarch64", (string)mpvToken!.Invoke(null, new object[] { MpvWindowsArchitecture.Arm64 })!, "ARM64 token");
+
+        // yt-dlp：x64 用 yt-dlp.exe、ARM64 用 yt-dlp_arm64.exe
+        Type ytdlpArchExt = typeof(YtDlpWindowsArchitectureExtensions);
+        MethodInfo? ytdlpAsset = ytdlpArchExt.GetMethod(
+            "ToAssetName",
+            BindingFlags.NonPublic | BindingFlags.Static,
+            binder: null,
+            types: new[] { typeof(YtDlpWindowsArchitecture) },
+            modifiers: null);
+        AssertEx.True(ytdlpAsset != null, "YtDlpWindowsArchitectureExtensions.ToAssetName 應存在。");
+        AssertEx.Equal("yt-dlp.exe", (string)ytdlpAsset!.Invoke(null, new object[] { YtDlpWindowsArchitecture.X64 })!, "yt-dlp x64 asset");
+        AssertEx.Equal("yt-dlp_arm64.exe", (string)ytdlpAsset!.Invoke(null, new object[] { YtDlpWindowsArchitecture.Arm64 })!, "yt-dlp ARM64 asset");
+
+        // Deno：x64 與 ARM64 命名為 deno-{token}-pc-windows-msvc.zip
+        Type denoArchExt = typeof(DenoWindowsArchitectureExtensions);
+        MethodInfo? denoAsset = denoArchExt.GetMethod(
+            "ToAssetName",
+            BindingFlags.NonPublic | BindingFlags.Static,
+            binder: null,
+            types: new[] { typeof(DenoWindowsArchitecture) },
+            modifiers: null);
+        AssertEx.True(denoAsset != null, "DenoWindowsArchitectureExtensions.ToAssetName 應存在。");
+        AssertEx.Equal("deno-x86_64-pc-windows-msvc.zip", (string)denoAsset!.Invoke(null, new object[] { DenoWindowsArchitecture.X64 })!, "Deno x64 asset");
+        AssertEx.Equal("deno-aarch64-pc-windows-msvc.zip", (string)denoAsset!.Invoke(null, new object[] { DenoWindowsArchitecture.Arm64 })!, "Deno ARM64 asset");
+
+        // FFmpeg：透過 public GetWindowsAssetName helper
+        AssertEx.Equal(FFmpegDownloader.WindowsX64AssetName, FFmpegDownloader.GetWindowsAssetName(MpvWindowsArchitecture.X64), "FFmpeg x64 asset");
+        AssertEx.Equal(FFmpegDownloader.WindowsArm64AssetName, FFmpegDownloader.GetWindowsAssetName(MpvWindowsArchitecture.Arm64), "FFmpeg ARM64 asset");
+        AssertEx.Equal("ffmpeg-master-latest-winarm64-gpl.zip", FFmpegDownloader.WindowsArm64AssetName, "FFmpeg ARM64 GPL 資產檔名");
         return Task.CompletedTask;
     }
 

@@ -115,10 +115,12 @@ public static class MpvWindowsRuntimeInstaller
         YtDlpDownloadResult? ytDlp = null;
         if (options.IncludeYtDlp)
         {
-            string assetName = options.YtDlp.Architecture.ToAssetName();
-            string targetName = options.YtDlp.Architecture == YtDlpWindowsArchitecture.X64 ? "yt-dlp.exe" : assetName;
+            // 不論架構皆統一儲存為 yt-dlp.exe，讓 mpv 預設 yt-dlp 路徑解析與
+            // MpvPlayerOptions.YtdlpPath 預設值在 x64 與 ARM64 上行為一致。
+            // 來源資產為 yt-dlp.exe (x64) 或 yt-dlp_arm64.exe (ARM64)，由
+            // YtDlpDownloader 依 options.YtDlp.Architecture 自動選擇。
             ytDlp = await YtDlpDownloader.InstallOrUpdateLatestExecutableAsync(
-                Path.Combine(runtimeDirectory, targetName),
+                Path.Combine(runtimeDirectory, "yt-dlp.exe"),
                 options.YtDlp,
                 cancellationToken).ConfigureAwait(false);
         }

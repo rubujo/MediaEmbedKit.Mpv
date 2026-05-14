@@ -144,7 +144,17 @@ public static class ExternalToolRuntimeCatalog
             MpvNativeRuntimeSupportStatus.Supported,
             true,
             "yt-dlp.exe --update",
-            "Implemented by YtDlpDownloader for Windows x64.")
+            "Implemented by YtDlpDownloader for Windows x64."),
+        new ExternalToolRuntimeSource(
+            ExternalToolKind.YtDlp,
+            MpvNativeRuntimePlatform.Windows,
+            "yt-dlp Windows ARM64",
+            YtDlpReleases,
+            "yt-dlp_arm64.exe",
+            MpvNativeRuntimeSupportStatus.Supported,
+            true,
+            "yt-dlp_arm64.exe --update",
+            "Implemented by YtDlpDownloader for Windows ARM64 (yt-dlp 2026.03.17+).")
     };
 
     /// <summary>
@@ -161,7 +171,17 @@ public static class ExternalToolRuntimeCatalog
             MpvNativeRuntimeSupportStatus.Supported,
             true,
             "deno.exe upgrade",
-            "Implemented by DenoDownloader for Windows x64.")
+            "Implemented by DenoDownloader for Windows x64."),
+        new ExternalToolRuntimeSource(
+            ExternalToolKind.Deno,
+            MpvNativeRuntimePlatform.Windows,
+            "Deno Windows ARM64",
+            DenoReleases,
+            "deno-aarch64-pc-windows-msvc.zip",
+            MpvNativeRuntimeSupportStatus.Supported,
+            true,
+            "deno.exe upgrade",
+            "Implemented by DenoDownloader for Windows ARM64 (Deno 2.7+).")
     };
 
     /// <summary>
@@ -178,7 +198,17 @@ public static class ExternalToolRuntimeCatalog
             MpvNativeRuntimeSupportStatus.Supported,
             false,
             string.Empty,
-            "Implemented by FFmpegDownloader for Windows x64; update by re-running the downloader.")
+            "Implemented by FFmpegDownloader for Windows x64; update by re-running the downloader."),
+        new ExternalToolRuntimeSource(
+            ExternalToolKind.FFmpeg,
+            MpvNativeRuntimePlatform.Windows,
+            "yt-dlp FFmpeg-Builds Windows ARM64 GPL",
+            FFmpegBuildsReleases,
+            FFmpegDownloader.WindowsArm64AssetName,
+            MpvNativeRuntimeSupportStatus.Supported,
+            false,
+            string.Empty,
+            "Implemented by FFmpegDownloader for Windows ARM64; update by re-running the downloader.")
     };
 
 }

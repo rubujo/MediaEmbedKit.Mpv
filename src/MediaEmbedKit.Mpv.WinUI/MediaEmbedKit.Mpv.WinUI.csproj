@@ -3,7 +3,7 @@
     <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
     <UseWinUI>true</UseWinUI>
     <WindowsPackageType>None</WindowsPackageType>
-    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
     <AssemblyName>MediaEmbedKit.Mpv.WinUI</AssemblyName>
     <RootNamespace>MediaEmbedKit.Mpv.WinUI</RootNamespace>
     <Description>WinUI 3 HWND control for MediaEmbedKit.Mpv.</Description>
