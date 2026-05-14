@@ -32,16 +32,11 @@ AI 產製內容可能包含缺漏、錯誤假設或未涵蓋的邊界情境。�
 
 ## 功能概要
 
-- libmpv stable v0.41.0 公開 C API 包裝（54/54 函式對齊 mpv master）。
-- 通用 command、property、node 與 event 入口。
-- 高階播放 API：`MpvAppBuilder` fluent 建構、`MpvMediaItem` per-file 選項、`LoadAsync`、`WatchProperty<T>`、`MpvCapabilities`、`IAsyncDisposable`、`Microsoft.Extensions.Logging.Abstractions` 整合、`MpvServiceCollectionExtensions.AddMpvPlayerFactory`；以及播放狀態、音量、速度、播放清單、章節、軌道、字幕、OSD、截圖、濾鏡、輸入事件、script message。
-- 高階 encoding API：`MpvEncoder.EncodeAsync` / `EncodeTwoPassAsync` 一站式轉碼（含 `IProgress<MpvEncodingProgress>` 進度與 `CancellationToken` 支援，取消含 3 秒 grace period 並以結果回報）、`RemuxAsync` stream-copy 重新封裝、`ExtractAudioAsync` / `ExtractVideoAsync` 單軌抽取、`ExtractFrameAsync` / `ExtractFramesAsync` 影格抽圖、`ConcatenateAsync`（EDL）多檔串接、`SplitAsync` 多段切割、`MpvAppBuilder.UseEncodingTo` 整合、`MpvVideoCodecPreset` / `MpvAudioCodecPreset`（含 `Copy` stream-copy）。
-- 五個 UI 框架控制項共通綁定屬性（Source / Position / Duration / Volume / IsPaused / IsMuted / PlaybackState）與 MVVM Commands（Play / Pause / Stop / TogglePause / ToggleMute），詳見 `docs/CONTROLS_API.md`。
-- OpenGL render API、software render API 與 stream callback 的核心包裝。
-- Windows x64 / ARM64 runtime helper：`MpvLibraryUpdateScheduler` stage / apply / rollback、`MpvRuntimeHealthCheck`（含 `IsHealthy` / `IsComplete` / `IsHealthyFor(MpvRuntimeTools)` 健康語意拆分）、`MpvLicenseAuditor`、provider fallback；可由使用者明確下載或更新 `libmpv-2.dll`、`yt-dlp.exe`、`deno.exe`、`ffmpeg.exe` 與 `ffprobe.exe`（架構依目前處理序自動偵測）。
-- 預設下載驗證政策為 `RequireGitHubDigest`（GitHub Releases API 提供的 `sha256:` digest 必須驗證一致）；可選 `RequireProviderChecksum` / `RequirePinnedSha256` 或 `BestEffort` 相容模式。
-- yt-dlp 格式預設值與自訂 selector；yt-dlp / Deno / FFmpeg / ffprobe 外部處理序執行器（`StreamAsync` 即時消費 stdout/stderr）。
-- WinForms、WPF、Avalonia、WinUI 3 與 MAUI Windows 範例（含 MVVM 綁定示範區）。
+- libmpv stable v0.41.0 公開 C API 完整包裝（含命令、屬性、節點、事件、render API、stream callback）。
+- 高階播放 API：fluent `MpvAppBuilder`、per-file `MpvMediaItem`、`LoadAsync`、`WatchProperty<T>`、`IAsyncDisposable`、`Microsoft.Extensions.Logging` / `Microsoft.Extensions.DependencyInjection` 整合。詳見 `docs/HIGH_LEVEL_API.md`。
+- 高階 encoding API：單／兩階段轉碼、stream-copy 重新封裝、單軌抽取、影格抽圖、多檔 EDL 串接、多段切割；含 `IProgress<MpvEncodingProgress>` 進度與 `CancellationToken` 取消。詳見 `docs/HIGH_LEVEL_API.md`「Encoding」段。
+- 5 個 UI 框架控制項（WinForms / WPF / Avalonia / WinUI 3 / MAUI Windows）共通綁定屬性與 MVVM Commands。詳見 `docs/CONTROLS_API.md`。
+- Windows x64 / ARM64 runtime helper：libmpv / yt-dlp / Deno / FFmpeg / ffprobe 下載、更新、健康檢查、授權稽核與 provider fallback；架構依目前處理序自動偵測。詳見 `docs/RUNTIME_ASSETS.md`。
 
 ## 基本使用
 
@@ -59,45 +54,9 @@ player.Initialize();
 player.LoadFile("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
 ```
 
-若要讓 runtime 資料夾同時作為 mpv 設定資料夾，可啟用設定載入：
+若要讓 runtime 資料夾同時作為 mpv 設定資料夾，於 `CreatePlayerOptions` 傳入 `loadRuntimeConfiguration: true`。
 
-```csharp
-MpvPlayerOptions options =
-    MpvWindowsRuntimeInstaller.CreatePlayerOptions(
-        runtime.RuntimeDirectory,
-        loadRuntimeConfiguration: true);
-```
-
-若要使用 mpv encoding mode 進行簡單輸出，推薦使用 `MpvEncoder.EncodeAsync` 一站式 API（自行管理短生命週期 player、套用選項、await `EndFile`、回報進度）：
-
-```csharp
-MpvEncodingOptions encoding = new MpvEncodingOptions(outputPath)
-    .AsMp4()
-    .WithVideoCodec(MpvVideoCodecPreset.H264)
-    .WithVideoCodecOption("crf", "23")
-    .WithAudioCodec(MpvAudioCodecPreset.Aac);
-
-MpvPlayerOptions playerOptions =
-    MpvWindowsRuntimeInstaller.CreatePlayerOptions(runtime.RuntimeDirectory);
-
-Progress<MpvEncodingProgress> progress = new Progress<MpvEncodingProgress>(p =>
-    Console.WriteLine($"{p.Percent:F1}%  pos={p.Position}  bytes={p.OutputBytes}"));
-
-MpvEncodingResult result = await MpvEncoder.EncodeAsync(
-    inputPath,
-    encoding,
-    playerOptions,
-    progress);
-
-if (!result.Success)
-{
-    Console.Error.WriteLine($"編碼失敗：reason={result.EndReason} err={result.ErrorCode}");
-}
-```
-
-兩階段、stream-copy、抽取音訊／視訊／影格、多檔串接（EDL）、多段切割、字幕 burn-in 等場景請參考 `docs/HIGH_LEVEL_API.md` Encoding 段。
-
-encoding mode 屬於 mpv 的附帶能力，本專案在其之上提供 C# 友善的高階入口；mpv 結構性不支援的場景（多軌輸出 / HLS-DASH 切片 / 字幕匯出 / 原檔 in-place 編輯）請改用 FFmpeg。
+Fluent builder、`MpvMediaItem` per-file 選項、`MpvEncoder` 轉碼、`WatchProperty<T>` 等高階入口請參考 `docs/HIGH_LEVEL_API.md`。
 
 高階 API 採薄型 helper 設計：常用設定可用 fluent 方式組合，但播放器初始化、runtime 下載與資源釋放仍由應用程式明確控制。
 
@@ -125,25 +84,9 @@ dotnet run --project .\tests\MediaEmbedKit.Mpv.PlaybackSmoke\MediaEmbedKit.Mpv.P
 .\tools\Invoke-GuiConsumerPlaybackValidation.ps1 -Seconds 20
 ```
 
-整合測試與播放冒煙測試需要 Windows x64 原生執行階段。URL 播放需要 `yt-dlp.exe` 可被 mpv 找到，或透過 `MpvPlayerOptions.YtdlpPath` 指定。預設 runtime helper 也會準備 yt-dlp 建議使用的 `ffmpeg.exe` 與 `ffprobe.exe`；如不需要，可設定 `MpvWindowsRuntimeDownloadOptions.IncludeFFmpeg = false`。
+整合測試、播放冒煙測試需要 Windows 原生執行階段；環境條件詳見 `docs/RUNTIME_ASSETS.md`。
 
-發佈前可執行本機驗證腳本：
-
-```powershell
-.\tools\Invoke-PreReleaseValidation.ps1
-```
-
-此腳本是 Windows x64 發佈前本機驗證主流程，會執行格式檢查、測試、Release 建置、NuGet 套件內容驗證與乾淨 consumer 專案驗證。若要執行完整 Windows release gate，可使用：
-
-```powershell
-.\tools\Invoke-PreReleaseValidation.ps1 -IncludeWindowsReleaseGate -GuiPlaybackSeconds 20
-```
-
-GUI consumer 實際播放驗證會以本機 NuGet 套件建立臨時 consumer sample，並播放到指定秒數後關閉。長時間 GUI 播放壓力測試可使用：
-
-```powershell
-.\tools\Invoke-GuiPlaybackStress.ps1 -Seconds 120 -Iterations 2
-```
+發佈前驗證以 `docs/RELEASE_CHECKLIST.md` 與 `tools/Invoke-PreReleaseValidation.ps1` 為主流程。
 
 ## 文件
 
