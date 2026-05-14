@@ -135,15 +135,12 @@ libmpv 記錄等級對應：fatal → Critical、error → Error、warn → Warn
 ```csharp
 using MediaEmbedKit.Mpv.Hosting;
 
-// 建議：以工廠形式註冊，於 IHostedService.StartAsync 中 await 建立。
 services.AddMpvPlayerFactory(builder => builder
     .UseRuntime(runtimeDirectory)
     .UseHardwareDecoding());
 ```
 
-`AddMpvPlayerFactory` 會註冊一個 `Func<Task<MpvPlayer>>`，由呼叫端在啟動流程（例如 `IHostedService.StartAsync`、應用程式啟動程式碼）以 `await` 建立並自行決定生命週期。
-
-> `AddMpvPlayer(...)` 同步多載仍存在，但已標 `[Obsolete]`。它會在服務解析時以 `GetAwaiter().GetResult()` 同步等待 `BuildAsync`，在 `IHostedService.StartAsync`、ASP.NET Core 啟動或有同步上下文（WinForms/WPF UI thread）時容易死鎖。請改用 `AddMpvPlayerFactory`。
+`AddMpvPlayerFactory` 會註冊一個 `Func<Task<MpvPlayer>>`，由呼叫端在啟動流程（例如 `IHostedService.StartAsync`、應用程式啟動程式碼）以 `await` 建立並自行決定生命週期。`MpvPlayer` 的初始化本質上是非同步的，本函式庫只提供非同步入口，不提供同步等待版本以避免常見的 `GetAwaiter().GetResult()` 死鎖。
 
 ## MpvCapabilities
 

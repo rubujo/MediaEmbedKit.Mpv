@@ -34,7 +34,7 @@ AI 產製內容可能包含缺漏、錯誤假設或未涵蓋的邊界情境。�
 
 - libmpv stable v0.41.0 公開 C API 包裝（54/54 函式對齊 mpv master）。
 - 通用 command、property、node 與 event 入口。
-- 高階播放 API：`MpvAppBuilder` fluent 建構、`MpvMediaItem` per-file 選項、`LoadAsync`、`WatchProperty<T>`、`MpvCapabilities`、`IAsyncDisposable`、`Microsoft.Extensions.Logging.Abstractions` 整合、`MpvServiceCollectionExtensions.AddMpvPlayer` / `AddMpvPlayerFactory`；以及播放狀態、音量、速度、播放清單、章節、軌道、字幕、OSD、截圖、濾鏡、輸入事件、script message。
+- 高階播放 API：`MpvAppBuilder` fluent 建構、`MpvMediaItem` per-file 選項、`LoadAsync`、`WatchProperty<T>`、`MpvCapabilities`、`IAsyncDisposable`、`Microsoft.Extensions.Logging.Abstractions` 整合、`MpvServiceCollectionExtensions.AddMpvPlayerFactory`；以及播放狀態、音量、速度、播放清單、章節、軌道、字幕、OSD、截圖、濾鏡、輸入事件、script message。
 - 高階 encoding API：`MpvEncoder.EncodeAsync` / `EncodeTwoPassAsync` 一站式轉碼（含 `IProgress<MpvEncodingProgress>` 進度與 `CancellationToken` 支援，取消含 3 秒 grace period 並以結果回報）、`RemuxAsync` stream-copy 重新封裝、`ExtractAudioAsync` / `ExtractVideoAsync` 單軌抽取、`ExtractFrameAsync` / `ExtractFramesAsync` 影格抽圖、`ConcatenateAsync`（EDL）多檔串接、`SplitAsync` 多段切割、`MpvAppBuilder.UseEncodingTo` 整合、`MpvVideoCodecPreset` / `MpvAudioCodecPreset`（含 `Copy` stream-copy）。
 - 五個 UI 框架控制項共通綁定屬性（Source / Position / Duration / Volume / IsPaused / IsMuted / PlaybackState）與 MVVM Commands（Play / Pause / Stop / TogglePause / ToggleMute），詳見 `docs/CONTROLS_API.md`。
 - OpenGL render API、software render API 與 stream callback 的核心包裝。

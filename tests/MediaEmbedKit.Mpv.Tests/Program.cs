@@ -56,8 +56,6 @@ internal static class Program
         runner.Add("MpvRelayCommand CanExecute/Execute/RaiseCanExecuteChanged", VerifyMpvRelayCommand);
         runner.Add("MpvEncodingOptions two-pass clone 內部累積清單", VerifyEncodingOptionsTwoPassClone);
         runner.Add("MpvRuntimeHealthReport IsComplete / IsHealthyFor", VerifyMpvRuntimeHealthReportSemantics);
-        runner.Add("AddMpvPlayer 同步擴充已標 [Obsolete]", VerifyAddMpvPlayerObsolete);
-        runner.Add("AddMpvPlayerFactory 未標 [Obsolete]", VerifyAddMpvPlayerFactoryNotObsolete);
         runner.Add("MpvRenderParamType.AmbientLight 已標 [Obsolete]", VerifyAmbientLightObsolete);
         runner.Add("MpvPlayer 提供 TryGetProperty* 系列", VerifyTryGetPropertySurface);
         runner.Add("MpvNative 在 net7.0+ 採用 LibraryImport", VerifyMpvNativeUsesLibraryImport);
@@ -65,41 +63,6 @@ internal static class Program
 
         await runner.RunAsync().ConfigureAwait(false);
         return runner.FailedCount == 0 ? 0 : 1;
-    }
-
-    /// <summary>
-    /// 驗證 <see cref="MpvServiceCollectionExtensions.AddMpvPlayer"/> 同步多載已標記
-    /// <see cref="ObsoleteAttribute"/>，並建議改用工廠形式。
-    /// </summary>
-    /// <returns>代表測試流程的工作。</returns>
-    private static Task VerifyAddMpvPlayerObsolete()
-    {
-        MethodInfo? method = typeof(MpvServiceCollectionExtensions).GetMethod(
-            nameof(MpvServiceCollectionExtensions.AddMpvPlayer),
-            BindingFlags.Public | BindingFlags.Static);
-        AssertEx.True(method != null, "AddMpvPlayer 方法應存在。");
-        ObsoleteAttribute? obsolete = method!.GetCustomAttribute<ObsoleteAttribute>();
-        AssertEx.True(obsolete != null, "AddMpvPlayer 應已標 [Obsolete]，因為它在解析時會同步等待非同步建構。");
-        AssertEx.True(
-            obsolete!.Message != null && obsolete.Message.IndexOf("AddMpvPlayerFactory", StringComparison.Ordinal) >= 0,
-            "AddMpvPlayer 的 [Obsolete] 訊息應引導使用者改用 AddMpvPlayerFactory。");
-        return Task.CompletedTask;
-    }
-
-    /// <summary>
-    /// 驗證 <see cref="MpvServiceCollectionExtensions.AddMpvPlayerFactory"/> 並未被標記為過時，
-    /// 仍是建議的 DI 註冊入口。
-    /// </summary>
-    /// <returns>代表測試流程的工作。</returns>
-    private static Task VerifyAddMpvPlayerFactoryNotObsolete()
-    {
-        MethodInfo? method = typeof(MpvServiceCollectionExtensions).GetMethod(
-            nameof(MpvServiceCollectionExtensions.AddMpvPlayerFactory),
-            BindingFlags.Public | BindingFlags.Static);
-        AssertEx.True(method != null, "AddMpvPlayerFactory 方法應存在。");
-        AssertEx.True(method!.GetCustomAttribute<ObsoleteAttribute>() == null,
-            "AddMpvPlayerFactory 不應被標 [Obsolete]；它是非同步建構的建議入口。");
-        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -612,46 +575,38 @@ internal static class Program
     }
 
     /// <summary>
-    /// 驗證 <see cref="MpvServiceCollectionExtensions.AddMpvPlayerFactory"/> 與
-    /// <see cref="MpvServiceCollectionExtensions.AddMpvPlayer"/> 會把對應服務登錄到容器。
+    /// 驗證 <see cref="MpvServiceCollectionExtensions.AddMpvPlayerFactory"/> 會把對應的工廠服務
+    /// 登錄到容器，並對 null 參數做出明確的拒絕。
     /// </summary>
     /// <returns>代表測試流程的工作。</returns>
     private static Task VerifyDependencyInjectionExtensions()
     {
-        ServiceCollection servicesA = new ServiceCollection();
-        MpvServiceCollectionExtensions.AddMpvPlayerFactory(servicesA, builder => builder.UseHardwareDecoding());
+        ServiceCollection services = new ServiceCollection();
+        MpvServiceCollectionExtensions.AddMpvPlayerFactory(services, builder => builder.UseHardwareDecoding());
 
-        ServiceProvider providerA = servicesA.BuildServiceProvider();
+        ServiceProvider provider = services.BuildServiceProvider();
         try
         {
-            Func<Task<MpvPlayer>>? factoryA = providerA.GetService<Func<Task<MpvPlayer>>>();
-            AssertEx.True(factoryA != null, "AddMpvPlayerFactory 應註冊 Func<Task<MpvPlayer>>");
-
-            ServiceCollection servicesB = new ServiceCollection();
-#pragma warning disable CS0618 // 測試對已標 [Obsolete] 的 AddMpvPlayer 仍維持原有註冊語意。
-            MpvServiceCollectionExtensions.AddMpvPlayer(servicesB, builder => builder.UseHardwareDecoding());
-            ServiceDescriptor playerDescriptor = servicesB.Single(descriptor => descriptor.ServiceType == typeof(MpvPlayer));
-            AssertEx.Equal(ServiceLifetime.Singleton, playerDescriptor.Lifetime, "AddMpvPlayer 應註冊為 singleton");
-            AssertEx.True(playerDescriptor.ImplementationFactory != null, "AddMpvPlayer 應透過工廠註冊");
+            Func<Task<MpvPlayer>>? factory = provider.GetService<Func<Task<MpvPlayer>>>();
+            AssertEx.True(factory != null, "AddMpvPlayerFactory 應註冊 Func<Task<MpvPlayer>>");
 
             AssertEx.Throws<ArgumentNullException>(
                 delegate
                 {
-                    MpvServiceCollectionExtensions.AddMpvPlayer(null!, builder => { });
+                    MpvServiceCollectionExtensions.AddMpvPlayerFactory(null!, builder => { });
                 },
                 "services 為 null 應被拒絕");
 
             AssertEx.Throws<ArgumentNullException>(
                 delegate
                 {
-                    MpvServiceCollectionExtensions.AddMpvPlayer(new ServiceCollection(), null!);
+                    MpvServiceCollectionExtensions.AddMpvPlayerFactory(new ServiceCollection(), null!);
                 },
                 "configure 為 null 應被拒絕");
-#pragma warning restore CS0618
         }
         finally
         {
-            providerA.Dispose();
+            provider.Dispose();
         }
 
         return Task.CompletedTask;

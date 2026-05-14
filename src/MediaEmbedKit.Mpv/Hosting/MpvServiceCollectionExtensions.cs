@@ -10,44 +10,6 @@ namespace MediaEmbedKit.Mpv.Hosting;
 public static class MpvServiceCollectionExtensions
 {
     /// <summary>
-    /// 把 <see cref="MpvAppBuilder"/> 設定後產生的 <see cref="MpvPlayer"/> 註冊為 singleton。
-    /// </summary>
-    /// <param name="services">要登錄服務的服務集合。</param>
-    /// <param name="configure">用來設定 <see cref="MpvAppBuilder"/> 的委派。</param>
-    /// <returns>原始的 <see cref="IServiceCollection"/>，方便鏈式呼叫。</returns>
-    /// <remarks>
-    /// 此多載在解析時以 <c>GetAwaiter().GetResult()</c> 同步等待 <see cref="MpvAppBuilder.BuildAsync(System.Threading.CancellationToken)"/>，
-    /// 在 <c>IHostedService.StartAsync</c>、ASP.NET Core 啟動或 UI 同步上下文中可能阻塞執行緒或造成死鎖。
-    /// 建議改用 <see cref="AddMpvPlayerFactory(IServiceCollection, Action{MpvAppBuilder})"/>，在
-    /// <c>IHostedService.StartAsync</c> 或啟動程式碼以 <c>await</c> 建構。
-    /// <see cref="MpvPlayer"/> 為 singleton；服務容器釋放時會走 <see cref="IDisposable.Dispose"/>。
-    /// 如需 graceful shutdown，請另外註冊 <c>IHostedService</c> 在停機時呼叫
-    /// <c>MpvPlayer.ShutdownAsync</c> 並 <c>await using</c> 釋放。
-    /// </remarks>
-    [Obsolete("AddMpvPlayer 會在服務解析時同步阻塞等待非同步建構，可能造成死鎖。請改用 AddMpvPlayerFactory，並於 IHostedService.StartAsync 等非同步流程中 await 建立 MpvPlayer。")]
-    public static IServiceCollection AddMpvPlayer(this IServiceCollection services, Action<MpvAppBuilder> configure)
-    {
-        if (services == null)
-        {
-            throw new ArgumentNullException(nameof(services));
-        }
-
-        if (configure == null)
-        {
-            throw new ArgumentNullException(nameof(configure));
-        }
-
-        services.TryAddSingleton<MpvPlayer>(serviceProvider =>
-        {
-            MpvAppBuilder builder = new MpvAppBuilder();
-            configure(builder);
-            return builder.BuildAsync().GetAwaiter().GetResult();
-        });
-
-        return services;
-    }
-
-    /// <summary>
     /// 註冊一個工廠，讓呼叫端可在執行階段非同步建立 <see cref="MpvPlayer"/>。
     /// </summary>
     /// <param name="services">要登錄服務的服務集合。</param>
@@ -55,7 +17,7 @@ public static class MpvServiceCollectionExtensions
     /// <returns>原始的 <see cref="IServiceCollection"/>，方便鏈式呼叫。</returns>
     /// <remarks>
     /// 此擴充方法適合配合 <c>IHostedService</c> 啟動流程使用：取得
-    /// <see cref="Func{TResult}"/>，於 <c>StartAsync</c> 中 await 建構，
+    /// <see cref="Func{TResult}"/>，於 <c>StartAsync</c> 中 <c>await</c> 建構，
     /// 完成後再以 singleton 或 scoped 形式自行管理生命週期。
     /// </remarks>
     public static IServiceCollection AddMpvPlayerFactory(this IServiceCollection services, Action<MpvAppBuilder> configure)
