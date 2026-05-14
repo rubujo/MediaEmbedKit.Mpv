@@ -1,20 +1,20 @@
 ﻿using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Themes.Fluent;
+using Avalonia.Markup.Xaml;
 
 namespace MediaEmbedKit.Mpv.Samples.Avalonia;
 
 /// <summary>
-/// 表示 Avalonia 範例應用程式。
+/// 表示 Avalonia 範例應用程式。樣式定義在 <c>App.axaml</c>。
 /// </summary>
-public sealed class App : Application
+public sealed partial class App : Application
 {
     /// <summary>
-    /// 初始化 Avalonia 範例應用程式的樣式。
+    /// 載入 <c>App.axaml</c> 中宣告的樣式與資源。
     /// </summary>
     public override void Initialize()
     {
-        Styles.Add(new FluentTheme());
+        AvaloniaXamlLoader.Load(this);
     }
 
     /// <summary>

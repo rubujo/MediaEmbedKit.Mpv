@@ -12,21 +12,17 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms;
 /// <summary>
 /// 表示 WinForms 範例的主要視窗。
 /// </summary>
-public sealed class MainForm : Form
+public sealed partial class MainForm : Form
 {
     /// <summary>
     /// 範例事件輸出的最大保留列數。
     /// </summary>
     private const int EventLogLimit = 60;
 
-    /// <summary>
-    /// 顯示 libmpv 視訊內容的 WinForms 控制項。
-    /// </summary>
-    private readonly MpvPlayerControl _player;
-    /// <summary>
-    /// 讓使用者輸入檔案路徑或媒體網址的文字方塊。
-    /// </summary>
-    private readonly TextBox _urlTextBox;
+    // _player / _urlTextBox / _statusLabel / _mvvmStateLabel / _eventListBox 的欄位宣告
+    // 與基礎 property 設定已搬到 MainForm.Designer.cs（由 designer 序列化負責）。
+    // 這些欄位仍可在本檔案直接存取（partial class 跨檔共享）。
+
     /// <summary>
     /// 載入目前媒體來源的按鈕。
     /// </summary>
@@ -43,18 +39,6 @@ public sealed class MainForm : Form
     /// 選擇 yt-dlp 格式預設值的下拉選單。
     /// </summary>
     private readonly ComboBox _formatComboBox;
-    /// <summary>
-    /// 顯示目前播放狀態的標籤。
-    /// </summary>
-    private readonly Label _statusLabel;
-    /// <summary>
-    /// MVVM 綁定示範：透過 <see cref="MpvPlayerControl.PlaybackState"/> 的 INotifyPropertyChanged 即時顯示狀態。
-    /// </summary>
-    private readonly Label _mvvmStateLabel;
-    /// <summary>
-    /// 顯示 libmpv 事件與範例生命週期的清單。
-    /// </summary>
-    private readonly ListBox _eventListBox;
     /// <summary>
     /// 背景讀取並批次套用狀態列文字的分派器。
     /// </summary>
@@ -93,18 +77,19 @@ public sealed class MainForm : Form
     /// </summary>
     public MainForm()
     {
-        Text = "MediaEmbedKit.Mpv WinForms Sample";
-        ClientSize = new Size(SampleRuntime.SampleWindowWidth, SampleRuntime.SampleWindowHeight);
-        StartPosition = FormStartPosition.CenterScreen;
+        // 由 designer 序列化的部分：Form 屬性、_player、_urlTextBox、_statusLabel、
+        // _mvvmStateLabel、_eventListBox 的 instantiation 與基礎 property、以及
+        // _player.PlayerCreated 與 Shown 事件處理。
+        InitializeComponent();
 
-        _urlTextBox = new TextBox
-        {
-            Dock = DockStyle.Fill,
-            Text = SampleRuntime.PlaybackUrl,
-            AutoSize = false,
-            Height = SampleRuntime.SampleButtonHeight,
-            Margin = new Padding(0, 2, SampleRuntime.SampleControlSpacing, 0)
-        };
+        // ----- 以下為 designer 結構上無法序列化的部分（factory method、lambda、
+        //       DataBindings、動態 layout、SampleRuntime 常數相依），維持在 code-behind。-----
+
+        ClientSize = new Size(SampleRuntime.SampleWindowWidth, SampleRuntime.SampleWindowHeight);
+
+        _urlTextBox.Text = SampleRuntime.PlaybackUrl;
+        _urlTextBox.Height = SampleRuntime.SampleButtonHeight;
+        _urlTextBox.Margin = new Padding(0, 2, SampleRuntime.SampleControlSpacing, 0);
 
         _loadButton = CreateCommandButton("Load");
         _loadButton.Click += LoadButtonClick;
@@ -114,53 +99,28 @@ public sealed class MainForm : Form
         _stopButton.Margin = new Padding(0);
         _stopButton.Click += StopButtonClick;
 
-        _player = new MpvPlayerControl
-        {
-            Dock = DockStyle.Fill,
-            AutoInitialize = false
-        };
-        _player.PlayerCreated += PlayerCreated;
-
         _features = new SampleFeatureController(() => _currentPlayer, AppendEventLine);
         _formatComboBox = CreateFormatComboBox();
-        _statusLabel = new Label
-        {
-            AutoSize = false,
-            Width = 380,
-            Height = SampleRuntime.SampleButtonHeight,
-            Text = "播放器尚未初始化",
-            TextAlign = ContentAlignment.MiddleLeft,
-            Margin = new Padding(0, 0, SampleRuntime.SampleControlSpacing, 0)
-        };
 
-        _mvvmStateLabel = new Label
-        {
-            AutoSize = false,
-            Width = 220,
-            Height = SampleRuntime.SampleButtonHeight,
-            Text = "MVVM 綁定示範：狀態 = Idle",
-            TextAlign = ContentAlignment.MiddleLeft,
-            Margin = new Padding(0, 0, SampleRuntime.SampleControlSpacing, 0)
-        };
+        _statusLabel.Width = 380;
+        _statusLabel.Height = SampleRuntime.SampleButtonHeight;
+        _statusLabel.Margin = new Padding(0, 0, SampleRuntime.SampleControlSpacing, 0);
+
+        _mvvmStateLabel.Width = 220;
+        _mvvmStateLabel.Height = SampleRuntime.SampleButtonHeight;
+        _mvvmStateLabel.Margin = new Padding(0, 0, SampleRuntime.SampleControlSpacing, 0);
         _mvvmStateLabel.DataBindings.Add(new Binding(nameof(Label.Text), _player, nameof(MpvPlayerControl.PlaybackState), formattingEnabled: true)
         {
             FormatString = "MVVM 綁定示範：狀態 = {0}"
         });
 
-        _eventListBox = new ListBox
-        {
-            Dock = DockStyle.Fill,
-            Font = new Font(FontFamily.GenericMonospace, 8.25f),
-            HorizontalScrollbar = true,
-            IntegralHeight = false
-        };
+        _eventListBox.Font = new Font(FontFamily.GenericMonospace, 8.25f);
 
         _eventLogDispatcher = new SampleEventLogDispatcher(AppendEventLines, ScheduleEventLogFlush);
         _statusDispatcher = new SampleStatusUpdateDispatcher(() => _features.GetStatusText(), SetStatusText, ScheduleUiUpdate);
 
         Controls.Add(CreateRootLayout());
         SetPlaybackControlsEnabled(false);
-        Shown += MainFormShown;
         AppendEventLine(CreateLifecycleLine("FormCreated", "範例視窗已建立，等待 runtime 初始化。"));
     }
 
@@ -172,6 +132,7 @@ public sealed class MainForm : Form
     {
         if (disposing)
         {
+            components?.Dispose();
             _statusDispatcher.Dispose();
             _eventBridge?.WriteLifecycle("FormDispose", "視窗正在釋放，準備取消事件訂閱。");
             _eventBridge?.Dispose();

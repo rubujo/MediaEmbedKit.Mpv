@@ -10,14 +10,15 @@ using MediaEmbedKit.Mpv.Samples;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Graphics;
-using Microsoft.Maui.Layouts;
 
 namespace MediaEmbedKit.Mpv.Samples.Maui;
 
 /// <summary>
-/// 表示 .NET MAUI 範例的主要頁面。
+/// 表示 .NET MAUI 範例的主要頁面。靜態 layout（toolbar / feature panel / player surface /
+/// event log）由 <c>MainPage.xaml</c> 序列化；以下 code-behind 負責動態 feature button、
+/// Picker 內容、SampleRuntime 初始化、播放器生命週期與 dispatcher 串接等 markup 無法表達的邏輯。
 /// </summary>
-public sealed class MainPage : ContentPage, IDisposable
+public sealed partial class MainPage : ContentPage, IDisposable
 {
     /// <summary>
     /// 範例事件輸出的最大保留列數。
@@ -25,13 +26,9 @@ public sealed class MainPage : ContentPage, IDisposable
     private const int EventLogLimit = 60;
 
     /// <summary>
-    /// 顯示 libmpv 視訊內容的 MAUI 檢視。
+    /// 顯示 libmpv 視訊內容的 MAUI 檢視；runtime 就緒後由 CreatePlayerHost 插入。
     /// </summary>
     private MpvView? _player;
-    /// <summary>
-    /// runtime 就緒後承載 MAUI 播放檢視的容器。
-    /// </summary>
-    private readonly Grid _playerHostContainer = new Grid();
     /// <summary>
     /// 需要在 runtime 就緒後才可使用的控制項清單。
     /// </summary>
@@ -40,38 +37,6 @@ public sealed class MainPage : ContentPage, IDisposable
     /// 非同步功能進行中需暫時禁用的功能按鈕清單。
     /// </summary>
     private readonly List<Button> _featureButtons = new List<Button>();
-    /// <summary>
-    /// 讓使用者輸入檔案路徑或媒體網址的輸入方塊。
-    /// </summary>
-    private readonly Entry _sourceEntry;
-    /// <summary>
-    /// 載入目前媒體來源的按鈕。
-    /// </summary>
-    private readonly Button _loadButton;
-    /// <summary>
-    /// 切換目前播放器暫停狀態的按鈕。
-    /// </summary>
-    private readonly Button _pauseButton;
-    /// <summary>
-    /// 停止目前播放項目的按鈕。
-    /// </summary>
-    private readonly Button _stopButton;
-    /// <summary>
-    /// 選擇 yt-dlp 格式預設值的選擇器。
-    /// </summary>
-    private readonly Picker _formatPicker;
-    /// <summary>
-    /// 顯示目前播放狀態的標籤。
-    /// </summary>
-    private readonly Label _statusLabel;
-    /// <summary>
-    /// MVVM 綁定示範：透過 MAUI binding 即時顯示 <see cref="MpvView.PlaybackState"/>。
-    /// </summary>
-    private readonly Label _mvvmStateLabel;
-    /// <summary>
-    /// 顯示 libmpv 事件與範例生命週期的清單。
-    /// </summary>
-    private readonly CollectionView _eventList;
     /// <summary>
     /// 顯示在 UI 的事件文字列集合。
     /// </summary>
@@ -122,66 +87,53 @@ public sealed class MainPage : ContentPage, IDisposable
     private int _disposed;
 
     /// <summary>
-    /// 初始化 <see cref="MainPage"/> 類別的新執行個體。
+    /// 初始化 <see cref="MainPage"/> 類別的新執行個體。XAML 序列化後加上動態按鈕、
+    /// Picker 內容、MVVM binding 與 dispatcher 等 markup 無法序列化的設定。
     /// </summary>
     public MainPage()
     {
-        Title = "MediaEmbedKit.Mpv MAUI Sample";
+        InitializeComponent();
 
-        _sourceEntry = new Entry
-        {
-            Text = SampleRuntime.PlaybackUrl,
-            HeightRequest = SampleRuntime.SampleButtonHeight,
-            HorizontalOptions = LayoutOptions.Fill,
-            VerticalOptions = LayoutOptions.Center
-        };
-
-        _features = new SampleFeatureController(() => _currentPlayer, AppendEventLine);
-        _formatChoices = SampleFeatureController.CreateYtdlpFormatChoices();
-        _formatPicker = CreateFormatPicker();
-        _statusLabel = new Label
-        {
-            Text = "播放器尚未初始化",
-            WidthRequest = 380,
-            HeightRequest = SampleRuntime.SampleButtonHeight,
-            Padding = new Thickness(8, 0),
-            VerticalTextAlignment = TextAlignment.Center,
-            LineBreakMode = LineBreakMode.TailTruncation
-        };
-
-        _mvvmStateLabel = new Label
-        {
-            Text = "MVVM 綁定示範：狀態 = Idle",
-            WidthRequest = 240,
-            HeightRequest = SampleRuntime.SampleButtonHeight,
-            Padding = new Thickness(8, 0),
-            VerticalTextAlignment = TextAlignment.Center,
-            LineBreakMode = LineBreakMode.TailTruncation
-        };
-        _mvvmStateLabel.SetBinding(
-            Label.TextProperty,
-            new Binding(nameof(MpvView.PlaybackState), stringFormat: "MVVM 綁定示範：狀態 = {0}"));
-
-        _loadButton = CreateCommandButton("Load");
-        _loadButton.Clicked += LoadButtonClicked;
-        _pauseButton = CreateCommandButton("Pause");
-        _pauseButton.Clicked += PauseButtonClicked;
-        _stopButton = CreateCommandButton("Stop");
-        _stopButton.Clicked += StopButtonClicked;
+        _sourceEntry.Text = SampleRuntime.PlaybackUrl;
         _runtimeControls.Add(_loadButton);
         _runtimeControls.Add(_pauseButton);
         _runtimeControls.Add(_stopButton);
 
-        _eventList = new CollectionView
-        {
-            ItemsSource = _eventLines,
-            ItemTemplate = CreateEventTemplate()
-        };
+        _features = new SampleFeatureController(() => _currentPlayer, AppendEventLine);
+        _formatChoices = SampleFeatureController.CreateYtdlpFormatChoices();
+        PopulateFormatPicker();
+        _runtimeControls.Add(_formatPicker);
+
+        _mvvmStateLabel.SetBinding(
+            Label.TextProperty,
+            new Binding(nameof(MpvView.PlaybackState), stringFormat: "MVVM 綁定示範：狀態 = {0}"));
+
+        _eventList.ItemsSource = _eventLines;
+        _eventList.ItemTemplate = CreateEventTemplate();
+
+        _primaryRow.Children.Add(CreateFeatureButton("OSD", () => _features.ShowOsd()));
+        _primaryRow.Children.Add(CreateFeatureButton("-10s", () => _features.SeekRelative(-10)));
+        _primaryRow.Children.Add(CreateFeatureButton("+10s", () => _features.SeekRelative(10)));
+        _primaryRow.Children.Add(CreateFeatureButton("Vol-", () => _features.ChangeVolume(-5)));
+        _primaryRow.Children.Add(CreateFeatureButton("Vol+", () => _features.ChangeVolume(5)));
+        _primaryRow.Children.Add(CreateFeatureButton("Mute", () => _features.ToggleMute()));
+        _primaryRow.Children.Add(CreateFeatureButton("Speed", () => _features.CycleSpeed()));
+
+        _secondaryRow.Children.Add(CreateFeatureButton("Sub", () => _features.AddSampleSubtitle()));
+        _secondaryRow.Children.Add(CreateFeatureButton("Tracks", () => _features.DumpTracks()));
+        _secondaryRow.Children.Add(CreateFeatureButton("Shot", () => _features.TakeScreenshot()));
+        _secondaryRow.Children.Add(CreateFeatureButton("Config", () => _features.LoadSampleConfig()));
+        _secondaryRow.Children.Add(CreateAsyncFeatureButton("Lua", () => _features.LoadSampleLuaScriptAsync()));
+        _secondaryRow.Children.Add(CreateAsyncFeatureButton("yt-dlp", () => _features.RunYtdlpDiagnosticsAsync(_sourceEntry.Text ?? string.Empty)));
+        _secondaryRow.Children.Add(CreateAsyncFeatureButton("Deno", () => _features.RunDenoDiagnosticsAsync()));
+        _secondaryRow.Children.Add(CreateAsyncFeatureButton("FFmpeg", () => _features.RunFFmpegDiagnosticsAsync()));
+        _secondaryRow.Children.Add(CreateAsyncFeatureButton("Save MP4", () => EncodeCurrentSourceToMp4Async(), SampleRuntime.SampleYtdlpUpdateButtonWidth));
+        _secondaryRow.Children.Add(CreateAsyncFeatureButton("Update yt", () => _features.RunYtdlpSelfUpdateAsync(), SampleRuntime.SampleYtdlpUpdateButtonWidth));
+        _secondaryRow.Children.Add(CreateAsyncFeatureButton("Update Deno", () => _features.RunDenoSelfUpgradeAsync(), SampleRuntime.SampleDenoUpdateButtonWidth));
 
         _eventLogDispatcher = new SampleEventLogDispatcher(AppendEventLines, ScheduleEventLogFlush);
         _statusDispatcher = new SampleStatusUpdateDispatcher(() => _features.GetStatusText(), SetStatusText, ScheduleUiUpdate);
 
-        Content = CreateLayout();
         SetRuntimeControlsEnabled(false);
         AppendEventLine(CreateLifecycleLine("PageCreated", "MAUI 頁面已建立，等待 runtime 初始化。"));
     }
@@ -482,220 +434,6 @@ public sealed class MainPage : ContentPage, IDisposable
     }
 
     /// <summary>
-    /// 建立範例根版面。
-    /// </summary>
-    /// <returns>包含工具列、功能列、播放區域與事件清單的根版面。</returns>
-    private Grid CreateLayout()
-    {
-        Grid root = new Grid
-        {
-            RowDefinitions =
-            {
-                new RowDefinition(GridLength.Auto),
-                new RowDefinition(new GridLength(SampleRuntime.SampleFeaturePanelHeight)),
-                new RowDefinition(GridLength.Star),
-                new RowDefinition(new GridLength(SampleRuntime.SampleEventLogHeight))
-            }
-        };
-
-        root.Add(CreateToolbar(), 0, 0);
-        root.Add(CreateFeaturePanel(), 0, 1);
-        root.Add(CreatePlayerSurface(), 0, 2);
-        root.Add(_eventList, 0, 3);
-        return root;
-    }
-
-    /// <summary>
-    /// 建立範例工具列。
-    /// </summary>
-    /// <returns>包含來源輸入與播放命令的工具列。</returns>
-    private Grid CreateToolbar()
-    {
-        Grid controls = new Grid
-        {
-            HeightRequest = SampleRuntime.SampleToolbarHeight,
-            ColumnDefinitions =
-            {
-                new ColumnDefinition(GridLength.Star),
-                new ColumnDefinition(new GridLength(SampleRuntime.SampleButtonWidth)),
-                new ColumnDefinition(new GridLength(SampleRuntime.SampleButtonWidth)),
-                new ColumnDefinition(new GridLength(SampleRuntime.SampleButtonWidth))
-            },
-            ColumnSpacing = SampleRuntime.SampleControlSpacing,
-            Padding = SampleRuntime.SampleControlPadding
-        };
-        controls.Add(_sourceEntry, 0, 0);
-        controls.Add(_loadButton, 1, 0);
-        controls.Add(_pauseButton, 2, 0);
-        controls.Add(_stopButton, 3, 0);
-        return controls;
-    }
-
-    /// <summary>
-    /// 建立進階功能展示列。
-    /// </summary>
-    /// <returns>包含格式、狀態與 API 按鈕的功能列。</returns>
-    private Grid CreateFeaturePanel()
-    {
-        Grid panel = new Grid
-        {
-            RowDefinitions =
-            {
-                new RowDefinition(new GridLength(40)),
-                new RowDefinition(new GridLength(40))
-            }
-        };
-
-        FlexLayout primaryRow = new FlexLayout
-        {
-            Direction = FlexDirection.Row,
-            Wrap = FlexWrap.Wrap,
-            AlignItems = FlexAlignItems.Center,
-            Padding = new Thickness(SampleRuntime.SampleControlPadding, 4, SampleRuntime.SampleControlPadding, 0)
-        };
-        primaryRow.Children.Add(_formatPicker);
-        primaryRow.Children.Add(_statusLabel);
-        primaryRow.Children.Add(_mvvmStateLabel);
-        primaryRow.Children.Add(CreateFeatureButton("OSD", () => _features.ShowOsd()));
-        primaryRow.Children.Add(CreateFeatureButton("-10s", () => _features.SeekRelative(-10)));
-        primaryRow.Children.Add(CreateFeatureButton("+10s", () => _features.SeekRelative(10)));
-        primaryRow.Children.Add(CreateFeatureButton("Vol-", () => _features.ChangeVolume(-5)));
-        primaryRow.Children.Add(CreateFeatureButton("Vol+", () => _features.ChangeVolume(5)));
-        primaryRow.Children.Add(CreateFeatureButton("Mute", () => _features.ToggleMute()));
-        primaryRow.Children.Add(CreateFeatureButton("Speed", () => _features.CycleSpeed()));
-
-        FlexLayout secondaryRow = new FlexLayout
-        {
-            Direction = FlexDirection.Row,
-            Wrap = FlexWrap.Wrap,
-            AlignItems = FlexAlignItems.Center,
-            Padding = new Thickness(SampleRuntime.SampleControlPadding, 2, SampleRuntime.SampleControlPadding, 4)
-        };
-        secondaryRow.Children.Add(CreateFeatureButton("Sub", () => _features.AddSampleSubtitle()));
-        secondaryRow.Children.Add(CreateFeatureButton("Tracks", () => _features.DumpTracks()));
-        secondaryRow.Children.Add(CreateFeatureButton("Shot", () => _features.TakeScreenshot()));
-        secondaryRow.Children.Add(CreateFeatureButton("Config", () => _features.LoadSampleConfig()));
-        secondaryRow.Children.Add(CreateAsyncFeatureButton("Lua", () => _features.LoadSampleLuaScriptAsync()));
-        secondaryRow.Children.Add(CreateAsyncFeatureButton("yt-dlp", () => _features.RunYtdlpDiagnosticsAsync(_sourceEntry.Text ?? string.Empty)));
-        secondaryRow.Children.Add(CreateAsyncFeatureButton("Deno", () => _features.RunDenoDiagnosticsAsync()));
-        secondaryRow.Children.Add(CreateAsyncFeatureButton("FFmpeg", () => _features.RunFFmpegDiagnosticsAsync()));
-        secondaryRow.Children.Add(CreateAsyncFeatureButton("Save MP4", () => EncodeCurrentSourceToMp4Async(), SampleRuntime.SampleYtdlpUpdateButtonWidth));
-        secondaryRow.Children.Add(CreateAsyncFeatureButton("Update yt", () => _features.RunYtdlpSelfUpdateAsync(), SampleRuntime.SampleYtdlpUpdateButtonWidth));
-        secondaryRow.Children.Add(CreateAsyncFeatureButton("Update Deno", () => _features.RunDenoSelfUpgradeAsync(), SampleRuntime.SampleDenoUpdateButtonWidth));
-
-        panel.Add(primaryRow, 0, 0);
-        panel.Add(secondaryRow, 0, 1);
-        return panel;
-    }
-
-    /// <summary>
-    /// 建立播放區域。
-    /// </summary>
-    /// <returns>包含單一播放器、安全覆蓋層與一般覆蓋層對照的播放區域。</returns>
-    private Grid CreatePlayerSurface()
-    {
-        Grid playerSurface = new Grid
-        {
-            RowDefinitions =
-            {
-                new RowDefinition(new GridLength(SampleRuntime.SampleAirspaceComparisonHeight)),
-                new RowDefinition(GridLength.Star)
-            }
-        };
-
-        playerSurface.Add(CreateHeaderPanel(), 0, 0);
-        playerSurface.Add(CreateVideoSurface(), 0, 1);
-        return playerSurface;
-    }
-
-    /// <summary>
-    /// 建立左右對照標題列。
-    /// </summary>
-    /// <returns>包含安全覆蓋層與一般覆蓋層標題的面板。</returns>
-    private static Grid CreateHeaderPanel()
-    {
-        Grid header = new Grid
-        {
-            ColumnDefinitions =
-            {
-                new ColumnDefinition(GridLength.Star),
-                new ColumnDefinition(GridLength.Star)
-            }
-        };
-
-        header.Add(CreateHeaderBadge("控制項 OverlayView：可覆蓋 HWND", ThemeColor(SampleTheme.AccentBadgeArgb), new Thickness(16, 6, 8, 6)), 0, 0);
-        header.Add(CreateHeaderBadge("一般 MAUI Overlay 嘗試覆蓋同一個 HWND", ThemeColor(SampleTheme.ContrastBadgeArgb), new Thickness(8, 6, 16, 6)), 1, 0);
-        return header;
-    }
-
-    /// <summary>
-    /// 建立播放視訊與覆蓋層對照面板。
-    /// </summary>
-    /// <returns>包含播放器與一般 MAUI 覆蓋層的播放面板。</returns>
-    private Grid CreateVideoSurface()
-    {
-        Grid surface = new Grid
-        {
-            BackgroundColor = Colors.Black
-        };
-
-        Label normalOverlay = CreateOverlayBadge("一般 MAUI Overlay：AirSpace 對照", ThemeColor(SampleTheme.ContrastBadgeArgb));
-        normalOverlay.ZIndex = 10;
-        surface.Add(_playerHostContainer, 0, 0);
-        surface.Add(normalOverlay, 0, 0);
-        return surface;
-    }
-
-    /// <summary>
-    /// 建立播放區中的覆蓋層標籤。
-    /// </summary>
-    /// <param name="text">要顯示的標籤文字。</param>
-    /// <param name="backgroundColor">標籤背景色彩。</param>
-    /// <returns>已套用固定尺寸與色彩的覆蓋層標籤。</returns>
-    private static Label CreateOverlayBadge(string text, Color backgroundColor)
-    {
-        return new Label
-        {
-            Text = text,
-            WidthRequest = SampleRuntime.SampleOverlayBadgeWidth,
-            HeightRequest = SampleRuntime.SampleOverlayBadgeHeight,
-            Margin = new Thickness(16),
-            BackgroundColor = backgroundColor,
-            TextColor = Colors.White,
-            FontAttributes = FontAttributes.Bold,
-            HorizontalOptions = LayoutOptions.End,
-            VerticalOptions = LayoutOptions.Start,
-            HorizontalTextAlignment = TextAlignment.Center,
-            VerticalTextAlignment = TextAlignment.Center,
-            LineBreakMode = LineBreakMode.TailTruncation
-        };
-    }
-
-    /// <summary>
-    /// 建立 AirSpace 對照區標題列。
-    /// </summary>
-    /// <param name="text">要顯示的標題文字。</param>
-    /// <param name="backgroundColor">標題背景色彩。</param>
-    /// <param name="margin">標題外距。</param>
-    /// <returns>已套用固定色彩與邊界的標題。</returns>
-    private static Label CreateHeaderBadge(string text, Color backgroundColor, Thickness margin)
-    {
-        return new Label
-        {
-            Text = text,
-            Margin = margin,
-            BackgroundColor = backgroundColor,
-            TextColor = Colors.White,
-            FontAttributes = FontAttributes.Bold,
-            HorizontalOptions = LayoutOptions.Fill,
-            VerticalOptions = LayoutOptions.Fill,
-            HorizontalTextAlignment = TextAlignment.Center,
-            VerticalTextAlignment = TextAlignment.Center,
-            LineBreakMode = LineBreakMode.TailTruncation
-        };
-    }
-
-    /// <summary>
     /// 建立 MAUI handler 可轉換到平台控制項的安全覆蓋層檢視。
     /// </summary>
     /// <returns>可交給 `MpvView.OverlayView` 顯示的 MAUI 覆蓋層檢視。</returns>
@@ -927,34 +665,23 @@ public sealed class MainPage : ContentPage, IDisposable
     }
 
     /// <summary>
-    /// 建立 yt-dlp 格式選擇器。
+    /// 填入 XAML 宣告之 Picker 的格式選項並設定預設選擇。
     /// </summary>
-    /// <returns>已填入格式選項的選擇器。</returns>
-    private Picker CreateFormatPicker()
+    private void PopulateFormatPicker()
     {
-        Picker picker = new Picker
-        {
-            WidthRequest = 132,
-            HeightRequest = SampleRuntime.SampleButtonHeight,
-            Margin = new Thickness(0, 0, SampleRuntime.SampleControlSpacing, 4)
-        };
-
         SampleYtdlpFormatChoice defaultChoice = SampleFeatureController.CreateDefaultYtdlpFormatChoice();
         int selectedIndex = 0;
         for (int index = 0; index < _formatChoices.Count; index++)
         {
             SampleYtdlpFormatChoice choice = _formatChoices[index];
-            picker.Items.Add(choice.DisplayName);
+            _formatPicker.Items.Add(choice.DisplayName);
             if (string.Equals(choice.Selector, defaultChoice.Selector, StringComparison.Ordinal))
             {
                 selectedIndex = index;
             }
         }
 
-        picker.SelectedIndex = selectedIndex;
-        picker.SelectedIndexChanged += FormatPickerSelectedIndexChanged;
-        _runtimeControls.Add(picker);
-        return picker;
+        _formatPicker.SelectedIndex = selectedIndex;
     }
 
     /// <summary>
@@ -974,23 +701,6 @@ public sealed class MainPage : ContentPage, IDisposable
             label.SetBinding(Label.TextProperty, ".");
             return label;
         });
-    }
-
-    /// <summary>
-    /// 建立標準尺寸的命令按鈕。
-    /// </summary>
-    /// <param name="text">要顯示在按鈕上的文字。</param>
-    /// <returns>已套用範例標準尺寸的按鈕。</returns>
-    private static Button CreateCommandButton(string text)
-    {
-        return new Button
-        {
-            Text = text,
-            WidthRequest = SampleRuntime.SampleButtonWidth,
-            HeightRequest = SampleRuntime.SampleButtonHeight,
-            HorizontalOptions = LayoutOptions.Fill,
-            VerticalOptions = LayoutOptions.Center
-        };
     }
 
     /// <summary>

@@ -1,14 +1,22 @@
-﻿using Microsoft.Maui.Controls;
-using System;
+﻿using System;
 using System.Threading;
+using Microsoft.Maui.Controls;
 
 namespace MediaEmbedKit.Mpv.Samples.Maui;
 
 /// <summary>
-/// 表示 .NET MAUI 範例應用程式。
+/// 表示 .NET MAUI 範例應用程式。資源字典定義在 <c>App.xaml</c>。
 /// </summary>
-public sealed class App : Application
+public sealed partial class App : Application
 {
+    /// <summary>
+    /// 初始化 <see cref="App"/> 類別的新執行個體並載入 XAML 資源。
+    /// </summary>
+    public App()
+    {
+        InitializeComponent();
+    }
+
     /// <summary>
     /// 建立 MAUI 範例應用程式的主要視窗。
     /// </summary>

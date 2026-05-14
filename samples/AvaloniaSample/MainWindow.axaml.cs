@@ -3,12 +3,10 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Threading.Tasks;
-using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
-using Avalonia.Media;
+using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
 using MediaEmbedKit.Mpv;
 using MediaEmbedKit.Mpv.Avalonia;
@@ -17,9 +15,11 @@ using MediaEmbedKit.Mpv.Samples;
 namespace MediaEmbedKit.Mpv.Samples.Avalonia;
 
 /// <summary>
-/// 表示 Avalonia 範例的主要視窗。
+/// 表示 Avalonia 範例的主要視窗。靜態 layout（toolbar / feature panel / player surface /
+/// event log）由 <c>MainWindow.axaml</c> 序列化；以下 code-behind 負責動態 button factory、
+/// SampleRuntime 初始化、播放器生命週期與 dispatcher 串接等 markup 無法表達的邏輯。
 /// </summary>
-public sealed class MainWindow : Window
+public sealed partial class MainWindow : Window
 {
     /// <summary>
     /// 範例事件輸出的最大保留列數。
@@ -27,13 +27,9 @@ public sealed class MainWindow : Window
     private const int EventLogLimit = 60;
 
     /// <summary>
-    /// 顯示 libmpv 視訊內容的 Avalonia OpenGL 控制項。
+    /// 顯示 libmpv 視訊內容的 Avalonia OpenGL 控制項；runtime 就緒後由 CreatePlayerHost 插入。
     /// </summary>
     private MpvAvaloniaPlayer? _player;
-    /// <summary>
-    /// runtime 就緒後承載 OpenGL 播放控制項的容器。
-    /// </summary>
-    private readonly Grid _playerHostContainer = new Grid();
     /// <summary>
     /// 需要在 runtime 就緒後才可使用的控制項清單。
     /// </summary>
@@ -43,41 +39,17 @@ public sealed class MainWindow : Window
     /// </summary>
     private readonly List<Button> _featureButtons = new List<Button>();
     /// <summary>
-    /// 讓使用者輸入檔案路徑或媒體網址的文字方塊。
-    /// </summary>
-    private readonly TextBox _sourceBox;
-    /// <summary>
     /// 載入目前媒體來源的按鈕。
     /// </summary>
-    private readonly Button _loadButton;
+    private Button _loadButton = null!;
     /// <summary>
     /// 切換目前播放器暫停狀態的按鈕。
     /// </summary>
-    private readonly Button _pauseButton;
+    private Button _pauseButton = null!;
     /// <summary>
     /// 停止目前播放項目的按鈕。
     /// </summary>
-    private readonly Button _stopButton;
-    /// <summary>
-    /// 選擇 yt-dlp 格式預設值的下拉選單。
-    /// </summary>
-    private readonly ComboBox _formatComboBox;
-    /// <summary>
-    /// 顯示目前播放狀態的文字區塊。
-    /// </summary>
-    private readonly TextBlock _statusTextBlock;
-    /// <summary>
-    /// MVVM 綁定示範：透過 Avalonia binding 即時顯示 <see cref="MpvAvaloniaPlayer.PlaybackState"/>。
-    /// </summary>
-    private readonly TextBlock _mvvmStateTextBlock;
-    /// <summary>
-    /// 顯示 libmpv 事件與範例生命週期的清單。
-    /// </summary>
-    private readonly ItemsControl _eventList;
-    /// <summary>
-    /// 承載事件清單的可捲動容器。
-    /// </summary>
-    private readonly ScrollViewer _eventScrollViewer;
+    private Button _stopButton = null!;
     /// <summary>
     /// 顯示在 UI 的事件文字列集合。
     /// </summary>
@@ -85,11 +57,11 @@ public sealed class MainWindow : Window
     /// <summary>
     /// 範例進階功能控制器。
     /// </summary>
-    private readonly SampleFeatureController _features;
+    private SampleFeatureController _features = null!;
     /// <summary>
     /// 背景讀取並批次套用狀態列文字的分派器。
     /// </summary>
-    private readonly SampleStatusUpdateDispatcher _statusDispatcher;
+    private SampleStatusUpdateDispatcher _statusDispatcher = null!;
     /// <summary>
     /// 將播放器事件轉接到範例事件清單。
     /// </summary>
@@ -101,7 +73,7 @@ public sealed class MainWindow : Window
     /// <summary>
     /// 批次轉送事件文字到 UI 執行緒的分派器。
     /// </summary>
-    private readonly SampleEventLogDispatcher _eventLogDispatcher;
+    private SampleEventLogDispatcher _eventLogDispatcher = null!;
     /// <summary>
     /// 控制非同步範例功能不可重入的閘門。
     /// </summary>
@@ -120,59 +92,37 @@ public sealed class MainWindow : Window
     private bool _smokeStarted;
 
     /// <summary>
-    /// 初始化 <see cref="MainWindow"/> 類別的新執行個體。
+    /// 初始化 <see cref="MainWindow"/> 類別的新執行個體。XAML 序列化後加上動態按鈕與
+    /// dispatcher、binding、事件訂閱等 markup 無法序列化的設定。
     /// </summary>
     public MainWindow()
     {
-        Title = "MediaEmbedKit.Mpv Avalonia Sample";
-        Width = SampleRuntime.SampleWindowWidth;
-        Height = SampleRuntime.SampleWindowHeight;
-        MinWidth = SampleRuntime.SampleWindowWidth;
-        MinHeight = SampleRuntime.SampleWindowHeight;
-        WindowStartupLocation = WindowStartupLocation.CenterScreen;
+        InitializeComponent();
 
-        _sourceBox = new TextBox
-        {
-            Text = SampleRuntime.PlaybackUrl,
-            VerticalContentAlignment = VerticalAlignment.Center,
-            MinHeight = SampleRuntime.SampleButtonHeight,
-            Margin = new Thickness(0, 0, SampleRuntime.SampleControlSpacing, 0)
-        };
+        _sourceBox.Text = SampleRuntime.PlaybackUrl;
 
         _loadButton = CreateCommandButton("Load");
         _loadButton.Click += OnLoadClicked;
         _pauseButton = CreateCommandButton("Pause");
         _pauseButton.Click += OnPauseClicked;
         _stopButton = CreateCommandButton("Stop");
-        _stopButton.Margin = new Thickness(0);
+        _stopButton.Margin = new global::Avalonia.Thickness(0);
         _stopButton.Click += OnStopClicked;
         _runtimeControls.Add(_loadButton);
         _runtimeControls.Add(_pauseButton);
         _runtimeControls.Add(_stopButton);
+        Grid.SetColumn(_loadButton, 1);
+        Grid.SetColumn(_pauseButton, 3);
+        Grid.SetColumn(_stopButton, 5);
+        _toolbarHost.Children.Add(_loadButton);
+        _toolbarHost.Children.Add(_pauseButton);
+        _toolbarHost.Children.Add(_stopButton);
 
         _features = new SampleFeatureController(() => _currentPlayer, AppendEventLine);
-        _formatComboBox = CreateFormatComboBox();
-        _runtimeControls.Add(_formatComboBox);
-        _statusTextBlock = new TextBlock
-        {
-            Width = 380,
-            Height = SampleRuntime.SampleButtonHeight,
-            Margin = new Thickness(0, 0, SampleRuntime.SampleControlSpacing, 4),
-            Padding = new Thickness(8, 0),
-            VerticalAlignment = VerticalAlignment.Center,
-            Text = "播放器尚未初始化",
-            TextTrimming = TextTrimming.CharacterEllipsis
-        };
 
-        _mvvmStateTextBlock = new TextBlock
-        {
-            Width = 240,
-            Height = SampleRuntime.SampleButtonHeight,
-            Margin = new Thickness(0, 0, SampleRuntime.SampleControlSpacing, 4),
-            Padding = new Thickness(8, 0),
-            VerticalAlignment = VerticalAlignment.Center,
-            Text = "MVVM 綁定示範：狀態 = Idle"
-        };
+        ConfigureFormatComboBox();
+        _runtimeControls.Add(_formatComboBox);
+
         _mvvmStateTextBlock.Bind(
             TextBlock.TextProperty,
             new global::Avalonia.Data.Binding(nameof(MpvAvaloniaPlayer.PlaybackState))
@@ -180,27 +130,42 @@ public sealed class MainWindow : Window
                 StringFormat = "MVVM 綁定示範：狀態 = {0}"
             });
 
-        _eventList = new ItemsControl
-        {
-            ItemsSource = _eventLines,
-            FontFamily = new FontFamily("Consolas"),
-            FontSize = 12
-        };
+        _eventList.ItemsSource = _eventLines;
 
-        _eventScrollViewer = new ScrollViewer
-        {
-            HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
-            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-            Content = _eventList
-        };
+        _primaryRow.Children.Add(CreateFeatureButton("OSD", () => _features.ShowOsd()));
+        _primaryRow.Children.Add(CreateFeatureButton("-10s", () => _features.SeekRelative(-10)));
+        _primaryRow.Children.Add(CreateFeatureButton("+10s", () => _features.SeekRelative(10)));
+        _primaryRow.Children.Add(CreateFeatureButton("Vol-", () => _features.ChangeVolume(-5)));
+        _primaryRow.Children.Add(CreateFeatureButton("Vol+", () => _features.ChangeVolume(5)));
+        _primaryRow.Children.Add(CreateFeatureButton("Mute", () => _features.ToggleMute()));
+        _primaryRow.Children.Add(CreateFeatureButton("Speed", () => _features.CycleSpeed()));
+
+        _secondaryRow.Children.Add(CreateFeatureButton("Sub", () => _features.AddSampleSubtitle()));
+        _secondaryRow.Children.Add(CreateFeatureButton("Tracks", () => _features.DumpTracks()));
+        _secondaryRow.Children.Add(CreateFeatureButton("Shot", () => _features.TakeScreenshot()));
+        _secondaryRow.Children.Add(CreateFeatureButton("Config", () => _features.LoadSampleConfig()));
+        _secondaryRow.Children.Add(CreateAsyncFeatureButton("Lua", () => _features.LoadSampleLuaScriptAsync()));
+        _secondaryRow.Children.Add(CreateAsyncFeatureButton("yt-dlp", () => _features.RunYtdlpDiagnosticsAsync(_sourceBox.Text ?? string.Empty)));
+        _secondaryRow.Children.Add(CreateAsyncFeatureButton("Deno", () => _features.RunDenoDiagnosticsAsync()));
+        _secondaryRow.Children.Add(CreateAsyncFeatureButton("FFmpeg", () => _features.RunFFmpegDiagnosticsAsync()));
+        _secondaryRow.Children.Add(CreateAsyncFeatureButton("Save MP4", () => EncodeCurrentSourceToMp4Async(), SampleRuntime.SampleYtdlpUpdateButtonWidth));
+        _secondaryRow.Children.Add(CreateAsyncFeatureButton("Update yt", () => _features.RunYtdlpSelfUpdateAsync(), SampleRuntime.SampleYtdlpUpdateButtonWidth));
+        _secondaryRow.Children.Add(CreateAsyncFeatureButton("Update Deno", () => _features.RunDenoSelfUpgradeAsync(), SampleRuntime.SampleDenoUpdateButtonWidth));
 
         _eventLogDispatcher = new SampleEventLogDispatcher(AppendEventLines, ScheduleEventLogFlush);
         _statusDispatcher = new SampleStatusUpdateDispatcher(() => _features.GetStatusText(), SetStatusText, ScheduleUiUpdate);
 
-        Content = CreateLayout();
         SetRuntimeControlsEnabled(false);
         Opened += WindowOpened;
         AppendEventLine(CreateLifecycleLine("WindowCreated", "Avalonia 視窗已建立，等待 runtime 初始化。"));
+    }
+
+    /// <summary>
+    /// 載入 <c>MainWindow.axaml</c> 序列化的 visual tree。
+    /// </summary>
+    private void InitializeComponent()
+    {
+        AvaloniaXamlLoader.Load(this);
     }
 
     /// <summary>
@@ -328,13 +293,13 @@ public sealed class MainWindow : Window
         StackPanel panel = new StackPanel
         {
             Spacing = 18,
-            Margin = new Thickness(20),
+            Margin = new global::Avalonia.Thickness(20),
             Children =
             {
                 new TextBlock
                 {
                     Text = message,
-                    TextWrapping = TextWrapping.Wrap
+                    TextWrapping = global::Avalonia.Media.TextWrapping.Wrap
                 },
                 closeButton
             }
@@ -541,243 +506,6 @@ public sealed class MainWindow : Window
     }
 
     /// <summary>
-    /// 建立範例視窗版面。
-    /// </summary>
-    /// <returns>包含工具列、功能列、播放區域與事件清單的根版面。</returns>
-    private Grid CreateLayout()
-    {
-        Grid root = new Grid
-        {
-            RowDefinitions =
-            {
-                new RowDefinition(new GridLength(SampleRuntime.SampleToolbarHeight, GridUnitType.Pixel)),
-                new RowDefinition(new GridLength(SampleRuntime.SampleFeaturePanelHeight, GridUnitType.Pixel)),
-                new RowDefinition(new GridLength(1, GridUnitType.Star)),
-                new RowDefinition(new GridLength(SampleRuntime.SampleEventLogHeight, GridUnitType.Pixel))
-            }
-        };
-
-        Grid toolbar = CreateToolbar();
-        Control featurePanel = CreateFeaturePanel();
-        Grid playerSurface = CreatePlayerSurface();
-
-        root.Children.Add(toolbar);
-        Grid.SetRow(featurePanel, 1);
-        root.Children.Add(featurePanel);
-        Grid.SetRow(playerSurface, 2);
-        root.Children.Add(playerSurface);
-        Grid.SetRow(_eventScrollViewer, 3);
-        root.Children.Add(_eventScrollViewer);
-        return root;
-    }
-
-    /// <summary>
-    /// 建立範例工具列。
-    /// </summary>
-    /// <returns>包含來源輸入與播放命令的工具列。</returns>
-    private Grid CreateToolbar()
-    {
-        Grid toolbar = new Grid
-        {
-            Margin = new Thickness(SampleRuntime.SampleControlPadding),
-            ColumnDefinitions =
-            {
-                new ColumnDefinition(new GridLength(1, GridUnitType.Star)),
-                new ColumnDefinition(new GridLength(SampleRuntime.SampleButtonWidth, GridUnitType.Pixel)),
-                new ColumnDefinition(new GridLength(SampleRuntime.SampleControlSpacing, GridUnitType.Pixel)),
-                new ColumnDefinition(new GridLength(SampleRuntime.SampleButtonWidth, GridUnitType.Pixel)),
-                new ColumnDefinition(new GridLength(SampleRuntime.SampleControlSpacing, GridUnitType.Pixel)),
-                new ColumnDefinition(new GridLength(SampleRuntime.SampleButtonWidth, GridUnitType.Pixel))
-            }
-        };
-
-        toolbar.Children.Add(_sourceBox);
-        Grid.SetColumn(_loadButton, 1);
-        toolbar.Children.Add(_loadButton);
-        Grid.SetColumn(_pauseButton, 3);
-        toolbar.Children.Add(_pauseButton);
-        Grid.SetColumn(_stopButton, 5);
-        toolbar.Children.Add(_stopButton);
-        return toolbar;
-    }
-
-    /// <summary>
-    /// 建立進階功能展示列。
-    /// </summary>
-    /// <returns>包含格式、狀態與 API 按鈕的功能列。</returns>
-    private Control CreateFeaturePanel()
-    {
-        Grid panel = new Grid
-        {
-            Margin = new Thickness(0),
-            RowDefinitions =
-            {
-                new RowDefinition(new GridLength(40, GridUnitType.Pixel)),
-                new RowDefinition(new GridLength(40, GridUnitType.Pixel))
-            }
-        };
-
-        WrapPanel primaryRow = new WrapPanel
-        {
-            Margin = new Thickness(SampleRuntime.SampleControlPadding, 4, SampleRuntime.SampleControlPadding, 0),
-            VerticalAlignment = VerticalAlignment.Center,
-            Orientation = Orientation.Horizontal
-        };
-        primaryRow.Children.Add(_formatComboBox);
-        primaryRow.Children.Add(_statusTextBlock);
-        primaryRow.Children.Add(_mvvmStateTextBlock);
-        primaryRow.Children.Add(CreateFeatureButton("OSD", () => _features.ShowOsd()));
-        primaryRow.Children.Add(CreateFeatureButton("-10s", () => _features.SeekRelative(-10)));
-        primaryRow.Children.Add(CreateFeatureButton("+10s", () => _features.SeekRelative(10)));
-        primaryRow.Children.Add(CreateFeatureButton("Vol-", () => _features.ChangeVolume(-5)));
-        primaryRow.Children.Add(CreateFeatureButton("Vol+", () => _features.ChangeVolume(5)));
-        primaryRow.Children.Add(CreateFeatureButton("Mute", () => _features.ToggleMute()));
-        primaryRow.Children.Add(CreateFeatureButton("Speed", () => _features.CycleSpeed()));
-
-        WrapPanel secondaryRow = new WrapPanel
-        {
-            Margin = new Thickness(SampleRuntime.SampleControlPadding, 2, SampleRuntime.SampleControlPadding, 4),
-            VerticalAlignment = VerticalAlignment.Center,
-            Orientation = Orientation.Horizontal
-        };
-        secondaryRow.Children.Add(CreateFeatureButton("Sub", () => _features.AddSampleSubtitle()));
-        secondaryRow.Children.Add(CreateFeatureButton("Tracks", () => _features.DumpTracks()));
-        secondaryRow.Children.Add(CreateFeatureButton("Shot", () => _features.TakeScreenshot()));
-        secondaryRow.Children.Add(CreateFeatureButton("Config", () => _features.LoadSampleConfig()));
-        secondaryRow.Children.Add(CreateAsyncFeatureButton("Lua", () => _features.LoadSampleLuaScriptAsync()));
-        secondaryRow.Children.Add(CreateAsyncFeatureButton("yt-dlp", () => _features.RunYtdlpDiagnosticsAsync(_sourceBox.Text ?? string.Empty)));
-        secondaryRow.Children.Add(CreateAsyncFeatureButton("Deno", () => _features.RunDenoDiagnosticsAsync()));
-        secondaryRow.Children.Add(CreateAsyncFeatureButton("FFmpeg", () => _features.RunFFmpegDiagnosticsAsync()));
-        secondaryRow.Children.Add(CreateAsyncFeatureButton("Save MP4", () => EncodeCurrentSourceToMp4Async(), SampleRuntime.SampleYtdlpUpdateButtonWidth));
-        secondaryRow.Children.Add(CreateAsyncFeatureButton("Update yt", () => _features.RunYtdlpSelfUpdateAsync(), SampleRuntime.SampleYtdlpUpdateButtonWidth));
-        secondaryRow.Children.Add(CreateAsyncFeatureButton("Update Deno", () => _features.RunDenoSelfUpgradeAsync(), SampleRuntime.SampleDenoUpdateButtonWidth));
-
-        panel.Children.Add(primaryRow);
-        Grid.SetRow(secondaryRow, 1);
-        panel.Children.Add(secondaryRow);
-        return panel;
-    }
-
-    /// <summary>
-    /// 建立播放區域與 Avalonia 覆蓋層展示。
-    /// </summary>
-    /// <returns>包含單一播放器與同層覆蓋層示範的播放區域。</returns>
-    private Grid CreatePlayerSurface()
-    {
-        Grid playerSurface = new Grid
-        {
-            RowDefinitions =
-            {
-                new RowDefinition(new GridLength(SampleRuntime.SampleAirspaceComparisonHeight, GridUnitType.Pixel)),
-                new RowDefinition(new GridLength(1, GridUnitType.Star))
-            }
-        };
-
-        Grid header = CreateHeaderPanel();
-        Grid videoSurface = CreateVideoSurface();
-        Grid.SetRow(videoSurface, 1);
-        playerSurface.Children.Add(header);
-        playerSurface.Children.Add(videoSurface);
-        return playerSurface;
-    }
-
-    /// <summary>
-    /// 建立左右對照標題列。
-    /// </summary>
-    /// <returns>包含 OpenGL render API 與一般覆蓋層標題的面板。</returns>
-    private static Grid CreateHeaderPanel()
-    {
-        Grid header = new Grid
-        {
-            ColumnDefinitions =
-            {
-                new ColumnDefinition(new GridLength(1, GridUnitType.Star)),
-                new ColumnDefinition(new GridLength(1, GridUnitType.Star))
-            }
-        };
-
-        Border safeHeader = CreateHeaderBadge("Avalonia OpenGL render API：同層組合", SampleTheme.AccentBadgeArgb, new Thickness(16, 6, 8, 6));
-        Border normalHeader = CreateHeaderBadge("Avalonia Overlay：同層覆蓋示範", SampleTheme.ContrastBadgeArgb, new Thickness(8, 6, 16, 6));
-        header.Children.Add(safeHeader);
-        Grid.SetColumn(normalHeader, 1);
-        header.Children.Add(normalHeader);
-        return header;
-    }
-
-    /// <summary>
-    /// 建立播放視訊與覆蓋層對照面板。
-    /// </summary>
-    /// <returns>包含播放器與一般 Avalonia 覆蓋層的播放面板。</returns>
-    private Grid CreateVideoSurface()
-    {
-        Grid videoSurface = new Grid
-        {
-            Background = Brushes.Black
-        };
-
-        Border safeOverlay = CreateOverlayBadge("OpenGL render API：同層覆蓋", SampleTheme.AccentBadgeArgb, HorizontalAlignment.Left);
-        Border normalOverlay = CreateOverlayBadge("Avalonia Overlay：同層覆蓋", SampleTheme.ContrastBadgeArgb, HorizontalAlignment.Right);
-        videoSurface.Children.Add(_playerHostContainer);
-        videoSurface.Children.Add(safeOverlay);
-        videoSurface.Children.Add(normalOverlay);
-        return videoSurface;
-    }
-
-    /// <summary>
-    /// 建立播放區中的覆蓋層標籤。
-    /// </summary>
-    /// <param name="text">要顯示的標籤文字。</param>
-    /// <param name="backgroundArgb">標籤背景色彩 ARGB。</param>
-    /// <param name="alignment">標籤水平對齊方式。</param>
-    /// <returns>已套用固定尺寸與色彩的覆蓋層標籤。</returns>
-    private static Border CreateOverlayBadge(string text, int backgroundArgb, HorizontalAlignment alignment)
-    {
-        return new Border
-        {
-            Width = SampleRuntime.SampleOverlayBadgeWidth,
-            Height = SampleRuntime.SampleOverlayBadgeHeight,
-            Margin = new Thickness(16),
-            HorizontalAlignment = alignment,
-            VerticalAlignment = VerticalAlignment.Top,
-            CornerRadius = new CornerRadius(4),
-            Background = new SolidColorBrush(ThemeColor(backgroundArgb)),
-            Child = new TextBlock
-            {
-                Text = text,
-                Foreground = new SolidColorBrush(ThemeColor(SampleTheme.BadgeForegroundArgb)),
-                FontWeight = FontWeight.SemiBold,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center
-            }
-        };
-    }
-
-    /// <summary>
-    /// 建立 OpenGL 同層組合展示標題列。
-    /// </summary>
-    /// <param name="text">要顯示的標題文字。</param>
-    /// <param name="backgroundArgb">標題背景色彩 ARGB。</param>
-    /// <param name="margin">標題外距。</param>
-    /// <returns>已套用固定色彩與邊界的標題。</returns>
-    private static Border CreateHeaderBadge(string text, int backgroundArgb, Thickness margin)
-    {
-        return new Border
-        {
-            Margin = margin,
-            CornerRadius = new CornerRadius(4),
-            Background = new SolidColorBrush(ThemeColor(backgroundArgb)),
-            Child = new TextBlock
-            {
-                Text = text,
-                Foreground = new SolidColorBrush(ThemeColor(SampleTheme.BadgeForegroundArgb)),
-                FontWeight = FontWeight.SemiBold,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center
-            }
-        };
-    }
-
-    /// <summary>
     /// 執行同步範例功能並處理錯誤。
     /// </summary>
     /// <param name="action">要執行的功能。</param>
@@ -970,22 +698,14 @@ public sealed class MainWindow : Window
     }
 
     /// <summary>
-    /// 建立 yt-dlp 格式下拉選單。
+    /// 設定 XAML 宣告的 yt-dlp 格式下拉選單：填入選項並訂閱變更事件。
     /// </summary>
-    /// <returns>已填入格式選項的下拉選單。</returns>
-    private ComboBox CreateFormatComboBox()
+    private void ConfigureFormatComboBox()
     {
         IReadOnlyList<SampleYtdlpFormatChoice> choices = SampleFeatureController.CreateYtdlpFormatChoices();
         SampleYtdlpFormatChoice defaultChoice = SampleFeatureController.CreateDefaultYtdlpFormatChoice();
         int selectedIndex = 0;
-        ComboBox comboBox = new ComboBox
-        {
-            Width = 132,
-            Height = SampleRuntime.SampleButtonHeight,
-            Margin = new Thickness(SampleRuntime.SampleControlPadding, 4, SampleRuntime.SampleControlSpacing, 4),
-            ItemsSource = choices
-        };
-
+        _formatComboBox.ItemsSource = choices;
         for (int index = 0; index < choices.Count; index++)
         {
             if (string.Equals(choices[index].Selector, defaultChoice.Selector, StringComparison.Ordinal))
@@ -994,9 +714,8 @@ public sealed class MainWindow : Window
             }
         }
 
-        comboBox.SelectedIndex = selectedIndex;
-        comboBox.SelectionChanged += FormatComboBoxSelectionChanged;
-        return comboBox;
+        _formatComboBox.SelectedIndex = selectedIndex;
+        _formatComboBox.SelectionChanged += FormatComboBoxSelectionChanged;
     }
 
     /// <summary>
@@ -1014,16 +733,6 @@ public sealed class MainWindow : Window
             HorizontalContentAlignment = HorizontalAlignment.Center,
             VerticalContentAlignment = VerticalAlignment.Center
         };
-    }
-
-    /// <summary>
-    /// 將 <see cref="SampleTheme"/> 的 ARGB 整數轉成 Avalonia 顏色。
-    /// </summary>
-    /// <param name="argb">要轉換的 ARGB 整數。</param>
-    /// <returns>對應的 Avalonia 顏色。</returns>
-    private static Color ThemeColor(int argb)
-    {
-        return Color.FromUInt32(unchecked((uint)argb));
     }
 
     /// <summary>
@@ -1066,7 +775,7 @@ public sealed class MainWindow : Window
             Content = text,
             Width = width,
             Height = SampleRuntime.SampleButtonHeight,
-            Margin = new Thickness(0, 4, SampleRuntime.SampleControlSpacing, 4),
+            Margin = new global::Avalonia.Thickness(0, 4, SampleRuntime.SampleControlSpacing, 4),
             HorizontalContentAlignment = HorizontalAlignment.Center,
             VerticalContentAlignment = VerticalAlignment.Center
         };

@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="MediaEmbedKit.Mpv.Samples.Maui.MainPage"
+             Title="MediaEmbedKit.Mpv MAUI Sample">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="88" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="168" />
+        </Grid.RowDefinitions>
+
+        <!-- Toolbar：來源輸入 + Load / Pause / Stop 按鈕。事件處理在 code-behind。 -->
+        <Grid Grid.Row="0"
+              HeightRequest="48"
+              ColumnSpacing="8"
+              Padding="8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="88" />
+                <ColumnDefinition Width="88" />
+                <ColumnDefinition Width="88" />
+            </Grid.ColumnDefinitions>
+            <Entry x:Name="_sourceEntry"
+                   Grid.Column="0"
+                   HeightRequest="32"
+                   HorizontalOptions="Fill"
+                   VerticalOptions="Center" />
+            <Button x:Name="_loadButton"
+                    Grid.Column="1"
+                    Text="Load"
+                    WidthRequest="88" HeightRequest="32"
+                    HorizontalOptions="Fill"
+                    VerticalOptions="Center"
+                    Clicked="LoadButtonClicked" />
+            <Button x:Name="_pauseButton"
+                    Grid.Column="2"
+                    Text="Pause"
+                    WidthRequest="88" HeightRequest="32"
+                    HorizontalOptions="Fill"
+                    VerticalOptions="Center"
+                    Clicked="PauseButtonClicked" />
+            <Button x:Name="_stopButton"
+                    Grid.Column="3"
+                    Text="Stop"
+                    WidthRequest="88" HeightRequest="32"
+                    HorizontalOptions="Fill"
+                    VerticalOptions="Center"
+                    Clicked="StopButtonClicked" />
+        </Grid>
+
+        <!-- FeaturePanel：兩排 FlexLayout。Picker / 兩個 Label 在 markup 宣告；
+             其餘 feature button 由 code-behind 透過 CreateFeatureButton /
+             CreateAsyncFeatureButton 加入。 -->
+        <Grid Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="40" />
+                <RowDefinition Height="40" />
+            </Grid.RowDefinitions>
+            <FlexLayout x:Name="_primaryRow"
+                        Grid.Row="0"
+                        Direction="Row"
+                        Wrap="Wrap"
+                        AlignItems="Center"
+                        Padding="8,4,8,0">
+                <Picker x:Name="_formatPicker"
+                        WidthRequest="132" HeightRequest="32"
+                        Margin="0,0,8,4"
+                        SelectedIndexChanged="FormatPickerSelectedIndexChanged" />
+                <Label x:Name="_statusLabel"
+                       Text="播放器尚未初始化"
+                       WidthRequest="380" HeightRequest="32"
+                       Padding="8,0"
+                       VerticalTextAlignment="Center"
+                       LineBreakMode="TailTruncation" />
+                <Label x:Name="_mvvmStateLabel"
+                       Text="MVVM 綁定示範：狀態 = Idle"
+                       WidthRequest="240" HeightRequest="32"
+                       Padding="8,0"
+                       VerticalTextAlignment="Center"
+                       LineBreakMode="TailTruncation" />
+            </FlexLayout>
+            <FlexLayout x:Name="_secondaryRow"
+                        Grid.Row="1"
+                        Direction="Row"
+                        Wrap="Wrap"
+                        AlignItems="Center"
+                        Padding="8,2,8,4" />
+        </Grid>
+
+        <!-- PlayerSurface：上方標題列 + 下方視訊區 + 一般 MAUI Overlay 對照。
+             _playerHostContainer 在 runtime 就緒後由 CreatePlayerHost 把 MpvView 插入。 -->
+        <Grid Grid.Row="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="40" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Label Grid.Column="0"
+                       Text="控制項 OverlayView：可覆蓋 HWND"
+                       Margin="16,6,8,6"
+                       BackgroundColor="#FF0078D4"
+                       TextColor="White"
+                       FontAttributes="Bold"
+                       HorizontalOptions="Fill"
+                       VerticalOptions="Fill"
+                       HorizontalTextAlignment="Center"
+                       VerticalTextAlignment="Center"
+                       LineBreakMode="TailTruncation" />
+                <Label Grid.Column="1"
+                       Text="一般 MAUI Overlay 嘗試覆蓋同一個 HWND"
+                       Margin="8,6,16,6"
+                       BackgroundColor="#FF323130"
+                       TextColor="White"
+                       FontAttributes="Bold"
+                       HorizontalOptions="Fill"
+                       VerticalOptions="Fill"
+                       HorizontalTextAlignment="Center"
+                       VerticalTextAlignment="Center"
+                       LineBreakMode="TailTruncation" />
+            </Grid>
+            <Grid Grid.Row="1" BackgroundColor="Black">
+                <Grid x:Name="_playerHostContainer" />
+                <Label Text="一般 MAUI Overlay：AirSpace 對照"
+                       WidthRequest="340" HeightRequest="32"
+                       Margin="16"
+                       BackgroundColor="#FF323130"
+                       TextColor="White"
+                       FontAttributes="Bold"
+                       HorizontalOptions="End"
+                       VerticalOptions="Start"
+                       HorizontalTextAlignment="Center"
+                       VerticalTextAlignment="Center"
+                       LineBreakMode="TailTruncation"
+                       ZIndex="10" />
+            </Grid>
+        </Grid>
+
+        <!-- EventLog：libmpv 事件與範例生命週期輸出。
+             ItemsSource / DataTemplate 由 code-behind 設定（為了與 _eventLines /
+             SampleEventLogDispatcher 共用 ObservableCollection）。 -->
+        <CollectionView x:Name="_eventList" Grid.Row="3" />
+    </Grid>
+</ContentPage>

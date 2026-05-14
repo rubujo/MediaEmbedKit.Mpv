@@ -103,8 +103,8 @@ muteButton.Click += (_, _) => playerControl.ToggleMuteCommand.Execute(null);
 | --- | --- |
 | `samples/WpfSample/MainWindow.xaml` | `DataContext = playerHost`、`PlaybackState` 文字、`Volume` 雙向、`TogglePauseCommand` / `ToggleMuteCommand` |
 | `samples/WinUISample/MainWindow.xaml` | `MvvmDemoBar.DataContext = playerHost`、同上元素 |
-| `samples/AvaloniaSample/MainWindow.cs` | `_mvvmStateTextBlock.Bind(...)` + `TogglePauseCommand` / `StopCommand` 取代 click 內容 |
-| `samples/MauiSample/MainPage.cs` | `_mvvmStateLabel.SetBinding(...)` + Command click |
+| `samples/AvaloniaSample/MainWindow.axaml.cs` | `_mvvmStateTextBlock.Bind(...)` + `TogglePauseCommand` / `StopCommand` 取代 click 內容 |
+| `samples/MauiSample/MainPage.xaml.cs` | `_mvvmStateLabel.SetBinding(...)` + Command click |
 | `samples/WinFormsSample/MainForm.cs` | `_mvvmStateLabel.DataBindings.Add(...)` + Command click |
 
 ## 注意事項

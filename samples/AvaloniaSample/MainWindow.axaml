@@ -1,0 +1,145 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mpv="clr-namespace:MediaEmbedKit.Mpv.Avalonia;assembly=MediaEmbedKit.Mpv.Avalonia"
+        x:Class="MediaEmbedKit.Mpv.Samples.Avalonia.MainWindow"
+        Title="MediaEmbedKit.Mpv Avalonia Sample"
+        Width="1200" Height="720"
+        MinWidth="1200" MinHeight="720"
+        WindowStartupLocation="CenterScreen">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="48" />
+            <RowDefinition Height="88" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="168" />
+        </Grid.RowDefinitions>
+
+        <!-- Toolbar：來源輸入 + Load / Pause / Stop 按鈕。
+             按鈕由 code-behind 透過 CreateCommandButton 建立並加入 _toolbarHost。 -->
+        <Grid x:Name="_toolbarHost" Grid.Row="0" Margin="8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="88" />
+                <ColumnDefinition Width="8" />
+                <ColumnDefinition Width="88" />
+                <ColumnDefinition Width="8" />
+                <ColumnDefinition Width="88" />
+            </Grid.ColumnDefinitions>
+            <TextBox x:Name="_sourceBox"
+                     Grid.Column="0"
+                     VerticalContentAlignment="Center"
+                     MinHeight="32"
+                     Margin="0,0,8,0" />
+        </Grid>
+
+        <!-- FeaturePanel：兩排 WrapPanel。
+             _formatComboBox / _statusTextBlock / _mvvmStateTextBlock 在 code-behind
+             加入 _primaryRow；其餘 feature button 由 CreateFeatureButton /
+             CreateAsyncFeatureButton 透過 code-behind 加入。 -->
+        <Grid Grid.Row="1" Margin="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="40" />
+                <RowDefinition Height="40" />
+            </Grid.RowDefinitions>
+            <WrapPanel x:Name="_primaryRow"
+                       Grid.Row="0"
+                       Margin="8,4,8,0"
+                       VerticalAlignment="Center"
+                       Orientation="Horizontal">
+                <ComboBox x:Name="_formatComboBox"
+                          Width="132" Height="32"
+                          Margin="8,4,8,4" />
+                <TextBlock x:Name="_statusTextBlock"
+                           Width="380" Height="32"
+                           Margin="0,0,8,4" Padding="8,0"
+                           VerticalAlignment="Center"
+                           Text="播放器尚未初始化"
+                           TextTrimming="CharacterEllipsis" />
+                <TextBlock x:Name="_mvvmStateTextBlock"
+                           Width="240" Height="32"
+                           Margin="0,0,8,4" Padding="8,0"
+                           VerticalAlignment="Center"
+                           Text="MVVM 綁定示範：狀態 = Idle" />
+            </WrapPanel>
+            <WrapPanel x:Name="_secondaryRow"
+                       Grid.Row="1"
+                       Margin="8,2,8,4"
+                       VerticalAlignment="Center"
+                       Orientation="Horizontal" />
+        </Grid>
+
+        <!-- PlayerSurface：上方標題列 + 下方視訊區 + 覆蓋層展示。
+             _playerHostContainer 在 runtime 就緒後由 CreatePlayerHost 把
+             MpvAvaloniaPlayer 插入；同層覆蓋徽章直接在 markup 宣告。 -->
+        <Grid Grid.Row="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="40" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Border Grid.Column="0"
+                        Margin="16,6,8,6"
+                        CornerRadius="4"
+                        Background="#FF0078D4">
+                    <TextBlock Text="Avalonia OpenGL render API：同層組合"
+                               Foreground="White"
+                               FontWeight="SemiBold"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center" />
+                </Border>
+                <Border Grid.Column="1"
+                        Margin="8,6,16,6"
+                        CornerRadius="4"
+                        Background="#FF323130">
+                    <TextBlock Text="Avalonia Overlay：同層覆蓋示範"
+                               Foreground="White"
+                               FontWeight="SemiBold"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center" />
+                </Border>
+            </Grid>
+            <Grid Grid.Row="1" Background="Black">
+                <Grid x:Name="_playerHostContainer" />
+                <Border Width="340" Height="32"
+                        Margin="16"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Top"
+                        CornerRadius="4"
+                        Background="#FF0078D4">
+                    <TextBlock Text="OpenGL render API：同層覆蓋"
+                               Foreground="White"
+                               FontWeight="SemiBold"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center" />
+                </Border>
+                <Border Width="340" Height="32"
+                        Margin="16"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Top"
+                        CornerRadius="4"
+                        Background="#FF323130">
+                    <TextBlock Text="Avalonia Overlay：同層覆蓋"
+                               Foreground="White"
+                               FontWeight="SemiBold"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center" />
+                </Border>
+            </Grid>
+        </Grid>
+
+        <!-- EventLog：libmpv 事件與範例生命週期輸出。
+             ItemsSource / 內容變更由 code-behind 維護 ObservableCollection。 -->
+        <ScrollViewer x:Name="_eventScrollViewer"
+                      Grid.Row="3"
+                      HorizontalScrollBarVisibility="Auto"
+                      VerticalScrollBarVisibility="Auto">
+            <ItemsControl x:Name="_eventList"
+                          FontFamily="Consolas"
+                          FontSize="12" />
+        </ScrollViewer>
+    </Grid>
+</Window>

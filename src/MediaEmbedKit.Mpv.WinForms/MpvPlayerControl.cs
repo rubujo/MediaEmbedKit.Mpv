@@ -15,7 +15,6 @@ namespace MediaEmbedKit.Mpv.WinForms;
 [DefaultProperty(nameof(Source))]
 [DefaultEvent(nameof(PlayerCreated))]
 [DefaultBindingProperty(nameof(Source))]
-[DesignerCategory("Code")]
 [Description("以 libmpv 播放媒體的 WinForms 控制項。")]
 public class MpvPlayerControl : Control, INotifyPropertyChanged
 {

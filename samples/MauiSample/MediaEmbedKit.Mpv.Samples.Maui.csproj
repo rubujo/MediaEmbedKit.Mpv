@@ -25,6 +25,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- App icon：背景單色 + 前景 play triangle，由 MAUI build 自動產生各平台所需解析度。 -->
+    <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#0F4A4F" />
+
+    <!-- Splash screen：與 app icon 同 play triangle 主題；底色對齊 icon 背景。 -->
+    <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#0F4A4F" BaseSize="128,128" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Include="..\SampleRuntime.cs" Link="SampleRuntime.cs" />
     <Compile Include="..\SampleEventLogDispatcher.cs" Link="SampleEventLogDispatcher.cs" />
     <Compile Include="..\SampleStatusUpdateDispatcher.cs" Link="SampleStatusUpdateDispatcher.cs" />
