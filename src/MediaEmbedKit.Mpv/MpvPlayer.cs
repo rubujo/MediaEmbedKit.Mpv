@@ -92,10 +92,6 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// 表示目前播放器是否已釋放。
     /// </summary>
     private bool _disposed;
-    /// <summary>
-    /// <see cref="Chapters"/> 的 lazy-init backing。
-    /// </summary>
-    private MpvChapters? _chapters;
 
     /// <summary>
     /// 使用預設選項初始化 <see cref="MpvPlayer"/> 類別的新執行個體。
@@ -523,6 +519,56 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     {
         get { return !string.Equals(GetPropertyString("loop-playlist"), "no", StringComparison.OrdinalIgnoreCase); }
         set { SetPropertyString("loop-playlist", value ? "inf" : "no"); }
+    }
+
+    /// <summary>
+    /// 取得或設定當前章節 0-based 索引；未載入媒體或無章節時取得為 <see langword="null"/>。
+    /// 寫入會把播放位置跳到對應章節（mpv <c>chapter</c> property）。
+    /// </summary>
+    /// <value>當前章節索引；libmpv 對「無章節」回傳 -1，本屬性轉換為 <see langword="null"/>。</value>
+    public int? Chapter
+    {
+        get
+        {
+            if (!TryGetPropertyInt64("chapter", out long value) || value < 0)
+            {
+                return null;
+            }
+
+            return checked((int)value);
+        }
+
+        set
+        {
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value), "Chapter 不可設為 null；要清除請改用 SeekTime / loadfile。");
+            }
+
+            if (value.Value < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(value), value.Value, "章節索引不可為負值。");
+            }
+
+            SetPropertyInt64("chapter", value.Value);
+        }
+    }
+
+    /// <summary>
+    /// 取得當前媒體的章節總數；未載入媒體或無章節時為 0。等同 <c>chapters</c> 屬性。
+    /// </summary>
+    /// <value>章節總數。</value>
+    public int ChapterCount
+    {
+        get
+        {
+            if (!TryGetPropertyInt64("chapters", out long count) || count < 0)
+            {
+                return 0;
+            }
+
+            return checked((int)count);
+        }
     }
 
     /// <summary>
@@ -2258,6 +2304,166 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     }
 
     /// <summary>
+    /// 跳到下一章節（mpv 命令 <c>add chapter 1</c>）。媒體未載入或無章節時 silently
+    /// no-op，對齊 LibVLCSharp <see cref="!:LibVLCSharp.Shared.MediaPlayer.NextChapter"/>
+    /// 風格；已在最後一章時 mpv 視為結束播放。
+    /// </summary>
+    public void NextChapter()
+    {
+        if (Chapter == null)
+        {
+            return;
+        }
+
+        Command("add", "chapter", "1");
+    }
+
+    /// <summary>
+    /// 跳到前一章節（mpv 命令 <c>add chapter -1</c>）。媒體未載入或無章節時 silently
+    /// no-op；已在第一章時 mpv 維持當前章節。
+    /// </summary>
+    public void PreviousChapter()
+    {
+        if (Chapter == null)
+        {
+            return;
+        }
+
+        Command("add", "chapter", "-1");
+    }
+
+    /// <summary>
+    /// 跳到指定 0-based 索引的章節（寫入 mpv <c>chapter</c> 屬性）。
+    /// 等同 <c>Chapter = index</c>，提供方法形式以對齊既有 <see cref="PlayPlaylistIndex(int)"/>
+    /// 命名慣例。
+    /// </summary>
+    /// <param name="index">目標章節索引；libmpv 會拒絕超出 <see cref="ChapterCount"/> 範圍的值。</param>
+    /// <exception cref="ArgumentOutOfRangeException">索引為負時擲回。</exception>
+    /// <exception cref="MpvException">索引超出範圍或當前媒體無章節時擲回。</exception>
+    public void SeekChapter(int index)
+    {
+        if (index < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(index), index, "章節索引不可為負值。");
+        }
+
+        SetPropertyInt64("chapter", index);
+    }
+
+    /// <summary>
+    /// 取得或設定主字幕軌是否顯示（mpv <c>sub-visibility</c>）。
+    /// </summary>
+    /// <value>顯示時為 <see langword="true"/>。</value>
+    public bool SubtitleVisible
+    {
+        get { return GetPropertyFlag("sub-visibility"); }
+        set { SetPropertyFlag("sub-visibility", value); }
+    }
+
+    /// <summary>
+    /// 取得或設定主字幕同步偏移（mpv <c>sub-delay</c>，秒）。正值延後、負值提前。
+    /// </summary>
+    /// <value>字幕同步偏移時間。</value>
+    public TimeSpan SubtitleDelay
+    {
+        get { return TimeSpan.FromSeconds(GetPropertyDouble("sub-delay")); }
+        set { SetPropertyDouble("sub-delay", value.TotalSeconds); }
+    }
+
+    /// <summary>
+    /// 取得或設定主字幕垂直位置（mpv <c>sub-pos</c>），0 為畫面最頂、100 為最底。
+    /// 範圍允許 0–150（150 會超出畫面下緣讓字幕隱藏）。
+    /// </summary>
+    /// <value>字幕垂直位置百分比。</value>
+    public double SubtitlePosition
+    {
+        get { return GetPropertyDouble("sub-pos"); }
+        set { SetPropertyDouble("sub-pos", value); }
+    }
+
+    /// <summary>
+    /// 取得或設定主字幕縮放（mpv <c>sub-scale</c>），1.0 為原始大小。
+    /// </summary>
+    /// <value>字幕縮放比例。</value>
+    public double SubtitleScale
+    {
+        get { return GetPropertyDouble("sub-scale"); }
+        set { SetPropertyDouble("sub-scale", value); }
+    }
+
+    /// <summary>
+    /// 取得或設定主字幕字型大小（mpv <c>sub-font-size</c>），單位為 pt at 720p reference。
+    /// </summary>
+    /// <value>字幕字型大小。</value>
+    public double SubtitleFontSize
+    {
+        get { return GetPropertyDouble("sub-font-size"); }
+        set { SetPropertyDouble("sub-font-size", value); }
+    }
+
+    /// <summary>
+    /// 取得或設定主字幕字型家族（mpv <c>sub-font</c>），例如 <c>"sans-serif"</c> 或 <c>"Noto Sans CJK TC"</c>。
+    /// </summary>
+    /// <value>字幕字型家族名稱；未設定時為空字串。</value>
+    public string? SubtitleFontFamily
+    {
+        get { return GetPropertyString("sub-font"); }
+        set { SetPropertyString("sub-font", value ?? string.Empty); }
+    }
+
+    /// <summary>
+    /// 取得或設定主字幕主要色彩（mpv <c>sub-color</c>），接受 <c>#AARRGGBB</c> /
+    /// <c>#RRGGBB</c> / 命名色彩 / 浮點 RGBA 等格式；可用 <see cref="MpvColor"/> 工具
+    /// 從 ARGB 分量建構。
+    /// </summary>
+    /// <value>mpv 接受的色彩字串。</value>
+    public string? SubtitleColor
+    {
+        get { return GetPropertyString("sub-color"); }
+        set { SetPropertyString("sub-color", value ?? string.Empty); }
+    }
+
+    /// <summary>
+    /// 取得或設定主字幕背景色彩（mpv <c>sub-back-color</c>），格式同 <see cref="SubtitleColor"/>。
+    /// </summary>
+    /// <value>mpv 接受的色彩字串。</value>
+    public string? SubtitleBackgroundColor
+    {
+        get { return GetPropertyString("sub-back-color"); }
+        set { SetPropertyString("sub-back-color", value ?? string.Empty); }
+    }
+
+    /// <summary>
+    /// 取得或設定主字幕粗體（mpv <c>sub-bold</c>）。
+    /// </summary>
+    /// <value>套用粗體時為 <see langword="true"/>。</value>
+    public bool SubtitleBold
+    {
+        get { return GetPropertyFlag("sub-bold"); }
+        set { SetPropertyFlag("sub-bold", value); }
+    }
+
+    /// <summary>
+    /// 取得或設定主字幕斜體（mpv <c>sub-italic</c>）。
+    /// </summary>
+    /// <value>套用斜體時為 <see langword="true"/>。</value>
+    public bool SubtitleItalic
+    {
+        get { return GetPropertyFlag("sub-italic"); }
+        set { SetPropertyFlag("sub-italic", value); }
+    }
+
+    /// <summary>
+    /// 取得或設定主音訊軌同步偏移（mpv <c>audio-delay</c>，秒）。正值延後、負值提前。
+    /// </summary>
+    /// <value>音訊同步偏移時間。</value>
+    public TimeSpan AudioDelay
+    {
+        get { return TimeSpan.FromSeconds(GetPropertyDouble("audio-delay")); }
+        set { SetPropertyDouble("audio-delay", value.TotalSeconds); }
+    }
+
+    /// <summary>
     /// 載入外部字幕播放軌。
     /// </summary>
     /// <param name="url">字幕檔案路徑或網路網址。</param>
@@ -3360,28 +3566,6 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// </summary>
     private readonly Dictionary<(string Name, MpvFormat Format), object> _propertyObservables =
         new Dictionary<(string Name, MpvFormat Format), object>();
-
-    /// <summary>
-    /// 取得當前媒體的章節 typed 操作 sub-object（lazy-init）。
-    /// 首次存取時建立；之後重複呼叫回傳同一執行個體。
-    /// </summary>
-    /// <remarks>
-    /// 屬性值（<see cref="MpvChapters.Items"/> / <see cref="MpvChapters.CurrentIndex"/> 等）
-    /// 每次存取都向 libmpv 即時 fetch，無快取。
-    /// </remarks>
-    public MpvChapters Chapters
-    {
-        get
-        {
-            EnsureNotDisposed();
-            if (_chapters == null)
-            {
-                System.Threading.Interlocked.CompareExchange(ref _chapters, new MpvChapters(this), null);
-            }
-
-            return _chapters;
-        }
-    }
 
     /// <summary>
     /// 取得指定 libmpv 屬性的 <see cref="IObservable{T}"/>，多個訂閱者共享單一觀察註冊。

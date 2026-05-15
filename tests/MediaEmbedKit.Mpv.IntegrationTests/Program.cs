@@ -231,11 +231,15 @@ internal static class Program
         {
             return VerifyHdrPropertyPathAsync(runtimeDirectory);
         });
-        runner.Add("MpvChapters typed API（未載入媒體 + 無章節媒體）", delegate
+        runner.Add("Chapter typed flat API（無媒體 + 合成 mp4）", delegate
         {
-            return VerifyChaptersTypedApiAsync(runtimeDirectory);
+            return VerifyChapterFlatApiAsync(runtimeDirectory);
         });
-
+        runner.Add("Subtitle/Audio styling typed properties round-trip", delegate
+        {
+            return VerifySubtitleAudioStylingAsync(runtimeDirectory);
+        });
+        runner.Add("MpvColor helper FromArgb / FromRgb / TryParse", VerifyMpvColorHelper);
         await runner.RunAsync().ConfigureAwait(false);
         return runner.FailedCount == 0 ? 0 : 1;
     }
@@ -1697,38 +1701,34 @@ internal static class Program
     }
 
     /// <summary>
-    /// 驗證 <see cref="MpvPlayer.Chapters"/> typed API 的 wrapper 行為。未載入媒體時
-    /// snapshot 應為空、CurrentIndex 為 null；載入無章節的合成 mp4 後同樣為空。
-    /// 本測試不驗證實際章節內容（需要含 chapter metadata 的 mkv，那是 encoder 層工作）。
+    /// 驗證 chapter flat API（<see cref="MpvPlayer.Chapter"/> / <see cref="MpvPlayer.ChapterCount"/> /
+    /// <see cref="MpvPlayer.NextChapter"/> / <see cref="MpvPlayer.PreviousChapter"/> /
+    /// <see cref="MpvPlayer.SeekChapter"/>）的 wrapper 行為。未載入媒體或無章節時應為空 /
+    /// no-op；本測試不驗證實際章節內容（需要含 chapter metadata 的 mkv，屬 encoder 層工作）。
     /// </summary>
     /// <param name="runtimeDirectory">包含 libmpv 的執行階段資料夾。</param>
     /// <returns>代表測試流程的工作。</returns>
-    private static async Task VerifyChaptersTypedApiAsync(string runtimeDirectory)
+    private static async Task VerifyChapterFlatApiAsync(string runtimeDirectory)
     {
         using (MpvPlayer player = CreatePlayer(runtimeDirectory))
         {
             player.Initialize();
 
-            // 未載入媒體：Items 應為空、Count == 0、CurrentIndex / Current 為 null
-            IntegrationAssert.Equal(0, player.Chapters.Count, "未載入媒體時 Chapters.Count 應為 0。");
-            IntegrationAssert.Equal(0, player.Chapters.Items.Count, "未載入媒體時 Chapters.Items 應為空。");
-            IntegrationAssert.True(player.Chapters.CurrentIndex == null, "未載入媒體時 Chapters.CurrentIndex 應為 null。");
-            IntegrationAssert.True(player.Chapters.Current == null, "未載入媒體時 Chapters.Current 應為 null。");
+            // 未載入媒體：Chapter / ChapterCount 應為 null / 0
+            IntegrationAssert.True(player.Chapter == null, "未載入媒體時 Chapter 應為 null。");
+            IntegrationAssert.Equal(0, player.ChapterCount, "未載入媒體時 ChapterCount 應為 0。");
+            IntegrationAssert.Equal(0, player.GetChapters().Count, "未載入媒體時 GetChapters 應為空。");
 
-            // sub-object lazy-init 一致性：兩次存取應回傳同一執行個體
-            IntegrationAssert.True(object.ReferenceEquals(player.Chapters, player.Chapters),
-                "Chapters sub-object 應為單例（lazy-init 後重用）。");
-
-            // SeekTo 負值應立即擲 ArgumentOutOfRangeException（不到 libmpv 層）
+            // SeekChapter 負值應立即擲 ArgumentOutOfRangeException（不到 libmpv 層）
             IntegrationAssert.Throws<ArgumentOutOfRangeException>(
-                delegate { player.Chapters.SeekTo(-1); },
-                "SeekTo 負值應擲 ArgumentOutOfRangeException。");
+                delegate { player.SeekChapter(-1); },
+                "SeekChapter 負值應擲 ArgumentOutOfRangeException。");
 
-            // Next / Previous 在無章節時 mpv 視為 no-op，不應擲例外
-            player.Chapters.Next();
-            player.Chapters.Previous();
+            // NextChapter / PreviousChapter 在無章節時應 silently no-op
+            player.NextChapter();
+            player.PreviousChapter();
 
-            // 載入無章節的合成 mp4 後仍應為 0
+            // 載入無章節合成 mp4 後同樣為 0
             string? lavfiPath = await TryGenerateLavfiTestVideoAsync(runtimeDirectory, 1.0).ConfigureAwait(false);
             if (lavfiPath != null)
             {
@@ -1738,8 +1738,8 @@ internal static class Program
                     player.LoadFile(lavfiPath);
                     await probe.WaitForFileLoadedAsync().ConfigureAwait(false);
 
-                    IntegrationAssert.Equal(0, player.Chapters.Count, "合成 mp4 無章節，Count 應為 0。");
-                    IntegrationAssert.Equal(0, player.Chapters.Items.Count, "合成 mp4 無章節，Items 應為空。");
+                    IntegrationAssert.Equal(0, player.ChapterCount, "合成 mp4 無章節，ChapterCount 應為 0。");
+                    IntegrationAssert.Equal(0, player.GetChapters().Count, "合成 mp4 無章節，GetChapters 應為空。");
                 }
                 finally
                 {
@@ -1751,6 +1751,100 @@ internal static class Program
                 Console.WriteLine("(略過載入媒體後章節驗證：mpv av://lavfi 合成輸入不可用)");
             }
         }
+    }
+
+    /// <summary>
+    /// 驗證 subtitle / audio styling typed properties 的 round-trip：所有 11 個屬性
+    /// 寫入後讀回相符。本測試不需要實際載入字幕軌（mpv 屬性可在 idle 狀態 round-trip）。
+    /// </summary>
+    /// <param name="runtimeDirectory">包含 libmpv 的執行階段資料夾。</param>
+    /// <returns>代表測試流程的工作。</returns>
+    private static Task VerifySubtitleAudioStylingAsync(string runtimeDirectory)
+    {
+        using (MpvPlayer player = CreatePlayer(runtimeDirectory))
+        {
+            player.Initialize();
+
+            // SubtitleVisible
+            player.SubtitleVisible = false;
+            IntegrationAssert.True(!player.SubtitleVisible, "SubtitleVisible=false round-trip。");
+            player.SubtitleVisible = true;
+            IntegrationAssert.True(player.SubtitleVisible, "SubtitleVisible=true round-trip。");
+
+            // SubtitleDelay（TimeSpan）
+            player.SubtitleDelay = TimeSpan.FromSeconds(2.5);
+            IntegrationAssert.Near(2.5, player.SubtitleDelay.TotalSeconds, 0.001, "SubtitleDelay 2.5s round-trip。");
+            player.SubtitleDelay = TimeSpan.Zero;
+
+            // SubtitlePosition
+            player.SubtitlePosition = 80;
+            IntegrationAssert.Near(80, player.SubtitlePosition, 0.5, "SubtitlePosition 80 round-trip。");
+
+            // SubtitleScale
+            player.SubtitleScale = 1.25;
+            IntegrationAssert.Near(1.25, player.SubtitleScale, 0.01, "SubtitleScale 1.25 round-trip。");
+            player.SubtitleScale = 1.0;
+
+            // SubtitleFontSize
+            player.SubtitleFontSize = 42;
+            IntegrationAssert.Near(42, player.SubtitleFontSize, 0.5, "SubtitleFontSize 42 round-trip。");
+
+            // SubtitleFontFamily
+            player.SubtitleFontFamily = "sans-serif";
+            IntegrationAssert.Equal("sans-serif", player.SubtitleFontFamily, "SubtitleFontFamily round-trip。");
+
+            // SubtitleColor / SubtitleBackgroundColor
+            string color = MpvColor.FromArgb(0xFF, 0xCC, 0xCC, 0xCC);
+            player.SubtitleColor = color;
+            // mpv 可能正規化字串大小寫；只驗證設定不擲例外、讀回不為 null。
+            IntegrationAssert.True(!string.IsNullOrEmpty(player.SubtitleColor), "SubtitleColor 寫入後應可讀回。");
+
+            player.SubtitleBackgroundColor = MpvColor.FromRgb(0x00, 0x00, 0x00);
+            IntegrationAssert.True(!string.IsNullOrEmpty(player.SubtitleBackgroundColor), "SubtitleBackgroundColor 寫入後應可讀回。");
+
+            // SubtitleBold / SubtitleItalic
+            player.SubtitleBold = true;
+            IntegrationAssert.True(player.SubtitleBold, "SubtitleBold round-trip。");
+            player.SubtitleItalic = true;
+            IntegrationAssert.True(player.SubtitleItalic, "SubtitleItalic round-trip。");
+            player.SubtitleBold = false;
+            player.SubtitleItalic = false;
+
+            // AudioDelay
+            player.AudioDelay = TimeSpan.FromSeconds(-0.3);
+            IntegrationAssert.Near(-0.3, player.AudioDelay.TotalSeconds, 0.001, "AudioDelay -0.3s round-trip。");
+            player.AudioDelay = TimeSpan.Zero;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// 驗證 <see cref="MpvColor"/> helper：FromArgb / FromRgb 產出 mpv 接受的字串；
+    /// TryParse 把多種變體正規化為 <c>#AARRGGBB</c>。
+    /// </summary>
+    /// <returns>代表測試流程的工作。</returns>
+    private static Task VerifyMpvColorHelper()
+    {
+        IntegrationAssert.Equal("#FFCCCCCC", MpvColor.FromArgb(0xFF, 0xCC, 0xCC, 0xCC), "FromArgb #FFCCCCCC。");
+        IntegrationAssert.Equal("#FF000000", MpvColor.FromRgb(0x00, 0x00, 0x00), "FromRgb 黑色 #FF000000。");
+        IntegrationAssert.Equal("#80FF0000", MpvColor.FromArgb(0x80, 0xFF, 0x00, 0x00), "FromArgb 半透明紅。");
+
+        // TryParse round-trip 變體
+        string? normalized;
+        IntegrationAssert.True(MpvColor.TryParse("#FFCCCCCC", out normalized) && normalized == "#FFCCCCCC", "TryParse #FFCCCCCC pass-through。");
+        IntegrationAssert.True(MpvColor.TryParse("#CCCCCC", out normalized) && normalized == "#FFCCCCCC", "TryParse #CCCCCC 補 alpha。");
+        IntegrationAssert.True(MpvColor.TryParse("0xFFCCCCCC", out normalized) && normalized == "#FFCCCCCC", "TryParse 0x 前綴正規化。");
+        IntegrationAssert.True(MpvColor.TryParse("  #CCCCCC  ", out normalized) && normalized == "#FFCCCCCC", "TryParse 容忍前後空白。");
+
+        // 無效輸入回傳 false
+        IntegrationAssert.True(!MpvColor.TryParse(null, out _), "TryParse null 應回 false。");
+        IntegrationAssert.True(!MpvColor.TryParse("", out _), "TryParse 空字串應回 false。");
+        IntegrationAssert.True(!MpvColor.TryParse("not-a-color", out _), "TryParse 命名色彩不在處理範圍應回 false。");
+        IntegrationAssert.True(!MpvColor.TryParse("#GGGGGG", out _), "TryParse 非十六進位應回 false。");
+        IntegrationAssert.True(!MpvColor.TryParse("#FFF", out _), "TryParse 3 位數短格式不在處理範圍應回 false。");
+
+        return Task.CompletedTask;
     }
 
     /// <summary>

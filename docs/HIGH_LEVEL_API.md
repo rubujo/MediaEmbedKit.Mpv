@@ -178,6 +178,65 @@ services.AddMpvPlayerFactory(builder => builder
 
 `AddMpvPlayerFactory` 會註冊一個 `Func<Task<MpvPlayer>>`，由呼叫端在啟動流程（例如 `IHostedService.StartAsync`、應用程式啟動程式碼）以 `await` 建立並自行決定生命週期。`MpvPlayer` 的初始化本質上是非同步的，本函式庫只提供非同步入口，不提供同步等待版本以避免常見的 `GetAwaiter().GetResult()` 死鎖。
 
+## 章節 / Subtitle / Audio styling typed API
+
+flat API（直接掛在 `MpvPlayer` 上）。設計上跟既有 `PlaylistNext` / `AddSubtitle` 等慣例一致；對應 libmpv property / command 的 typed 包裝，省去手動 `GetPropertyString("sub-color")` 與字串組裝。
+
+### 章節 navigation
+
+```csharp
+int? current = player.Chapter;             // 0-based 索引，null = 無章節
+int total = player.ChapterCount;            // 章節總數
+IReadOnlyList<MpvChapterInfo> chapters = player.GetChapters();
+
+player.NextChapter();                       // 媒體無章節時 silently no-op
+player.PreviousChapter();
+player.SeekChapter(3);                      // 等同 player.Chapter = 3
+```
+
+包裝的 mpv：`chapter` / `chapters` / `chapter-list` property + `add chapter ±1` 命令。
+
+### Subtitle styling
+
+```csharp
+player.SubtitleVisible = true;
+player.SubtitleDelay = TimeSpan.FromSeconds(0.5);   // 字幕慢 0.5 秒
+player.SubtitlePosition = 80;                        // 0=畫面頂、100=底
+player.SubtitleScale = 1.25;
+player.SubtitleFontSize = 36;
+player.SubtitleFontFamily = "Noto Sans CJK TC";
+player.SubtitleColor = MpvColor.FromArgb(0xFF, 0xFF, 0xFF, 0xFF);
+player.SubtitleBackgroundColor = MpvColor.FromArgb(0x80, 0x00, 0x00, 0x00);
+player.SubtitleBold = true;
+player.SubtitleItalic = false;
+```
+
+包裝的 mpv：`sub-visibility` / `sub-delay` / `sub-pos` / `sub-scale` / `sub-font-size` / `sub-font` / `sub-color` / `sub-back-color` / `sub-bold` / `sub-italic`。
+
+### Audio sync
+
+```csharp
+player.AudioDelay = TimeSpan.FromSeconds(-0.05);    // 音訊提前 50ms
+```
+
+包裝的 mpv：`audio-delay`。
+
+### MpvColor helper
+
+`SubtitleColor` / `SubtitleBackgroundColor` 接受任意 mpv 色彩字串（`#AARRGGBB` / 命名色彩 / `0xRRGGBB` / 浮點 RGBA）。`MpvColor` 靜態 helper 提供 compile-time typed 構造：
+
+```csharp
+string opaque = MpvColor.FromRgb(0xFF, 0xCC, 0xCC);           // #FFFFCCCC
+string transparent = MpvColor.FromArgb(0x80, 0xFF, 0x00, 0x00); // #80FF0000
+
+if (MpvColor.TryParse(userInput, out string? normalized))
+{
+    player.SubtitleColor = normalized;                          // 正規化為 #AARRGGBB
+}
+```
+
+setter 不做自動驗證（避免 hot-path 成本），呼叫端可選用 `MpvColor.TryParse` 預先驗證。
+
 ## MpvCapabilities
 
 對 libmpv 取一次性快照，內含 client API 版本、mpv 版本字串、mpv-configuration、protocols、decoders、demuxers，並提供 `SupportsProtocol` / `ContainsDemuxer` / `ContainsDecoder` 預斷方法。
