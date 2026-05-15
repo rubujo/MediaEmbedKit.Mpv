@@ -599,10 +599,25 @@ public sealed partial class MainForm : Form
             _eventListBox.EndUpdate();
         }
 
-        if (_eventListBox.Items.Count > 0)
+        ScrollEventListToEnd();
+    }
+
+    /// <summary>
+    /// 把事件清單捲動到底端：算出當前可視 item 數，把 <see cref="ListBox.TopIndex"/>
+    /// 設成讓最後一個 item 對齊在 viewport 底端的索引。直接設 <c>TopIndex = Count - 1</c>
+    /// 會把最後一個 item 放在 viewport 頂端、下方留空，視覺上像沒捲動。
+    /// </summary>
+    private void ScrollEventListToEnd()
+    {
+        int itemCount = _eventListBox.Items.Count;
+        if (itemCount <= 0)
         {
-            _eventListBox.TopIndex = _eventListBox.Items.Count - 1;
+            return;
         }
+
+        int itemHeight = Math.Max(1, _eventListBox.ItemHeight);
+        int visibleItems = Math.Max(1, _eventListBox.ClientSize.Height / itemHeight);
+        _eventListBox.TopIndex = Math.Max(0, itemCount - visibleItems);
     }
 
     /// <summary>
