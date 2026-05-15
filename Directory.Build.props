@@ -4,12 +4,20 @@
     <ImplicitUsings>false</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Deterministic>true</Deterministic>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <!--
+      TreatWarningsAsErrors / EnforceCodeStyleInBuild：本機 dev build 仍允許
+      warnings（避免 SourceLink「無遠端」這類本機環境固有 warning 卡住 build），
+      但 CI build 強制 0 warning 才過。release gate 跑的 dotnet format 也會在
+      pre-merge 抓到格式問題。
+    -->
+    <TreatWarningsAsErrors Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</TreatWarningsAsErrors>
+    <TreatWarningsAsErrors Condition="'$(ContinuousIntegrationBuild)' != 'true'">false</TreatWarningsAsErrors>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <AnalysisLevel>latest</AnalysisLevel>
     <AnalysisMode>Default</AnalysisMode>
-    <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+    <EnforceCodeStyleInBuild Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</EnforceCodeStyleInBuild>
+    <EnforceCodeStyleInBuild Condition="'$(ContinuousIntegrationBuild)' != 'true'">false</EnforceCodeStyleInBuild>
     <!--
       抑制以下規則：
       CA1711 — 型別名稱結尾不可為 'Stream' / 'Flags' 等。我方 P/Invoke 命名鏡像 mpv enum，
