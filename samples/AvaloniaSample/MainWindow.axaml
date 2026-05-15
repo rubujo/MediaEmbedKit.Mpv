@@ -216,14 +216,14 @@
         </Grid>
 
         <!-- EventLog：libmpv 事件與範例生命週期輸出。
-             ItemsSource / 內容變更由 code-behind 維護 ObservableCollection。 -->
-        <ScrollViewer x:Name="_eventScrollViewer"
-                      Grid.Row="3"
-                      HorizontalScrollBarVisibility="Auto"
-                      VerticalScrollBarVisibility="Auto">
-            <ItemsControl x:Name="_eventList"
-                          FontFamily="Consolas"
-                          FontSize="12" />
-        </ScrollViewer>
+             ItemsSource / 內容變更由 code-behind 維護 ObservableCollection。
+             用 ListBox 而不是 ItemsControl + ScrollViewer，因為 ListBox 內建
+             VirtualizingStackPanel 與自家 ScrollViewer，增量 add / remove 不會
+             rebuild 整個 child collection，避免「先放原位 → 重測 → 跳新位」的
+             閃爍。對齊 WPF sample 同樣使用 ListBox 的策略。 -->
+        <ListBox x:Name="_eventList"
+                 Grid.Row="3"
+                 FontFamily="Consolas"
+                 FontSize="12" />
     </Grid>
 </Window>

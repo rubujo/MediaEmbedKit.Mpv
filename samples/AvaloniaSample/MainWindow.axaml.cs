@@ -617,7 +617,18 @@ public sealed partial class MainWindow : Window
             _eventLines.RemoveAt(0);
         }
 
-        _eventScrollViewer.ScrollToEnd();
+        if (_eventLines.Count > 0)
+        {
+            // Avalonia ListBox 沒有 WPF / WinUI 的 ScrollIntoView 公開 API；改透過
+            // virtualizing items host 的 BringIntoView 把最後一個容器捲到可視範圍。
+            // 由於 ListBox 用 VirtualizingStackPanel，container 可能還沒實體化，需
+            // 排到 background priority 等 layout 完成後再執行。
+            string lastLine = _eventLines[_eventLines.Count - 1];
+            Dispatcher.UIThread.Post(() =>
+            {
+                _eventList.ScrollIntoView(lastLine);
+            }, DispatcherPriority.Background);
+        }
     }
 
     /// <summary>
