@@ -29,10 +29,30 @@
     <PackageReleaseNotes>初始 alpha 套件。支援 Windows x64 libmpv wrapper、runtime helper 與 Windows 桌面 UI 控制項。</PackageReleaseNotes>
     <RepositoryType>git</RepositoryType>
     <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
+
+    <!--
+      SourceLink + symbol packaging（套用至所有 packable 套件）。
+      consumer 從 NuGet 安裝套件後可直接 step-into 我方原始碼（透過 GitHub raw URL），
+      exception stack trace 也會解析回完整檔名 / 行號。
+      - PublishRepositoryUrl：把 git remote URL 嵌入 NuGet metadata，啟用 NuGet Gallery
+        的 source 連結
+      - EmbedUntrackedSources：把 generator 產出 / 沒進 git 的 .cs（例如 Avalonia
+        NameGenerator 的 .g.cs）也嵌進 PDB，避免 step-into 失敗
+      - DebugType=portable：跨平台、與 SourceLink 相容的 PDB 格式（取代舊式 Windows-only
+        full PDB）
+      - IncludeSymbols + SymbolPackageFormat=snupkg：發佈 .snupkg symbol 套件到
+        NuGet symbol server，與主套件分離但同版本綁定
+    -->
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <DebugType>portable</DebugType>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(IsPackable)' != 'false'">
     <None Include="$(MSBuildThisFileDirectory)README.md" Pack="true" PackagePath="\" Link="README.md" />
     <None Include="$(MSBuildThisFileDirectory)THIRD_PARTY_NOTICES.md" Pack="true" PackagePath="\" Link="THIRD_PARTY_NOTICES.md" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="all" />
   </ItemGroup>
 </Project>
