@@ -2642,7 +2642,7 @@ internal static class RuntimeResolver
             MpvRuntimeInstallResult result = await MpvRuntimeInstaller.InstallOrUpdateAsync(runtimeDirectory, options).ConfigureAwait(false);
             if (!result.IsSupported || string.IsNullOrWhiteSpace(result.LibMpvPath))
             {
-                throw new InvalidOperationException("無法準備 Windows x64 libmpv 執行階段：" + result.Message);
+                throw new InvalidOperationException("無法準備 Windows libmpv 執行階段：" + result.Message);
             }
         }
 

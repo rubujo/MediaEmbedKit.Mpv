@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace MediaEmbedKit.Mpv.Downloads;
 
 /// <summary>
-/// 提供 yt-dlp FFmpeg-Builds Windows x64 下載、版本查詢與解壓縮 helper。
+/// 提供 yt-dlp FFmpeg-Builds Windows x64 / ARM64 下載、版本查詢與解壓縮 helper。
 /// </summary>
 public static class FFmpegDownloader
 {
@@ -46,7 +46,7 @@ public static class FFmpegDownloader
     }
 
     /// <summary>
-    /// 下載並解壓縮最新 yt-dlp FFmpeg-Builds Windows x64 發行檔。
+    /// 下載並解壓縮最新 yt-dlp FFmpeg-Builds Windows 發行檔（x64 或 ARM64，依 <see cref="FFmpegDownloadOptions.Architecture"/>）。
     /// </summary>
     /// <param name="installDirectory">FFmpeg 與 FFprobe 要安裝到的資料夾。</param>
     /// <param name="options">FFmpeg 下載選項；未指定時使用預設選項。</param>

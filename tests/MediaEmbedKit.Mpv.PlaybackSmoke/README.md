@@ -14,7 +14,7 @@ dotnet run --project .\tests\MediaEmbedKit.Mpv.PlaybackSmoke\MediaEmbedKit.Mpv.P
 dotnet run --project .\tests\MediaEmbedKit.Mpv.PlaybackSmoke\MediaEmbedKit.Mpv.PlaybackSmoke.csproj -- --sample WinForms --seconds 20
 ```
 
-可用範例名稱為 `WinForms`、`WPF`、`Avalonia`、`WinUI`、`MAUI` 或 `all`。第一次執行可能需要下載 Windows x64 runtime 資產。
+可用範例名稱為 `WinForms`、`WPF`、`Avalonia`、`WinUI`、`MAUI` 或 `all`。第一次執行可能需要下載 Windows x64 / ARM64 runtime 資產。
 
 ## 重複執行與共用 runtime
 

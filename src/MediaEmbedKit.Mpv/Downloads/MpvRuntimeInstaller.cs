@@ -49,7 +49,7 @@ public static class MpvRuntimeInstaller
             platform,
             MpvNativeRuntimeCatalog.GetProjectSupportStatus(platform),
             runtimeDirectory,
-            "自動執行階段安裝目前僅實作 Windows x64。",
+            "自動執行階段安裝目前僅實作 Windows x64 / ARM64。",
             null,
             MpvNativeRuntimeCatalog.GetSources(platform));
     }

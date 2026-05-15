@@ -1,6 +1,6 @@
 # MediaEmbedKit.Mpv.IntegrationTests
 
-此專案執行需要 Windows x64 `libmpv-2.dll` 的整合測試，涵蓋初始化、屬性、錯誤路徑、本機 WAV 播放事件、自訂 stream callback 與 FFmpeg-Builds 下載驗證。
+此專案執行需要 Windows x64 或 ARM64 `libmpv-2.dll` 的整合測試，涵蓋初始化、屬性、錯誤路徑、本機 WAV 播放事件、自訂 stream callback 與 FFmpeg-Builds 下載驗證。
 
 ## 執行
 

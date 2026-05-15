@@ -97,20 +97,25 @@ public static class MpvLibraryLoader
     public static string GetDefaultRuntimeIdentifier()
     {
 #if NET5_0_OR_GREATER || NETSTANDARD2_0
-        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ||
-            RuntimeInformation.OSArchitecture != Architecture.X64 ||
-            RuntimeInformation.ProcessArchitecture != Architecture.X64)
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            throw new PlatformNotSupportedException("目前只支援 Windows x64 runtime。");
+            throw new PlatformNotSupportedException("目前只支援 Windows x64 / ARM64 runtime。");
         }
+
+        return RuntimeInformation.ProcessArchitecture switch
+        {
+            Architecture.X64 => "win-x64",
+            Architecture.Arm64 => "win-arm64",
+            _ => throw new PlatformNotSupportedException("目前只支援 Windows x64 / ARM64 runtime。"),
+        };
 #else
         if (IntPtr.Size != 8)
         {
-            throw new PlatformNotSupportedException("目前只支援 Windows x64 runtime。");
+            throw new PlatformNotSupportedException("目前只支援 Windows x64 / ARM64 runtime。");
         }
-#endif
 
         return "win-x64";
+#endif
     }
 
     /// <summary>
