@@ -284,7 +284,7 @@ internal static class SampleRuntime
     }
 
     /// <summary>
-    /// 準備核心播放器範例需要的 Windows x64 runtime。
+    /// 準備核心播放器範例需要的 Windows runtime（依目前處理序架構選擇 x64 或 ARM64 資產）。
     /// </summary>
     /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
     /// <returns>可提供給播放器選項的 runtime 資料夾完整路徑。</returns>
@@ -318,7 +318,7 @@ internal static class SampleRuntime
             return _activeRuntimeDirectory;
         }
 
-        throw new PlatformNotSupportedException("目前範例只支援 Windows x64 runtime 自動安裝：" + result.Message);
+        throw new PlatformNotSupportedException("目前範例只支援 Windows runtime（x64 / ARM64）自動安裝：" + result.Message);
     }
 
     /// <summary>

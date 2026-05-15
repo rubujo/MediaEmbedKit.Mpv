@@ -20,10 +20,10 @@
 
 ## 必守規則
 
-- 目前產品支援範圍為 Windows x64。
+- 目前產品支援範圍為 Windows x64 與 Windows ARM64。ARM64 程式碼路徑與 runtime 資產 mapping 已就緒，物理機驗證狀態以 `docs/SUPPORT_MATRIX.md` 為準。
 - 核心 libmpv 包裝需維持 stable v0.41.0 公開 C API 覆蓋。
 - WinForms、WPF、WinUI 3 與 MAUI Windows UI 控制項使用 HWND 後端。
-- Avalonia 使用 Windows x64 OpenGL render API 後端。
+- Avalonia 使用 OpenGL render API 後端。
 - 控制項建構函式不得下載 runtime asset。
 - libmpv 更新需在已載入時暫存並提示重新啟動，不得實作處理序內 hot reload。
 - runtime helper 可同層管理 `libmpv-2.dll`、`yt-dlp.exe`、`deno.exe`、`ffmpeg.exe` 與 `ffprobe.exe`。
@@ -46,4 +46,4 @@ dotnet build .\MediaEmbedKit.Mpv.slnx
 ```
 
 使用 `rg` 搜尋程式碼。變更 API 行為、支援範圍或平台宣告時，必須同步更新文件。
-發佈品質相關任務以 `tools/Invoke-PreReleaseValidation.ps1` 為主流程；需要完整 Windows x64 release gate 時使用 `-IncludeWindowsReleaseGate`。
+發佈品質相關任務以 `tools/Invoke-PreReleaseValidation.ps1` 為主流程；需要完整 Windows release gate 時使用 `-IncludeWindowsReleaseGate`。

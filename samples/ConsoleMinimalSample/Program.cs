@@ -53,7 +53,7 @@ internal static class Program
 
         try
         {
-            Console.WriteLine("準備 Windows x64 runtime...");
+            Console.WriteLine("準備 Windows runtime...");
             string runtimeDirectory = await SampleRuntime.PrepareCoreRuntimeAsync().ConfigureAwait(false);
 
             if (encodeOutput != null)

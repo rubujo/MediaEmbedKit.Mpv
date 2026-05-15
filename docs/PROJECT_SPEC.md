@@ -43,4 +43,4 @@ dotnet run --project .\tests\MediaEmbedKit.Mpv.IntegrationTests\MediaEmbedKit.Mp
 dotnet build .\MediaEmbedKit.Mpv.slnx
 ```
 
-整合測試需要 Windows x64 `libmpv-2.dll`。URL 播放需要 `yt-dlp.exe` 可被 mpv 找到，或透過 `MpvPlayerOptions.YtdlpPath` 指定。FFmpeg-Builds 下載驗證需可連線至 GitHub Releases。
+整合測試需要 Windows `libmpv-2.dll`。URL 播放需要 `yt-dlp.exe` 可被 mpv 找到，或透過 `MpvPlayerOptions.YtdlpPath` 指定。FFmpeg-Builds 下載驗證需可連線至 GitHub Releases。

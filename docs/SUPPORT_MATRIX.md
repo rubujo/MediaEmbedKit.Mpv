@@ -51,7 +51,7 @@ libmpv 兩個架構皆由 [shinchiro/mpv-winbuild-cmake](https://github.com/shin
 
 ## 驗證狀態
 
-Windows x64 發佈前驗證以本機 release gate 為準：
+Windows 發佈前驗證以本機 release gate 為準：
 
 ```powershell
 .\tools\Invoke-PreReleaseValidation.ps1

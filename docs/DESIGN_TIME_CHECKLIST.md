@@ -1,6 +1,6 @@
 # Windows 設計階段檢查清單
 
-本文件定義 Windows x64 UI 控制項在 Visual Studio 設計階段應符合的行為。設計階段不得下載 runtime、不得初始化 libmpv，也不得建立實際播放工作。
+本文件定義 Windows UI 控制項在 Visual Studio 設計階段應符合的行為（x64 / ARM64 共用）。設計階段不得下載 runtime、不得初始化 libmpv，也不得建立實際播放工作。
 
 ## VS 2026 設計階段支援現況
 

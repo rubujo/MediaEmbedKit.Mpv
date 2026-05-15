@@ -1,6 +1,6 @@
 # 範例總覽
 
-本資料夾包含 MediaEmbedKit.Mpv 的 Windows x64 範例。範例用於示範 runtime 準備、播放器初始化、事件輸出、播放控制、AirSpace 行為與資源釋放。
+本資料夾包含 MediaEmbedKit.Mpv 的 Windows 範例（x64 / ARM64，runtime helper 依目前處理序架構自動選擇對應資產）。範例用於示範 runtime 準備、播放器初始化、事件輸出、播放控制、AirSpace 行為與資源釋放。
 
 ## 專案
 

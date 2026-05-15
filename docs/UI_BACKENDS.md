@@ -4,7 +4,7 @@
 
 ## 後端策略
 
-WinForms、WPF、WinUI 3 與 .NET MAUI Windows 使用 HWND `wid` 後端。Avalonia 使用 Windows x64 OpenGL render API 後端。
+WinForms、WPF、WinUI 3 與 .NET MAUI Windows 使用 HWND `wid` 後端。Avalonia 使用 Windows OpenGL render API 後端。
 
 ## 後端差異
 

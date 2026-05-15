@@ -1,6 +1,6 @@
 # 發佈前檢查清單
 
-本文件定義 Windows x64 發佈前可在本機完成的檢查項目。現階段發佈品質以本機驗證鏈為準，不建立 CI 工作流程。
+本文件定義 Windows 發佈前可在本機完成的檢查項目（x64 / ARM64 共用同一驗證鏈，runtime helper 依目前處理序架構自動選擇對應資產）。現階段發佈品質以本機驗證鏈為準，不建立 CI 工作流程。
 
 ## 必要檢查
 
@@ -18,13 +18,13 @@
 .\tools\Invoke-PreReleaseValidation.ps1 -IncludeWindowsReleaseGate -GuiPlaybackSeconds 20
 ```
 
-預估資源（Windows x64，純機器跑、開發人員無互動）：
+預估資源（Windows，純機器跑、開發人員無互動）：
 
 | 場景 | 大約耗時 | 額外磁碟需求 | 備註 |
 | --- | --- | --- | --- |
 | 不帶任何旗標的最小驗證 | 約 5–10 分鐘 | < 1 GB | 還原、專案規範檢查、格式、核心測試、整合測試、方案建置、套件驗證、consumer 驗證。 |
 | `-IncludeStressTests` | 加約 5–10 分鐘 | 與上同 | 第一階段壓力測試包含播放器重複建立與釋放。 |
-| `-IncludeConsoleMinimalPlaybackValidation` | 加約 1–2 分鐘 | 與上同 | 需 Windows x64 runtime；單次 console minimal 播放。 |
+| `-IncludeConsoleMinimalPlaybackValidation` | 加約 1–2 分鐘 | 與上同 | 需 Windows runtime；單次 console minimal 播放。 |
 | `-IncludeGuiConsumerPlaybackValidation` | 加約 10–15 分鐘 | 加約 2–3 GB | 為 5 個 GUI sample 各建一份臨時 consumer 專案、本機 NuGet 套件、實際開視窗播放。 |
 | `-IncludeGuiPlaybackStress` | 加約 10–15 分鐘 / iteration | 與上同 | 重複啟動 5 個 GUI sample。可調整 `-GuiPlaybackIterations`。 |
 | `-IncludeWindowsReleaseGate` | 約 35–60 分鐘 | 約 3–5 GB | 上述全部開啟，建議在 release 前一次跑完。 |
@@ -37,7 +37,7 @@
 .\tools\Invoke-PreReleaseValidation.ps1 -IncludeWindowsReleaseGate -DryRun
 ```
 
-若目前環境沒有可用的 Windows x64 `libmpv-2.dll`，可先略過整合測試：
+若目前環境沒有可用的 Windows `libmpv-2.dll`，可先略過整合測試：
 
 ```powershell
 .\tools\Invoke-PreReleaseValidation.ps1 -SkipIntegrationTests

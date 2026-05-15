@@ -1,6 +1,6 @@
 # libmpv C API 測試矩陣
 
-本矩陣區分「C API 包裝覆蓋」與「實戰情境驗證」。核心包裝器已覆蓋 libmpv stable v0.41.0 的 `client.h`、`render.h`、`render_gl.h` 與 `stream_cb.h` 公開 API；整合測試會以 Windows x64 原生程式庫、媒體檔與錯誤路徑驗證主要實戰語意。
+本矩陣區分「C API 包裝覆蓋」與「實戰情境驗證」。核心包裝器已覆蓋 libmpv stable v0.41.0 的 `client.h`、`render.h`、`render_gl.h` 與 `stream_cb.h` 公開 API；整合測試會以 Windows 原生程式庫、媒體檔與錯誤路徑驗證主要實戰語意。
 
 ## 覆蓋狀態
 
@@ -71,7 +71,7 @@
 
 目前整合驗證涵蓋：
 
-- Windows x64 `libmpv-2.dll` 實際初始化。
+- Windows `libmpv-2.dll` 實際初始化。
 - 本機檔案與 `https://www.youtube.com/watch?v=dQw4w9WgXcQ` 播放。
 - 命令、屬性、觀察屬性、事件節點、記錄、hook、自訂串流與 render API。
 - 不存在屬性、錯誤格式、載入失敗、URL 工具不存在與 render context 建立失敗。

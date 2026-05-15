@@ -4,7 +4,7 @@
 
 ## 示範內容
 
-- 啟動時準備 Windows x64 runtime 資料夾。
+- 啟動時準備 Windows runtime 資料夾。
 - 使用控制項內建 `OverlayContent` 顯示影片上方 UI。
 - 透過 `SamplePlayerEventBridge` 輸出 libmpv 事件、記錄訊息與屬性變更。
 - 示範播放控制、字幕、截圖、OSD、yt-dlp 格式、yt-dlp/Deno 診斷與自我更新命令。
