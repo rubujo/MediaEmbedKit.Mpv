@@ -231,6 +231,10 @@ internal static class Program
         {
             return VerifyHdrPropertyPathAsync(runtimeDirectory);
         });
+        runner.Add("MpvChapters typed API（未載入媒體 + 無章節媒體）", delegate
+        {
+            return VerifyChaptersTypedApiAsync(runtimeDirectory);
+        });
 
         await runner.RunAsync().ConfigureAwait(false);
         return runner.FailedCount == 0 ? 0 : 1;
@@ -1690,6 +1694,63 @@ internal static class Program
         }
 
         return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// 驗證 <see cref="MpvPlayer.Chapters"/> typed API 的 wrapper 行為。未載入媒體時
+    /// snapshot 應為空、CurrentIndex 為 null；載入無章節的合成 mp4 後同樣為空。
+    /// 本測試不驗證實際章節內容（需要含 chapter metadata 的 mkv，那是 encoder 層工作）。
+    /// </summary>
+    /// <param name="runtimeDirectory">包含 libmpv 的執行階段資料夾。</param>
+    /// <returns>代表測試流程的工作。</returns>
+    private static async Task VerifyChaptersTypedApiAsync(string runtimeDirectory)
+    {
+        using (MpvPlayer player = CreatePlayer(runtimeDirectory))
+        {
+            player.Initialize();
+
+            // 未載入媒體：Items 應為空、Count == 0、CurrentIndex / Current 為 null
+            IntegrationAssert.Equal(0, player.Chapters.Count, "未載入媒體時 Chapters.Count 應為 0。");
+            IntegrationAssert.Equal(0, player.Chapters.Items.Count, "未載入媒體時 Chapters.Items 應為空。");
+            IntegrationAssert.True(player.Chapters.CurrentIndex == null, "未載入媒體時 Chapters.CurrentIndex 應為 null。");
+            IntegrationAssert.True(player.Chapters.Current == null, "未載入媒體時 Chapters.Current 應為 null。");
+
+            // sub-object lazy-init 一致性：兩次存取應回傳同一執行個體
+            IntegrationAssert.True(object.ReferenceEquals(player.Chapters, player.Chapters),
+                "Chapters sub-object 應為單例（lazy-init 後重用）。");
+
+            // SeekTo 負值應立即擲 ArgumentOutOfRangeException（不到 libmpv 層）
+            IntegrationAssert.Throws<ArgumentOutOfRangeException>(
+                delegate { player.Chapters.SeekTo(-1); },
+                "SeekTo 負值應擲 ArgumentOutOfRangeException。");
+
+            // Next / Previous 在無章節時 mpv 視為 no-op，不應擲例外
+            player.Chapters.Next();
+            player.Chapters.Previous();
+
+            // 載入無章節的合成 mp4 後仍應為 0
+            string? lavfiPath = await TryGenerateLavfiTestVideoAsync(runtimeDirectory, 1.0).ConfigureAwait(false);
+            if (lavfiPath != null)
+            {
+                try
+                {
+                    PlaybackEventProbe probe = new PlaybackEventProbe(player);
+                    player.LoadFile(lavfiPath);
+                    await probe.WaitForFileLoadedAsync().ConfigureAwait(false);
+
+                    IntegrationAssert.Equal(0, player.Chapters.Count, "合成 mp4 無章節，Count 應為 0。");
+                    IntegrationAssert.Equal(0, player.Chapters.Items.Count, "合成 mp4 無章節，Items 應為空。");
+                }
+                finally
+                {
+                    TryDeleteFile(lavfiPath);
+                }
+            }
+            else
+            {
+                Console.WriteLine("(略過載入媒體後章節驗證：mpv av://lavfi 合成輸入不可用)");
+            }
+        }
     }
 
     /// <summary>

@@ -92,6 +92,10 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// 表示目前播放器是否已釋放。
     /// </summary>
     private bool _disposed;
+    /// <summary>
+    /// <see cref="Chapters"/> 的 lazy-init backing。
+    /// </summary>
+    private MpvChapters? _chapters;
 
     /// <summary>
     /// 使用預設選項初始化 <see cref="MpvPlayer"/> 類別的新執行個體。
@@ -3356,6 +3360,28 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// </summary>
     private readonly Dictionary<(string Name, MpvFormat Format), object> _propertyObservables =
         new Dictionary<(string Name, MpvFormat Format), object>();
+
+    /// <summary>
+    /// 取得當前媒體的章節 typed 操作 sub-object（lazy-init）。
+    /// 首次存取時建立；之後重複呼叫回傳同一執行個體。
+    /// </summary>
+    /// <remarks>
+    /// 屬性值（<see cref="MpvChapters.Items"/> / <see cref="MpvChapters.CurrentIndex"/> 等）
+    /// 每次存取都向 libmpv 即時 fetch，無快取。
+    /// </remarks>
+    public MpvChapters Chapters
+    {
+        get
+        {
+            EnsureNotDisposed();
+            if (_chapters == null)
+            {
+                System.Threading.Interlocked.CompareExchange(ref _chapters, new MpvChapters(this), null);
+            }
+
+            return _chapters;
+        }
+    }
 
     /// <summary>
     /// 取得指定 libmpv 屬性的 <see cref="IObservable{T}"/>，多個訂閱者共享單一觀察註冊。
