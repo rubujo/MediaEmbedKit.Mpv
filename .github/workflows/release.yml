@@ -1,0 +1,71 @@
+name: release
+
+# 觸發策略：
+# - push semver-style tag（v0.1.0-alpha.1 / v1.0.0 等）自動跑
+# - workflow_dispatch 允許手動測試
+# 不 push 到 nuget.org；只把 .nupkg / .snupkg 上傳到對應 GitHub Release 頁面。
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write   # softprops/action-gh-release 上傳檔到 Release 需要
+
+jobs:
+  pack-and-release:
+    name: Pack and upload to GitHub Release
+    runs-on: windows-latest
+    timeout-minutes: 45
+    env:
+      MEDIAEMBEDKIT_MPV_RUNTIME_DIR: ${{ github.workspace }}\.cache\runtime
+      DOTNET_NOLOGO: true
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~\.nuget\packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/Directory.Packages.props', '**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
+
+      - name: Cache libmpv / yt-dlp / FFmpeg / Deno runtime
+        uses: actions/cache@v4
+        with:
+          path: .cache\runtime
+          key: runtime-${{ runner.os }}-${{ hashFiles('docs/runtime/libmpv-git-builds.json', 'src/MediaEmbedKit.Mpv/Downloads/**.cs') }}
+          restore-keys: |
+            runtime-${{ runner.os }}-
+
+      - name: Run release gate
+        # release gate 內第 8 步「NuGet 套件驗證」會呼叫 Invoke-PackageValidation.ps1，
+        # 它已經把 6 個 packable project pack 到 artifacts/packages/（含 .nupkg 與
+        # .snupkg）。下一步直接拿那邊的檔上傳，不重複 dotnet pack。
+        shell: pwsh
+        run: |
+          .\tools\Invoke-PreReleaseValidation.ps1
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/packages/*.nupkg
+            artifacts/packages/*.snupkg
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          # tag_name 由 push tag 自動取得
