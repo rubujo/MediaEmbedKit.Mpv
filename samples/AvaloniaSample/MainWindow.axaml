@@ -14,9 +14,8 @@
             <RowDefinition Height="168" />
         </Grid.RowDefinitions>
 
-        <!-- Toolbar：來源輸入 + Load / Pause / Stop 按鈕。
-             按鈕由 code-behind 透過 CreateCommandButton 建立並加入 _toolbarHost。 -->
-        <Grid x:Name="_toolbarHost" Grid.Row="0" Margin="8">
+        <!-- Toolbar：來源輸入 + Load / Pause / Stop 按鈕（完整在 markup 宣告）。 -->
+        <Grid Grid.Row="0" Margin="8">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="88" />
@@ -30,19 +29,32 @@
                      VerticalContentAlignment="Center"
                      MinHeight="32"
                      Margin="0,0,8,0" />
+            <Button x:Name="_loadButton" Content="Load"
+                    Grid.Column="1"
+                    MinWidth="88" MinHeight="32"
+                    HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                    Click="OnLoadClicked" />
+            <Button x:Name="_pauseButton" Content="Pause"
+                    Grid.Column="3"
+                    MinWidth="88" MinHeight="32"
+                    HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                    Click="OnPauseClicked" />
+            <Button x:Name="_stopButton" Content="Stop"
+                    Grid.Column="5"
+                    MinWidth="88" MinHeight="32"
+                    HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                    Click="OnStopClicked" />
         </Grid>
 
-        <!-- FeaturePanel：兩排 WrapPanel。
-             _formatComboBox / _statusTextBlock / _mvvmStateTextBlock 在 code-behind
-             加入 _primaryRow；其餘 feature button 由 CreateFeatureButton /
-             CreateAsyncFeatureButton 透過 code-behind 加入。 -->
+        <!-- FeaturePanel：兩排 WrapPanel 都把 18 個 feature button + ComboBox + 2 個
+             TextBlock 在 markup 完整宣告（對齊 Avalonia for Visual Studio 的 AXAML
+             template 風格）。命名 Click handler 在 code-behind。 -->
         <Grid Grid.Row="1" Margin="0">
             <Grid.RowDefinitions>
                 <RowDefinition Height="40" />
                 <RowDefinition Height="40" />
             </Grid.RowDefinitions>
-            <WrapPanel x:Name="_primaryRow"
-                       Grid.Row="0"
+            <WrapPanel Grid.Row="0"
                        Margin="8,4,8,0"
                        VerticalAlignment="Center"
                        Orientation="Horizontal">
@@ -60,12 +72,84 @@
                            Margin="0,0,8,4" Padding="8,0"
                            VerticalAlignment="Center"
                            Text="MVVM 綁定示範：狀態 = Idle" />
+                <Button x:Name="_osdButton" Content="OSD"
+                        Width="76" Height="32" Margin="0,4,8,4"
+                        HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                        Click="OsdClick" />
+                <Button x:Name="_seekBackwardButton" Content="-10s"
+                        Width="76" Height="32" Margin="0,4,8,4"
+                        HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                        Click="SeekBackwardClick" />
+                <Button x:Name="_seekForwardButton" Content="+10s"
+                        Width="76" Height="32" Margin="0,4,8,4"
+                        HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                        Click="SeekForwardClick" />
+                <Button x:Name="_volumeDownButton" Content="Vol-"
+                        Width="76" Height="32" Margin="0,4,8,4"
+                        HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                        Click="VolumeDownClick" />
+                <Button x:Name="_volumeUpButton" Content="Vol+"
+                        Width="76" Height="32" Margin="0,4,8,4"
+                        HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                        Click="VolumeUpClick" />
+                <Button x:Name="_muteButton" Content="Mute"
+                        Width="76" Height="32" Margin="0,4,8,4"
+                        HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                        Click="MuteClick" />
+                <Button x:Name="_speedButton" Content="Speed"
+                        Width="76" Height="32" Margin="0,4,8,4"
+                        HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                        Click="SpeedClick" />
             </WrapPanel>
-            <WrapPanel x:Name="_secondaryRow"
-                       Grid.Row="1"
+            <WrapPanel Grid.Row="1"
                        Margin="8,2,8,4"
                        VerticalAlignment="Center"
-                       Orientation="Horizontal" />
+                       Orientation="Horizontal">
+                <Button x:Name="_subtitleButton" Content="Sub"
+                        Width="76" Height="32" Margin="0,4,8,4"
+                        HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                        Click="SubtitleClick" />
+                <Button x:Name="_tracksButton" Content="Tracks"
+                        Width="76" Height="32" Margin="0,4,8,4"
+                        HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                        Click="TracksClick" />
+                <Button x:Name="_screenshotButton" Content="Shot"
+                        Width="76" Height="32" Margin="0,4,8,4"
+                        HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                        Click="ScreenshotClick" />
+                <Button x:Name="_configButton" Content="Config"
+                        Width="76" Height="32" Margin="0,4,8,4"
+                        HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                        Click="ConfigClick" />
+                <Button x:Name="_luaButton" Content="Lua"
+                        Width="76" Height="32" Margin="0,4,8,4"
+                        HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                        Click="LuaClick" />
+                <Button x:Name="_ytdlpButton" Content="yt-dlp"
+                        Width="76" Height="32" Margin="0,4,8,4"
+                        HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                        Click="YtdlpClick" />
+                <Button x:Name="_denoButton" Content="Deno"
+                        Width="76" Height="32" Margin="0,4,8,4"
+                        HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                        Click="DenoClick" />
+                <Button x:Name="_ffmpegButton" Content="FFmpeg"
+                        Width="76" Height="32" Margin="0,4,8,4"
+                        HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                        Click="FFmpegClick" />
+                <Button x:Name="_saveMp4Button" Content="Save MP4"
+                        Width="88" Height="32" Margin="0,4,8,4"
+                        HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                        Click="SaveMp4Click" />
+                <Button x:Name="_ytdlpUpdateButton" Content="Update yt"
+                        Width="88" Height="32" Margin="0,4,8,4"
+                        HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                        Click="YtdlpUpdateClick" />
+                <Button x:Name="_denoUpdateButton" Content="Update Deno"
+                        Width="120" Height="32" Margin="0,4,8,4"
+                        HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                        Click="DenoUpdateClick" />
+            </WrapPanel>
         </Grid>
 
         <!-- PlayerSurface：上方標題列 + 下方視訊區 + 覆蓋層展示。

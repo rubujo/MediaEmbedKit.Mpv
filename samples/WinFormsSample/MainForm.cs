@@ -10,7 +10,11 @@ using MediaEmbedKit.Mpv.WinForms;
 namespace MediaEmbedKit.Mpv.Samples.WinForms;
 
 /// <summary>
-/// 表示 WinForms 範例的主要視窗。
+/// 表示 WinForms 範例的主要視窗。layout 結構、所有控制項實例化、屬性設定與事件繫結
+/// 由 <c>MainForm.Designer.cs</c> 序列化（對齊 VS 2026 designer 產出）。本檔僅處理
+/// designer 無法序列化的部分：runtime 初始化、dispatcher / event bridge 串接、命名
+/// click handler 對 <see cref="RunFeature"/> / <see cref="RunFeatureAsync"/> wrapper 的轉送、
+/// ComboBox 動態項目填入、DataBindings 設定與 Resize 時對右側對照覆蓋層的位置調整。
 /// </summary>
 public sealed partial class MainForm : Form
 {
@@ -19,26 +23,6 @@ public sealed partial class MainForm : Form
     /// </summary>
     private const int EventLogLimit = 60;
 
-    // _player / _urlTextBox / _statusLabel / _mvvmStateLabel / _eventListBox 的欄位宣告
-    // 與基礎 property 設定已搬到 MainForm.Designer.cs（由 designer 序列化負責）。
-    // 這些欄位仍可在本檔案直接存取（partial class 跨檔共享）。
-
-    /// <summary>
-    /// 載入目前媒體來源的按鈕。
-    /// </summary>
-    private readonly Button _loadButton;
-    /// <summary>
-    /// 切換目前播放器暫停狀態的按鈕。
-    /// </summary>
-    private readonly Button _pauseButton;
-    /// <summary>
-    /// 停止目前播放項目的按鈕。
-    /// </summary>
-    private readonly Button _stopButton;
-    /// <summary>
-    /// 選擇 yt-dlp 格式預設值的下拉選單。
-    /// </summary>
-    private readonly ComboBox _formatComboBox;
     /// <summary>
     /// 背景讀取並批次套用狀態列文字的分派器。
     /// </summary>
@@ -62,7 +46,7 @@ public sealed partial class MainForm : Form
     /// <summary>
     /// 需要在 runtime 就緒後才可使用的功能按鈕清單。
     /// </summary>
-    private readonly List<Button> _featureButtons = new List<Button>();
+    private readonly List<Button> _featureButtons;
     /// <summary>
     /// 紀錄範例 runtime 是否已完成初始化。
     /// </summary>
@@ -77,49 +61,43 @@ public sealed partial class MainForm : Form
     /// </summary>
     public MainForm()
     {
-        // 由 designer 序列化的部分：Form 屬性、_player、_urlTextBox、_statusLabel、
-        // _mvvmStateLabel、_eventListBox 的 instantiation 與基礎 property、以及
-        // _player.PlayerCreated 與 Shown 事件處理。
         InitializeComponent();
 
-        // ----- 以下為 designer 結構上無法序列化的部分（factory method、lambda、
-        //       DataBindings、動態 layout、SampleRuntime 常數相依），維持在 code-behind。-----
-
-        ClientSize = new Size(SampleRuntime.SampleWindowWidth, SampleRuntime.SampleWindowHeight);
-
         _urlTextBox.Text = SampleRuntime.PlaybackUrl;
-        _urlTextBox.Height = SampleRuntime.SampleButtonHeight;
-        _urlTextBox.Margin = new Padding(0, 2, SampleRuntime.SampleControlSpacing, 0);
 
-        _loadButton = CreateCommandButton("Load");
-        _loadButton.Click += LoadButtonClick;
-        _pauseButton = CreateCommandButton("Pause");
-        _pauseButton.Click += PauseButtonClick;
-        _stopButton = CreateCommandButton("Stop");
-        _stopButton.Margin = new Padding(0);
-        _stopButton.Click += StopButtonClick;
+        _featureButtons = new List<Button>
+        {
+            _osdButton,
+            _seekBackwardButton,
+            _seekForwardButton,
+            _volumeDownButton,
+            _volumeUpButton,
+            _muteButton,
+            _speedButton,
+            _subtitleButton,
+            _tracksButton,
+            _screenshotButton,
+            _configButton,
+            _luaButton,
+            _ytdlpButton,
+            _denoButton,
+            _ffmpegButton,
+            _saveMp4Button,
+            _ytdlpUpdateButton,
+            _denoUpdateButton
+        };
 
         _features = new SampleFeatureController(() => _currentPlayer, AppendEventLine);
-        _formatComboBox = CreateFormatComboBox();
+        PopulateFormatComboBox();
 
-        _statusLabel.Width = 380;
-        _statusLabel.Height = SampleRuntime.SampleButtonHeight;
-        _statusLabel.Margin = new Padding(0, 0, SampleRuntime.SampleControlSpacing, 0);
-
-        _mvvmStateLabel.Width = 220;
-        _mvvmStateLabel.Height = SampleRuntime.SampleButtonHeight;
-        _mvvmStateLabel.Margin = new Padding(0, 0, SampleRuntime.SampleControlSpacing, 0);
         _mvvmStateLabel.DataBindings.Add(new Binding(nameof(Label.Text), _player, nameof(MpvPlayerControl.PlaybackState), formattingEnabled: true)
         {
             FormatString = "MVVM 綁定示範：狀態 = {0}"
         });
 
-        _eventListBox.Font = new Font(FontFamily.GenericMonospace, 8.25f);
-
         _eventLogDispatcher = new SampleEventLogDispatcher(AppendEventLines, ScheduleEventLogFlush);
         _statusDispatcher = new SampleStatusUpdateDispatcher(() => _features.GetStatusText(), SetStatusText, ScheduleUiUpdate);
 
-        Controls.Add(CreateRootLayout());
         SetPlaybackControlsEnabled(false);
         AppendEventLine(CreateLifecycleLine("FormCreated", "範例視窗已建立，等待 runtime 初始化。"));
     }
@@ -283,7 +261,7 @@ public sealed partial class MainForm : Form
     }
 
     /// <summary>
-    /// 處理載入按鈕點選事件並載入輸入的媒體來源。
+    /// 載入按鈕點選事件。
     /// </summary>
     /// <param name="sender">引發事件的物件。</param>
     /// <param name="e">事件資料。</param>
@@ -293,7 +271,7 @@ public sealed partial class MainForm : Form
     }
 
     /// <summary>
-    /// 切換目前播放器的暫停狀態。
+    /// 暫停按鈕點選事件：切換目前播放器的暫停狀態。
     /// </summary>
     /// <param name="sender">引發事件的物件。</param>
     /// <param name="e">事件資料。</param>
@@ -312,7 +290,7 @@ public sealed partial class MainForm : Form
     }
 
     /// <summary>
-    /// 停止目前播放項目。
+    /// 停止按鈕點選事件。
     /// </summary>
     /// <param name="sender">引發事件的物件。</param>
     /// <param name="e">事件資料。</param>
@@ -325,6 +303,73 @@ public sealed partial class MainForm : Form
 
         _eventBridge?.WriteLifecycle("Stop", "透過 StopCommand 停止播放。");
         _player.StopCommand.Execute(null);
+    }
+
+    /// <summary>OSD 按鈕點選事件。</summary>
+    private void OsdClick(object? sender, EventArgs e) => RunFeature(() => _features.ShowOsd());
+
+    /// <summary>後退 10 秒按鈕點選事件。</summary>
+    private void SeekBackwardClick(object? sender, EventArgs e) => RunFeature(() => _features.SeekRelative(-10));
+
+    /// <summary>前進 10 秒按鈕點選事件。</summary>
+    private void SeekForwardClick(object? sender, EventArgs e) => RunFeature(() => _features.SeekRelative(10));
+
+    /// <summary>音量下降按鈕點選事件。</summary>
+    private void VolumeDownClick(object? sender, EventArgs e) => RunFeature(() => _features.ChangeVolume(-5));
+
+    /// <summary>音量上升按鈕點選事件。</summary>
+    private void VolumeUpClick(object? sender, EventArgs e) => RunFeature(() => _features.ChangeVolume(5));
+
+    /// <summary>靜音按鈕點選事件。</summary>
+    private void MuteClick(object? sender, EventArgs e) => RunFeature(() => _features.ToggleMute());
+
+    /// <summary>播放速度切換按鈕點選事件。</summary>
+    private void SpeedClick(object? sender, EventArgs e) => RunFeature(() => _features.CycleSpeed());
+
+    /// <summary>字幕載入按鈕點選事件。</summary>
+    private void SubtitleClick(object? sender, EventArgs e) => RunFeature(() => _features.AddSampleSubtitle());
+
+    /// <summary>軌道輸出按鈕點選事件。</summary>
+    private void TracksClick(object? sender, EventArgs e) => RunFeature(() => _features.DumpTracks());
+
+    /// <summary>截圖按鈕點選事件。</summary>
+    private void ScreenshotClick(object? sender, EventArgs e) => RunFeature(() => _features.TakeScreenshot());
+
+    /// <summary>設定載入按鈕點選事件。</summary>
+    private void ConfigClick(object? sender, EventArgs e) => RunFeature(() => _features.LoadSampleConfig());
+
+    /// <summary>Lua script 載入按鈕點選事件。</summary>
+    private async void LuaClick(object? sender, EventArgs e) => await RunFeatureAsync(() => _features.LoadSampleLuaScriptAsync()).ConfigureAwait(true);
+
+    /// <summary>yt-dlp 診斷按鈕點選事件。</summary>
+    private async void YtdlpClick(object? sender, EventArgs e) => await RunFeatureAsync(() => _features.RunYtdlpDiagnosticsAsync(_urlTextBox.Text)).ConfigureAwait(true);
+
+    /// <summary>Deno 診斷按鈕點選事件。</summary>
+    private async void DenoClick(object? sender, EventArgs e) => await RunFeatureAsync(() => _features.RunDenoDiagnosticsAsync()).ConfigureAwait(true);
+
+    /// <summary>FFmpeg 診斷按鈕點選事件。</summary>
+    private async void FFmpegClick(object? sender, EventArgs e) => await RunFeatureAsync(() => _features.RunFFmpegDiagnosticsAsync()).ConfigureAwait(true);
+
+    /// <summary>Save MP4 按鈕點選事件。</summary>
+    private async void SaveMp4Click(object? sender, EventArgs e) => await RunFeatureAsync(() => EncodeCurrentSourceToMp4Async()).ConfigureAwait(true);
+
+    /// <summary>yt-dlp 自我更新按鈕點選事件。</summary>
+    private async void YtdlpUpdateClick(object? sender, EventArgs e) => await RunFeatureAsync(() => _features.RunYtdlpSelfUpdateAsync()).ConfigureAwait(true);
+
+    /// <summary>Deno 自我升級按鈕點選事件。</summary>
+    private async void DenoUpdateClick(object? sender, EventArgs e) => await RunFeatureAsync(() => _features.RunDenoSelfUpgradeAsync()).ConfigureAwait(true);
+
+    /// <summary>
+    /// 在播放區尺寸變化時把右側 Z-order 對照覆蓋層維持在右上角。
+    /// </summary>
+    /// <param name="sender">引發事件的播放區面板。</param>
+    /// <param name="e">事件資料。</param>
+    private void PlayerVideoPanelResize(object? sender, EventArgs e)
+    {
+        if (sender is Panel panel)
+        {
+            _normalOverlayLabel.Left = Math.Max(16, panel.ClientSize.Width - _normalOverlayLabel.Width - 16);
+        }
     }
 
     /// <summary>
@@ -420,213 +465,6 @@ public sealed partial class MainForm : Form
             AppendEventLine(CreateLifecycleLine("LoadFileError", ex.Message));
             MessageBox.Show(this, ex.Message, "mpv", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
-    }
-
-    /// <summary>
-    /// 建立範例根版面。
-    /// </summary>
-    /// <returns>包含工具列、功能列、播放區域與事件清單的根版面。</returns>
-    private Control CreateRootLayout()
-    {
-        TableLayoutPanel root = new TableLayoutPanel
-        {
-            Dock = DockStyle.Fill,
-            ColumnCount = 1,
-            RowCount = 4
-        };
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, SampleRuntime.SampleToolbarHeight));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, SampleRuntime.SampleFeaturePanelHeight));
-        root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-        root.RowStyles.Add(new RowStyle(SizeType.Absolute, SampleRuntime.SampleEventLogHeight));
-        root.Controls.Add(CreateToolbar(), 0, 0);
-        root.Controls.Add(CreateFeaturePanel(), 0, 1);
-        root.Controls.Add(CreatePlayerSurface(), 0, 2);
-        root.Controls.Add(_eventListBox, 0, 3);
-        return root;
-    }
-
-    /// <summary>
-    /// 建立範例工具列。
-    /// </summary>
-    /// <returns>包含來源輸入與播放命令的工具列。</returns>
-    private Control CreateToolbar()
-    {
-        TableLayoutPanel topPanel = new TableLayoutPanel
-        {
-            Dock = DockStyle.Top,
-            Height = SampleRuntime.SampleToolbarHeight,
-            Padding = new Padding(SampleRuntime.SampleControlPadding),
-            ColumnCount = 4,
-            RowCount = 1
-        };
-        topPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        topPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, SampleRuntime.SampleButtonWidth + SampleRuntime.SampleControlSpacing));
-        topPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, SampleRuntime.SampleButtonWidth + SampleRuntime.SampleControlSpacing));
-        topPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, SampleRuntime.SampleButtonWidth));
-        topPanel.RowStyles.Add(new RowStyle(SizeType.Absolute, SampleRuntime.SampleButtonHeight));
-        topPanel.Controls.Add(_urlTextBox, 0, 0);
-        topPanel.Controls.Add(_loadButton, 1, 0);
-        topPanel.Controls.Add(_pauseButton, 2, 0);
-        topPanel.Controls.Add(_stopButton, 3, 0);
-        return topPanel;
-    }
-
-    /// <summary>
-    /// 建立進階功能展示列。
-    /// </summary>
-    /// <returns>包含格式、狀態與 API 按鈕的功能列。</returns>
-    private Control CreateFeaturePanel()
-    {
-        FlowLayoutPanel panel = new FlowLayoutPanel
-        {
-            Dock = DockStyle.Fill,
-            Padding = new Padding(SampleRuntime.SampleControlPadding, 4, SampleRuntime.SampleControlPadding, 4),
-            WrapContents = true,
-            AutoScroll = false
-        };
-
-        panel.Controls.Add(_formatComboBox);
-        panel.Controls.Add(_statusLabel);
-        panel.Controls.Add(_mvvmStateLabel);
-        panel.Controls.Add(CreateFeatureButton("OSD", () => _features.ShowOsd()));
-        panel.Controls.Add(CreateFeatureButton("-10s", () => _features.SeekRelative(-10)));
-        panel.Controls.Add(CreateFeatureButton("+10s", () => _features.SeekRelative(10)));
-        panel.Controls.Add(CreateFeatureButton("Vol-", () => _features.ChangeVolume(-5)));
-        panel.Controls.Add(CreateFeatureButton("Vol+", () => _features.ChangeVolume(5)));
-        panel.Controls.Add(CreateFeatureButton("Mute", () => _features.ToggleMute()));
-        panel.Controls.Add(CreateFeatureButton("Speed", () => _features.CycleSpeed()));
-        panel.Controls.Add(CreateFeatureButton("Sub", () => _features.AddSampleSubtitle()));
-        panel.Controls.Add(CreateFeatureButton("Tracks", () => _features.DumpTracks()));
-        panel.Controls.Add(CreateFeatureButton("Shot", () => _features.TakeScreenshot()));
-        panel.Controls.Add(CreateFeatureButton("Config", () => _features.LoadSampleConfig()));
-        panel.Controls.Add(CreateAsyncFeatureButton("Lua", () => _features.LoadSampleLuaScriptAsync()));
-        panel.Controls.Add(CreateAsyncFeatureButton("yt-dlp", () => _features.RunYtdlpDiagnosticsAsync(_urlTextBox.Text)));
-        panel.Controls.Add(CreateAsyncFeatureButton("Deno", () => _features.RunDenoDiagnosticsAsync()));
-        panel.Controls.Add(CreateAsyncFeatureButton("FFmpeg", () => _features.RunFFmpegDiagnosticsAsync()));
-        panel.Controls.Add(CreateAsyncFeatureButton("Save MP4", () => EncodeCurrentSourceToMp4Async(), SampleRuntime.SampleYtdlpUpdateButtonWidth));
-        panel.Controls.Add(CreateAsyncFeatureButton("Update yt", () => _features.RunYtdlpSelfUpdateAsync(), SampleRuntime.SampleYtdlpUpdateButtonWidth));
-        panel.Controls.Add(CreateAsyncFeatureButton("Update Deno", () => _features.RunDenoSelfUpgradeAsync(), SampleRuntime.SampleDenoUpdateButtonWidth));
-        return panel;
-    }
-
-    /// <summary>
-    /// 建立播放區域與覆蓋層展示。
-    /// </summary>
-    /// <returns>包含安全播放器與一般覆蓋層對照區域的面板。</returns>
-    private Control CreatePlayerSurface()
-    {
-        TableLayoutPanel surface = new TableLayoutPanel
-        {
-            Dock = DockStyle.Fill,
-            BackColor = Color.Black,
-            ColumnCount = 1,
-            RowCount = 2
-        };
-        surface.RowStyles.Add(new RowStyle(SizeType.Absolute, SampleRuntime.SampleAirspaceComparisonHeight));
-        surface.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
-        surface.Controls.Add(CreateHeaderPanel(), 0, 0);
-        surface.Controls.Add(CreateVideoPanel(), 0, 1);
-        return surface;
-    }
-
-    /// <summary>
-    /// 建立左右對照標題列。
-    /// </summary>
-    /// <returns>包含安全覆蓋層與一般覆蓋層標題的面板。</returns>
-    private static Control CreateHeaderPanel()
-    {
-        TableLayoutPanel panel = new TableLayoutPanel
-        {
-            Dock = DockStyle.Fill,
-            ColumnCount = 2,
-            RowCount = 1
-        };
-        panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
-        panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
-        panel.Controls.Add(CreateHeaderBadge("WinForms HWND 播放區：控制項同層展示", ThemeColor(SampleTheme.AccentBadgeOpaqueArgb), new Padding(16, 6, 8, 6)), 0, 0);
-        panel.Controls.Add(CreateHeaderBadge("WinForms Z-order 對照：一般 Label 會被影片覆蓋", ThemeColor(SampleTheme.ContrastBadgeOpaqueArgb), new Padding(8, 6, 16, 6)), 1, 0);
-        return panel;
-    }
-
-    /// <summary>
-    /// 建立播放視訊與安全覆蓋層面板。
-    /// </summary>
-    /// <returns>包含播放器、安全覆蓋層與一般覆蓋層對照標籤的播放面板。</returns>
-    private Control CreateVideoPanel()
-    {
-        Panel panel = new Panel
-        {
-            Dock = DockStyle.Fill,
-            BackColor = Color.Black
-        };
-
-        Label overlayLabel = new Label
-        {
-            AutoSize = false,
-            Text = "WinForms HWND 控制項覆蓋",
-            TextAlign = ContentAlignment.MiddleCenter,
-            BackColor = ThemeColor(SampleTheme.AccentBadgeOpaqueArgb),
-            ForeColor = Color.White,
-            Width = SampleRuntime.SampleOverlayBadgeWidth,
-            Height = SampleRuntime.SampleOverlayBadgeHeight,
-            Left = 16,
-            Top = 16
-        };
-
-        Label normalOverlayLabel = new Label
-        {
-            AutoSize = false,
-            Text = "WinForms Label Z-order 對照（會被影片覆蓋）",
-            TextAlign = ContentAlignment.MiddleCenter,
-            BackColor = ThemeColor(SampleTheme.ContrastBadgeOpaqueArgb),
-            ForeColor = Color.White,
-            Width = SampleRuntime.SampleOverlayBadgeWidth,
-            Height = SampleRuntime.SampleOverlayBadgeHeight,
-            Left = 16,
-            Top = 16,
-            Anchor = AnchorStyles.Top | AnchorStyles.Right
-        };
-
-        panel.Controls.Add(overlayLabel);
-        panel.Controls.Add(_player);
-        panel.Controls.Add(normalOverlayLabel);
-        panel.Resize += (sender, e) => PositionRightOverlay(panel, normalOverlayLabel);
-        PositionRightOverlay(panel, normalOverlayLabel);
-        overlayLabel.BringToFront();
-        normalOverlayLabel.BringToFront();
-        return panel;
-    }
-
-    /// <summary>
-    /// 將一般覆蓋層標籤固定在播放面板右上角。
-    /// </summary>
-    /// <param name="panel">播放面板。</param>
-    /// <param name="label">要定位的標籤。</param>
-    private static void PositionRightOverlay(Panel panel, Label label)
-    {
-        label.Left = Math.Max(16, panel.ClientSize.Width - label.Width - 16);
-    }
-
-    /// <summary>
-    /// 建立播放區對照標題列。
-    /// </summary>
-    /// <param name="text">要顯示的標籤文字。</param>
-    /// <param name="backColor">標籤背景色彩。</param>
-    /// <param name="margin">標籤外距。</param>
-    /// <returns>已套用固定尺寸與色彩的對照標籤。</returns>
-    private static Control CreateHeaderBadge(string text, Color backColor, Padding margin)
-    {
-        Label label = new Label
-        {
-            AutoSize = false,
-            Text = text,
-            TextAlign = ContentAlignment.MiddleCenter,
-            BackColor = backColor,
-            ForeColor = Color.White,
-            Dock = DockStyle.Fill,
-            Margin = margin
-        };
-        return label;
     }
 
     /// <summary>
@@ -816,9 +654,9 @@ public sealed partial class MainForm : Form
     /// <param name="enabled">控制項可操作時為 <see langword="true"/>。</param>
     private void SetPlaybackControlsEnabled(bool enabled)
     {
-        SetButtonEnabled(_loadButton, enabled);
-        SetButtonEnabled(_pauseButton, enabled);
-        SetButtonEnabled(_stopButton, enabled);
+        _loadButton.Enabled = enabled;
+        _pauseButton.Enabled = enabled;
+        _stopButton.Enabled = enabled;
         _formatComboBox.Enabled = enabled;
         SetFeatureButtonsEnabled(enabled && !_asyncFeatureGate.IsRunning);
     }
@@ -831,7 +669,7 @@ public sealed partial class MainForm : Form
     {
         foreach (Button button in _featureButtons)
         {
-            SetButtonEnabled(button, enabled);
+            button.Enabled = enabled;
         }
     }
 
@@ -871,133 +709,26 @@ public sealed partial class MainForm : Form
     }
 
     /// <summary>
-    /// 建立 yt-dlp 格式下拉選單。
+    /// 填入 yt-dlp 格式下拉選單的選項並選擇預設值。
     /// </summary>
-    /// <returns>已填入格式選項的下拉選單。</returns>
-    private ComboBox CreateFormatComboBox()
+    private void PopulateFormatComboBox()
     {
-        ComboBox comboBox = new ComboBox
-        {
-            Width = 132,
-            Height = SampleRuntime.SampleButtonHeight,
-            DropDownStyle = ComboBoxStyle.DropDownList,
-            Margin = new Padding(0, 0, SampleRuntime.SampleControlSpacing, 0)
-        };
-
         IReadOnlyList<SampleYtdlpFormatChoice> choices = SampleFeatureController.CreateYtdlpFormatChoices();
         SampleYtdlpFormatChoice defaultChoice = SampleFeatureController.CreateDefaultYtdlpFormatChoice();
         int selectedIndex = 0;
         foreach (SampleYtdlpFormatChoice choice in choices)
         {
-            comboBox.Items.Add(choice);
+            _formatComboBox.Items.Add(choice);
             if (string.Equals(choice.Selector, defaultChoice.Selector, StringComparison.Ordinal))
             {
-                selectedIndex = comboBox.Items.Count - 1;
+                selectedIndex = _formatComboBox.Items.Count - 1;
             }
         }
 
-        comboBox.SelectedIndex = selectedIndex;
-        if (comboBox.SelectedItem is SampleYtdlpFormatChoice selectedChoice)
+        _formatComboBox.SelectedIndex = selectedIndex;
+        if (_formatComboBox.SelectedItem is SampleYtdlpFormatChoice selectedChoice)
         {
             SampleFeatureController.ApplyYtdlpFormat(_player.PlayerOptions, selectedChoice);
         }
-
-        comboBox.SelectedIndexChanged += FormatComboBoxSelectedIndexChanged;
-        return comboBox;
-    }
-
-    /// <summary>
-    /// 建立標準尺寸的命令按鈕。
-    /// </summary>
-    /// <param name="text">要顯示在按鈕上的文字。</param>
-    /// <returns>已套用範例標準尺寸的按鈕。</returns>
-    private static Button CreateCommandButton(string text)
-    {
-        Button button = new Button
-        {
-            Text = text,
-            Dock = DockStyle.Fill,
-            Width = SampleRuntime.SampleButtonWidth,
-            Height = SampleRuntime.SampleButtonHeight,
-            Margin = new Padding(0, 0, SampleRuntime.SampleControlSpacing, 0)
-        };
-        ApplyButtonStyle(button);
-        return button;
-    }
-
-    /// <summary>
-    /// 建立同步功能按鈕。
-    /// </summary>
-    /// <param name="text">按鈕文字。</param>
-    /// <param name="action">點選時要執行的功能。</param>
-    /// <returns>已建立的功能按鈕。</returns>
-    private Button CreateFeatureButton(string text, Action action)
-    {
-        Button button = CreateFeatureButtonCore(text, SampleRuntime.SampleFeatureButtonWidth);
-        button.Click += (sender, e) => RunFeature(action);
-        return button;
-    }
-
-    /// <summary>
-    /// 建立非同步功能按鈕。
-    /// </summary>
-    /// <param name="text">按鈕文字。</param>
-    /// <param name="action">點選時要執行的非同步功能。</param>
-    /// <param name="width">按鈕寬度。</param>
-    /// <returns>已建立的功能按鈕。</returns>
-    private Button CreateAsyncFeatureButton(string text, Func<Task> action, int width = SampleRuntime.SampleFeatureButtonWidth)
-    {
-        Button button = CreateFeatureButtonCore(text, width);
-        button.Click += async (sender, e) => await RunFeatureAsync(action).ConfigureAwait(true);
-        return button;
-    }
-
-    /// <summary>
-    /// 建立功能按鈕共用外觀。
-    /// </summary>
-    /// <param name="text">按鈕文字。</param>
-    /// <param name="width">按鈕寬度。</param>
-    /// <returns>已套用共用外觀的按鈕。</returns>
-    private Button CreateFeatureButtonCore(string text, int width)
-    {
-        Button button = new Button
-        {
-            Text = text,
-            Width = width,
-            Height = SampleRuntime.SampleButtonHeight,
-            Margin = new Padding(0, 0, SampleRuntime.SampleControlSpacing, 4)
-        };
-        ApplyButtonStyle(button);
-        _featureButtons.Add(button);
-        return button;
-    }
-
-    /// <summary>
-    /// 套用範例按鈕的固定深色外觀。
-    /// </summary>
-    /// <param name="button">要套用外觀的按鈕。</param>
-    private static void ApplyButtonStyle(Button button)
-    {
-        button.UseVisualStyleBackColor = true;
-    }
-
-    /// <summary>
-    /// 設定按鈕可用狀態。
-    /// </summary>
-    /// <param name="button">要設定的按鈕。</param>
-    /// <param name="enabled">按鈕可操作時為 <see langword="true"/>。</param>
-    private static void SetButtonEnabled(Button button, bool enabled)
-    {
-        button.Enabled = enabled;
-    }
-
-    /// <summary>
-    /// 將 <see cref="SampleTheme"/> 的 ARGB 整數轉成 WinForms 顏色物件。
-    /// </summary>
-    /// <param name="argb">要轉換的 ARGB 整數。</param>
-    /// <returns>對應的 WinForms 顏色物件。</returns>
-    private static Color ThemeColor(int argb)
-    {
-        return Color.FromArgb(argb);
     }
 }

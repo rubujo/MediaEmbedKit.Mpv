@@ -87,8 +87,10 @@ public sealed partial class MainPage : ContentPage, IDisposable
     private int _disposed;
 
     /// <summary>
-    /// 初始化 <see cref="MainPage"/> 類別的新執行個體。XAML 序列化後加上動態按鈕、
-    /// Picker 內容、MVVM binding 與 dispatcher 等 markup 無法序列化的設定。
+    /// 初始化 <see cref="MainPage"/> 類別的新執行個體。所有控制項（21 個按鈕 + Picker +
+    /// 兩個 Label + CollectionView）由 <c>MainPage.xaml</c> 完整宣告；本建構式只處理
+    /// markup 無法表達的部分：runtime feature controller 建構、Picker 項目填入、
+    /// MVVM binding、event log ItemsSource / DataTemplate 與 dispatcher 串接。
     /// </summary>
     public MainPage()
     {
@@ -104,6 +106,29 @@ public sealed partial class MainPage : ContentPage, IDisposable
         PopulateFormatPicker();
         _runtimeControls.Add(_formatPicker);
 
+        _featureButtons.Add(_osdButton);
+        _featureButtons.Add(_seekBackwardButton);
+        _featureButtons.Add(_seekForwardButton);
+        _featureButtons.Add(_volumeDownButton);
+        _featureButtons.Add(_volumeUpButton);
+        _featureButtons.Add(_muteButton);
+        _featureButtons.Add(_speedButton);
+        _featureButtons.Add(_subtitleButton);
+        _featureButtons.Add(_tracksButton);
+        _featureButtons.Add(_screenshotButton);
+        _featureButtons.Add(_configButton);
+        _featureButtons.Add(_luaButton);
+        _featureButtons.Add(_ytdlpButton);
+        _featureButtons.Add(_denoButton);
+        _featureButtons.Add(_ffmpegButton);
+        _featureButtons.Add(_saveMp4Button);
+        _featureButtons.Add(_ytdlpUpdateButton);
+        _featureButtons.Add(_denoUpdateButton);
+        foreach (Button button in _featureButtons)
+        {
+            _runtimeControls.Add(button);
+        }
+
         _mvvmStateLabel.SetBinding(
             Label.TextProperty,
             new Binding(nameof(MpvView.PlaybackState), stringFormat: "MVVM 綁定示範：狀態 = {0}"));
@@ -111,32 +136,66 @@ public sealed partial class MainPage : ContentPage, IDisposable
         _eventList.ItemsSource = _eventLines;
         _eventList.ItemTemplate = CreateEventTemplate();
 
-        _primaryRow.Children.Add(CreateFeatureButton("OSD", () => _features.ShowOsd()));
-        _primaryRow.Children.Add(CreateFeatureButton("-10s", () => _features.SeekRelative(-10)));
-        _primaryRow.Children.Add(CreateFeatureButton("+10s", () => _features.SeekRelative(10)));
-        _primaryRow.Children.Add(CreateFeatureButton("Vol-", () => _features.ChangeVolume(-5)));
-        _primaryRow.Children.Add(CreateFeatureButton("Vol+", () => _features.ChangeVolume(5)));
-        _primaryRow.Children.Add(CreateFeatureButton("Mute", () => _features.ToggleMute()));
-        _primaryRow.Children.Add(CreateFeatureButton("Speed", () => _features.CycleSpeed()));
-
-        _secondaryRow.Children.Add(CreateFeatureButton("Sub", () => _features.AddSampleSubtitle()));
-        _secondaryRow.Children.Add(CreateFeatureButton("Tracks", () => _features.DumpTracks()));
-        _secondaryRow.Children.Add(CreateFeatureButton("Shot", () => _features.TakeScreenshot()));
-        _secondaryRow.Children.Add(CreateFeatureButton("Config", () => _features.LoadSampleConfig()));
-        _secondaryRow.Children.Add(CreateAsyncFeatureButton("Lua", () => _features.LoadSampleLuaScriptAsync()));
-        _secondaryRow.Children.Add(CreateAsyncFeatureButton("yt-dlp", () => _features.RunYtdlpDiagnosticsAsync(_sourceEntry.Text ?? string.Empty)));
-        _secondaryRow.Children.Add(CreateAsyncFeatureButton("Deno", () => _features.RunDenoDiagnosticsAsync()));
-        _secondaryRow.Children.Add(CreateAsyncFeatureButton("FFmpeg", () => _features.RunFFmpegDiagnosticsAsync()));
-        _secondaryRow.Children.Add(CreateAsyncFeatureButton("Save MP4", () => EncodeCurrentSourceToMp4Async(), SampleRuntime.SampleYtdlpUpdateButtonWidth));
-        _secondaryRow.Children.Add(CreateAsyncFeatureButton("Update yt", () => _features.RunYtdlpSelfUpdateAsync(), SampleRuntime.SampleYtdlpUpdateButtonWidth));
-        _secondaryRow.Children.Add(CreateAsyncFeatureButton("Update Deno", () => _features.RunDenoSelfUpgradeAsync(), SampleRuntime.SampleDenoUpdateButtonWidth));
-
         _eventLogDispatcher = new SampleEventLogDispatcher(AppendEventLines, ScheduleEventLogFlush);
         _statusDispatcher = new SampleStatusUpdateDispatcher(() => _features.GetStatusText(), SetStatusText, ScheduleUiUpdate);
 
         SetRuntimeControlsEnabled(false);
         AppendEventLine(CreateLifecycleLine("PageCreated", "MAUI 頁面已建立，等待 runtime 初始化。"));
     }
+
+    /// <summary>OSD 按鈕點選事件。</summary>
+    private void OsdClicked(object? sender, EventArgs e) => RunFeature(() => _features.ShowOsd());
+
+    /// <summary>後退 10 秒按鈕點選事件。</summary>
+    private void SeekBackwardClicked(object? sender, EventArgs e) => RunFeature(() => _features.SeekRelative(-10));
+
+    /// <summary>前進 10 秒按鈕點選事件。</summary>
+    private void SeekForwardClicked(object? sender, EventArgs e) => RunFeature(() => _features.SeekRelative(10));
+
+    /// <summary>音量下降按鈕點選事件。</summary>
+    private void VolumeDownClicked(object? sender, EventArgs e) => RunFeature(() => _features.ChangeVolume(-5));
+
+    /// <summary>音量上升按鈕點選事件。</summary>
+    private void VolumeUpClicked(object? sender, EventArgs e) => RunFeature(() => _features.ChangeVolume(5));
+
+    /// <summary>靜音按鈕點選事件。</summary>
+    private void MuteClicked(object? sender, EventArgs e) => RunFeature(() => _features.ToggleMute());
+
+    /// <summary>播放速度切換按鈕點選事件。</summary>
+    private void SpeedClicked(object? sender, EventArgs e) => RunFeature(() => _features.CycleSpeed());
+
+    /// <summary>字幕載入按鈕點選事件。</summary>
+    private void SubtitleClicked(object? sender, EventArgs e) => RunFeature(() => _features.AddSampleSubtitle());
+
+    /// <summary>軌道輸出按鈕點選事件。</summary>
+    private void TracksClicked(object? sender, EventArgs e) => RunFeature(() => _features.DumpTracks());
+
+    /// <summary>截圖按鈕點選事件。</summary>
+    private void ScreenshotClicked(object? sender, EventArgs e) => RunFeature(() => _features.TakeScreenshot());
+
+    /// <summary>設定載入按鈕點選事件。</summary>
+    private void ConfigClicked(object? sender, EventArgs e) => RunFeature(() => _features.LoadSampleConfig());
+
+    /// <summary>Lua script 載入按鈕點選事件。</summary>
+    private async void LuaClicked(object? sender, EventArgs e) => await RunFeatureAsync(() => _features.LoadSampleLuaScriptAsync()).ConfigureAwait(true);
+
+    /// <summary>yt-dlp 診斷按鈕點選事件。</summary>
+    private async void YtdlpClicked(object? sender, EventArgs e) => await RunFeatureAsync(() => _features.RunYtdlpDiagnosticsAsync(_sourceEntry.Text ?? string.Empty)).ConfigureAwait(true);
+
+    /// <summary>Deno 診斷按鈕點選事件。</summary>
+    private async void DenoClicked(object? sender, EventArgs e) => await RunFeatureAsync(() => _features.RunDenoDiagnosticsAsync()).ConfigureAwait(true);
+
+    /// <summary>FFmpeg 診斷按鈕點選事件。</summary>
+    private async void FFmpegClicked(object? sender, EventArgs e) => await RunFeatureAsync(() => _features.RunFFmpegDiagnosticsAsync()).ConfigureAwait(true);
+
+    /// <summary>Save MP4 按鈕點選事件。</summary>
+    private async void SaveMp4Clicked(object? sender, EventArgs e) => await RunFeatureAsync(() => EncodeCurrentSourceToMp4Async()).ConfigureAwait(true);
+
+    /// <summary>yt-dlp 自我更新按鈕點選事件。</summary>
+    private async void YtdlpUpdateClicked(object? sender, EventArgs e) => await RunFeatureAsync(() => _features.RunYtdlpSelfUpdateAsync()).ConfigureAwait(true);
+
+    /// <summary>Deno 自我升級按鈕點選事件。</summary>
+    private async void DenoUpdateClicked(object? sender, EventArgs e) => await RunFeatureAsync(() => _features.RunDenoSelfUpgradeAsync()).ConfigureAwait(true);
 
     /// <summary>
     /// 在 MAUI 頁面顯示後載入預設媒體並執行冒煙測試。
@@ -701,55 +760,6 @@ public sealed partial class MainPage : ContentPage, IDisposable
             label.SetBinding(Label.TextProperty, ".");
             return label;
         });
-    }
-
-    /// <summary>
-    /// 建立同步功能按鈕。
-    /// </summary>
-    /// <param name="text">按鈕文字。</param>
-    /// <param name="action">點選時要執行的功能。</param>
-    /// <returns>已建立的功能按鈕。</returns>
-    private Button CreateFeatureButton(string text, Action action)
-    {
-        Button button = CreateFeatureButtonCore(text, SampleRuntime.SampleFeatureButtonWidth);
-        button.Clicked += (sender, e) => RunFeature(action);
-        return button;
-    }
-
-    /// <summary>
-    /// 建立非同步功能按鈕。
-    /// </summary>
-    /// <param name="text">按鈕文字。</param>
-    /// <param name="action">點選時要執行的非同步功能。</param>
-    /// <param name="width">按鈕寬度。</param>
-    /// <returns>已建立的功能按鈕。</returns>
-    private Button CreateAsyncFeatureButton(string text, Func<Task> action, double width = SampleRuntime.SampleFeatureButtonWidth)
-    {
-        Button button = CreateFeatureButtonCore(text, width);
-        button.Clicked += async (sender, e) => await RunFeatureAsync(action).ConfigureAwait(true);
-        return button;
-    }
-
-    /// <summary>
-    /// 建立功能按鈕共用外觀。
-    /// </summary>
-    /// <param name="text">按鈕文字。</param>
-    /// <param name="width">按鈕寬度。</param>
-    /// <returns>已套用共用外觀的按鈕。</returns>
-    private Button CreateFeatureButtonCore(string text, double width)
-    {
-        Button button = new Button
-        {
-            Text = text,
-            WidthRequest = width,
-            HeightRequest = SampleRuntime.SampleButtonHeight,
-            Margin = new Thickness(0, 0, SampleRuntime.SampleControlSpacing, 4),
-            HorizontalOptions = LayoutOptions.Start,
-            VerticalOptions = LayoutOptions.Center
-        };
-        _runtimeControls.Add(button);
-        _featureButtons.Add(button);
-        return button;
     }
 
     /// <summary>

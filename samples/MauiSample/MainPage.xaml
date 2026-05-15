@@ -50,16 +50,15 @@
                     Clicked="StopButtonClicked" />
         </Grid>
 
-        <!-- FeaturePanel：兩排 FlexLayout。Picker / 兩個 Label 在 markup 宣告；
-             其餘 feature button 由 code-behind 透過 CreateFeatureButton /
-             CreateAsyncFeatureButton 加入。 -->
+        <!-- FeaturePanel：兩排 FlexLayout 都把 18 個 feature button + Picker + 2 個
+             Label 在 markup 完整宣告（對齊 VS 2026 / Visual Studio MAUI XAML
+             template 風格）。命名 Clicked handler 在 code-behind。 -->
         <Grid Grid.Row="1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="40" />
                 <RowDefinition Height="40" />
             </Grid.RowDefinitions>
-            <FlexLayout x:Name="_primaryRow"
-                        Grid.Row="0"
+            <FlexLayout Grid.Row="0"
                         Direction="Row"
                         Wrap="Wrap"
                         AlignItems="Center"
@@ -80,13 +79,67 @@
                        Padding="8,0"
                        VerticalTextAlignment="Center"
                        LineBreakMode="TailTruncation" />
+                <Button x:Name="_osdButton" Text="OSD"
+                        WidthRequest="76" HeightRequest="32" Margin="0,0,8,4"
+                        Clicked="OsdClicked" />
+                <Button x:Name="_seekBackwardButton" Text="-10s"
+                        WidthRequest="76" HeightRequest="32" Margin="0,0,8,4"
+                        Clicked="SeekBackwardClicked" />
+                <Button x:Name="_seekForwardButton" Text="+10s"
+                        WidthRequest="76" HeightRequest="32" Margin="0,0,8,4"
+                        Clicked="SeekForwardClicked" />
+                <Button x:Name="_volumeDownButton" Text="Vol-"
+                        WidthRequest="76" HeightRequest="32" Margin="0,0,8,4"
+                        Clicked="VolumeDownClicked" />
+                <Button x:Name="_volumeUpButton" Text="Vol+"
+                        WidthRequest="76" HeightRequest="32" Margin="0,0,8,4"
+                        Clicked="VolumeUpClicked" />
+                <Button x:Name="_muteButton" Text="Mute"
+                        WidthRequest="76" HeightRequest="32" Margin="0,0,8,4"
+                        Clicked="MuteClicked" />
+                <Button x:Name="_speedButton" Text="Speed"
+                        WidthRequest="76" HeightRequest="32" Margin="0,0,8,4"
+                        Clicked="SpeedClicked" />
             </FlexLayout>
-            <FlexLayout x:Name="_secondaryRow"
-                        Grid.Row="1"
+            <FlexLayout Grid.Row="1"
                         Direction="Row"
                         Wrap="Wrap"
                         AlignItems="Center"
-                        Padding="8,2,8,4" />
+                        Padding="8,2,8,4">
+                <Button x:Name="_subtitleButton" Text="Sub"
+                        WidthRequest="76" HeightRequest="32" Margin="0,0,8,4"
+                        Clicked="SubtitleClicked" />
+                <Button x:Name="_tracksButton" Text="Tracks"
+                        WidthRequest="76" HeightRequest="32" Margin="0,0,8,4"
+                        Clicked="TracksClicked" />
+                <Button x:Name="_screenshotButton" Text="Shot"
+                        WidthRequest="76" HeightRequest="32" Margin="0,0,8,4"
+                        Clicked="ScreenshotClicked" />
+                <Button x:Name="_configButton" Text="Config"
+                        WidthRequest="76" HeightRequest="32" Margin="0,0,8,4"
+                        Clicked="ConfigClicked" />
+                <Button x:Name="_luaButton" Text="Lua"
+                        WidthRequest="76" HeightRequest="32" Margin="0,0,8,4"
+                        Clicked="LuaClicked" />
+                <Button x:Name="_ytdlpButton" Text="yt-dlp"
+                        WidthRequest="76" HeightRequest="32" Margin="0,0,8,4"
+                        Clicked="YtdlpClicked" />
+                <Button x:Name="_denoButton" Text="Deno"
+                        WidthRequest="76" HeightRequest="32" Margin="0,0,8,4"
+                        Clicked="DenoClicked" />
+                <Button x:Name="_ffmpegButton" Text="FFmpeg"
+                        WidthRequest="76" HeightRequest="32" Margin="0,0,8,4"
+                        Clicked="FFmpegClicked" />
+                <Button x:Name="_saveMp4Button" Text="Save MP4"
+                        WidthRequest="88" HeightRequest="32" Margin="0,0,8,4"
+                        Clicked="SaveMp4Clicked" />
+                <Button x:Name="_ytdlpUpdateButton" Text="Update yt"
+                        WidthRequest="88" HeightRequest="32" Margin="0,0,8,4"
+                        Clicked="YtdlpUpdateClicked" />
+                <Button x:Name="_denoUpdateButton" Text="Update Deno"
+                        WidthRequest="120" HeightRequest="32" Margin="0,0,8,4"
+                        Clicked="DenoUpdateClicked" />
+            </FlexLayout>
         </Grid>
 
         <!-- PlayerSurface：上方標題列 + 下方視訊區 + 一般 MAUI Overlay 對照。
