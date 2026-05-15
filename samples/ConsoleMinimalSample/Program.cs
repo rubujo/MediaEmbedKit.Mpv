@@ -97,9 +97,20 @@ internal static class Program
                 + "，decoders="
                 + capabilities.Decoders.Count.ToString());
 
-            using IDisposable timePositionSubscription = player
-                .WatchProperty<double>("time-pos")
-                .Subscribe(new ConsoleTimePositionObserver());
+            // WatchProperty<T> 多屬性 fan-out 示範：對 time-pos / duration / pause /
+            // volume 四個屬性同時訂閱；各自獨立 IObservable<T>，內部以 (Name, Format)
+            // 鍵共享單一 mpv_observe_property 註冊。player Dispose 時所有 subscription
+            // 自動收到 OnCompleted，下面 IDisposable[] 是「明確結束」的範例寫法。
+            IDisposable[] subscriptions = new[]
+            {
+                player.WatchProperty<double>("time-pos").Subscribe(new ConsoleTimePositionObserver()),
+                player.WatchProperty<double>("duration").Subscribe(new ActionObserver<double>(value =>
+                    Console.WriteLine("[duration] " + value.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture) + "s"))),
+                player.WatchProperty<bool>("pause").Subscribe(new ActionObserver<bool>(paused =>
+                    Console.WriteLine("[pause] " + (paused ? "paused" : "playing")))),
+                player.WatchProperty<double>("volume").Subscribe(new ActionObserver<double>(volume =>
+                    Console.WriteLine("[volume] " + volume.ToString("0", System.Globalization.CultureInfo.InvariantCulture))))
+            };
 
             Console.WriteLine("載入媒體：" + source);
             player.Load(new MpvMediaItem(source));
@@ -113,6 +124,13 @@ internal static class Program
             else
             {
                 Console.ReadLine();
+            }
+
+            // 明確結束 fan-out 訂閱（不必要——player Dispose 會送 OnCompleted 給所有
+            // 未 Dispose 的訂閱者；這裡示範主動清理的 idiom）。
+            foreach (IDisposable subscription in subscriptions)
+            {
+                subscription.Dispose();
             }
 
             player.Stop();
@@ -288,6 +306,47 @@ internal static class Program
     private static void PlayerShutdown(object? sender, MpvEventArgs e)
     {
         Console.WriteLine("[lifecycle] shutdown");
+    }
+
+    /// <summary>
+    /// 把 <see cref="Action{T}"/> 委派包裝成 <see cref="IObserver{T}"/>，供
+    /// <c>WatchProperty&lt;T&gt;().Subscribe(...)</c> 使用。<see cref="IObservable{T}.Subscribe"/>
+    /// 本身只收 <see cref="IObserver{T}"/>；本範例不依賴 <c>System.Reactive</c>，所以提供
+    /// 此小型 adapter。
+    /// </summary>
+    /// <typeparam name="T">觀察者接收的值型別。</typeparam>
+    private sealed class ActionObserver<T> : IObserver<T>
+    {
+        /// <summary>
+        /// 對應 <see cref="IObserver{T}.OnNext"/> 的委派。
+        /// </summary>
+        private readonly Action<T> _onNext;
+
+        /// <summary>
+        /// 初始化 <see cref="ActionObserver{T}"/> 類別的新執行個體。
+        /// </summary>
+        /// <param name="onNext">收到新值時要呼叫的委派。</param>
+        public ActionObserver(Action<T> onNext)
+        {
+            _onNext = onNext ?? throw new ArgumentNullException(nameof(onNext));
+        }
+
+        /// <summary>
+        /// 把新值轉發到委派。
+        /// </summary>
+        /// <param name="value">收到的新值。</param>
+        public void OnNext(T value) => _onNext(value);
+
+        /// <summary>
+        /// 訂閱因 player 釋放而結束時忽略；本範例不需特別處理。
+        /// </summary>
+        public void OnCompleted() { }
+
+        /// <summary>
+        /// 訂閱遇到例外狀況時忽略；本範例不需特別處理。
+        /// </summary>
+        /// <param name="error">未使用。</param>
+        public void OnError(Exception error) { }
     }
 
     /// <summary>

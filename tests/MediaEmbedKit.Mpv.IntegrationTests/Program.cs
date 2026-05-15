@@ -223,6 +223,14 @@ internal static class Program
         {
             return VerifyEncodeLongClipStabilityAsync(runtimeDirectory);
         });
+        runner.Add("hwdec 屬性 round-trip 與 hwdec-current 讀取", delegate
+        {
+            return VerifyHardwareDecodingPropertyPathAsync(runtimeDirectory);
+        });
+        runner.Add("HDR target-prim / target-trc / tone-mapping 屬性 round-trip", delegate
+        {
+            return VerifyHdrPropertyPathAsync(runtimeDirectory);
+        });
 
         await runner.RunAsync().ConfigureAwait(false);
         return runner.FailedCount == 0 ? 0 : 1;
@@ -1577,6 +1585,111 @@ internal static class Program
             TryDeleteFile(inputPath);
             TryDeleteFile(outputPath);
         }
+    }
+
+    /// <summary>
+    /// 驗證 libmpv hardware decoding 屬性的 wrapper API 路徑：<c>hwdec</c> 可寫入合法
+    /// 值並讀回；<c>hwdec-current</c> 可讀取（不擲例外）。本測試**不**驗證實際硬體
+    /// 解碼器是否被選用 — 那需要實機硬體 + 視訊內容 + 顯卡驅動，超出 headless 範圍。
+    /// 焦點是 wrapper 對這條 mpv property 路徑的 Get/Set 行為正確。
+    /// </summary>
+    /// <param name="runtimeDirectory">包含 libmpv 的執行階段資料夾。</param>
+    /// <returns>代表測試流程的工作。</returns>
+    private static async Task VerifyHardwareDecodingPropertyPathAsync(string runtimeDirectory)
+    {
+        using (MpvPlayer player = CreatePlayer(runtimeDirectory))
+        {
+            player.Initialize();
+
+            // 預設應為 "no"（CreatePlayer 沒明確指定 hwdec，且 vo=null 不需硬體解碼）。
+            string? defaultHwdec = player.GetPropertyString("hwdec");
+            IntegrationAssert.True(!string.IsNullOrEmpty(defaultHwdec), "hwdec 屬性應可讀取。");
+
+            // 嘗試幾個合法值，全部都該 round-trip 成功（即使本機沒有對應硬體；mpv
+            // 只是把值存起來，實際使用時若失敗會 fall back 而非擲例外）。
+            string[] candidateValues = new[] { "no", "auto-safe", "auto-copy", "auto" };
+            foreach (string value in candidateValues)
+            {
+                player.SetPropertyString("hwdec", value);
+                string? readBack = player.GetPropertyString("hwdec");
+                IntegrationAssert.Equal(value, readBack, "hwdec=" + value + " round-trip 應一致。");
+            }
+
+            // hwdec-current 在未載入視訊時可能回 null（未決）或 "no"；只驗證讀取
+            // 這條 property path 不擲例外即視為通過。
+            _ = player.GetPropertyString("hwdec-current");
+
+            // 載入合成視訊後再驗證一次（不假設特定值，依硬體環境）。
+            string? lavfiPath = await TryGenerateLavfiTestVideoAsync(runtimeDirectory, 1.0).ConfigureAwait(false);
+            if (lavfiPath != null)
+            {
+                try
+                {
+                    player.SetPropertyString("hwdec", "no");
+                    PlaybackEventProbe probe = new PlaybackEventProbe(player);
+                    player.LoadFile(lavfiPath);
+                    await probe.WaitForFileLoadedAsync().ConfigureAwait(false);
+
+                    _ = player.GetPropertyString("hwdec-current");
+                }
+                finally
+                {
+                    TryDeleteFile(lavfiPath);
+                }
+            }
+            else
+            {
+                Console.WriteLine("(略過載入視訊後 hwdec-current 子驗證：mpv av://lavfi 合成輸入不可用)");
+            }
+        }
+    }
+
+    /// <summary>
+    /// 驗證 libmpv HDR 相關屬性的 wrapper API 路徑：<c>target-prim</c> / <c>target-trc</c> /
+    /// <c>tone-mapping</c> 可寫入 BT.2020 / PQ / HDR tone-mapping 等合法值並讀回。
+    /// 本測試**不**驗證實際 HDR 渲染輸出 — 那需要 HDR 內容 + HDR 顯示器 + render API 路徑。
+    /// 焦點是 wrapper 對這幾條 mpv property 路徑的 Get/Set 行為與 BT.2020/PQ 識別碼合法。
+    /// </summary>
+    /// <param name="runtimeDirectory">包含 libmpv 的執行階段資料夾。</param>
+    /// <returns>代表測試流程的工作。</returns>
+    private static Task VerifyHdrPropertyPathAsync(string runtimeDirectory)
+    {
+        using (MpvPlayer player = CreatePlayer(runtimeDirectory))
+        {
+            player.Initialize();
+
+            // target-prim：色彩原色目標；BT.2020-NCL 是 HDR10 / Rec.2100 標準。
+            player.SetPropertyString("target-prim", "bt.2020");
+            IntegrationAssert.Equal("bt.2020", player.GetPropertyString("target-prim"), "target-prim=bt.2020 round-trip。");
+
+            player.SetPropertyString("target-prim", "auto");
+            IntegrationAssert.Equal("auto", player.GetPropertyString("target-prim"), "target-prim=auto round-trip。");
+
+            // target-trc：傳輸函數目標；PQ (SMPTE ST 2084) 是 HDR10 標準，HLG 是 Rec.2100 廣播。
+            player.SetPropertyString("target-trc", "pq");
+            IntegrationAssert.Equal("pq", player.GetPropertyString("target-trc"), "target-trc=pq round-trip。");
+
+            player.SetPropertyString("target-trc", "hlg");
+            IntegrationAssert.Equal("hlg", player.GetPropertyString("target-trc"), "target-trc=hlg round-trip。");
+
+            player.SetPropertyString("target-trc", "auto");
+            IntegrationAssert.Equal("auto", player.GetPropertyString("target-trc"), "target-trc=auto round-trip。");
+
+            // tone-mapping：HDR → SDR / HDR → HDR 色調映射演算法選擇。
+            string[] toneMappingValues = new[] { "auto", "clip", "bt.2390", "reinhard", "hable", "mobius" };
+            foreach (string value in toneMappingValues)
+            {
+                player.SetPropertyString("tone-mapping", value);
+                IntegrationAssert.Equal(value, player.GetPropertyString("tone-mapping"), "tone-mapping=" + value + " round-trip。");
+            }
+
+            // video-params/* 是 libmpv 報告當前載入媒體的視訊參數（唯讀）；未載入媒體時
+            // 通常回 null（沒值），這是 mpv 預期行為。只驗證 property path 可讀取不擲例外。
+            _ = player.GetPropertyString("video-params/primaries");
+            _ = player.GetPropertyString("video-params/gamma");
+        }
+
+        return Task.CompletedTask;
     }
 
     /// <summary>

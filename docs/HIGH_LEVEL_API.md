@@ -63,6 +63,42 @@ IDisposable subscription = player
 
 目前支援的型別：`double` / `long` / `bool` / `string` / `MpvNode`。
 
+### 多訂閱者共享註冊
+
+同一屬性的多個 `WatchProperty<T>().Subscribe(...)` 共用單一底層 `mpv_observe_property` 註冊，避免對 libmpv 重複下訂閱：
+
+```csharp
+IObservable<double> timePos = player.WatchProperty<double>("time-pos");
+
+IDisposable uiSub = timePos.Subscribe(p => seekBar.Position = p);
+IDisposable logSub = timePos.Subscribe(p => logger.LogTrace("time-pos={Position}", p));
+IDisposable metricsSub = timePos.Subscribe(p => metrics.RecordPosition(p));
+```
+
+三個訂閱者收到同一份事件流，內部只對 libmpv 註冊一次。當最後一個訂閱者 `Dispose` 後，整個觀察才會解註冊。
+
+### 多屬性同時訂閱（fan-out）
+
+```csharp
+IDisposable[] subs = new[]
+{
+    player.WatchProperty<double>("time-pos").Subscribe(OnPositionChanged),
+    player.WatchProperty<double>("duration").Subscribe(OnDurationChanged),
+    player.WatchProperty<bool>("pause").Subscribe(OnPauseChanged),
+    player.WatchProperty<double>("volume").Subscribe(OnVolumeChanged),
+    player.WatchProperty<string>("media-title").Subscribe(OnTitleChanged)
+};
+
+// 一次取消所有訂閱
+foreach (IDisposable sub in subs) sub.Dispose();
+```
+
+### 訂閱生命週期
+
+- **明確 Dispose**：訂閱者需要在 player 釋放前停止接收事件時呼叫 `Dispose()`
+- **隱式清理**：player 釋放（`Dispose` / `DisposeAsync`）會對所有未 Dispose 的訂閱者送出 `OnCompleted`，呼叫端不必手動清理
+- **高頻屬性節流**：`time-pos` 每數十毫秒可能觸發；UI 更新建議在 `OnNext` 內以 `DateTimeOffset.UtcNow` 自行節流，或集中到 `Dispatcher.BeginInvoke` 用 UI thread 的 batching 自然合併（範例：`samples/ConsoleMinimalSample/Program.cs` 的 `ConsoleTimePositionObserver` 1 秒節流）
+
 ### ObserveProperty 與 WatchProperty 遷移
 
 `ObserveProperty(string, MpvFormat)` 是 libmpv `mpv_observe_property` 的薄包裝，仍可使用，但建議新程式碼改用 `WatchProperty<T>`。對應關係如下：
