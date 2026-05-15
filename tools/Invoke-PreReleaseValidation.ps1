@@ -125,6 +125,17 @@ if (-not $SkipIntegrationTests) {
 
 Invoke-Step "方案建置" { dotnet build .\MediaEmbedKit.Mpv.slnx --configuration $Configuration --no-restore }
 
+Invoke-Step "UI 控制項 headless 測試" {
+    # 5 個 UI framework 各自的控制項層 headless tests（DP / BindableProperty / 5 commands /
+    # CanExecute / Dispose 重入 / 唯讀 property 守備）。不啟動真實 libmpv，純驗證屬性系統
+    # 與 CLR 包裝層；WinUI / MAUI 走 WinUI / MauiWinUI host，啟動後即在 UI thread 跑完後退出。
+    dotnet run --project .\tests\MediaEmbedKit.Mpv.WinForms.HeadlessTests\MediaEmbedKit.Mpv.WinForms.HeadlessTests.csproj --configuration $Configuration --no-restore
+    dotnet run --project .\tests\MediaEmbedKit.Mpv.Wpf.HeadlessTests\MediaEmbedKit.Mpv.Wpf.HeadlessTests.csproj --configuration $Configuration --no-restore
+    dotnet run --project .\tests\MediaEmbedKit.Mpv.Avalonia.HeadlessTests\MediaEmbedKit.Mpv.Avalonia.HeadlessTests.csproj --configuration $Configuration --no-restore
+    dotnet run --project .\tests\MediaEmbedKit.Mpv.WinUI.HeadlessTests\MediaEmbedKit.Mpv.WinUI.HeadlessTests.csproj --configuration $Configuration --no-restore
+    dotnet run --project .\tests\MediaEmbedKit.Mpv.Maui.HeadlessTests\MediaEmbedKit.Mpv.Maui.HeadlessTests.csproj --configuration $Configuration --no-restore
+}
+
 if (-not $SkipPackageValidation) {
     Invoke-Step "NuGet 套件驗證" { & .\tools\Invoke-PackageValidation.ps1 -Configuration $Configuration }
 }

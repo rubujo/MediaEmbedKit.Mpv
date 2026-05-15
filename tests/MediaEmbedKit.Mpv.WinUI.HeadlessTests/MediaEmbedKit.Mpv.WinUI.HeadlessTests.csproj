@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <UseWinUI>true</UseWinUI>
+    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">$(NETCoreSdkPortableRuntimeIdentifier)</RuntimeIdentifier>
+    <AssemblyName>MediaEmbedKit.Mpv.WinUI.HeadlessTests</AssemblyName>
+    <RootNamespace>MediaEmbedKit.Mpv.WinUI.HeadlessTests</RootNamespace>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" />
+    <ProjectReference Include="..\..\src\MediaEmbedKit.Mpv\MediaEmbedKit.Mpv.csproj" />
+    <ProjectReference Include="..\..\src\MediaEmbedKit.Mpv.WinUI\MediaEmbedKit.Mpv.WinUI.csproj" />
+  </ItemGroup>
+</Project>
