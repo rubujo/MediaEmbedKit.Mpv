@@ -160,13 +160,10 @@ public sealed partial class MainWindow : Window
         AppendEventLine(CreateLifecycleLine("WindowCreated", "Avalonia 視窗已建立，等待 runtime 初始化。"));
     }
 
-    /// <summary>
-    /// 載入 <c>MainWindow.axaml</c> 序列化的 visual tree。
-    /// </summary>
-    private void InitializeComponent()
-    {
-        AvaloniaXamlLoader.Load(this);
-    }
+    // InitializeComponent 由 Avalonia.Generators 的 NameGenerator source-gen 提供
+    // （public 簽章 `void InitializeComponent(bool loadXaml = true)`），同時做 XAML
+    // 載入與 x:Name 欄位繫結。不要手動實作私有 InitializeComponent；overload resolution
+    // 會選錯版本導致 _sourceBox / _toolbarHost 等欄位永遠為 null。
 
     /// <summary>
     /// 在視窗關閉時釋放事件橋接器。

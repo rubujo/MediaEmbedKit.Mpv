@@ -102,7 +102,7 @@ function Invoke-ProjectPolicyCheck {
         return
     }
 
-    $conventionalCommitSubjectPattern = '^(feat|fix|docs|refactor|test|build|chore|style|perf|ci|revert)(\([a-z0-9-]+(,[a-z0-9-]+)*\))?!?: .+'
+    $conventionalCommitSubjectPattern = '^(feat|fix|docs|refactor|test|build|chore|style|perf|ci|revert)(\+(feat|fix|docs|refactor|test|build|chore|style|perf|ci|revert))*(\([a-z0-9-]+(,[a-z0-9-]+)*\))?!?: .+'
     if ($commitSubject -notmatch $conventionalCommitSubjectPattern) {
         throw "最新提交主旨不符合專案慣例式提交規範：$commitSubject"
     }

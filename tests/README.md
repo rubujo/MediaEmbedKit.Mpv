@@ -1,6 +1,6 @@
 # 測試
 
-本資料夾包含核心 API 測試、原生整合測試、範例播放冒煙測試與第一階段壓力測試。
+本資料夾包含核心 API 測試、原生整合測試、範例播放冒煙測試、第一階段壓力測試與 5 個 UI framework 的控制項層 headless 測試。
 
 ## 核心 API 測試
 
@@ -16,7 +16,7 @@ dotnet run --project .\tests\MediaEmbedKit.Mpv.Tests\MediaEmbedKit.Mpv.Tests.csp
 dotnet run --project .\tests\MediaEmbedKit.Mpv.IntegrationTests\MediaEmbedKit.Mpv.IntegrationTests.csproj
 ```
 
-此測試需要 Windows x64 `libmpv-2.dll`，涵蓋初始化、屬性、錯誤路徑、本機播放事件、stream callback 與 FFmpeg-Builds 下載驗證。
+此測試需要 Windows `libmpv-2.dll`，涵蓋初始化、屬性、錯誤路徑、本機播放事件、stream callback 與 FFmpeg-Builds 下載驗證。
 
 ## 播放冒煙測試
 
@@ -25,6 +25,18 @@ dotnet run --project .\tests\MediaEmbedKit.Mpv.PlaybackSmoke\MediaEmbedKit.Mpv.P
 ```
 
 此測試會啟動範例應用程式，並等待影片播放到指定秒數後關閉。
+
+## UI 控制項 headless 測試
+
+```powershell
+dotnet run --project .\tests\MediaEmbedKit.Mpv.WinForms.HeadlessTests\MediaEmbedKit.Mpv.WinForms.HeadlessTests.csproj
+dotnet run --project .\tests\MediaEmbedKit.Mpv.Wpf.HeadlessTests\MediaEmbedKit.Mpv.Wpf.HeadlessTests.csproj
+dotnet run --project .\tests\MediaEmbedKit.Mpv.Avalonia.HeadlessTests\MediaEmbedKit.Mpv.Avalonia.HeadlessTests.csproj
+dotnet run --project .\tests\MediaEmbedKit.Mpv.WinUI.HeadlessTests\MediaEmbedKit.Mpv.WinUI.HeadlessTests.csproj
+dotnet run --project .\tests\MediaEmbedKit.Mpv.Maui.HeadlessTests\MediaEmbedKit.Mpv.Maui.HeadlessTests.csproj
+```
+
+每個 framework 各自驗證控制項層的 DependencyProperty / BindableProperty / INPC 屬性 / 5 個 Commands / CanExecute / Dispose 重入。**不**啟動真實 libmpv、不註冊 handler，純粹覆蓋屬性系統與 CLR 包裝層。WinUI / MAUI 以 WinUI / MauiWinUIApplication host 啟動，在 UI thread 跑完後立即結束 process。`tools/Invoke-PreReleaseValidation.ps1` 會自動依序執行這 5 個 headless 測試。
 
 ## 第一階段壓力測試
 

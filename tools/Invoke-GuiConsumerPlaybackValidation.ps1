@@ -114,10 +114,11 @@ function Convert-SampleProjectToPackageReference {
     )
 
     [xml] $project = Get-Content -LiteralPath $ProjectPath -Raw
-    foreach ($itemGroup in @($project.Project.ItemGroup)) {
-        foreach ($projectReference in @($itemGroup.ProjectReference)) {
-            [void] $itemGroup.RemoveChild($projectReference)
-        }
+    # 用 SelectNodes XPath 走訪而非屬性存取，避免 Set-StrictMode 對「ItemGroup 沒有
+    # ProjectReference 子節點」的情境擲 PropertyNotFoundException（如 MauiSample 把
+    # MauiIcon / MauiSplashScreen 放在獨立 ItemGroup 時）。
+    foreach ($projectReference in @($project.Project.SelectNodes("ItemGroup/ProjectReference"))) {
+        [void] $projectReference.ParentNode.RemoveChild($projectReference)
     }
 
     $targetItemGroup = @($project.Project.ItemGroup)[0]
