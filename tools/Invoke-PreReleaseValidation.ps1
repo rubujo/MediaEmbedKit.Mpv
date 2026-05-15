@@ -77,13 +77,23 @@ function Invoke-Step {
 }
 
 function Invoke-ProjectPolicyCheck {
-    $inheritdocMatches = & rg -n "<inheritdoc" src samples tests 2>$null
-    if ($LASTEXITCODE -eq 0) {
-        throw "C# XML 註解不得使用 <inheritdoc>。`n$($inheritdocMatches -join "`n")"
+    # 「C# XML 註解不得使用 <inheritdoc>」規則只適用於原始碼；build 產物（bin/obj/*.xml）
+    # 由編譯器生成，會合法出現 <inheritdoc/>，必須排除。
+    $inheritdocMatches = @()
+    foreach ($dir in @("src", "samples", "tests")) {
+        if (Test-Path $dir) {
+            $matchesInDir = Get-ChildItem -Path $dir -Recurse -File -Filter "*.cs" -ErrorAction SilentlyContinue |
+                Where-Object { $_.FullName -notmatch '\\(bin|obj)\\' } |
+                Select-String -Pattern "<inheritdoc" -SimpleMatch
+            if ($matchesInDir) {
+                $inheritdocMatches += $matchesInDir
+            }
+        }
     }
 
-    if ($LASTEXITCODE -gt 1) {
-        throw "無法執行 <inheritdoc> 搜尋。"
+    if ($inheritdocMatches.Count -gt 0) {
+        $lines = $inheritdocMatches | ForEach-Object { "$($_.Path):$($_.LineNumber): $($_.Line.Trim())" }
+        throw "C# XML 註解不得使用 <inheritdoc>。`n$($lines -join "`n")"
     }
 
     $commitSubject = & git log -1 --pretty=%s 2>$null
@@ -92,7 +102,7 @@ function Invoke-ProjectPolicyCheck {
         return
     }
 
-    $conventionalCommitSubjectPattern = '^(feat|fix|docs|refactor|test|build|chore|style|perf|ci|revert)(\([a-z0-9-]+\))?!?: .+'
+    $conventionalCommitSubjectPattern = '^(feat|fix|docs|refactor|test|build|chore|style|perf|ci|revert)(\([a-z0-9-]+(,[a-z0-9-]+)*\))?!?: .+'
     if ($commitSubject -notmatch $conventionalCommitSubjectPattern) {
         throw "最新提交主旨不符合專案慣例式提交規範：$commitSubject"
     }
