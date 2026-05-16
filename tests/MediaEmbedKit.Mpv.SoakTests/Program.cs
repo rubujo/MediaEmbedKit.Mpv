@@ -12,8 +12,11 @@ namespace MediaEmbedKit.Mpv.SoakTests;
 
 /// <summary>
 /// 24 小時連續播放 soak harness：循環 Load → 播放 → Stop → 取樣 → 記錄。
-/// 跑完後線性回歸 GC heap、Working Set、handle count 對時間的斜率，
-/// 判斷有無慢性記憶體 / handle 洩漏。失敗條件以 24 小時推算量為門檻。
+/// 工作負載按 iteration 輪流：WAV（audio only）／MP4（video + audio）／取消（cancel-in-flight）。
+/// 每回合都 subscribe WatchProperty time-pos + pause + dispose，並讀取多個 property
+/// 涵蓋 decoder / event / property cache 路徑。
+/// 跑完後線性回歸推算整段累計成長並比對絕對量門檻（pass/fail gate）；同時做
+/// Mann-Kendall 趨勢檢定輸出方向描述（純資訊用，MK 對 magnitude 無感所以不參與 gate）。
 /// </summary>
 internal static class Program
 {
@@ -55,6 +58,16 @@ internal static class Program
         string wavPath = Path.Combine(options.OutputDirectory, "soak-tone.wav");
         File.WriteAllBytes(wavPath, CreateSineWave(TimeSpan.FromSeconds(90)));
 
+        string? mp4Path = TryGenerateTestMp4(runtimeDirectory, options.OutputDirectory);
+        if (mp4Path == null)
+        {
+            Console.WriteLine("警告：找不到 ffmpeg.exe，video workload 將略過。");
+        }
+        else
+        {
+            Console.WriteLine("video 樣本：" + mp4Path);
+        }
+
         List<SoakSample> samples = new List<SoakSample>(capacity: 2048);
         CancellationTokenSource cts = new CancellationTokenSource();
         Console.CancelKeyPress += delegate (object? sender, ConsoleCancelEventArgs e)
@@ -72,9 +85,12 @@ internal static class Program
             int iteration = 0;
             while (!cts.IsCancellationRequested && DateTime.UtcNow < deadline)
             {
+                SoakWorkload workload = PickWorkload(iteration, mp4Path != null);
                 SoakSample sample = await RunIterationAsync(
                     runtimeDirectory,
                     wavPath,
+                    mp4Path,
+                    workload,
                     iteration,
                     start,
                     options,
@@ -119,6 +135,8 @@ internal static class Program
     private static async Task<SoakSample> RunIterationAsync(
         string runtimeDirectory,
         string wavPath,
+        string? mp4Path,
+        SoakWorkload workload,
         int iteration,
         DateTime start,
         SoakOptions options,
@@ -129,44 +147,76 @@ internal static class Program
         double observedSeconds = 0;
         try
         {
-            using (MpvPlayer player = CreatePlayer(runtimeDirectory, loopFile: true))
+            using (MpvPlayer player = CreatePlayer(runtimeDirectory, loopFile: workload != SoakWorkload.Cancel))
             {
                 player.Initialize();
-                player.LoadFile(wavPath);
 
-                Stopwatch sw = Stopwatch.StartNew();
-                while (sw.Elapsed.TotalSeconds < options.PlaybackSeconds)
+                // 覆蓋 WatchProperty callback path：每 iter subscribe + dispose。
+                IDisposable timePosSub = player.WatchProperty<double>("time-pos").Subscribe(new NoopObserver<double>());
+                IDisposable pauseSub = player.WatchProperty<bool>("pause").Subscribe(new NoopObserver<bool>());
+
+                try
                 {
-                    if (cancellationToken.IsCancellationRequested)
+                    string mediaPath = workload switch
                     {
-                        break;
-                    }
+                        SoakWorkload.Mp4 when mp4Path != null => mp4Path,
+                        _ => wavPath,
+                    };
+                    player.LoadFile(mediaPath);
 
-                    try
+                    if (workload == SoakWorkload.Cancel)
                     {
-                        double? pos = player.GetPropertyDouble("time-pos");
-                        if (pos.HasValue)
+                        // cancel-in-flight：LoadFile 後立刻 Stop，覆蓋 cancel / abort 路徑。
+                        try { player.Stop(); } catch (MpvException) { /* expected race */ }
+                        reachedTarget = true;
+                    }
+                    else
+                    {
+                        Stopwatch sw = Stopwatch.StartNew();
+                        while (sw.Elapsed.TotalSeconds < options.PlaybackSeconds)
                         {
-                            observedSeconds = pos.Value;
-                        }
-                    }
-                    catch (MpvException)
-                    {
-                        // time-pos 在 file-loaded 之前尚未可用，忽略。
-                    }
+                            if (cancellationToken.IsCancellationRequested)
+                            {
+                                break;
+                            }
 
-                    try
-                    {
-                        await Task.Delay(TimeSpan.FromMilliseconds(200), cancellationToken).ConfigureAwait(false);
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        break;
+                            try
+                            {
+                                observedSeconds = player.GetPropertyDouble("time-pos");
+
+                                // 每 ~1 秒讀一次多項 property，覆蓋 property cache / event 通路。
+                                if (((int)sw.Elapsed.TotalMilliseconds) % 1000 < 220)
+                                {
+                                    _ = player.GetPropertyDouble("duration");
+                                    _ = player.GetPropertyString("audio-codec");
+                                    _ = player.GetPropertyString("video-codec");
+                                    _ = player.GetPropertyFlag("pause");
+                                }
+                            }
+                            catch (MpvException)
+                            {
+                                // 部分屬性在 file-loaded 前不可用，忽略。
+                            }
+
+                            try
+                            {
+                                await Task.Delay(TimeSpan.FromMilliseconds(200), cancellationToken).ConfigureAwait(false);
+                            }
+                            catch (OperationCanceledException)
+                            {
+                                break;
+                            }
+                        }
+
+                        reachedTarget = sw.Elapsed.TotalSeconds >= options.PlaybackSeconds;
+                        player.Stop();
                     }
                 }
-
-                reachedTarget = sw.Elapsed.TotalSeconds >= options.PlaybackSeconds;
-                player.Stop();
+                finally
+                {
+                    timePosSub.Dispose();
+                    pauseSub.Dispose();
+                }
             }
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
@@ -195,6 +245,7 @@ internal static class Program
         return new SoakSample(
             Iteration: iteration,
             ElapsedSeconds: elapsed.TotalSeconds,
+            Workload: workload,
             GcHeapBytes: gcHeap,
             WorkingSetBytes: workingSet,
             PrivateMemoryBytes: privateMemory,
@@ -202,6 +253,95 @@ internal static class Program
             PlaybackReachedTarget: reachedTarget,
             ObservedPlaybackSeconds: observedSeconds,
             ErrorMessage: errorMessage);
+    }
+
+    private static SoakWorkload PickWorkload(int iteration, bool mp4Available)
+    {
+        // 三路循環：WAV → MP4 → Cancel。若無 MP4 則退化為 WAV / Cancel 兩路。
+        int mod = mp4Available ? 3 : 2;
+        int slot = iteration % mod;
+        if (mp4Available)
+        {
+            return slot switch
+            {
+                0 => SoakWorkload.Wav,
+                1 => SoakWorkload.Mp4,
+                _ => SoakWorkload.Cancel,
+            };
+        }
+
+        return slot == 0 ? SoakWorkload.Wav : SoakWorkload.Cancel;
+    }
+
+    private static string? TryGenerateTestMp4(string runtimeDirectory, string outputDirectory)
+    {
+        string ffmpegPath = Path.Combine(runtimeDirectory, "ffmpeg.exe");
+        if (!File.Exists(ffmpegPath))
+        {
+            return null;
+        }
+
+        string mp4Path = Path.Combine(outputDirectory, "soak-video.mp4");
+        if (File.Exists(mp4Path))
+        {
+            try { File.Delete(mp4Path); } catch (IOException) { return mp4Path; } catch (UnauthorizedAccessException) { return mp4Path; }
+        }
+
+        ProcessStartInfo psi = new ProcessStartInfo(ffmpegPath)
+        {
+            UseShellExecute = false,
+            RedirectStandardError = true,
+            RedirectStandardOutput = true,
+            CreateNoWindow = true,
+        };
+        psi.ArgumentList.Add("-y");
+        psi.ArgumentList.Add("-loglevel");
+        psi.ArgumentList.Add("error");
+        psi.ArgumentList.Add("-f");
+        psi.ArgumentList.Add("lavfi");
+        psi.ArgumentList.Add("-i");
+        psi.ArgumentList.Add("testsrc=duration=5:size=320x240:rate=30");
+        psi.ArgumentList.Add("-f");
+        psi.ArgumentList.Add("lavfi");
+        psi.ArgumentList.Add("-i");
+        psi.ArgumentList.Add("sine=frequency=440:duration=5");
+        psi.ArgumentList.Add("-c:v");
+        psi.ArgumentList.Add("libx264");
+        psi.ArgumentList.Add("-preset");
+        psi.ArgumentList.Add("ultrafast");
+        psi.ArgumentList.Add("-tune");
+        psi.ArgumentList.Add("zerolatency");
+        psi.ArgumentList.Add("-pix_fmt");
+        psi.ArgumentList.Add("yuv420p");
+        psi.ArgumentList.Add("-c:a");
+        psi.ArgumentList.Add("aac");
+        psi.ArgumentList.Add("-shortest");
+        psi.ArgumentList.Add(mp4Path);
+
+        using (Process? process = Process.Start(psi))
+        {
+            if (process == null)
+            {
+                return null;
+            }
+
+            string stderr = process.StandardError.ReadToEnd();
+            process.WaitForExit(60000);
+            if (process.ExitCode != 0 || !File.Exists(mp4Path))
+            {
+                Console.Error.WriteLine("ffmpeg 產生測試 MP4 失敗（exit=" + process.ExitCode + "）：" + stderr);
+                return null;
+            }
+        }
+
+        return mp4Path;
+    }
+
+    private sealed class NoopObserver<T> : IObserver<T>
+    {
+        public void OnCompleted() { }
+        public void OnError(Exception error) { }
+        public void OnNext(T value) { }
     }
 
     private static MpvPlayer CreatePlayer(string runtimeDirectory, bool loopFile = false)
@@ -273,7 +413,7 @@ internal static class Program
 
     private static void WriteCsvHeader(StreamWriter writer)
     {
-        writer.WriteLine("iteration,elapsed_seconds,gc_heap_bytes,working_set_bytes,private_memory_bytes,handle_count,playback_reached,observed_playback_seconds,error");
+        writer.WriteLine("iteration,elapsed_seconds,workload,gc_heap_bytes,working_set_bytes,private_memory_bytes,handle_count,playback_reached,observed_playback_seconds,error");
     }
 
     private static void WriteCsvRow(StreamWriter writer, SoakSample sample)
@@ -281,6 +421,8 @@ internal static class Program
         writer.Write(sample.Iteration.ToString(CultureInfo.InvariantCulture));
         writer.Write(',');
         writer.Write(sample.ElapsedSeconds.ToString("F3", CultureInfo.InvariantCulture));
+        writer.Write(',');
+        writer.Write(sample.Workload.ToString().ToLowerInvariant());
         writer.Write(',');
         writer.Write(sample.GcHeapBytes.ToString(CultureInfo.InvariantCulture));
         writer.Write(',');
@@ -386,9 +528,17 @@ internal static class Program
     }
 }
 
+internal enum SoakWorkload
+{
+    Wav,
+    Mp4,
+    Cancel,
+}
+
 internal sealed record SoakSample(
     int Iteration,
     double ElapsedSeconds,
+    SoakWorkload Workload,
     long GcHeapBytes,
     long WorkingSetBytes,
     long PrivateMemoryBytes,
@@ -594,22 +744,49 @@ internal static class SoakAnalyzer
         long projectedPmGrowth = (long)(pmReg.SlopePerSecond * targetSpanSeconds);
         long projectedHandleGrowth = (long)(hcReg.SlopePerSecond * targetSpanSeconds);
 
+        // Mann-Kendall 趨勢檢定（無母數），α=0.05 → |Z| > 1.96 即顯著趨勢。
+        MannKendallResult gcMk = MannKendall.Compute(analysisSet, s => s.GcHeapBytes);
+        MannKendallResult wsMk = MannKendall.Compute(analysisSet, s => s.WorkingSetBytes);
+        MannKendallResult pmMk = MannKendall.Compute(analysisSet, s => s.PrivateMemoryBytes);
+        MannKendallResult hcMk = MannKendall.Compute(analysisSet, s => s.HandleCount);
+
+        // 工作負載分布。
+        int wavCount = 0;
+        int mp4Count = 0;
+        int cancelCount = 0;
+        foreach (SoakSample s in samples)
+        {
+            switch (s.Workload)
+            {
+                case SoakWorkload.Wav: wavCount++; break;
+                case SoakWorkload.Mp4: mp4Count++; break;
+                case SoakWorkload.Cancel: cancelCount++; break;
+            }
+        }
+
         bool gcPass = Math.Abs(projectedGcGrowth) <= options.GcHeapAbsoluteGrowthLimitBytes;
         bool wsPass = Math.Abs(projectedWsGrowth) <= options.WorkingSetAbsoluteGrowthLimitBytes;
         bool handlePass = Math.Abs(projectedHandleGrowth) <= options.HandleCountAbsoluteGrowthLimit;
+        // MK 是趨勢檢定但對 magnitude 無感（1 byte/iter 累積也判顯著）。
+        // 業界做法：gate 仍以絕對量門檻為準；MK 純資訊用，用來描述「上升 / 平穩 / 下降」。
+        bool gcMkPass = gcMk.ZScore <= 1.96;
+        bool wsMkPass = wsMk.ZScore <= 1.96;
+        bool hcMkPass = hcMk.ZScore <= 1.96;
         bool allPass = gcPass && wsPass && handlePass && errors == 0;
 
         sb.AppendLine("warmup 跳過：" + options.WarmupIterations);
         sb.AppendLine("回歸樣本數：" + analysisSet.Count);
         sb.AppendLine("回歸區間：" + TimeSpan.FromSeconds(analyzedSpanSeconds));
+        sb.AppendLine(CultureInfo.InvariantCulture, $"工作負載分布：wav={wavCount} mp4={mp4Count} cancel={cancelCount}");
         sb.AppendLine();
-        AppendRegression(sb, "GC heap", first.GcHeapBytes, last.GcHeapBytes, gcReg, targetSpanSeconds, projectedGcGrowth, options.GcHeapAbsoluteGrowthLimitBytes, gcPass);
-        AppendRegression(sb, "Working Set", first.WorkingSetBytes, last.WorkingSetBytes, wsReg, targetSpanSeconds, projectedWsGrowth, options.WorkingSetAbsoluteGrowthLimitBytes, wsPass);
-        AppendRegression(sb, "Private Memory", first.PrivateMemoryBytes, last.PrivateMemoryBytes, pmReg, targetSpanSeconds, projectedPmGrowth, 0, true);
-        AppendHandleRegression(sb, first.HandleCount, last.HandleCount, hcReg, targetSpanSeconds, projectedHandleGrowth, options.HandleCountAbsoluteGrowthLimit, handlePass);
+        AppendRegression(sb, "GC heap", first.GcHeapBytes, last.GcHeapBytes, gcReg, targetSpanSeconds, projectedGcGrowth, options.GcHeapAbsoluteGrowthLimitBytes, gcPass, gcMk, gcMkPass);
+        AppendRegression(sb, "Working Set", first.WorkingSetBytes, last.WorkingSetBytes, wsReg, targetSpanSeconds, projectedWsGrowth, options.WorkingSetAbsoluteGrowthLimitBytes, wsPass, wsMk, wsMkPass);
+        AppendRegression(sb, "Private Memory", first.PrivateMemoryBytes, last.PrivateMemoryBytes, pmReg, targetSpanSeconds, projectedPmGrowth, 0, true, pmMk, true);
+        AppendHandleRegression(sb, first.HandleCount, last.HandleCount, hcReg, targetSpanSeconds, projectedHandleGrowth, options.HandleCountAbsoluteGrowthLimit, handlePass, hcMk, hcMkPass);
 
         sb.AppendLine();
-        sb.AppendLine(allPass ? "結論：PASS" : "結論：FAIL（任一項超出門檻或有錯誤回合）");
+        sb.AppendLine("註：MK z-score 為趨勢方向描述（純資訊），實際 pass/fail 以絕對量門檻為準。");
+        sb.AppendLine(allPass ? "結論：PASS" : "結論：FAIL（任一項超出絕對量門檻或有錯誤回合）");
 
         return new SoakReport(sb.ToString(), allPass);
     }
@@ -642,7 +819,9 @@ internal static class SoakAnalyzer
         double targetSpanSeconds,
         long projectedGrowth,
         long limit,
-        bool pass)
+        bool pass,
+        MannKendallResult mk,
+        bool mkPass)
     {
         sb.Append(name).Append("：");
         sb.Append("baseline=").Append(Program.FormatBytes(baseline));
@@ -662,6 +841,8 @@ internal static class SoakAnalyzer
             sb.Append(" (僅參考)");
         }
 
+        sb.Append(" MK z=").Append(mk.ZScore.ToString("F2", CultureInfo.InvariantCulture));
+        sb.Append(' ').Append(DescribeMk(mk.ZScore));
         sb.AppendLine();
     }
 
@@ -673,18 +854,85 @@ internal static class SoakAnalyzer
         double targetSpanSeconds,
         long projectedGrowth,
         int limit,
-        bool pass)
+        bool pass,
+        MannKendallResult mk,
+        bool mkPass)
     {
         sb.AppendFormat(
             CultureInfo.InvariantCulture,
-            "Handle Count：baseline={0} end={1} slope={2:F2}/hr 整段投射={3:+#;-#;0} 門檻=±{4} {5}",
+            "Handle Count：baseline={0} end={1} slope={2:F2}/hr 整段投射={3:+#;-#;0} 門檻=±{4} {5} MK z={6:F2} {7}",
             baseline,
             end,
             regression.SlopePerSecond * 3600.0,
             projectedGrowth,
             limit,
-            pass ? "PASS" : "FAIL");
+            pass ? "PASS" : "FAIL",
+            mk.ZScore,
+            DescribeMk(mk.ZScore));
         sb.AppendLine();
+    }
+
+    private static string DescribeMk(double zScore)
+    {
+        if (zScore > 1.96) return "(MK 上升顯著)";
+        if (zScore < -1.96) return "(MK 下降顯著)";
+        return "(MK 平穩)";
+    }
+}
+
+internal sealed record MannKendallResult(double S, double Variance, double ZScore);
+
+internal static class MannKendall
+{
+    /// <summary>
+    /// 對序列做 Mann-Kendall 趨勢檢定（無母數）。
+    /// </summary>
+    /// <remarks>
+    /// S = Σ_{i&lt;j} sign(y_j - y_i)；Var(S) = n(n-1)(2n+5)/18；
+    /// Z = (S - sign(S)) / sqrt(Var(S))。|Z| &gt; 1.96 表示在 α=0.05 顯著趨勢。
+    /// 正 Z 表示上升、負 Z 表示下降。樣本數 &lt; 10 時忽略連續性修正以免分母過小。
+    /// </remarks>
+    public static MannKendallResult Compute(IReadOnlyList<SoakSample> samples, Func<SoakSample, double> selector)
+    {
+        int n = samples.Count;
+        if (n < 3)
+        {
+            return new MannKendallResult(0, 0, 0);
+        }
+
+        long s = 0;
+        for (int i = 0; i < n - 1; i++)
+        {
+            double yi = selector(samples[i]);
+            for (int j = i + 1; j < n; j++)
+            {
+                double yj = selector(samples[j]);
+                if (yj > yi) s++;
+                else if (yj < yi) s--;
+            }
+        }
+
+        double variance = (double)n * (n - 1) * (2 * n + 5) / 18.0;
+        if (variance <= 0)
+        {
+            return new MannKendallResult(s, 0, 0);
+        }
+
+        double zScore;
+        if (s > 0)
+        {
+            zScore = (s - 1) / Math.Sqrt(variance);
+        }
+        else if (s < 0)
+        {
+            zScore = (s + 1) / Math.Sqrt(variance);
+        }
+        else
+        {
+            zScore = 0;
+        }
+
+        return new MannKendallResult(s, variance, zScore);
     }
 }
 
