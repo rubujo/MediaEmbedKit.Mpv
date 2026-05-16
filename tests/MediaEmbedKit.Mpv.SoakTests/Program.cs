@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
@@ -41,6 +42,26 @@ internal static class Program
             SoakOptions.PrintUsage(Console.Out);
             return 0;
         }
+
+        // 安全硬化：把 process / 主執行緒降到 BelowNormal，讓 OS 排程器可以優先給 UI 與
+        // 其他應用，避免 24h 跑滿 CPU 把使用者的互動體驗拖垮、減少風扇長時間滿轉。
+        try
+        {
+            using (Process self = Process.GetCurrentProcess())
+            {
+                self.PriorityClass = ProcessPriorityClass.BelowNormal;
+            }
+        }
+        catch (Exception ex) when (ex is PlatformNotSupportedException or InvalidOperationException or Win32Exception)
+        {
+            Console.Error.WriteLine("警告：無法調整 process priority：" + ex.Message);
+        }
+
+        try
+        {
+            Thread.CurrentThread.Priority = ThreadPriority.BelowNormal;
+        }
+        catch (ThreadStateException) { }
 
         Directory.CreateDirectory(options.OutputDirectory);
         string samplesCsv = Path.Combine(options.OutputDirectory, "samples.csv");
