@@ -80,9 +80,12 @@ jobs:
         # release gate 內第 8 步「NuGet 套件驗證」會呼叫 Invoke-PackageValidation.ps1，
         # 它已經把 6 個 packable project pack 到 artifacts/packages/（含 .nupkg 與
         # .snupkg）。下一步直接拿那邊的檔上傳，不重複 dotnet pack。
+        #
+        # -IncludeDocSyncCheck：要求 provider 下游事實宣告型文件已與 catalog 同步。
+        # ci.yml（PR-CI）不開此旗標，留給 release 路徑當最後一道把關（drift 不能上正式版）。
         shell: pwsh
         run: |
-          .\tools\Invoke-PreReleaseValidation.ps1
+          .\tools\Invoke-PreReleaseValidation.ps1 -IncludeDocSyncCheck
 
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v3

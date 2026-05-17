@@ -8,6 +8,7 @@ param(
     [switch] $IncludeGuiConsumerPlaybackValidation,
     [switch] $IncludeGuiPlaybackStress,
     [switch] $IncludeWindowsReleaseGate,
+    [switch] $IncludeDocSyncCheck,
     [switch] $DryRun,
     [string] $RuntimeDirectory = ".tmp/gui-playback-runtime",
     [double] $GuiPlaybackSeconds = 20,
@@ -116,6 +117,15 @@ if ($DryRun) {
 
 Invoke-Step "還原套件" { dotnet restore .\MediaEmbedKit.Mpv.slnx }
 Invoke-Step "專案規範檢查" { Invoke-ProjectPolicyCheck }
+
+if ($IncludeDocSyncCheck) {
+    # 驗證 provider 下游事實宣告型文件（LIBMPV_C_API_TEST_MATRIX / HIGH_LEVEL_API /
+    # REFERENCE_SOURCES）與 catalog（docs/runtime/libmpv-git-builds.json）同步。
+    # 由 release.yml 顯式開啟；ci.yml 不啟用，避免 PR 階段半成品狀態被 drift 卡住。
+    # drift 時 Sync-ProviderDocs.ps1 -Check 會 exit 1，Invoke-Step 會抓 LASTEXITCODE 並 throw。
+    Invoke-Step "Provider 下游文件同步檢查" { & .\tools\libmpv\Sync-ProviderDocs.ps1 -Check }
+}
+
 Invoke-Step "格式檢查" { dotnet format .\MediaEmbedKit.Mpv.slnx --no-restore --verify-no-changes }
 Invoke-Step "核心測試" { dotnet run --project .\tests\MediaEmbedKit.Mpv.Tests\MediaEmbedKit.Mpv.Tests.csproj --configuration $Configuration --no-restore }
 
