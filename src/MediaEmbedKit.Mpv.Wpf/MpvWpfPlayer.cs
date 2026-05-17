@@ -188,6 +188,7 @@ public class MpvWpfPlayer : HwndHost
     /// 取得讓播放器開始或續播的指令。
     /// </summary>
     /// <value>對應 mpv <c>pause=no</c>。</value>
+    [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public ICommand PlayCommand
     {
         get { return _playCommand; }
@@ -197,6 +198,7 @@ public class MpvWpfPlayer : HwndHost
     /// 取得暫停播放的指令。
     /// </summary>
     /// <value>對應 mpv <c>pause=yes</c>。</value>
+    [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public ICommand PauseCommand
     {
         get { return _pauseCommand; }
@@ -206,6 +208,7 @@ public class MpvWpfPlayer : HwndHost
     /// 取得停止播放的指令。
     /// </summary>
     /// <value>對應 mpv <c>stop</c>。</value>
+    [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public ICommand StopCommand
     {
         get { return _stopCommand; }
@@ -215,6 +218,7 @@ public class MpvWpfPlayer : HwndHost
     /// 取得切換暫停狀態的指令。
     /// </summary>
     /// <value>切換 mpv <c>pause</c>。</value>
+    [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public ICommand TogglePauseCommand
     {
         get { return _togglePauseCommand; }
@@ -224,6 +228,7 @@ public class MpvWpfPlayer : HwndHost
     /// 取得切換靜音狀態的指令。
     /// </summary>
     /// <value>切換 mpv <c>mute</c>。</value>
+    [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public ICommand ToggleMuteCommand
     {
         get { return _toggleMuteCommand; }
@@ -324,12 +329,14 @@ public class MpvWpfPlayer : HwndHost
     /// 取得主控項建立播放器時使用的選項。
     /// </summary>
     /// <value>播放器建立選項。</value>
+    [System.ComponentModel.Browsable(false)]
     public MpvPlayerOptions PlayerOptions { get; private set; }
 
     /// <summary>
     /// 取得主控項目前建立的播放器。
     /// </summary>
     /// <value>目前播放器；尚未建立時為 <see langword="null"/>。</value>
+    [System.ComponentModel.Browsable(false)]
     public MpvPlayer? Player
     {
         get { return _player; }
@@ -339,6 +346,7 @@ public class MpvWpfPlayer : HwndHost
     /// 取得或設定要由控制項自行放入 AirSpace 覆蓋層的 WPF 內容。
     /// </summary>
     /// <value>顯示在影片上方的 WPF 元素；未設定時為 <see langword="null"/>。</value>
+    [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public UIElement? OverlayContent
     {
         get { return (UIElement?)GetValue(OverlayContentProperty); }
@@ -349,6 +357,7 @@ public class MpvWpfPlayer : HwndHost
     /// 取得或設定控制項管理的 AirSpace 覆蓋層是否開啟。
     /// </summary>
     /// <value>覆蓋層應保持開啟時為 <see langword="true"/>。</value>
+    [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public bool IsOverlayOpen
     {
         get { return (bool)GetValue(IsOverlayOpenProperty); }
@@ -359,6 +368,7 @@ public class MpvWpfPlayer : HwndHost
     /// 取得或設定要載入並播放的媒體來源。
     /// </summary>
     /// <value>檔案路徑或媒體網址；變更會自動載入新媒體。</value>
+    [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public string? Source
     {
         get { return (string?)GetValue(SourceProperty); }
@@ -369,6 +379,7 @@ public class MpvWpfPlayer : HwndHost
     /// 取得或設定目前播放位置。
     /// </summary>
     /// <value>對應 mpv <c>time-pos</c>；雙向繫結時設值會觸發 seek。</value>
+    [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public TimeSpan Position
     {
         get { return (TimeSpan)GetValue(PositionProperty); }
@@ -379,6 +390,7 @@ public class MpvWpfPlayer : HwndHost
     /// 取得目前媒體總時長。
     /// </summary>
     /// <value>對應 mpv <c>duration</c>；尚未取得時為 <see cref="TimeSpan.Zero"/>。</value>
+    [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public TimeSpan Duration
     {
         get { return (TimeSpan)GetValue(DurationProperty); }
@@ -388,6 +400,7 @@ public class MpvWpfPlayer : HwndHost
     /// 取得或設定音量。
     /// </summary>
     /// <value>對應 mpv <c>volume</c>，範圍 0–130；預設 100。</value>
+    [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public double Volume
     {
         get { return (double)GetValue(VolumeProperty); }
@@ -398,6 +411,7 @@ public class MpvWpfPlayer : HwndHost
     /// 取得或設定是否暫停。
     /// </summary>
     /// <value>對應 mpv <c>pause</c>。</value>
+    [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public bool IsPaused
     {
         get { return (bool)GetValue(IsPausedProperty); }
@@ -408,6 +422,7 @@ public class MpvWpfPlayer : HwndHost
     /// 取得或設定是否靜音。
     /// </summary>
     /// <value>對應 mpv <c>mute</c>。</value>
+    [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public bool IsMuted
     {
         get { return (bool)GetValue(IsMutedProperty); }
@@ -418,6 +433,7 @@ public class MpvWpfPlayer : HwndHost
     /// 取得目前由 libmpv 事件聚合而成的播放狀態。
     /// </summary>
     /// <value>對應 <see cref="MpvPlayer.State"/>。</value>
+    [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public MpvPlaybackState PlaybackState
     {
         get { return (MpvPlaybackState)GetValue(PlaybackStateProperty); }
@@ -427,6 +443,7 @@ public class MpvWpfPlayer : HwndHost
     /// 取得或設定目前播放清單索引。
     /// </summary>
     /// <value>對應 mpv <c>playlist-pos</c>；以 0 起始。</value>
+    [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public int PlaylistIndex
     {
         get { return (int)GetValue(PlaylistIndexProperty); }
@@ -437,6 +454,7 @@ public class MpvWpfPlayer : HwndHost
     /// 取得或設定目前章節索引。
     /// </summary>
     /// <value>對應 mpv <c>chapter</c>；以 0 起始，<see langword="null"/> 代表無章節或尚未載入。</value>
+    [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public int? Chapter
     {
         get { return (int?)GetValue(ChapterProperty); }

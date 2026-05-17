@@ -206,6 +206,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// 取得讓播放器開始或續播的指令。
     /// </summary>
     /// <value>對應 mpv <c>pause=no</c>。</value>
+    [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public ICommand PlayCommand
     {
         get { return _playCommand; }
@@ -215,6 +216,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// 取得暫停播放的指令。
     /// </summary>
     /// <value>對應 mpv <c>pause=yes</c>。</value>
+    [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public ICommand PauseCommand
     {
         get { return _pauseCommand; }
@@ -224,6 +226,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// 取得停止播放的指令。
     /// </summary>
     /// <value>對應 mpv <c>stop</c>。</value>
+    [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public ICommand StopCommand
     {
         get { return _stopCommand; }
@@ -233,6 +236,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// 取得切換暫停狀態的指令。
     /// </summary>
     /// <value>切換 mpv <c>pause</c>。</value>
+    [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public ICommand TogglePauseCommand
     {
         get { return _togglePauseCommand; }
@@ -242,6 +246,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// 取得切換靜音狀態的指令。
     /// </summary>
     /// <value>切換 mpv <c>mute</c>。</value>
+    [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public ICommand ToggleMuteCommand
     {
         get { return _toggleMuteCommand; }
@@ -342,12 +347,14 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// 取得控制項建立播放器時使用的選項。
     /// </summary>
     /// <value>播放器建立選項。</value>
+    [System.ComponentModel.Browsable(false)]
     public MpvPlayerOptions PlayerOptions { get; private set; }
 
     /// <summary>
     /// 取得控制項目前建立的播放器。
     /// </summary>
     /// <value>目前播放器；尚未建立時為 <see langword="null"/>。</value>
+    [System.ComponentModel.Browsable(false)]
     public MpvPlayer? Player
     {
         get { return _hwndPlayer == null ? null : _hwndPlayer.Player; }
@@ -357,6 +364,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// 取得控制項目前記錄的 WinUI 視窗。
     /// </summary>
     /// <value>最近一次附加的 WinUI 視窗；尚未附加時為 <see langword="null"/>。</value>
+    [System.ComponentModel.Browsable(false)]
     public Window? HostWindow
     {
         get { return _hostWindow; }
@@ -366,6 +374,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// 取得此控制項是否已建立原生子視窗。
     /// </summary>
     /// <value>HWND 後端已建立原生子視窗時為 <see langword="true"/>。</value>
+    [System.ComponentModel.Browsable(false)]
     public bool IsNativeHostCreated
     {
         get { return _hwndPlayer != null && _hwndPlayer.VideoWindowHandle != IntPtr.Zero; }
@@ -375,6 +384,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// 取得控制項是否已取得可用的父視窗控制代碼。
     /// </summary>
     /// <value>父視窗控制代碼已設定時為 <see langword="true"/>。</value>
+    [System.ComponentModel.Browsable(false)]
     public bool IsAttached
     {
         get { return _parentHwnd != IntPtr.Zero; }
@@ -384,12 +394,14 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// 取得最近一次建立 HWND 後端時發生的錯誤。
     /// </summary>
     /// <value>最近一次錯誤；未發生錯誤時為 <see langword="null"/>。</value>
+    [System.ComponentModel.Browsable(false)]
     public Exception? LastBackendError { get; private set; }
 
     /// <summary>
     /// 取得或設定要由控制項自行放入 AirSpace 覆蓋層的 WinUI 內容。
     /// </summary>
     /// <value>顯示在影片上方的 WinUI 元素；未設定時為 <see langword="null"/>。</value>
+    [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public UIElement? OverlayContent
     {
         get { return (UIElement?)GetValue(OverlayContentProperty); }
@@ -400,6 +412,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// 取得或設定控制項管理的 AirSpace 覆蓋層是否開啟。
     /// </summary>
     /// <value>覆蓋層應保持開啟時為 <see langword="true"/>。</value>
+    [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public bool IsOverlayOpen
     {
         get { return (bool)GetValue(IsOverlayOpenProperty); }
@@ -410,6 +423,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// 取得或設定要載入並播放的媒體來源。
     /// </summary>
     /// <value>檔案路徑或媒體網址；變更會自動載入新媒體。</value>
+    [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public string? Source
     {
         get { return (string?)GetValue(SourceProperty); }
@@ -420,6 +434,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// 取得或設定目前播放位置。
     /// </summary>
     /// <value>對應 mpv <c>time-pos</c>；雙向繫結時設值會觸發 seek。</value>
+    [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public TimeSpan Position
     {
         get { return (TimeSpan)GetValue(PositionProperty); }
@@ -435,6 +450,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// 但 <see cref="DurationProperty"/> 的 callback 會在偵測到非播放器來源的寫入時自動回退。請勿透過
     /// XAML binding（<c>Mode=TwoWay</c>）或 <c>SetValue</c> 寫入此屬性。
     /// </remarks>
+    [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public TimeSpan Duration
     {
         get { return (TimeSpan)GetValue(DurationProperty); }
@@ -444,6 +460,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// 取得或設定音量。
     /// </summary>
     /// <value>對應 mpv <c>volume</c>，範圍 0–130；預設 100。</value>
+    [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public double Volume
     {
         get { return (double)GetValue(VolumeProperty); }
@@ -454,6 +471,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// 取得或設定是否暫停。
     /// </summary>
     /// <value>對應 mpv <c>pause</c>。</value>
+    [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public bool IsPaused
     {
         get { return (bool)GetValue(IsPausedProperty); }
@@ -464,6 +482,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// 取得或設定是否靜音。
     /// </summary>
     /// <value>對應 mpv <c>mute</c>。</value>
+    [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public bool IsMuted
     {
         get { return (bool)GetValue(IsMutedProperty); }
@@ -479,6 +498,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// 但 <see cref="PlaybackStateProperty"/> 的 callback 會在偵測到非播放器來源的寫入時自動回退。請勿透過
     /// XAML binding（<c>Mode=TwoWay</c>）或 <c>SetValue</c> 寫入此屬性。
     /// </remarks>
+    [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public MpvPlaybackState PlaybackState
     {
         get { return (MpvPlaybackState)GetValue(PlaybackStateProperty); }
@@ -488,6 +508,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// 取得或設定目前播放清單索引。
     /// </summary>
     /// <value>對應 mpv <c>playlist-pos</c>；以 0 起始。</value>
+    [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public int PlaylistIndex
     {
         get { return (int)GetValue(PlaylistIndexProperty); }
@@ -498,6 +519,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// 取得或設定目前章節索引。
     /// </summary>
     /// <value>對應 mpv <c>chapter</c>；以 0 起始，<see langword="null"/> 代表無章節或尚未載入。</value>
+    [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public int? Chapter
     {
         get { return (int?)GetValue(ChapterProperty); }
