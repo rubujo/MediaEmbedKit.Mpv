@@ -225,6 +225,14 @@ public static class YtDlpDownloader
     /// </summary>
     /// <param name="channel">要查詢的 yt-dlp 發行通道。</param>
     /// <returns>對應通道的 GitHub 最新發行 API URI。</returns>
+    /// <remarks>
+    /// 三個 yt-dlp repo（主 / master-builds / nightly-builds）均為「單軌 release」結構：
+    /// tag 為日期版本（如 <c>2026.05.16</c> 或 <c>2026.05.16.203101</c>），無另外的
+    /// <c>latest</c> tag，且 asset 名稱固定（如 <c>yt-dlp.exe</c>、<c>SHA2-256SUMS</c>）。
+    /// 因此 <c>/releases/latest</c> 端點安全 —— 不會像 <see cref="FFmpegDownloader"/>
+    /// 對應的 yt-dlp/FFmpeg-Builds 那樣，會被 hourly autobuild release 蓋過去取到
+    /// 動態命名 asset。請勿「順手對齊」改成 <c>/releases/tags/latest</c>，那會直接 404。
+    /// </remarks>
     private static Uri GetReleaseApiUri(YtDlpReleaseChannel channel)
     {
         switch (channel)

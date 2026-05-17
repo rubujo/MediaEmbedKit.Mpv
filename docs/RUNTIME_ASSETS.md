@@ -100,6 +100,21 @@ FFmpeg helper 支援從 yt-dlp `FFmpeg-Builds` 下載對應架構的 GPL build�
 
 FFmpeg 沒有本專案可呼叫的內建自我更新命令。若要更新，請重新呼叫 `FFmpegDownloader.DownloadAndExtractLatestAsync(...)` 或 `MpvWindowsRuntimeInstaller.InstallOrUpdateAsync(...)`，並於 `FFmpegDownloadOptions.OverwriteExisting = true` 時覆蓋既有檔案。
 
+### yt-dlp/FFmpeg-Builds 的雙 release 結構
+
+yt-dlp/FFmpeg-Builds 同 repo 並存兩種 release，命名規範完全不同：
+
+| Release 類型 | tag 範例 | asset 命名 |
+| --- | --- | --- |
+| 穩定 URL release | `latest`（字面 tag） | `ffmpeg-master-latest-{arch}-gpl.zip`（**固定**） |
+| 每小時 CI build | `autobuild-YYYY-MM-DD-HH-MM` | `ffmpeg-N-{buildnum}-g{commit10}-{arch}-gpl.zip`（**含 build number / commit**） |
+
+GitHub API 的 `/releases/latest` 端點語意是「取 `created_at` 最新、非 draft 非 prerelease 的 release」——**不會**特別取 tag 名為 `latest` 的 release。由於 autobuild 每小時新增、`created_at` 必然新於 `latest` tag，`/releases/latest` 會回傳 autobuild release，其 asset 名稱含動態 build number/commit，與 `FFmpegDownloader.WindowsX64AssetName`（寫死 `ffmpeg-master-latest-win64-gpl.zip`）對不起來。
+
+`FFmpegDownloader` 因此使用 `/releases/tags/latest` 端點，明確取 tag 名為 `latest` 的 release，asset 名稱穩定。此契約由 `VerifyFFmpegBuildsLatestTagAssetNamingAsync` 整合測試鎖住：上游若改命名或拆掉 `latest` tag，release gate 立即失敗。
+
+**不要把這個改成 `/releases/latest`** —— 那是用來抓 hourly autobuild 的端點，與本專案期待的穩定 asset 名稱結構不相容。其他 downloader（yt-dlp / Deno / libmpv 兩家 provider）的 repo 都是「單軌 release」（tag 為日期或版本號，無另外的 `latest` tag），所以它們繼續使用 `/releases/latest` 是安全的，請勿「順手對齊」改成 `tags/latest` —— 那會直接 404。
+
 yt-dlp 官方將 `ffmpeg` 與 `ffprobe` 列為 strongly recommended dependency；本 helper 僅將其視為 yt-dlp 附帶工具，不提供 FFmpeg wrapper、轉檔佇列或批次工作 API。
 
 ## mpv 設定與 scripts

@@ -65,7 +65,13 @@ public static class FFmpegDownloader
         options = options ?? new FFmpegDownloadOptions();
         Directory.CreateDirectory(installDirectory);
 
-        Uri defaultApiUri = new Uri("https://api.github.com/repos/yt-dlp/FFmpeg-Builds/releases/latest");
+        // yt-dlp/FFmpeg-Builds 同 repo 並存兩種 release：tag=latest（固定 asset 名）
+        // 與每小時新增的 autobuild-YYYY-MM-DD-HH-MM（含 build number / commit hash 的
+        // 動態 asset 名）。GitHub /releases/latest 取「created_at 最新」會吃到 autobuild
+        // 而拿到不固定的 asset 名稱（ffmpeg-N-{build}-g{commit}-...）→ SelectAsset
+        // 找 ffmpeg-master-latest-* 必爆。改用 /releases/tags/latest 明確抓 tag 名為
+        // latest 的 release，asset 名穩定為 ffmpeg-master-latest-*-gpl.zip。
+        Uri defaultApiUri = new Uri("https://api.github.com/repos/yt-dlp/FFmpeg-Builds/releases/tags/latest");
         Uri apiUri = options.ReleaseApiUriOverride ?? defaultApiUri;
         GitHubRelease release = await DownloadUtility.GetLatestReleaseAsync(
             apiUri,

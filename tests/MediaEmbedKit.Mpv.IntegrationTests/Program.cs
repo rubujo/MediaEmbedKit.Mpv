@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using MediaEmbedKit.Mpv.Downloads;
@@ -98,6 +100,7 @@ internal static class Program
             return VerifyStreamCallbackErrorAndCancellationAsync(runtimeDirectory);
         });
         runner.Add("FFmpeg-Builds 下載與版本執行", VerifyFFmpegDownloadAndExecutionAsync);
+        runner.Add("FFmpeg-Builds tag=latest asset 命名穩定性", VerifyFFmpegBuildsLatestTagAssetNamingAsync);
         runner.Add("IAsyncDisposable graceful shutdown", delegate
         {
             return VerifyAsyncDisposableAsync(runtimeDirectory);
@@ -2471,6 +2474,52 @@ internal static class Program
 
         await VerifyExternalToolVersionAsync(result.FFmpegPath, "FFmpeg").ConfigureAwait(false);
         await VerifyExternalToolVersionAsync(result.FFprobePath, "FFprobe").ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// 鎖住 yt-dlp/FFmpeg-Builds 的上游契約：tag=latest 這個 release 必須持續存在、
+    /// tag_name 字面為 "latest"、且 Windows x64 + ARM64 GPL asset 名稱以
+    /// <c>ffmpeg-master-latest-</c> 為前綴。
+    /// </summary>
+    /// <remarks>
+    /// FFmpeg-Builds 同 repo 並存兩種 release：tag=latest（固定 asset 名）與每小時
+    /// autobuild-YYYY-MM-DD-HH-MM（動態 asset 名）。<see cref="FFmpegDownloader"/>
+    /// 依賴 tag=latest 抓固定名 asset；上游若改命名或拆掉這個 release，本測試會
+    /// 立即在 release gate 失敗，避免 production user 自己撞 bug。
+    /// </remarks>
+    /// <returns>代表測試流程的工作。</returns>
+    private static async Task VerifyFFmpegBuildsLatestTagAssetNamingAsync()
+    {
+        Uri apiUri = new Uri("https://api.github.com/repos/yt-dlp/FFmpeg-Builds/releases/tags/latest");
+        using HttpClient client = new HttpClient();
+        client.DefaultRequestHeaders.UserAgent.ParseAdd("MediaEmbedKit.Mpv.IntegrationTests");
+        client.DefaultRequestHeaders.Accept.ParseAdd("application/vnd.github+json");
+
+        string json = await client.GetStringAsync(apiUri).ConfigureAwait(false);
+        using JsonDocument doc = JsonDocument.Parse(json);
+        JsonElement root = doc.RootElement;
+
+        string? tagName = root.GetProperty("tag_name").GetString();
+        IntegrationAssert.Equal("latest", tagName, "yt-dlp/FFmpeg-Builds tag=latest release 不應消失或改名");
+
+        JsonElement assetsElement = root.GetProperty("assets");
+        List<string> assetNames = new List<string>();
+        foreach (JsonElement asset in assetsElement.EnumerateArray())
+        {
+            string? name = asset.GetProperty("name").GetString();
+            if (!string.IsNullOrEmpty(name))
+            {
+                assetNames.Add(name!);
+            }
+        }
+
+        string assetList = string.Join(", ", assetNames);
+        IntegrationAssert.True(
+            assetNames.Contains(FFmpegDownloader.WindowsX64AssetName),
+            "tag=latest release 必須含 x64 GPL asset '" + FFmpegDownloader.WindowsX64AssetName + "'。實際清單：" + assetList);
+        IntegrationAssert.True(
+            assetNames.Contains(FFmpegDownloader.WindowsArm64AssetName),
+            "tag=latest release 必須含 ARM64 GPL asset '" + FFmpegDownloader.WindowsArm64AssetName + "'。實際清單：" + assetList);
     }
 
     /// <summary>
