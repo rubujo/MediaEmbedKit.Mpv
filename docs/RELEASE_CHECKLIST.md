@@ -1,6 +1,12 @@
-# 發佈前檢查清單
+﻿# 發佈前檢查清單
 
-本文件定義 Windows 發佈前可在本機完成的檢查項目（x64 / ARM64 共用同一驗證鏈，runtime helper 依目前處理序架構自動選擇對應資產）。現階段發佈品質以本機驗證鏈為準，不建立 CI 工作流程。
+本文件定義 Windows 發佈前可在本機完成的檢查項目（x64 / ARM64 共用同一驗證鏈，runtime helper 依目前處理序架構自動選擇對應資產）。
+
+本機驗證鏈與 GitHub Actions 互補：
+
+- 本機 release gate（本文件）：含 GUI 視窗實際播放，是發佈前**最終品質依據**。
+- [`.github/workflows/ci.yml`](../.github/workflows/ci.yml)：push to main / PR to main 觸發；跑不含 GUI playback 的 release gate（GitHub-hosted runner 無 display）。
+- [`.github/workflows/release.yml`](../.github/workflows/release.yml)：push `v*.*.*` tag 觸發；跑 release gate 並把 `.nupkg` / `.snupkg` 上傳到對應 GitHub Release。本專案不發行至 nuget.org，consumer 端流程見 [`docs/CONSUMING_PACKAGES.md`](CONSUMING_PACKAGES.md)。
 
 ## 必要檢查
 

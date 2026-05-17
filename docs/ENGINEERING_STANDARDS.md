@@ -1,4 +1,4 @@
-# 工程標準
+﻿# 工程標準
 
 本文件定義專案的程式碼、文件、提交與驗證規則。
 
@@ -37,9 +37,14 @@ Markdown 文件應使用正式、精煉且一致的正體中文。英文授權�
 - `docs/SUPPORT_MATRIX.md`：支援狀態。
 - `docs/UI_BACKENDS.md`：UI 後端。
 - `docs/RUNTIME_ASSETS.md`：runtime 政策。
+- `docs/HIGH_LEVEL_API.md`：高階 API 與 encoding 操作指南。
+- `docs/CONTROLS_API.md`：五個 UI 框架控制項共通綁定屬性與 Commands。
+- `docs/CONSUMING_PACKAGES.md`：從 GitHub Release 安裝本地 NuGet 套件。
+- `docs/LIBMPV_C_API_TEST_MATRIX.md`：libmpv C API 覆蓋與驗證矩陣。
 - `docs/RELEASE_CHECKLIST.md`：發佈前本機檢查。
 - `docs/DESIGN_TIME_CHECKLIST.md`：Windows UI 控制項設計階段檢查。
 - `docs/AI_AGENT_INTEGRATION.md`：AI agent 與 skills 結構。
+- `docs/REFERENCE_SOURCES.md`：上游與第三方參考來源。
 
 ## 方案結構
 

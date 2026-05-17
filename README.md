@@ -1,5 +1,12 @@
 ﻿# MediaEmbedKit.Mpv
 
+[![作業系統](https://img.shields.io/badge/作業系統-Windows%20x64%20%2F%20ARM64-003A6D?style=for-the-badge)](https://learn.microsoft.com/zh-tw/windows/)
+[![.NET Runtime](https://img.shields.io/badge/Runtime-.NET%2010%20%2F%208%20%2F%20Framework%204.7.2%2B-512BD4?logo=dotnet&logoColor=white&style=for-the-badge)](https://dotnet.microsoft.com/zh-tw/download/dotnet/10.0)
+[![程式語言](https://img.shields.io/badge/程式語言-C%23-1B5E20?style=for-the-badge)](https://learn.microsoft.com/zh-tw/dotnet/csharp/)
+[![libmpv 基準](https://img.shields.io/badge/libmpv-stable%20v0.41.0-A84300?style=for-the-badge)](https://github.com/mpv-player/mpv)
+[![UI 框架](https://img.shields.io/badge/UI%20框架-WinForms%20%2F%20WPF%20%2F%20Avalonia%20%2F%20WinUI%203%20%2F%20MAUI-107C10?style=for-the-badge)](docs/SUPPORT_MATRIX.md)
+[![授權](https://img.shields.io/badge/授權-CC0%201.0%20Universal-424242?style=for-the-badge)](https://creativecommons.org/publicdomain/zero/1.0/deed.zh-hant)
+
 MediaEmbedKit.Mpv 是 .NET libmpv 包裝器與 Windows 桌面 UI 控制項專案。專案提供核心 libmpv C API 包裝、常用高階播放 API、Windows x64 / ARM64 執行階段資產 helper，以及 WinForms、WPF、Avalonia、WinUI 3 與 .NET MAUI Windows 範例。
 
 本專案不是 mpv、yt-dlp、Deno、FFmpeg 或其相關建置提供者的官方專案。`MediaEmbedKit` 是本專案名稱；`Mpv` 僅表示本專案與 mpv/libmpv 的整合目標。
@@ -60,6 +67,10 @@ Fluent builder、`MpvMediaItem` per-file 選項、`MpvEncoder` 轉碼、`WatchPr
 
 高階 API 採薄型 helper 設計：常用設定可用 fluent 方式組合，但播放器初始化、runtime 下載與資源釋放仍由應用程式明確控制。
 
+## 取得套件
+
+本專案不發行至 nuget.org。發行版的 6 個 `.nupkg` 與對應 `.snupkg`（symbol package）由 GitHub Releases 提供，consumer 自行下載後以本機 NuGet feed 安裝。完整步驟（含 `nuget.config` 設定、`packageSourceMapping`、SourceLink 行為、IDE 整合）請參考 `docs/CONSUMING_PACKAGES.md`。
+
 ## 範例
 
 範例位於 `samples`。GUI 範例會先顯示視窗，再於背景呼叫共用 helper 準備 runtime 資產；Console 範例則示範核心 `MpvPlayer` 最小生命週期。範例涵蓋初始化、事件輸出、播放控制與釋放流程。
@@ -86,7 +97,9 @@ dotnet run --project .\tests\MediaEmbedKit.Mpv.PlaybackSmoke\MediaEmbedKit.Mpv.P
 
 整合測試、播放冒煙測試需要 Windows 原生執行階段；環境條件詳見 `docs/RUNTIME_ASSETS.md`。
 
-發佈前驗證以 `docs/RELEASE_CHECKLIST.md` 與 `tools/Invoke-PreReleaseValidation.ps1` 為主流程。
+發佈前驗證以 `docs/RELEASE_CHECKLIST.md` 與 `tools/Invoke-PreReleaseValidation.ps1` 為主流程。GitHub Actions 的 `ci.yml` / `release.yml` workflow 跑同一個 release gate 腳本（GitHub-hosted runner 無 display 略過 GUI playback）。
+
+長時間穩定性以 `tests/MediaEmbedKit.Mpv.SoakTests` 提供的 24 小時連續播放 soak harness 驗證；不在 release gate 內，視需要手動執行。
 
 ## 文件
 

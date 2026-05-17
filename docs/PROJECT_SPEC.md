@@ -1,4 +1,4 @@
-# MediaEmbedKit.Mpv 專案規範
+﻿# MediaEmbedKit.Mpv 專案規範
 
 本文件是專案規範入口。細節由專責文件維護；變更支援目標、平台狀態、runtime 政策、工程規則或 AI agent 指示時，必須同步更新對應文件。
 
@@ -10,6 +10,7 @@
 | libmpv C API 覆蓋與測試矩陣 | `docs/LIBMPV_C_API_TEST_MATRIX.md` |
 | 高階 API 與 ergonomics 指南 | `docs/HIGH_LEVEL_API.md` |
 | 控制項共通綁定 API | `docs/CONTROLS_API.md` |
+| 從 GitHub Release 安裝本地 NuGet 套件 | `docs/CONSUMING_PACKAGES.md` |
 | 發佈前本機檢查 | `docs/RELEASE_CHECKLIST.md` |
 | Windows 設計階段檢查 | `docs/DESIGN_TIME_CHECKLIST.md` |
 | 工程、文件、提交與驗證規則 | `docs/ENGINEERING_STANDARDS.md` |
