@@ -69,18 +69,26 @@ jobs:
             runtime-${{ runner.os }}-
 
       - name: Cache .NET workloads (MAUI)
-        # MAUI 專案讓 dotnet restore 連帶要求 maui-* workload（包含 maui-tizen，
-        # 即使我們只 target net10.0-windows）；workload 安裝後 cache 起來避免每次
-        # 重灌（~250 MB）。SDK 版本變動或 workload manifest 變動會自動失效。
+        # 只 cache workload restore 真正新增到 SDK 目錄的部分；runner image 預裝
+        # 的 ref/runtime/aspnetcore packs（~1.4 GB）不要再快取，避免雙倍負擔。
+        # packs/ 用 glob 篩出 MAUI 相關（Maui/Android/iOS/MacCatalyst/tvOS/Tizen），
+        # metadata/ 只抓 workloads 子資料夾（其他與 workload 無關）。
+        # SDK 版本變動或 workload manifest 變動會自動失效；key 加 v2 後綴強制
+        # 跳過先前過度涵蓋的舊 cache。
         uses: actions/cache@v5
         with:
           path: |
             C:\Program Files\dotnet\sdk-manifests
-            C:\Program Files\dotnet\metadata
-            C:\Program Files\dotnet\packs
+            C:\Program Files\dotnet\metadata\workloads
+            C:\Program Files\dotnet\packs\Microsoft.Maui.*
+            C:\Program Files\dotnet\packs\Microsoft.Android.*
+            C:\Program Files\dotnet\packs\Microsoft.iOS.*
+            C:\Program Files\dotnet\packs\Microsoft.MacCatalyst.*
+            C:\Program Files\dotnet\packs\Microsoft.tvOS.*
+            C:\Program Files\dotnet\packs\Microsoft.Tizen.*
             C:\Program Files\dotnet\library-packs
             C:\Program Files\dotnet\template-packs
-          key: workloads-${{ runner.os }}-${{ hashFiles('global.json') }}-maui
+          key: workloads-${{ runner.os }}-${{ hashFiles('global.json') }}-maui-v2
 
       - name: Restore .NET workloads (MAUI)
         # actions/setup-dotnet 不會自動裝 workload；MAUI 必須顯式 restore 才能讓
