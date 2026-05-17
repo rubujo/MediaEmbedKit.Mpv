@@ -68,6 +68,26 @@ jobs:
           restore-keys: |
             runtime-${{ runner.os }}-
 
+      - name: Cache .NET workloads (MAUI)
+        # MAUI 專案讓 dotnet restore 連帶要求 maui-* workload（包含 maui-tizen，
+        # 即使我們只 target net10.0-windows）；workload 安裝後 cache 起來避免每次
+        # 重灌（~250 MB）。SDK 版本變動或 workload manifest 變動會自動失效。
+        uses: actions/cache@v4
+        with:
+          path: |
+            C:\Program Files\dotnet\sdk-manifests
+            C:\Program Files\dotnet\metadata
+            C:\Program Files\dotnet\packs
+            C:\Program Files\dotnet\library-packs
+            C:\Program Files\dotnet\template-packs
+          key: workloads-${{ runner.os }}-${{ hashFiles('global.json') }}-maui
+
+      - name: Restore .NET workloads (MAUI)
+        # actions/setup-dotnet 不會自動裝 workload；MAUI 必須顯式 restore 才能讓
+        # 後續 dotnet restore / build 通過。
+        shell: pwsh
+        run: dotnet workload restore .\MediaEmbedKit.Mpv.slnx
+
       - name: Run release gate
         shell: pwsh
         run: |

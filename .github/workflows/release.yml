@@ -52,6 +52,23 @@ jobs:
           restore-keys: |
             runtime-${{ runner.os }}-
 
+      - name: Cache .NET workloads (MAUI)
+        # MAUI 專案讓 dotnet restore 連帶要求 maui-* workload（包含 maui-tizen，
+        # 即使我們只 target net10.0-windows）；workload 安裝後 cache 避免重灌。
+        uses: actions/cache@v4
+        with:
+          path: |
+            C:\Program Files\dotnet\sdk-manifests
+            C:\Program Files\dotnet\metadata
+            C:\Program Files\dotnet\packs
+            C:\Program Files\dotnet\library-packs
+            C:\Program Files\dotnet\template-packs
+          key: workloads-${{ runner.os }}-${{ hashFiles('global.json') }}-maui
+
+      - name: Restore .NET workloads (MAUI)
+        shell: pwsh
+        run: dotnet workload restore .\MediaEmbedKit.Mpv.slnx
+
       - name: Run release gate
         # release gate 內第 8 步「NuGet 套件驗證」會呼叫 Invoke-PackageValidation.ps1，
         # 它已經把 6 個 packable project pack 到 artifacts/packages/（含 .nupkg 與
