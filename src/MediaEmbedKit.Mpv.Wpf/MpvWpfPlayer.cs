@@ -129,6 +129,24 @@ public class MpvWpfPlayer : HwndHost
     public static readonly DependencyProperty PlaybackStateProperty = PlaybackStatePropertyKey.DependencyProperty;
 
     /// <summary>
+    /// 識別 <see cref="PlaylistIndex"/> 相依性屬性。
+    /// </summary>
+    public static readonly DependencyProperty PlaylistIndexProperty = DependencyProperty.Register(
+        nameof(PlaylistIndex),
+        typeof(int),
+        typeof(MpvWpfPlayer),
+        new PropertyMetadata(0, PlaylistIndexChanged));
+
+    /// <summary>
+    /// 識別 <see cref="Chapter"/> 相依性屬性。
+    /// </summary>
+    public static readonly DependencyProperty ChapterProperty = DependencyProperty.Register(
+        nameof(Chapter),
+        typeof(int?),
+        typeof(MpvWpfPlayer),
+        new PropertyMetadata(null, ChapterChanged));
+
+    /// <summary>
     /// 初始化 <see cref="MpvWpfPlayer"/> 類別的新執行個體。
     /// </summary>
     public MpvWpfPlayer()
@@ -406,6 +424,26 @@ public class MpvWpfPlayer : HwndHost
     }
 
     /// <summary>
+    /// 取得或設定目前播放清單索引。
+    /// </summary>
+    /// <value>對應 mpv <c>playlist-pos</c>；以 0 起始。</value>
+    public int PlaylistIndex
+    {
+        get { return (int)GetValue(PlaylistIndexProperty); }
+        set { SetValue(PlaylistIndexProperty, value); }
+    }
+
+    /// <summary>
+    /// 取得或設定目前章節索引。
+    /// </summary>
+    /// <value>對應 mpv <c>chapter</c>；以 0 起始，<see langword="null"/> 代表無章節或尚未載入。</value>
+    public int? Chapter
+    {
+        get { return (int?)GetValue(ChapterProperty); }
+        set { SetValue(ChapterProperty, value); }
+    }
+
+    /// <summary>
     /// 載入檔案或網址作為播放項目。
     /// </summary>
     /// <param name="pathOrUrl">要載入的檔案路徑或媒體網址。</param>
@@ -679,6 +717,8 @@ public class MpvWpfPlayer : HwndHost
         _propertyWatchers.Add(player.WatchProperty<double>("volume").Subscribe(new MpvDpObserver<double>(value => UpdateFromPlayer(VolumeProperty, value))));
         _propertyWatchers.Add(player.WatchProperty<double>("time-pos").Subscribe(new MpvDpObserver<double>(value => UpdateFromPlayer(PositionProperty, TimeSpan.FromSeconds(value)))));
         _propertyWatchers.Add(player.WatchProperty<double>("duration").Subscribe(new MpvDpObserver<double>(value => UpdateReadOnlyFromPlayer(DurationPropertyKey, TimeSpan.FromSeconds(value)))));
+        _propertyWatchers.Add(player.WatchProperty<long>("playlist-pos").Subscribe(new MpvDpObserver<long>(value => UpdateFromPlayer(PlaylistIndexProperty, checked((int)value)))));
+        _propertyWatchers.Add(player.WatchProperty<long>("chapter").Subscribe(new MpvDpObserver<long>(value => UpdateFromPlayer(ChapterProperty, value < 0 ? (int?)null : checked((int)value)))));
         player.StateChanged += OnPlayerStateChanged;
 
         if (!string.IsNullOrWhiteSpace(Source))
@@ -863,6 +903,65 @@ public class MpvWpfPlayer : HwndHost
             control._player.Mute = (bool)e.NewValue;
         }
         catch (MpvException)
+        {
+        }
+    }
+
+    /// <summary>
+    /// 處理 <see cref="PlaylistIndexProperty"/> 變更：寫入 player。
+    /// </summary>
+    /// <param name="dependencyObject">屬性所屬的相依性物件。</param>
+    /// <param name="e">屬性變更資料。</param>
+    private static void PlaylistIndexChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs e)
+    {
+        MpvWpfPlayer control = (MpvWpfPlayer)dependencyObject;
+        if (control._suppressPlayerWrite || control._player == null)
+        {
+            return;
+        }
+
+        int newIndex = (int)e.NewValue;
+        if (newIndex < 0)
+        {
+            return;
+        }
+
+        try
+        {
+            control._player.PlaylistIndex = newIndex;
+        }
+        catch (MpvException)
+        {
+        }
+    }
+
+    /// <summary>
+    /// 處理 <see cref="ChapterProperty"/> 變更：寫入 player；值為 null 或負數時忽略。
+    /// </summary>
+    /// <param name="dependencyObject">屬性所屬的相依性物件。</param>
+    /// <param name="e">屬性變更資料。</param>
+    private static void ChapterChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs e)
+    {
+        MpvWpfPlayer control = (MpvWpfPlayer)dependencyObject;
+        if (control._suppressPlayerWrite || control._player == null)
+        {
+            return;
+        }
+
+        int? newChapter = (int?)e.NewValue;
+        if (!newChapter.HasValue || newChapter.Value < 0)
+        {
+            return;
+        }
+
+        try
+        {
+            control._player.Chapter = newChapter.Value;
+        }
+        catch (MpvException)
+        {
+        }
+        catch (ArgumentOutOfRangeException)
         {
         }
     }

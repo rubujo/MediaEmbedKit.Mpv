@@ -94,6 +94,18 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
         AvaloniaProperty.RegisterDirect<MpvAvaloniaPlayer, MpvPlaybackState>(nameof(PlaybackState), control => control._playbackState);
 
     /// <summary>
+    /// 識別 <see cref="PlaylistIndex"/> 屬性。
+    /// </summary>
+    public static readonly StyledProperty<int> PlaylistIndexProperty =
+        AvaloniaProperty.Register<MpvAvaloniaPlayer, int>(nameof(PlaylistIndex));
+
+    /// <summary>
+    /// 識別 <see cref="Chapter"/> 屬性。
+    /// </summary>
+    public static readonly StyledProperty<int?> ChapterProperty =
+        AvaloniaProperty.Register<MpvAvaloniaPlayer, int?>(nameof(Chapter));
+
+    /// <summary>
     /// 由 <see cref="DurationProperty"/> 反射的目前媒體時長。
     /// </summary>
     private TimeSpan _duration;
@@ -118,6 +130,8 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
         VolumeProperty.Changed.AddClassHandler<MpvAvaloniaPlayer>((control, args) => control.OnVolumeChanged(args));
         IsPausedProperty.Changed.AddClassHandler<MpvAvaloniaPlayer>((control, args) => control.OnIsPausedChanged(args));
         IsMutedProperty.Changed.AddClassHandler<MpvAvaloniaPlayer>((control, args) => control.OnIsMutedChanged(args));
+        PlaylistIndexProperty.Changed.AddClassHandler<MpvAvaloniaPlayer>((control, args) => control.OnPlaylistIndexChanged(args));
+        ChapterProperty.Changed.AddClassHandler<MpvAvaloniaPlayer>((control, args) => control.OnChapterChanged(args));
 
         _playCommand = new MpvRelayCommand(ExecutePlay, CanExecutePlayerCommand);
         _pauseCommand = new MpvRelayCommand(ExecutePause, CanExecutePlayerCommand);
@@ -349,6 +363,26 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     }
 
     /// <summary>
+    /// 取得或設定目前播放清單索引。
+    /// </summary>
+    /// <value>對應 mpv <c>playlist-pos</c>；以 0 起始。</value>
+    public int PlaylistIndex
+    {
+        get { return GetValue(PlaylistIndexProperty); }
+        set { SetValue(PlaylistIndexProperty, value); }
+    }
+
+    /// <summary>
+    /// 取得或設定目前章節索引。
+    /// </summary>
+    /// <value>對應 mpv <c>chapter</c>；以 0 起始，<see langword="null"/> 代表無章節或尚未載入。</value>
+    public int? Chapter
+    {
+        get { return GetValue(ChapterProperty); }
+        set { SetValue(ChapterProperty, value); }
+    }
+
+    /// <summary>
     /// 在控制項建立 mpv 播放器後發生。
     /// </summary>
     public event EventHandler? PlayerCreated;
@@ -573,6 +607,8 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
         _propertyWatchers.Add(player.WatchProperty<double>("volume").Subscribe(new MpvDpObserver<double>(value => UpdateFromPlayer(VolumeProperty, value))));
         _propertyWatchers.Add(player.WatchProperty<double>("time-pos").Subscribe(new MpvDpObserver<double>(value => UpdateFromPlayer(PositionProperty, TimeSpan.FromSeconds(value)))));
         _propertyWatchers.Add(player.WatchProperty<double>("duration").Subscribe(new MpvDpObserver<double>(value => UpdateDurationFromPlayer(TimeSpan.FromSeconds(value)))));
+        _propertyWatchers.Add(player.WatchProperty<long>("playlist-pos").Subscribe(new MpvDpObserver<long>(value => UpdateFromPlayer(PlaylistIndexProperty, checked((int)value)))));
+        _propertyWatchers.Add(player.WatchProperty<long>("chapter").Subscribe(new MpvDpObserver<long>(value => UpdateFromPlayer(ChapterProperty, value < 0 ? (int?)null : checked((int)value)))));
         player.StateChanged += OnPlayerStateChanged;
 
         string? currentSource = Source;
@@ -778,6 +814,61 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
             _player.Mute = args.GetNewValue<bool>();
         }
         catch (MpvException)
+        {
+        }
+    }
+
+    /// <summary>
+    /// 處理 <see cref="PlaylistIndexProperty"/> 變更：寫入 player；負數忽略。
+    /// </summary>
+    /// <param name="args">屬性變更資料。</param>
+    private void OnPlaylistIndexChanged(AvaloniaPropertyChangedEventArgs args)
+    {
+        if (_suppressPlayerWrite || _player == null)
+        {
+            return;
+        }
+
+        int newIndex = args.GetNewValue<int>();
+        if (newIndex < 0)
+        {
+            return;
+        }
+
+        try
+        {
+            _player.PlaylistIndex = newIndex;
+        }
+        catch (MpvException)
+        {
+        }
+    }
+
+    /// <summary>
+    /// 處理 <see cref="ChapterProperty"/> 變更：寫入 player；null 或負數忽略。
+    /// </summary>
+    /// <param name="args">屬性變更資料。</param>
+    private void OnChapterChanged(AvaloniaPropertyChangedEventArgs args)
+    {
+        if (_suppressPlayerWrite || _player == null)
+        {
+            return;
+        }
+
+        int? newChapter = args.GetNewValue<int?>();
+        if (!newChapter.HasValue || newChapter.Value < 0)
+        {
+            return;
+        }
+
+        try
+        {
+            _player.Chapter = newChapter.Value;
+        }
+        catch (MpvException)
+        {
+        }
+        catch (ArgumentOutOfRangeException)
         {
         }
     }

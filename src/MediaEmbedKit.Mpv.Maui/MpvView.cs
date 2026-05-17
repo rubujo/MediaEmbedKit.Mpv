@@ -141,6 +141,28 @@ public class MpvView : View
     public static readonly BindableProperty PlaybackStateProperty = PlaybackStatePropertyKey.BindableProperty;
 
     /// <summary>
+    /// 識別 <see cref="PlaylistIndex"/> 可繫結屬性。
+    /// </summary>
+    public static readonly BindableProperty PlaylistIndexProperty = BindableProperty.Create(
+        nameof(PlaylistIndex),
+        typeof(int),
+        typeof(MpvView),
+        0,
+        defaultBindingMode: BindingMode.TwoWay,
+        propertyChanged: OnPlaylistIndexChanged);
+
+    /// <summary>
+    /// 識別 <see cref="Chapter"/> 可繫結屬性。
+    /// </summary>
+    public static readonly BindableProperty ChapterProperty = BindableProperty.Create(
+        nameof(Chapter),
+        typeof(int?),
+        typeof(MpvView),
+        null,
+        defaultBindingMode: BindingMode.TwoWay,
+        propertyChanged: OnChapterChanged);
+
+    /// <summary>
     /// 保存尚未交給平台 handler 的載入模式。
     /// </summary>
     private MpvLoadFileMode _pendingMode = MpvLoadFileMode.Replace;
@@ -446,6 +468,26 @@ public class MpvView : View
     }
 
     /// <summary>
+    /// 取得或設定目前播放清單索引。
+    /// </summary>
+    /// <value>對應 mpv <c>playlist-pos</c>；以 0 起始。</value>
+    public int PlaylistIndex
+    {
+        get { return (int)GetValue(PlaylistIndexProperty); }
+        set { SetValue(PlaylistIndexProperty, value); }
+    }
+
+    /// <summary>
+    /// 取得或設定目前章節索引。
+    /// </summary>
+    /// <value>對應 mpv <c>chapter</c>；以 0 起始，<see langword="null"/> 代表無章節或尚未載入。</value>
+    public int? Chapter
+    {
+        get { return (int?)GetValue(ChapterProperty); }
+        set { SetValue(ChapterProperty, value); }
+    }
+
+    /// <summary>
     /// 取得等待平台 handler 建立後載入的媒體來源。
     /// </summary>
     /// <value>等待載入的檔案路徑或媒體網址。</value>
@@ -518,6 +560,8 @@ public class MpvView : View
         _propertyWatchers.Add(player.WatchProperty<double>("volume").Subscribe(new MpvDpObserver<double>(value => UpdateFromPlayer(VolumeProperty, value))));
         _propertyWatchers.Add(player.WatchProperty<double>("time-pos").Subscribe(new MpvDpObserver<double>(value => UpdateFromPlayer(PositionProperty, TimeSpan.FromSeconds(value)))));
         _propertyWatchers.Add(player.WatchProperty<double>("duration").Subscribe(new MpvDpObserver<double>(value => UpdateReadOnlyFromPlayer(DurationPropertyKey, TimeSpan.FromSeconds(value)))));
+        _propertyWatchers.Add(player.WatchProperty<long>("playlist-pos").Subscribe(new MpvDpObserver<long>(value => UpdateFromPlayer(PlaylistIndexProperty, checked((int)value)))));
+        _propertyWatchers.Add(player.WatchProperty<long>("chapter").Subscribe(new MpvDpObserver<long>(value => UpdateFromPlayer(ChapterProperty, value < 0 ? (int?)null : checked((int)value)))));
         player.StateChanged += OnPlayerStateChanged;
 
         if (IsPaused != player.Pause)
@@ -724,6 +768,67 @@ public class MpvView : View
             view.Player.Mute = (bool)newValue;
         }
         catch (MpvException)
+        {
+        }
+    }
+
+    /// <summary>
+    /// 在 <see cref="PlaylistIndex"/> 屬性變更時寫入 player；負數忽略。
+    /// </summary>
+    /// <param name="bindable">屬性所屬的可繫結物件。</param>
+    /// <param name="oldValue">屬性先前的值。</param>
+    /// <param name="newValue">屬性新的值。</param>
+    private static void OnPlaylistIndexChanged(BindableObject bindable, object oldValue, object newValue)
+    {
+        MpvView view = (MpvView)bindable;
+        if (view._suppressPlayerWrite || view.Player == null)
+        {
+            return;
+        }
+
+        int newIndex = (int)newValue;
+        if (newIndex < 0)
+        {
+            return;
+        }
+
+        try
+        {
+            view.Player.PlaylistIndex = newIndex;
+        }
+        catch (MpvException)
+        {
+        }
+    }
+
+    /// <summary>
+    /// 在 <see cref="Chapter"/> 屬性變更時寫入 player；null 或負數忽略。
+    /// </summary>
+    /// <param name="bindable">屬性所屬的可繫結物件。</param>
+    /// <param name="oldValue">屬性先前的值。</param>
+    /// <param name="newValue">屬性新的值。</param>
+    private static void OnChapterChanged(BindableObject bindable, object oldValue, object newValue)
+    {
+        MpvView view = (MpvView)bindable;
+        if (view._suppressPlayerWrite || view.Player == null)
+        {
+            return;
+        }
+
+        int? newChapter = (int?)newValue;
+        if (!newChapter.HasValue || newChapter.Value < 0)
+        {
+            return;
+        }
+
+        try
+        {
+            view.Player.Chapter = newChapter.Value;
+        }
+        catch (MpvException)
+        {
+        }
+        catch (ArgumentOutOfRangeException)
         {
         }
     }
