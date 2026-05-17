@@ -29,12 +29,18 @@
     <Authors>MediaEmbedKit.Mpv contributors</Authors>
     <Company>MediaEmbedKit.Mpv contributors</Company>
     <Copyright>Copyright (c) 2026 MediaEmbedKit.Mpv contributors</Copyright>
-    <PackageVersion>0.1.0-alpha.1</PackageVersion>
+    <!--
+      PackageVersion 是版號的單一 source of truth；改這裡所有 packable project pack 出來
+      的 .nupkg / .snupkg 檔名與 metadata 都會跟著變。
+      docs/CONSUMING_PACKAGES.md 內部分範例會顯示具體版號（檔名 layout 等），請與此
+      欄位同步。使用 tools/Bump-Version.ps1 一鍵改全部，避免人工漏掉。
+    -->
+    <PackageVersion>0.0.1</PackageVersion>
     <PackageLicenseExpression>CC0-1.0</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageTags>mpv;libmpv;media;video;audio;winforms;wpf;avalonia;winui;maui;yt-dlp</PackageTags>
-    <PackageReleaseNotes>初始 alpha 套件。支援 Windows x64 libmpv wrapper、runtime helper 與 Windows 桌面 UI 控制項。</PackageReleaseNotes>
+    <PackageReleaseNotes>初始版本。Windows x64 / ARM64 libmpv wrapper、runtime helper 與 5 個 UI 框架的桌面控制項。</PackageReleaseNotes>
     <RepositoryType>git</RepositoryType>
     <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
 

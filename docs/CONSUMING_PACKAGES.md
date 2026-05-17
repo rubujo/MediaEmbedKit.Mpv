@@ -1,4 +1,4 @@
-﻿# 從 GitHub Release 安裝本地 NuGet 套件
+# 從 GitHub Release 安裝本地 NuGet 套件
 
 本專案 **不發行到 nuget.org**。所有 `.nupkg` 與 `.snupkg`（symbol package）改由 GitHub Releases 提供，consumer 自行下載後以本機 NuGet feed 安裝。本文件說明從零開始的完整流程。
 
@@ -7,7 +7,7 @@
 ## 為什麼不上 nuget.org
 
 - 本專案的散發政策（見 README）強調受控原始碼採 CC0-1.0、第三方原生二進位不簽入、由 helper 在運行時下載。發行到 nuget.org 會把這個責任邊界模糊化。
-- 早期版本（0.1.0-alpha.\*）公開 API 仍可能小幅調整，鎖在 GitHub Release 比較容易在出現嚴重問題時撤回。
+- 早期版本（1.0 之前）公開 API 仍可能小幅調整，鎖在 GitHub Release 比較容易在出現嚴重問題時撤回。
 - 1.0 之後若決定上 nuget.org，本文件的本機 feed 流程仍然可用，會作為「pinning 特定版本」的退路。
 
 ## 套件總覽
@@ -27,33 +27,37 @@
 
 只裝你需要的：UI 套件會自動透過 `<PackageReference>` 拉入核心 `MediaEmbedKit.Mpv`，不需要分開列出。
 
+> **本文件以 `<version>` 作為版號 placeholder**；複製範例時請替換為實際版號。
+> 目前 `Directory.Build.props` 的 `<PackageVersion>` 是 **`0.0.1`**，對應 tag 名 `v0.0.1`、
+> nupkg 檔名 `MediaEmbedKit.Mpv.0.0.1.nupkg`。後續升版時用 `tools/Bump-Version.ps1` 一鍵改全部。
+
 ## 步驟 1：下載
 
-到 repo 的 GitHub Releases 頁面，挑選想要的 tag（例如 `v0.1.0-alpha.1`），把 `.nupkg` 與 `.snupkg` 一併下載。建議下載**所有 6 個 package**：用不到的留著也沒成本，未來想加 UI framework 就不用再回頭下載。
+到 repo 的 [GitHub Releases](https://github.com/rubujo/MediaEmbedKit.Mpv/releases) 頁面，挑選想要的 tag（例如 `v0.0.1`），把 `.nupkg` 與 `.snupkg` 一併下載。建議下載**所有 6 個 package**：用不到的留著也沒成本，未來想加 UI framework 就不用再回頭下載。
 
 `.snupkg` 是 symbol package，IDE 除錯時會自動展開 PDB 與原始碼導航（SourceLink 已在 release gate 配置好）。可以選擇不下載，但有的話除錯體驗會明顯好很多。
 
 ## 步驟 2：建立本機 feed 資料夾
 
-挑一個固定位置放下載的檔案；任何資料夾都可以，但要選**不會被 IDE / build 工具清掉**的地方。常見慣例：
+挑一個固定位置放下載的檔案；任何資料夾都可以，但要選**不會被 IDE / build 工具清掉**的地方。以目前版號 `0.0.1` 為例的常見 layout：
 
 ```text
 C:\NuGet\MediaEmbedKit.Mpv\
-├── MediaEmbedKit.Mpv.0.1.0-alpha.1.nupkg
-├── MediaEmbedKit.Mpv.0.1.0-alpha.1.snupkg
-├── MediaEmbedKit.Mpv.WinForms.0.1.0-alpha.1.nupkg
-├── MediaEmbedKit.Mpv.WinForms.0.1.0-alpha.1.snupkg
-├── MediaEmbedKit.Mpv.Wpf.0.1.0-alpha.1.nupkg
-├── MediaEmbedKit.Mpv.Wpf.0.1.0-alpha.1.snupkg
-├── MediaEmbedKit.Mpv.Avalonia.0.1.0-alpha.1.nupkg
-├── MediaEmbedKit.Mpv.Avalonia.0.1.0-alpha.1.snupkg
-├── MediaEmbedKit.Mpv.WinUI.0.1.0-alpha.1.nupkg
-├── MediaEmbedKit.Mpv.WinUI.0.1.0-alpha.1.snupkg
-├── MediaEmbedKit.Mpv.Maui.0.1.0-alpha.1.nupkg
-└── MediaEmbedKit.Mpv.Maui.0.1.0-alpha.1.snupkg
+├── MediaEmbedKit.Mpv.0.0.1.nupkg
+├── MediaEmbedKit.Mpv.0.0.1.snupkg
+├── MediaEmbedKit.Mpv.WinForms.0.0.1.nupkg
+├── MediaEmbedKit.Mpv.WinForms.0.0.1.snupkg
+├── MediaEmbedKit.Mpv.Wpf.0.0.1.nupkg
+├── MediaEmbedKit.Mpv.Wpf.0.0.1.snupkg
+├── MediaEmbedKit.Mpv.Avalonia.0.0.1.nupkg
+├── MediaEmbedKit.Mpv.Avalonia.0.0.1.snupkg
+├── MediaEmbedKit.Mpv.WinUI.0.0.1.nupkg
+├── MediaEmbedKit.Mpv.WinUI.0.0.1.snupkg
+├── MediaEmbedKit.Mpv.Maui.0.0.1.nupkg
+└── MediaEmbedKit.Mpv.Maui.0.0.1.snupkg
 ```
 
-要支援多版本並存：放在 `C:\NuGet\MediaEmbedKit.Mpv\` 根目錄就好，NuGet 會自己以檔名解析版本。**不要**手動分子資料夾（如 `0.1.0-alpha.1/`）— 那是 hierarchical layout，需要不同的 source 設定，本流程用扁平最簡單。
+要支援多版本並存：放在 `C:\NuGet\MediaEmbedKit.Mpv\` 根目錄就好，NuGet 會自己以檔名解析版本。**不要**手動分子資料夾（如 `0.0.1/`）— 那是 hierarchical layout，需要不同的 source 設定，本流程用扁平最簡單。
 
 ## 步驟 3：把資料夾註冊成 NuGet source
 
@@ -104,24 +108,24 @@ dotnet nuget add source "C:\NuGet\MediaEmbedKit.Mpv" --name "MediaEmbedKit.Mpv (
 ```xml
 <ItemGroup>
   <!-- 核心；通常會被 UI 套件當作依賴自動拉，不需要顯式列出 -->
-  <PackageReference Include="MediaEmbedKit.Mpv" Version="0.1.0-alpha.1" />
+  <PackageReference Include="MediaEmbedKit.Mpv" Version="<version>" />
 
   <!-- 依你用的 UI framework 二擇一或多選 -->
-  <PackageReference Include="MediaEmbedKit.Mpv.Wpf" Version="0.1.0-alpha.1" />
-  <PackageReference Include="MediaEmbedKit.Mpv.WinForms" Version="0.1.0-alpha.1" />
-  <PackageReference Include="MediaEmbedKit.Mpv.Avalonia" Version="0.1.0-alpha.1" />
-  <PackageReference Include="MediaEmbedKit.Mpv.WinUI" Version="0.1.0-alpha.1" />
-  <PackageReference Include="MediaEmbedKit.Mpv.Maui" Version="0.1.0-alpha.1" />
+  <PackageReference Include="MediaEmbedKit.Mpv.Wpf" Version="<version>" />
+  <PackageReference Include="MediaEmbedKit.Mpv.WinForms" Version="<version>" />
+  <PackageReference Include="MediaEmbedKit.Mpv.Avalonia" Version="<version>" />
+  <PackageReference Include="MediaEmbedKit.Mpv.WinUI" Version="<version>" />
+  <PackageReference Include="MediaEmbedKit.Mpv.Maui" Version="<version>" />
 </ItemGroup>
 ```
 
 或用 CLI：
 
 ```powershell
-dotnet add package MediaEmbedKit.Mpv.Wpf --version 0.1.0-alpha.1
+dotnet add package MediaEmbedKit.Mpv.Wpf --version <version>
 ```
 
-**alpha / preview 版本注意：** 預設 `dotnet add package` 在不指定 `--version` 時會跳過 prerelease。你必須 **明確帶 `--version`** 或加 `--prerelease` 才會解析到 `0.1.0-alpha.\*`。
+**alpha / preview 版本注意：** 若使用 `0.x.y-alpha.z` 等含 pre-release suffix 的版號，預設 `dotnet add package` 在不指定 `--version` 時會跳過。請 **明確帶 `--version`** 或加 `--prerelease`。目前 `0.0.1`（無 pre-release suffix）不受此限制。
 
 ```powershell
 dotnet restore  # 若 IDE 沒自動觸發
@@ -161,14 +165,14 @@ VS / Rider 預設啟用 SourceLink；如果跳不進去，檢查 IDE 設定的�
 
 1. 從 GitHub Releases 下載新版的 6 個 `.nupkg`（與 `.snupkg`）
 2. **丟進同一個資料夾**（不要刪舊版，扁平 layout 允許多版本共存）
-3. 在 `.csproj` 把 `Version="0.1.0-alpha.1"` 改成新版號
+3. 在 `.csproj` 把 `Version="<舊版號>"` 改成新版號
 4. `dotnet restore`
 
 NuGet local feed 不會自動「拉新版」— 因為它沒有上游可以查；版號要 consumer 自己更新。
 
 ## 限制與已知坑
 
-- **本機 feed 沒有 listing API**：`dotnet list package --outdated` 不會回報新版可用，因為 NuGet 不會掃 GitHub Releases 看有沒有新版 .nupkg。要追新版只能手動看 [Releases 頁](https://github.com/perditavojo/MediaEmbedKit.Mpv/releases)（路徑依實際 repo 調整）。
+- **本機 feed 沒有 listing API**：`dotnet list package --outdated` 不會回報新版可用，因為 NuGet 不會掃 GitHub Releases 看有沒有新版 .nupkg。要追新版只能手動看 [Releases 頁](https://github.com/rubujo/MediaEmbedKit.Mpv/releases)。
 - **多人共用本機 feed**：每個開發者各自下載，或用 SMB / 網路共享資料夾再 `value="\\server\share\NuGet\MediaEmbedKit.Mpv"`。後者要注意網路延遲對 `dotnet restore` 的影響。
 - **CI 環境**：別在 CI runner 上手動裝；CI 通常會自己用 GitHub Actions cache 或 artifact 機制把 .nupkg 帶進來再加 source。若要在 GitHub Actions 上用，可以 `actions/download-artifact` 或 `gh release download` 抓 release artifact 後再 `dotnet nuget add source`。
 - **`packageSourceCredentials`**：本機 feed 不需要驗證；如果你看到 NuGet 跳出帳密對話框，多半是其它 source 設錯，跟本機 feed 無關。

@@ -1,4 +1,4 @@
-﻿# 發佈前檢查清單
+# 發佈前檢查清單
 
 本文件定義 Windows 發佈前可在本機完成的檢查項目（x64 / ARM64 共用同一驗證鏈，runtime helper 依目前處理序架構自動選擇對應資產）。
 
@@ -130,6 +130,22 @@ dotnet run --project .\tests\MediaEmbedKit.Mpv.StressTests\MediaEmbedKit.Mpv.Str
 此腳本會重複啟動支援的 GUI sample，要求每次播放到指定秒數後關閉，用於觀察開關視窗、初始化、播放與釋放流程的穩定性。
 
 GUI 播放相關腳本會在啟動視窗前先準備共用 runtime 資料夾，避免下載失敗以 sample 視窗訊息框中斷自動化流程。
+
+## 版號升級
+
+升級 `<PackageVersion>`（在 `Directory.Build.props`）時，使用 [`tools/Bump-Version.ps1`](../tools/Bump-Version.ps1) 一鍵改全部：
+
+```powershell
+.\tools\Bump-Version.ps1 -NewVersion 0.0.2          # 實際寫入
+.\tools\Bump-Version.ps1 -NewVersion 0.0.2 -DryRun  # 預覽
+```
+
+該 script 會：
+
+- 驗證新版號符合 SemVer 2.0
+- 更新 `Directory.Build.props` 的 `<PackageVersion>`
+- 同步替換 `docs/CONSUMING_PACKAGES.md` 內顯示具體版號的範例（檔名 layout 等）
+- 不會自動 commit / tag / push，請手動完成
 
 ## 發佈前人工確認
 

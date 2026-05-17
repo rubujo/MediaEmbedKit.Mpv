@@ -1,4 +1,4 @@
-﻿<Solution>
+<Solution>
   <Project Path="src/MediaEmbedKit.Mpv/MediaEmbedKit.Mpv.csproj" />
   <Project Path="src/MediaEmbedKit.Mpv.WinForms/MediaEmbedKit.Mpv.WinForms.csproj" />
   <Project Path="src/MediaEmbedKit.Mpv.Wpf/MediaEmbedKit.Mpv.Wpf.csproj" />
@@ -82,6 +82,7 @@
     <File Path="tools/libmpv/Verify-LibMpvArchive.ps1" />
   </Folder>
   <Folder Name="/方案項目/tools/">
+    <File Path="tools/Bump-Version.ps1" />
     <File Path="tools/Invoke-ConsumerPackageValidation.ps1" />
     <File Path="tools/Invoke-GuiConsumerPlaybackValidation.ps1" />
     <File Path="tools/Invoke-GuiPlaybackStress.ps1" />
