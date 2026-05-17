@@ -1,7 +1,7 @@
 ﻿# MediaEmbedKit.Mpv
 
 [![作業系統](https://img.shields.io/badge/作業系統-Windows%20x64%20%2F%20ARM64-003A6D?style=for-the-badge)](https://learn.microsoft.com/zh-tw/windows/)
-[![.NET Runtime](https://img.shields.io/badge/Runtime-.NET%2010%20%2F%208%20%2F%20Framework%204.7.2%2B-512BD4?logo=dotnet&logoColor=white&style=for-the-badge)](https://dotnet.microsoft.com/zh-tw/download/dotnet/10.0)
+[![.NET Runtime](https://img.shields.io/badge/Runtime-.NET%2010%20%2F%20Framework%204.7.2%2B-512BD4?logo=dotnet&logoColor=white&style=for-the-badge)](https://dotnet.microsoft.com/zh-tw/download/dotnet/10.0)
 [![程式語言](https://img.shields.io/badge/程式語言-C%23-1B5E20?style=for-the-badge)](https://learn.microsoft.com/zh-tw/dotnet/csharp/)
 [![libmpv 基準](https://img.shields.io/badge/libmpv-stable%20v0.41.0-A84300?style=for-the-badge)](https://github.com/mpv-player/mpv)
 [![UI 框架](https://img.shields.io/badge/UI%20框架-WinForms%20%2F%20WPF%20%2F%20Avalonia%20%2F%20WinUI%203%20%2F%20MAUI-107C10?style=for-the-badge)](docs/SUPPORT_MATRIX.md)

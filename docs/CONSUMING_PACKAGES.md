@@ -17,13 +17,13 @@
 | Package | 用途 | TFM |
 |---|---|---|
 | `MediaEmbedKit.Mpv` | 核心 libmpv 包裝、runtime helper、高階 API | `netstandard2.0;net472;net48;net10.0` |
-| `MediaEmbedKit.Mpv.WinForms` | WinForms 控制項 | `net472;net48;net8.0-windows;net10.0-windows` |
-| `MediaEmbedKit.Mpv.Wpf` | WPF `HwndHost` 控制項 + AirSpace 覆蓋層 | `net472;net48;net8.0-windows;net10.0-windows` |
-| `MediaEmbedKit.Mpv.Avalonia` | Avalonia OpenGL render API 控制項 | `net8.0-windows;net10.0-windows` |
+| `MediaEmbedKit.Mpv.WinForms` | WinForms 控制項 | `net472;net48;net10.0-windows` |
+| `MediaEmbedKit.Mpv.Wpf` | WPF `HwndHost` 控制項 + AirSpace 覆蓋層 | `net472;net48;net10.0-windows` |
+| `MediaEmbedKit.Mpv.Avalonia` | Avalonia OpenGL render API 控制項 | `net10.0-windows` |
 | `MediaEmbedKit.Mpv.WinUI` | WinUI 3 控制項 | `net10.0-windows10.0.19041.0` |
 | `MediaEmbedKit.Mpv.Maui` | .NET MAUI Windows handler | `net10.0-windows10.0.19041.0` |
 
-核心套件已不再多 target `net8.0`；下游 `net8.0-windows` UI 套件仍透過 `netstandard2.0` fallback 解析核心參照，consumer 端用 `net8.0-windows` 安裝 UI 套件不需特別調整。
+`net8.0` / `net8.0-windows` 已不在多 target 矩陣（核心於 commit 668d367 移除、UI 後續清理一併移除）。要在 .NET 8 環境消費這些套件，可改 target `net10.0-windows` 或回退至 .NET Framework 4.7.2 / 4.8。
 
 只裝你需要的：UI 套件會自動透過 `<PackageReference>` 拉入核心 `MediaEmbedKit.Mpv`，不需要分開列出。
 

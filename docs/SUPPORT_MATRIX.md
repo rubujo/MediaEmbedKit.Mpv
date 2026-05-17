@@ -17,13 +17,13 @@
 | 套件 | 目標框架 | 狀態 |
 | --- | --- | --- |
 | `MediaEmbedKit.Mpv` | `netstandard2.0;net472;net48;net10.0` | 支援 |
-| `MediaEmbedKit.Mpv.WinForms` | `net472;net48;net8.0-windows;net10.0-windows` | 支援 |
-| `MediaEmbedKit.Mpv.Wpf` | `net472;net48;net8.0-windows;net10.0-windows` | 支援 |
-| `MediaEmbedKit.Mpv.Avalonia` | `net8.0-windows;net10.0-windows` | 支援 |
+| `MediaEmbedKit.Mpv.WinForms` | `net472;net48;net10.0-windows` | 支援 |
+| `MediaEmbedKit.Mpv.Wpf` | `net472;net48;net10.0-windows` | 支援 |
+| `MediaEmbedKit.Mpv.Avalonia` | `net10.0-windows` | 支援 |
 | `MediaEmbedKit.Mpv.WinUI` | `net10.0-windows10.0.19041.0` | 支援 |
 | `MediaEmbedKit.Mpv.Maui` | `net10.0-windows10.0.19041.0` | 支援 |
 
-`netstandard2.0` 用於共用核心 API；核心套件不再多 target `net8.0`（移除於 commit 668d367 以縮小 build 矩陣，下游 `net8.0-windows` 等 RID-specific TFM 仍可透過 `netstandard2.0` fallback 解析參照）。UI 套件對應的 `net8.0-windows` 維持支援。基於 Microsoft 對 .NET Framework 使用 .NET Standard 2.0 的建議，本專案不支援 .NET Framework 4.0、4.5 或 4.6.1。
+`netstandard2.0` 用於共用核心 API；核心套件僅多 target `net10.0`，UI 套件僅多 target `net10.0-windows`（搭配 .NET Framework 4.7.2 / 4.8）。`net8.0` / `net8.0-windows` 已不在 multi-target 矩陣（核心於 commit 668d367 移除、UI 於後續清理一併移除以縮小發行矩陣）；要在 .NET 8 環境使用 UI 套件，可改 target `net10.0-windows` 或回退到 `net472` / `net48`。基於 Microsoft 對 .NET Framework 使用 .NET Standard 2.0 的建議，本專案不支援 .NET Framework 4.0、4.5 或 4.6.1。
 
 ## UI 與作業系統
 
@@ -34,7 +34,7 @@
 
 ### Windows ARM64 注意事項
 
-- `.NET 8 / .NET 10` 在 ARM64 為原生 first-class 支援。
+- `.NET 10` 在 ARM64 為原生 first-class 支援。
 - `net472` / `net48` 沒有原生 ARM64，Windows on ARM 上會走 x64 emulation；本專案不額外承諾 emulation 路徑下的效能或相容性。
 - 硬體編碼器（NVENC / Quick Sync / AMF）在主流 ARM64 Windows 裝置（Snapdragon X 等）上預期全部 unavailable；`MpvEncoder` 硬體 encoder preset probe 會回報 `unavailable`，使用者請走軟體 preset。Qualcomm Adreno 編解碼目前不在本專案 preset 內。
 
@@ -68,7 +68,7 @@ Windows 發佈前驗證以本機 release gate 為準：
 | 架構 | x64（開發機） | ARM64（程式碼路徑完整、資產對應有單元測試覆蓋，但未實機跑過） |
 | 長時穩定性 | 24 小時連續播放 soak 1916 iterations（wav / mp4 / cancel 三路）通過、0 leak 信號（[`tests/MediaEmbedKit.Mpv.SoakTests`](../tests/MediaEmbedKit.Mpv.SoakTests)） | — |
 
-未在表中的 OS 版本與架構**不在實機驗證範圍**。設計目標仍是支援 csproj 內 `TargetPlatformMinVersion` 宣告的所有版本（WinUI / MAUI 為 `10.0.17763.0`、WPF / WinForms 為 `.NET Framework 4.7.2+` 或 `.NET 8/10`），但實際相容性需由使用者在目標環境自行驗證。
+未在表中的 OS 版本與架構**不在實機驗證範圍**。設計目標仍是支援 csproj 內 `TargetPlatformMinVersion` 宣告的所有版本（WinUI / MAUI 為 `10.0.17763.0`、WPF / WinForms 為 `.NET Framework 4.7.2+` 或 `.NET 10`），但實際相容性需由使用者在目標環境自行驗證。
 
 ### libmpv header drift 檢查
 

@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net472;net48;net8.0-windows;net10.0-windows</TargetFrameworks>
+    <TargetFrameworks>net472;net48;net10.0-windows</TargetFrameworks>
     <UseWindowsForms>true</UseWindowsForms>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <AssemblyName>MediaEmbedKit.Mpv.WinForms</AssemblyName>
