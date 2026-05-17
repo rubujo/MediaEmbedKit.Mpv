@@ -10,7 +10,7 @@ MediaEmbedKit.Mpv 是獨立 .NET 包裝器與控制項專案，不是 mpv、yt-d
 - 網站：https://mpv.io/
 - 授權：請依上游專案與實際建置設定判定。mpv 預設為 GPLv2-or-later，特定建置可採 LGPLv2.1-or-later。
 - 注意事項：FFmpeg 與其他原生相依項目可能另有授權義務。
-- helper 行為：Windows helper 可從 mpv.io 列出的提供者下載 libmpv 開發封存檔，並以 `MpvWindowsBuildDownloadOptions.LicensePreference` 提供授權偏好選項。
+- helper 行為：Windows helper 可從 mpv.io 列出的提供者下載 libmpv 開發封存檔，並以 `MpvWindowsBuildDownloadOptions.LicensePreference` 提供授權偏好選項。**預設為 `PreferLgpl`**（上游有 LGPL 變體時優先選用），商用嚴格合規請設 `RequireLgpl`。
 
 ## yt-dlp
 

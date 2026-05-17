@@ -16,7 +16,7 @@ public sealed class MpvWindowsRuntimeDownloadOptions
         FFmpeg = new FFmpegDownloadOptions();
         IncludeYtDlp = true;
         IncludeDeno = true;
-        IncludeFFmpeg = true;
+        IncludeFFmpeg = false;
         LoadLibMpv = true;
     }
 
@@ -59,7 +59,13 @@ public sealed class MpvWindowsRuntimeDownloadOptions
     /// <summary>
     /// 取得或設定是否包含 yt-dlp 專用 FFmpeg 與 FFprobe 可執行檔。
     /// </summary>
-    /// <value>下載或更新 FFmpeg 與 FFprobe 時為 <see langword="true"/>。</value>
+    /// <value>
+    /// 下載或更新 FFmpeg 與 FFprobe 時為 <see langword="true"/>；**預設為
+    /// <see langword="false"/>**。yt-dlp/FFmpeg-Builds 目前僅發佈 GPL build，預設拉進
+    /// runtime 資料夾會讓使用者在不知情下背負 GPL 散發義務。需要 yt-dlp 後處理或自行
+    /// 編碼的應用程式應明確設為 <see langword="true"/>，並在 release 文件揭露 FFmpeg
+    /// 授權義務。
+    /// </value>
     public bool IncludeFFmpeg { get; set; }
 
     /// <summary>

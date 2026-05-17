@@ -1206,15 +1206,17 @@ internal static class Program
     }
 
     /// <summary>
-    /// 驗證 Windows runtime helper 預設包含 FFmpeg，且可由呼叫端關閉。
+    /// 驗證 Windows runtime helper 預設不下載 FFmpeg（yt-dlp/FFmpeg-Builds 為 GPL
+    /// build，預設拉進 runtime 會讓使用者背負未必知情的 GPL 散發義務），且可由呼叫
+    /// 端明確啟用。
     /// </summary>
     /// <returns>代表測試流程的工作。</returns>
     private static Task VerifyWindowsRuntimeFFmpegOptionDefaults()
     {
         MpvWindowsRuntimeDownloadOptions options = new MpvWindowsRuntimeDownloadOptions();
-        AssertEx.True(options.IncludeFFmpeg, "Windows runtime 預設應包含 FFmpeg。");
-        options.IncludeFFmpeg = false;
-        AssertEx.False(options.IncludeFFmpeg, "Windows runtime 應允許關閉 FFmpeg 下載。");
+        AssertEx.False(options.IncludeFFmpeg, "Windows runtime 預設不應下載 FFmpeg（GPL build）。");
+        options.IncludeFFmpeg = true;
+        AssertEx.True(options.IncludeFFmpeg, "Windows runtime 應允許明確啟用 FFmpeg 下載。");
         return Task.CompletedTask;
     }
 

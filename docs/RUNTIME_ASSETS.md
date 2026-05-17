@@ -104,7 +104,7 @@ Deno helper 支援 Windows x64（`deno-x86_64-pc-windows-msvc.zip`）與 ARM64�
 
 ## FFmpeg
 
-FFmpeg helper 支援從 yt-dlp `FFmpeg-Builds` 下載對應架構的 GPL build：x64 為 `ffmpeg-master-latest-win64-gpl.zip`、ARM64 為 `ffmpeg-master-latest-winarm64-gpl.zip`（兩者皆由 [yt-dlp/FFmpeg-Builds](https://github.com/yt-dlp/FFmpeg-Builds/releases) 與其上游 [BtbN/FFmpeg-Builds](https://github.com/BtbN/FFmpeg-Builds/releases) 自動產製）。下載後 `ffmpeg.exe` 與 `ffprobe.exe` 放在 runtime 資料夾根目錄。`MpvWindowsRuntimeDownloadOptions.IncludeFFmpeg` 預設為 `true`；不需要 FFmpeg 時可明確設為 `false`。`FFmpegDownloader.GetWindowsAssetName(MpvWindowsArchitecture)` 提供架構到資產名稱的 mapping。
+FFmpeg helper 支援從 yt-dlp `FFmpeg-Builds` 下載對應架構的 GPL build：x64 為 `ffmpeg-master-latest-win64-gpl.zip`、ARM64 為 `ffmpeg-master-latest-winarm64-gpl.zip`（兩者皆由 [yt-dlp/FFmpeg-Builds](https://github.com/yt-dlp/FFmpeg-Builds/releases) 與其上游 [BtbN/FFmpeg-Builds](https://github.com/BtbN/FFmpeg-Builds/releases) 自動產製）。下載後 `ffmpeg.exe` 與 `ffprobe.exe` 放在 runtime 資料夾根目錄。`MpvWindowsRuntimeDownloadOptions.IncludeFFmpeg` **預設為 `false`**：yt-dlp/FFmpeg-Builds 目前僅發佈 GPL build，預設下載會讓使用者在不知情下背負 GPL 散發義務。需要 yt-dlp 後處理（merge audio/video、轉檔）或自行編碼的應用程式應明確設為 `true`，並在 release 文件揭露 FFmpeg 授權義務。`FFmpegDownloader.GetWindowsAssetName(MpvWindowsArchitecture)` 提供架構到資產名稱的 mapping。
 
 FFmpeg 沒有本專案可呼叫的內建自我更新命令。若要更新，請重新呼叫 `FFmpegDownloader.DownloadAndExtractLatestAsync(...)` 或 `MpvWindowsRuntimeInstaller.InstallOrUpdateAsync(...)`，並於 `FFmpegDownloadOptions.OverwriteExisting = true` 時覆蓋既有檔案。
 
@@ -146,4 +146,11 @@ MpvPlayerOptions options =
 
 ## 授權
 
-本專案受控原始碼採用 CC0-1.0。此授權不涵蓋 mpv/libmpv、yt-dlp、Deno、FFmpeg 或其相依元件。helper 預設保持授權中立，使用者可透過 `MpvWindowsBuildDownloadOptions.LicensePreference` 指定 LGPL 或非 LGPL 偏好。yt-dlp FFmpeg-Builds 目前提供 GPL build；使用者散發該 runtime 前應自行確認授權義務。
+本專案受控原始碼採用 CC0-1.0。此授權不涵蓋 mpv/libmpv、yt-dlp、Deno、FFmpeg 或其相依元件。
+
+helper 預設值已往「對不確定散發授權的多數使用者較安全」方向收緊：
+
+- `MpvWindowsBuildDownloadOptions.LicensePreference` 預設為 `PreferLgpl`：上游有 LGPL 變體時優先選用，無時 fallback 到 GPL（不打掛現有環境）。商用嚴格合規請設 `RequireLgpl`（沒 LGPL 直接 fail、不靜默 fallback）；不要授權偏好請設 `Any`。
+- `MpvWindowsRuntimeDownloadOptions.IncludeFFmpeg` 預設為 `false`：yt-dlp/FFmpeg-Builds 為 GPL build，預設拉進 runtime 會讓使用者背負未必知情的 GPL 散發義務。需要 FFmpeg 後處理或自行編碼的應用程式應明確設為 `true`。
+
+無論採何種預設值，使用者散發 runtime 前均應依 `MpvLicenseAuditor.AnalyzeAsync(runtimeDirectory, probeLibMpv: bool)` 的判定確認義務，並查證對應 provider build 的實際 `mpv-configuration` 與 `ffmpeg -version` 內容。

@@ -16,7 +16,7 @@ public sealed class MpvWindowsBuildDownloadOptions
         Architecture = MpvWindowsArchitectureExtensions.CurrentProcess();
         Provider = MpvWindowsBuildProvider.Shinchiro;
         UserAgent = BrowserRequestHeaders.ChromeStableUserAgent;
-        LicensePreference = MpvWindowsBuildLicensePreference.Any;
+        LicensePreference = MpvWindowsBuildLicensePreference.PreferLgpl;
         OverwriteExisting = false;
         VerificationPolicy = MpvNativeAssetVerificationPolicy.RequireGitHubDigest;
         ProviderFallbackOrder = new List<MpvWindowsBuildProvider>();
@@ -48,7 +48,14 @@ public sealed class MpvWindowsBuildDownloadOptions
     /// <summary>
     /// 取得或設定 libmpv 建置授權偏好。
     /// </summary>
-    /// <value>用來篩選或偏好發行資產的授權偏好。</value>
+    /// <value>
+    /// 用來篩選或偏好發行資產的授權偏好。**預設為
+    /// <see cref="MpvWindowsBuildLicensePreference.PreferLgpl"/>**：上游有 LGPL 變體時優先
+    /// 選用，無 LGPL 變體時 fallback 到 GPL；對「不確定散發授權」的多數使用者較安全的
+    /// 預設值。商用嚴格合規請設 <see cref="MpvWindowsBuildLicensePreference.RequireLgpl"/>
+    /// （沒 LGPL 直接 fail，不靜默 fallback）。沒有授權偏好需求請設
+    /// <see cref="MpvWindowsBuildLicensePreference.Any"/>。
+    /// </value>
     public MpvWindowsBuildLicensePreference LicensePreference { get; set; }
 
     /// <summary>
