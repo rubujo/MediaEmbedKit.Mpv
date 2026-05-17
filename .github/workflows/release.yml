@@ -29,15 +29,15 @@ jobs:
       DOTNET_CLI_TELEMETRY_OPTOUT: true
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '10.0.x'
 
       - name: Cache NuGet packages
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~\.nuget\packages
           key: nuget-${{ runner.os }}-${{ hashFiles('**/Directory.Packages.props', '**/*.csproj') }}
@@ -45,7 +45,7 @@ jobs:
             nuget-${{ runner.os }}-
 
       - name: Cache libmpv / yt-dlp / FFmpeg / Deno runtime
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: .cache\runtime
           key: runtime-${{ runner.os }}-${{ hashFiles('docs/runtime/libmpv-git-builds.json', 'src/MediaEmbedKit.Mpv/Downloads/**.cs') }}
@@ -55,7 +55,7 @@ jobs:
       - name: Cache .NET workloads (MAUI)
         # MAUI 專案讓 dotnet restore 連帶要求 maui-* workload（包含 maui-tizen，
         # 即使我們只 target net10.0-windows）；workload 安裝後 cache 避免重灌。
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             C:\Program Files\dotnet\sdk-manifests
@@ -78,7 +78,7 @@ jobs:
           .\tools\Invoke-PreReleaseValidation.ps1
 
       - name: Upload to GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: |
             artifacts/packages/*.nupkg
