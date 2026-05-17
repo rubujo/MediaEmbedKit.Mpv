@@ -37,16 +37,26 @@ internal sealed class SystemSevenZipArchiveExtractor : IArchiveExtractor
         _displayName = displayName ?? (string.IsNullOrWhiteSpace(explicitPath) ? "System 7-Zip" : "Explicit 7z-compatible tool");
     }
 
-    /// <inheritdoc />
+    /// <summary>顯示名稱（建構時提供，預設「System 7-Zip」或「Explicit 7z-compatible tool」）。</summary>
     public string Name => _displayName;
 
-    /// <inheritdoc />
+    /// <summary>檢查明確指定路徑或 Program Files / PATH 內是否存在 7z.exe。</summary>
+    /// <param name="cancellationToken">未使用（路徑檢查為同步操作）。</param>
+    /// <returns>找到 7z 相容工具時為 <see langword="true"/>。</returns>
     public Task<bool> IsAvailableAsync(CancellationToken cancellationToken)
     {
         return Task.FromResult(ResolveExecutablePath() != null);
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// 用 <c>7z x -y -o{dir} {archive} [pattern...] -r</c> 解壓 .7z。選擇性解壓需要
+    /// <c>-r</c> recursive 旗標以匹配任意深度的檔名。
+    /// </summary>
+    /// <param name="archivePath">.7z 壓縮檔路徑。</param>
+    /// <param name="targetDirectory">解壓縮目標資料夾。</param>
+    /// <param name="includePatterns">要解出的檔名清單；<see langword="null"/> 解整個 archive。</param>
+    /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
+    /// <exception cref="InvalidOperationException">7z.exe 不存在或解壓失敗（exit code 非 0）。</exception>
     public async Task ExtractAsync(
         string archivePath,
         string targetDirectory,

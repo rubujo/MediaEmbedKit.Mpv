@@ -32,19 +32,31 @@ internal sealed class SevenZrArchiveExtractor : IArchiveExtractor
         _userAgent = userAgent;
     }
 
-    /// <inheritdoc />
+    /// <summary>顯示名稱「Downloaded 7zr.exe from ip7z/7zip」。</summary>
     public string Name => "Downloaded 7zr.exe from ip7z/7zip";
 
-    /// <inheritdoc />
+    /// <summary>
+    /// 永遠回傳 <see langword="true"/> —— 缺失時會在 <see cref="ExtractAsync"/> 內透過
+    /// <see cref="SevenZipBootstrapper"/> 自動下載。真正不可用的場景（無網路、ip7z 改
+    /// release 結構等）會在 <see cref="ExtractAsync"/> 內 throw，由 fallback chain 視為
+    /// 這層失敗（但已是最後一層，會直接 throw 給呼叫端）。
+    /// </summary>
+    /// <param name="cancellationToken">未使用。</param>
+    /// <returns>恆為 <see langword="true"/>。</returns>
     public Task<bool> IsAvailableAsync(CancellationToken cancellationToken)
     {
-        // 此層永遠視為可用 —— 缺失時會在 ExtractAsync 內透過 SevenZipBootstrapper 自動下載。
-        // 真正不可用的場景（無網路、ip7z 改 release 結構等）會在 ExtractAsync 內 throw，
-        // 由 fallback chain 視為這層失敗（但已是最後一層，會直接 throw 給呼叫端）。
         return Task.FromResult(true);
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// 透過 <see cref="SevenZipBootstrapper"/> 取得 / 重用 7zr.exe，再委派給
+    /// <see cref="SystemSevenZipArchiveExtractor"/> 執行實際解壓（CLI 完全相容）。
+    /// </summary>
+    /// <param name="archivePath">.7z 壓縮檔路徑。</param>
+    /// <param name="targetDirectory">解壓縮目標資料夾。</param>
+    /// <param name="includePatterns">要解出的檔名清單；<see langword="null"/> 解整個 archive。</param>
+    /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
+    /// <exception cref="InvalidOperationException">7zr.exe 下載失敗或解壓失敗。</exception>
     public async Task ExtractAsync(
         string archivePath,
         string targetDirectory,

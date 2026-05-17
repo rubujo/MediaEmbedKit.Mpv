@@ -19,16 +19,26 @@ internal sealed class WinRarArchiveExtractor : IArchiveExtractor
     /// <summary>WinRAR 解壓的預設逾時時間。</summary>
     private static readonly TimeSpan DefaultTimeout = TimeSpan.FromMinutes(3);
 
-    /// <inheritdoc />
+    /// <summary>顯示名稱「WinRAR」。</summary>
     public string Name => "WinRAR";
 
-    /// <inheritdoc />
+    /// <summary>檢查 Program Files / Program Files (x86) 內是否安裝 WinRAR.exe。</summary>
+    /// <param name="cancellationToken">未使用（路徑檢查為同步操作）。</param>
+    /// <returns>找到 WinRAR.exe 時為 <see langword="true"/>。</returns>
     public Task<bool> IsAvailableAsync(CancellationToken cancellationToken)
     {
         return Task.FromResult(ResolveWinRarPath() != null);
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// 用 <c>WinRAR x -ibck -y {archive} [pattern...] {dir}\</c> 解壓 .7z。
+    /// 結束代碼 0 / 1（成功 / 警告但完成）皆視為成功。
+    /// </summary>
+    /// <param name="archivePath">.7z 壓縮檔路徑。</param>
+    /// <param name="targetDirectory">解壓縮目標資料夾。</param>
+    /// <param name="includePatterns">要解出的檔名清單；<see langword="null"/> 解整個 archive。</param>
+    /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
+    /// <exception cref="InvalidOperationException">WinRAR.exe 不存在或解壓失敗（exit code ≥ 2）。</exception>
     public async Task ExtractAsync(
         string archivePath,
         string targetDirectory,
