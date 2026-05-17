@@ -16,14 +16,14 @@
 
 | 套件 | 目標框架 | 狀態 |
 | --- | --- | --- |
-| `MediaEmbedKit.Mpv` | `netstandard2.0;net472;net48;net8.0;net10.0` | 支援 |
+| `MediaEmbedKit.Mpv` | `netstandard2.0;net472;net48;net10.0` | 支援 |
 | `MediaEmbedKit.Mpv.WinForms` | `net472;net48;net8.0-windows;net10.0-windows` | 支援 |
 | `MediaEmbedKit.Mpv.Wpf` | `net472;net48;net8.0-windows;net10.0-windows` | 支援 |
 | `MediaEmbedKit.Mpv.Avalonia` | `net8.0-windows;net10.0-windows` | 支援 |
 | `MediaEmbedKit.Mpv.WinUI` | `net10.0-windows10.0.19041.0` | 支援 |
 | `MediaEmbedKit.Mpv.Maui` | `net10.0-windows10.0.19041.0` | 支援 |
 
-`netstandard2.0` 用於共用核心 API。基於 Microsoft 對 .NET Framework 使用 .NET Standard 2.0 的建議，本專案不支援 .NET Framework 4.0、4.5 或 4.6.1。
+`netstandard2.0` 用於共用核心 API；核心套件不再多 target `net8.0`（移除於 commit 668d367 以縮小 build 矩陣，下游 `net8.0-windows` 等 RID-specific TFM 仍可透過 `netstandard2.0` fallback 解析參照）。UI 套件對應的 `net8.0-windows` 維持支援。基於 Microsoft 對 .NET Framework 使用 .NET Standard 2.0 的建議，本專案不支援 .NET Framework 4.0、4.5 或 4.6.1。
 
 ## UI 與作業系統
 

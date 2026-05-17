@@ -28,7 +28,7 @@ AI 產製內容可能包含缺漏、錯誤假設或未涵蓋的邊界情境。�
 
 | 套件 | 狀態 |
 | --- | --- |
-| `MediaEmbedKit.Mpv` | 核心 API，支援 `netstandard2.0;net472;net48;net8.0;net10.0`。 |
+| `MediaEmbedKit.Mpv` | 核心 API，支援 `netstandard2.0;net472;net48;net10.0`。 |
 | `MediaEmbedKit.Mpv.WinForms` | Windows HWND 控制項。 |
 | `MediaEmbedKit.Mpv.Wpf` | `HwndHost` 控制項，內建 AirSpace 覆蓋層。 |
 | `MediaEmbedKit.Mpv.Avalonia` | Windows x64 / ARM64 OpenGL render API 控制項。 |
