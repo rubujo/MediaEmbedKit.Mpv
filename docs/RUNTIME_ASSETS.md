@@ -47,6 +47,27 @@ helper 可從 shinchiro `mpv-winbuild-cmake` 與 zhongfly `mpv-winbuild` 下載�
 
 下載後必須驗證封存檔包含 `libmpv-2.dll`。provider 對齊狀態記錄於 `docs/runtime/libmpv-git-builds.json`。
 
+### .7z 解壓 4-tier fallback chain
+
+mpv-dev archive 是 `.7z` 格式，需 7z 相容工具才能解壓。helper 依序嘗試以下 4 段 fallback，找到能用的就停；全部失敗才擲 `InvalidOperationException`，訊息含每層失敗細節與使用者可採取的解法。
+
+| 順序 | 對象 | 偵測 | CLI |
+| --- | --- | --- | --- |
+| 0 | `MpvWindowsBuildDownloadOptions.SevenZipPath` 顯式 | 路徑檢查 | 走第 2 層格式 |
+| 1 | **Windows 內建 `tar.exe`**（bsdtar / libarchive） | `%SystemRoot%\System32\tar.exe` 或 PATH | `tar -xf {archive} -C {dir} libmpv-2.dll` |
+| 2 | 系統 **7-Zip** | `Program Files\7-Zip\7z.exe` / `(x86)` / PATH | `7z x -y -o{dir} {archive} libmpv-2.dll -r` |
+| 3 | **WinRAR** | `Program Files\WinRAR\WinRAR.exe` / `(x86)` | `WinRAR x -ibck -y {archive} libmpv-2.dll {dir}\` |
+| 4 | 下載 `7zr.exe` from [ip7z/7zip](https://github.com/ip7z/7zip)（兜底 fallback） | 既有檔重用；缺則拉 `releases/latest` 並驗證 GitHub digest | 同第 2 層 |
+
+各層特性：
+
+- **tar.exe**（Windows 10 1803+ / Server 2019+ 內建）：API 最簡單、速度最快、無前置依賴。實測 Win11 24H2 (bsdtar 3.8.4 / liblzma 5.8.1) 解 shinchiro mpv-dev `.7z` 約 ~1.8 秒。舊版 Windows 10 (1803–2004) 的 tar.exe LZMA2 支援未經完整驗證 —— 失敗自動跳下一層。
+- **系統 7-Zip**：power user 常裝；CLI 穩定、Windows ARM64 有 native 版本。
+- **WinRAR**：中文圈裝機率高；`-ibck` 旗標跑背景模式不彈 UI（試用期過後 WinRAR 自身可能在啟動時彈提醒，本程式無法避免）。
+- **下載 7zr.exe**：終極 fallback。Igor Pavlov 官方 [ip7z/7zip](https://github.com/ip7z/7zip) 發佈的 standalone 32-bit x86 CLI（588 KB，純 LGPL-2.1+ 不含 unrar 限制）。既有 `7zr.exe` 存在時直接重用，不重複下載；首次下載驗證 GitHub asset digest。**Windows on ARM64**：7zr.exe 透過 x86 emulation 執行；Win11 ARM64 效能 OK，Win10 ARM64 emulation 較慢，建議 ARM64 使用者預裝 7-Zip ARM64 native 版（[7-zip.org/download.html](https://www.7-zip.org/download.html)）走第 2 層 fallback。
+
+選擇性解壓：`mpv-dev-*.7z` 內除 `libmpv-2.dll` 外還含 `include/mpv/*.h` 與 `libmpv.dll.a` 等 C++ build-time 用的雜物，runtime 完全用不到。fallback chain 預設只解出 `libmpv-2.dll`，runtime 資料夾保持乾淨。
+
 `libmpv-2.dll` 載入後不得在同一處理序 hot reload。更新流程必須：
 
 1. 偵測 `MpvLibraryLoader.IsLoaded`。

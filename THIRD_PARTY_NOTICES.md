@@ -31,3 +31,10 @@ MediaEmbedKit.Mpv 是獨立 .NET 包裝器與控制項專案，不是 mpv、yt-d
 - yt-dlp 建置來源：https://github.com/yt-dlp/FFmpeg-Builds
 - 授權：請依 FFmpeg 與實際建置內容判定；yt-dlp FFmpeg-Builds 目前提供 GPL build。
 - helper 行為：只有在應用程式明確呼叫時，才會下載或更新外部 `ffmpeg.exe` 與 `ffprobe.exe`。本專案 NuGet 套件不包含 FFmpeg 二進位檔。
+
+## 7-Zip（僅 fallback 情境）
+
+- 專案：https://github.com/ip7z/7zip（Igor Pavlov 官方）
+- 網站：https://www.7-zip.org/
+- 授權：LGPL-2.1-or-later（`7zr.exe` 不含 unrar 程式碼，純 LGPL 可自由 redistribute）。
+- helper 行為：libmpv `.7z` 解壓 4-tier fallback chain 在系統未裝 7-Zip / WinRAR、Windows 內建 `tar.exe` 也無法處理時，從 [ip7z/7zip releases/latest](https://github.com/ip7z/7zip/releases/latest) 下載 standalone `7zr.exe`（588 KB，32-bit x86 standalone CLI）。下載驗證 GitHub asset digest；既有檔存在則重用不重複下載。本專案 NuGet 套件不包含 7-Zip 二進位檔。

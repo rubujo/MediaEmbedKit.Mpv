@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -165,11 +162,22 @@ public static class MpvWindowsBuildDownloader
         options = options ?? new MpvWindowsBuildDownloadOptions();
         MpvWindowsBuildDownloadResult archive = await DownloadLatestLibMpvArchiveAsync(downloadDirectory, options, cancellationToken).ConfigureAwait(false);
 
-        string sevenZipPath = ResolveSevenZipPath(options.SevenZipPath);
         string extractRoot = options.ExtractDirectory ?? Path.Combine(downloadDirectory, Path.GetFileNameWithoutExtension(archive.AssetName));
         Directory.CreateDirectory(extractRoot);
 
-        ExtractWithSevenZip(sevenZipPath, archive.ArchivePath, extractRoot);
+        // 走 4-tier fallback chain（tar.exe → 系統 7-Zip → WinRAR → 下載 7zr.exe）+
+        // 選擇性只解 libmpv-2.dll（mpv-dev archive 還含 include/*.h、libmpv.dll.a 等
+        // C++ build-time 用的雜物，runtime 用不到）。各層失敗時 pipeline 自動跳下一層，
+        // 全失敗才擲詳細 exception 給呼叫端。
+        ArchiveExtraction.ArchiveExtractionPipeline pipeline = new ArchiveExtraction.ArchiveExtractionPipeline(
+            downloadDirectory,
+            options.UserAgent,
+            options.SevenZipPath);
+        await pipeline.ExtractAsync(
+            archive.ArchivePath,
+            extractRoot,
+            new[] { LibMpvDllName },
+            cancellationToken).ConfigureAwait(false);
 
         string? libraryPath = FindLibMpvDll(extractRoot);
         if (libraryPath == null)
@@ -396,85 +404,6 @@ public static class MpvWindowsBuildDownloader
         }
 
         return lower.Contains(architecture.ToAssetToken()) && !lower.Contains("x86_64-v3");
-    }
-
-    /// <summary>
-    /// 解析用來解壓縮 libmpv 封存檔的 7-Zip 可執行檔路徑。
-    /// </summary>
-    /// <param name="explicitPath">使用者明確指定的 7z.exe 路徑。</param>
-    /// <returns>可執行的 7z.exe 路徑。</returns>
-    private static string ResolveSevenZipPath(string? explicitPath)
-    {
-        if (!string.IsNullOrWhiteSpace(explicitPath))
-        {
-            if (File.Exists(explicitPath))
-            {
-                return explicitPath!;
-            }
-
-            throw new FileNotFoundException("7z.exe was not found.", explicitPath);
-        }
-
-        string[] candidates =
-        {
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "7-Zip", "7z.exe"),
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "7-Zip", "7z.exe")
-        };
-
-        for (int i = 0; i < candidates.Length; i++)
-        {
-            if (File.Exists(candidates[i]))
-            {
-                return candidates[i];
-            }
-        }
-
-        string? path = Environment.GetEnvironmentVariable("PATH");
-        if (!string.IsNullOrWhiteSpace(path))
-        {
-            string[] parts = path!.Split(new[] { Path.PathSeparator }, StringSplitOptions.RemoveEmptyEntries);
-            for (int i = 0; i < parts.Length; i++)
-            {
-                string candidate = Path.Combine(parts[i], "7z.exe");
-                if (File.Exists(candidate))
-                {
-                    return candidate;
-                }
-            }
-        }
-
-        throw new FileNotFoundException("7z.exe is required to extract .7z libmpv builds. Download the archive only, or provide MpvWindowsBuildDownloadOptions.SevenZipPath.");
-    }
-
-    /// <summary>
-    /// 使用 7-Zip 將 libmpv 封存檔解壓縮到指定資料夾。
-    /// </summary>
-    /// <param name="sevenZipPath">7z.exe 可執行檔路徑。</param>
-    /// <param name="archivePath">要解壓縮的 libmpv 封存檔路徑。</param>
-    /// <param name="extractDirectory">解壓縮目標資料夾。</param>
-    private static void ExtractWithSevenZip(string sevenZipPath, string archivePath, string extractDirectory)
-    {
-        ProcessStartInfo startInfo = new ProcessStartInfo
-        {
-            FileName = sevenZipPath,
-            Arguments = "x -y -o\"" + extractDirectory + "\" \"" + archivePath + "\"",
-            CreateNoWindow = true,
-            UseShellExecute = false
-        };
-
-        using (Process? process = Process.Start(startInfo))
-        {
-            if (process == null)
-            {
-                throw new InvalidOperationException("無法啟動 7z.exe。");
-            }
-
-            process.WaitForExit();
-            if (process.ExitCode != 0)
-            {
-                throw new InvalidOperationException("7z extraction failed with exit code " + process.ExitCode + ".");
-            }
-        }
     }
 
     /// <summary>
