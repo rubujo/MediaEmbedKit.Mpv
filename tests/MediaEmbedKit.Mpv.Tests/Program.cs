@@ -61,9 +61,61 @@ internal static class Program
         runner.Add("MpvNative 在 net7.0+ 採用 LibraryImport", VerifyMpvNativeUsesLibraryImport);
         runner.Add("MpvNative 委派／陣列 helper 在 net7.0+ 仍走 LibraryImport", VerifyMpvNativeHelperUsesLibraryImport);
         runner.Add("Windows ARM64 資產對應正確（libmpv / yt-dlp / Deno / FFmpeg）", VerifyWindowsArm64AssetMapping);
+        runner.Add("PackageVersion 與 docs/CONSUMING_PACKAGES.md 同步", VerifyPackageVersionInConsumingDoc);
 
         await runner.RunAsync().ConfigureAwait(false);
         return runner.FailedCount == 0 ? 0 : 1;
+    }
+
+    /// <summary>
+    /// 驗證 <c>Directory.Build.props</c> 的 <c>PackageVersion</c> 出現在
+    /// <c>docs/CONSUMING_PACKAGES.md</c>。若有人手動改 props 沒同步文件就會被擋下，
+    /// 提醒去跑 <c>tools/Bump-Version.ps1</c>。
+    /// </summary>
+    /// <returns>代表測試流程的工作。</returns>
+    private static Task VerifyPackageVersionInConsumingDoc()
+    {
+        string? repoRoot = FindRepoRoot();
+        AssertEx.True(repoRoot != null, "無法從測試輸出目錄回溯找到 repo 根（含 Directory.Build.props 的資料夾）。");
+
+        string propsPath = Path.Combine(repoRoot!, "Directory.Build.props");
+        string propsContent = File.ReadAllText(propsPath);
+        System.Text.RegularExpressions.Match versionMatch = System.Text.RegularExpressions.Regex.Match(
+            propsContent,
+            @"<PackageVersion>([^<]+)</PackageVersion>");
+        AssertEx.True(versionMatch.Success, "Directory.Build.props 內找不到 <PackageVersion>。");
+
+        string version = versionMatch.Groups[1].Value;
+        string docPath = Path.Combine(repoRoot!, "docs", "CONSUMING_PACKAGES.md");
+        AssertEx.True(File.Exists(docPath), "找不到 docs/CONSUMING_PACKAGES.md。");
+
+        string docContent = File.ReadAllText(docPath);
+        AssertEx.True(
+            docContent.Contains(version, StringComparison.Ordinal),
+            "docs/CONSUMING_PACKAGES.md 未提及 PackageVersion '" + version + "'。"
+            + "props 已升版但文件未同步；請使用 tools/Bump-Version.ps1 一鍵改全部。");
+
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// 從測試輸出目錄回溯找含 <c>Directory.Build.props</c> 的目錄當作 repo 根。
+    /// </summary>
+    /// <returns>找到時為 repo 根目錄絕對路徑，否則為 <see langword="null"/>。</returns>
+    private static string? FindRepoRoot()
+    {
+        DirectoryInfo? dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir != null)
+        {
+            if (File.Exists(Path.Combine(dir.FullName, "Directory.Build.props")))
+            {
+                return dir.FullName;
+            }
+
+            dir = dir.Parent;
+        }
+
+        return null;
     }
 
     /// <summary>

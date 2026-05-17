@@ -1,10 +1,12 @@
 <Solution>
-  <Project Path="src/MediaEmbedKit.Mpv/MediaEmbedKit.Mpv.csproj" />
-  <Project Path="src/MediaEmbedKit.Mpv.WinForms/MediaEmbedKit.Mpv.WinForms.csproj" />
-  <Project Path="src/MediaEmbedKit.Mpv.Wpf/MediaEmbedKit.Mpv.Wpf.csproj" />
-  <Project Path="src/MediaEmbedKit.Mpv.Avalonia/MediaEmbedKit.Mpv.Avalonia.csproj" />
-  <Project Path="src/MediaEmbedKit.Mpv.WinUI/MediaEmbedKit.Mpv.WinUI.csproj" />
-  <Project Path="src/MediaEmbedKit.Mpv.Maui/MediaEmbedKit.Mpv.Maui.csproj" />
+  <Folder Name="/src/">
+    <Project Path="src/MediaEmbedKit.Mpv/MediaEmbedKit.Mpv.csproj" />
+    <Project Path="src/MediaEmbedKit.Mpv.WinForms/MediaEmbedKit.Mpv.WinForms.csproj" />
+    <Project Path="src/MediaEmbedKit.Mpv.Wpf/MediaEmbedKit.Mpv.Wpf.csproj" />
+    <Project Path="src/MediaEmbedKit.Mpv.Avalonia/MediaEmbedKit.Mpv.Avalonia.csproj" />
+    <Project Path="src/MediaEmbedKit.Mpv.WinUI/MediaEmbedKit.Mpv.WinUI.csproj" />
+    <Project Path="src/MediaEmbedKit.Mpv.Maui/MediaEmbedKit.Mpv.Maui.csproj" />
+  </Folder>
   <Folder Name="/samples/">
     <Project Path="samples/WinFormsSample/MediaEmbedKit.Mpv.Samples.WinForms.csproj" />
     <Project Path="samples/WpfSample/MediaEmbedKit.Mpv.Samples.Wpf.csproj" />
@@ -25,7 +27,7 @@
     <Project Path="tests/MediaEmbedKit.Mpv.WinUI.HeadlessTests/MediaEmbedKit.Mpv.WinUI.HeadlessTests.csproj" />
     <Project Path="tests/MediaEmbedKit.Mpv.Maui.HeadlessTests/MediaEmbedKit.Mpv.Maui.HeadlessTests.csproj" />
   </Folder>
-  <Folder Name="/方案項目/">
+  <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />
     <File Path=".gitignore" />
     <File Path="AGENTS.md" />
@@ -38,21 +40,23 @@
     <File Path="README.md" />
     <File Path="THIRD_PARTY_NOTICES.md" />
   </Folder>
-  <Folder Name="/方案項目/.agents/skills/">
+  <Folder Name="/Solution Items/.agents/skills/">
     <File Path=".agents/skills/libmpv-git-build-tracker/SKILL.md" />
     <File Path=".agents/skills/mediaembedkit-mpv/SKILL.md" />
   </Folder>
-  <Folder Name="/方案項目/.claude/skills/">
+  <Folder Name="/Solution Items/.claude/skills/">
     <File Path=".claude/skills/libmpv-git-build-tracker/SKILL.md" />
     <File Path=".claude/skills/mediaembedkit-mpv/SKILL.md" />
   </Folder>
-  <Folder Name="/方案項目/.gemini/">
+  <Folder Name="/Solution Items/.gemini/">
     <File Path=".gemini/settings.json" />
   </Folder>
-  <Folder Name="/方案項目/.github/">
+  <Folder Name="/Solution Items/.github/">
     <File Path=".github/copilot-instructions.md" />
+    <File Path=".github/workflows/ci.yml" />
+    <File Path=".github/workflows/release.yml" />
   </Folder>
-  <Folder Name="/方案項目/docs/">
+  <Folder Name="/Solution Items/docs/">
     <File Path="docs/AI_AGENT_INTEGRATION.md" />
     <File Path="docs/CONSUMING_PACKAGES.md" />
     <File Path="docs/DESIGN_TIME_CHECKLIST.md" />
@@ -65,28 +69,28 @@
     <File Path="docs/SUPPORT_MATRIX.md" />
     <File Path="docs/UI_BACKENDS.md" />
   </Folder>
-  <Folder Name="/方案項目/docs/ai/">
+  <Folder Name="/Solution Items/docs/ai/">
     <File Path="docs/ai/AGENT_GUIDE.md" />
   </Folder>
-  <Folder Name="/方案項目/docs/ai/skills/">
+  <Folder Name="/Solution Items/docs/ai/skills/">
     <File Path="docs/ai/skills/libmpv-git-build-tracker.md" />
     <File Path="docs/ai/skills/mediaembedkit-mpv.md" />
   </Folder>
-  <Folder Name="/方案項目/docs/runtime/">
+  <Folder Name="/Solution Items/docs/runtime/">
     <File Path="docs/runtime/libmpv-git-builds.json" />
   </Folder>
-  <Folder Name="/方案項目/tools/libmpv/">
-    <File Path="tools/libmpv/Compare-LibMpvHeaders.ps1" />
-    <File Path="tools/libmpv/Resolve-MpvGitBuild.ps1" />
-    <File Path="tools/libmpv/Update-LibMpvGitBuildManifest.ps1" />
-    <File Path="tools/libmpv/Verify-LibMpvArchive.ps1" />
-  </Folder>
-  <Folder Name="/方案項目/tools/">
+  <Folder Name="/Solution Items/tools/">
     <File Path="tools/Bump-Version.ps1" />
     <File Path="tools/Invoke-ConsumerPackageValidation.ps1" />
     <File Path="tools/Invoke-GuiConsumerPlaybackValidation.ps1" />
     <File Path="tools/Invoke-GuiPlaybackStress.ps1" />
     <File Path="tools/Invoke-PackageValidation.ps1" />
     <File Path="tools/Invoke-PreReleaseValidation.ps1" />
+  </Folder>
+  <Folder Name="/Solution Items/tools/libmpv/">
+    <File Path="tools/libmpv/Compare-LibMpvHeaders.ps1" />
+    <File Path="tools/libmpv/Resolve-MpvGitBuild.ps1" />
+    <File Path="tools/libmpv/Update-LibMpvGitBuildManifest.ps1" />
+    <File Path="tools/libmpv/Verify-LibMpvArchive.ps1" />
   </Folder>
 </Solution>
