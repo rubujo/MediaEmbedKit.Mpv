@@ -164,6 +164,14 @@ public static class FFmpegDownloader
             }
         }
 
+        // 解壓成功後，依 options.RetainArchive 決定是否清掉壓縮檔。FFmpeg-Builds zip
+        // 約 200 MB；裝完即用情境留著只佔磁碟、無用途。warm restart 強驗證需求請設
+        // RetainArchive=true，CanVerifyExistingArchive fast path 才能找到 archive 重用。
+        if (!options.RetainArchive)
+        {
+            TryDeleteArchive(archivePath);
+        }
+
         return new FFmpegDownloadResult(
             release.TagName,
             asset.Name,
@@ -173,6 +181,27 @@ public static class FFmpegDownloader
             ffprobePath,
             asset.Digest,
             true);
+    }
+
+    /// <summary>
+    /// 嘗試刪除下載壓縮檔；刪除失敗不擲例外（檔案無關功能、留下也不會壞）。
+    /// </summary>
+    /// <param name="archivePath">要刪除的壓縮檔路徑。</param>
+    private static void TryDeleteArchive(string archivePath)
+    {
+        try
+        {
+            if (File.Exists(archivePath))
+            {
+                File.Delete(archivePath);
+            }
+        }
+        catch (IOException)
+        {
+        }
+        catch (UnauthorizedAccessException)
+        {
+        }
     }
 
     /// <summary>

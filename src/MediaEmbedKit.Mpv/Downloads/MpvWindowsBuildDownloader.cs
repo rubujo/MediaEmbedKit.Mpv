@@ -177,6 +177,14 @@ public static class MpvWindowsBuildDownloader
             throw new FileNotFoundException("壓縮檔已解壓縮，但找不到 libmpv-2.dll。", LibMpvDllName);
         }
 
+        // 解壓成功後，依 options.RetainArchive 決定是否清掉 .7z。libmpv 7z 約
+        // 50–100 MB；裝完即用情境留著只佔磁碟。warm restart 強驗證請設
+        // RetainArchive=true 保留 archive 供未來 SHA 重驗。
+        if (!options.RetainArchive)
+        {
+            TryDeleteArchive(archive.ArchivePath);
+        }
+
         return new MpvWindowsBuildDownloadResult(
             archive.Provider,
             archive.ReleaseTag,
@@ -186,6 +194,27 @@ public static class MpvWindowsBuildDownloader
             archive.Digest,
             extractRoot,
             libraryPath);
+    }
+
+    /// <summary>
+    /// 嘗試刪除下載的 libmpv 壓縮檔；刪除失敗不擲例外。
+    /// </summary>
+    /// <param name="archivePath">要刪除的壓縮檔路徑。</param>
+    private static void TryDeleteArchive(string archivePath)
+    {
+        try
+        {
+            if (File.Exists(archivePath))
+            {
+                File.Delete(archivePath);
+            }
+        }
+        catch (IOException)
+        {
+        }
+        catch (UnauthorizedAccessException)
+        {
+        }
     }
 
     /// <summary>

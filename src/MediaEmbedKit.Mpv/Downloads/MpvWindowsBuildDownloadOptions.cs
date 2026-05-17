@@ -20,6 +20,7 @@ public sealed class MpvWindowsBuildDownloadOptions
         OverwriteExisting = false;
         VerificationPolicy = MpvNativeAssetVerificationPolicy.RequireGitHubDigest;
         ProviderFallbackOrder = new List<MpvWindowsBuildProvider>();
+        RetainArchive = false;
     }
 
     /// <summary>
@@ -103,4 +104,14 @@ public sealed class MpvWindowsBuildDownloadOptions
     /// </summary>
     /// <value>自訂 GitHub 發行 API URI；未指定時依提供者使用預設 API。</value>
     public Uri? ReleaseApiUriOverride { get; set; }
+
+    /// <summary>
+    /// 取得或設定解壓縮成功後是否保留下載的 libmpv 壓縮檔。
+    /// </summary>
+    /// <value>
+    /// 保留壓縮檔時為 <see langword="true"/>；預設為 <see langword="false"/>，
+    /// 解壓縮成功後刪除壓縮檔以避免長期佔用磁碟（libmpv .7z 約 50–100 MB）。
+    /// 需在 warm restart 重新驗證 SHA-256 而省下載成本時，應明確設為 <see langword="true"/>。
+    /// </value>
+    public bool RetainArchive { get; set; }
 }

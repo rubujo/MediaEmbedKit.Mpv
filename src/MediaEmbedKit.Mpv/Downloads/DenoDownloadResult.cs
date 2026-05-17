@@ -56,7 +56,11 @@ public sealed class DenoDownloadResult
     /// <summary>
     /// 取得下載後的壓縮檔路徑。
     /// </summary>
-    /// <value>Deno 壓縮檔路徑。</value>
+    /// <value>
+    /// Deno 壓縮檔路徑。<see cref="DenoDownloadOptions.RetainArchive"/> 預設為
+    /// <see langword="false"/>，解壓成功後 helper 會清掉壓縮檔，此路徑指向不存在的
+    /// 檔案；caller 若需確認檔案存在請自行 <see cref="System.IO.File.Exists(string)"/>。
+    /// </value>
     public string ArchivePath { get; private set; }
 
     /// <summary>

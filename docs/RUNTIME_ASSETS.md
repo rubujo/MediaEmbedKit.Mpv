@@ -33,6 +33,14 @@ runtime helper 預設要求 GitHub Releases API 提供 `sha256:` digest，並驗
 
 `yt-dlp` 支援使用 `SHA2-256SUMS` 驗證發行檔。Deno 支援使用發行資產同層的 `.sha256sum` 檔案驗證壓縮檔。yt-dlp FFmpeg-Builds 支援使用 `checksums.sha256` 驗證發行檔。libmpv 的 shinchiro 與 zhongfly provider 不在 `RequireProviderChecksum` 支援範圍內；更嚴格的生產下載請使用 `RequirePinnedSha256`、`ExpectedSha256` 與 `LockReleaseSource`。
 
+## 下載壓縮檔保留策略
+
+`FFmpegDownloadOptions.RetainArchive`、`MpvWindowsBuildDownloadOptions.RetainArchive` 與 `DenoDownloadOptions.RetainArchive` 控制解壓成功後是否保留下載的壓縮檔（zip / 7z）。預設值為 `false`：解壓成功後 helper 立即清掉壓縮檔，避免長期佔用磁碟（一次完整 runtime install 可省 ~290 MB：FFmpeg-Builds zip ~200 MB + libmpv .7z ~50–100 MB + Deno zip ~30 MB）。
+
+需在「warm restart 重新驗證 SHA-256 而不重新下載」流程下保留壓縮檔的呼叫端，應明確設 `RetainArchive = true`。下次再呼叫 `Download*Async(...)` 時，FFmpeg helper 的 `CanVerifyExistingArchive` fast path 才會找到 archive 並重跑驗證。
+
+清掉壓縮檔的失敗（檔案被其他處理序鎖、權限不足等）不會擲例外或失敗整個下載流程 —— archive 本身已不再被需要，留下也只是磁碟用量問題。
+
 ## libmpv
 
 helper 可從 shinchiro `mpv-winbuild-cmake` 與 zhongfly `mpv-winbuild` 下載對應架構的 `mpv-dev-{token}-*.7z` 資產（x64 token 為 `x86_64`、ARM64 token 為 `aarch64`）。這些來源是 mpv Windows git build，不是 mpv stable release。兩個 provider 的命名規範完全相同，`ProviderFallbackOrder` 機制在 x64 與 ARM64 上行為一致。

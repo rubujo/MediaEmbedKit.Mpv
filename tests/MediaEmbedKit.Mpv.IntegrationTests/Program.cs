@@ -2464,16 +2464,33 @@ internal static class Program
         string runtimeDirectory = Path.Combine(Path.GetTempPath(), "MediaEmbedKit.Mpv.FFmpegIntegration", "win-x64");
         FFmpegDownloadOptions options = new FFmpegDownloadOptions
         {
-            VerificationPolicy = MpvNativeAssetVerificationPolicy.RequireProviderChecksum
+            VerificationPolicy = MpvNativeAssetVerificationPolicy.RequireProviderChecksum,
+            // 顯式保留 archive 以驗證 RetainArchive=true 路徑（同步覆蓋預設清除路徑下方）。
+            RetainArchive = true,
         };
         FFmpegDownloadResult result = await FFmpegDownloader.DownloadAndExtractLatestAsync(runtimeDirectory, options).ConfigureAwait(false);
 
         IntegrationAssert.True(File.Exists(result.FFmpegPath), "FFmpeg 應解壓縮到 runtime 根目錄。");
         IntegrationAssert.True(File.Exists(result.FFprobePath), "FFprobe 應解壓縮到 runtime 根目錄。");
-        IntegrationAssert.True(File.Exists(result.ArchivePath), "FFmpeg-Builds 壓縮檔應保留於 runtime 根目錄。");
+        IntegrationAssert.True(File.Exists(result.ArchivePath), "RetainArchive=true 時 FFmpeg-Builds 壓縮檔應保留於 runtime 根目錄。");
 
         await VerifyExternalToolVersionAsync(result.FFmpegPath, "FFmpeg").ConfigureAwait(false);
         await VerifyExternalToolVersionAsync(result.FFprobePath, "FFprobe").ConfigureAwait(false);
+
+        // 切回預設 RetainArchive=false，重新下載一次（OverwriteExisting=true 強制下載），
+        // 驗證解壓後 archive 確實被清掉。runtime 資料夾換到子路徑避免 fast path 重用既有
+        // 執行檔（CanUseExistingTools 不會觸發、走完整下載 + 解壓 + cleanup 路徑）。
+        string cleanupRuntimeDirectory = Path.Combine(runtimeDirectory, "cleanup-default");
+        FFmpegDownloadOptions cleanupOptions = new FFmpegDownloadOptions
+        {
+            VerificationPolicy = MpvNativeAssetVerificationPolicy.RequireProviderChecksum,
+            OverwriteExisting = true,
+            // RetainArchive 保持預設 false
+        };
+        FFmpegDownloadResult cleanupResult = await FFmpegDownloader.DownloadAndExtractLatestAsync(cleanupRuntimeDirectory, cleanupOptions).ConfigureAwait(false);
+        IntegrationAssert.True(File.Exists(cleanupResult.FFmpegPath), "預設 cleanup 路徑：FFmpeg 仍應解出。");
+        IntegrationAssert.True(File.Exists(cleanupResult.FFprobePath), "預設 cleanup 路徑：FFprobe 仍應解出。");
+        IntegrationAssert.True(!File.Exists(cleanupResult.ArchivePath), "預設 RetainArchive=false 時，archive 應於解壓成功後被刪除。");
     }
 
     /// <summary>
