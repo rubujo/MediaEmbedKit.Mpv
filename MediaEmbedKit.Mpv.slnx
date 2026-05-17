@@ -27,7 +27,7 @@
     <Project Path="tests/MediaEmbedKit.Mpv.WinUI.HeadlessTests/MediaEmbedKit.Mpv.WinUI.HeadlessTests.csproj" />
     <Project Path="tests/MediaEmbedKit.Mpv.Maui.HeadlessTests/MediaEmbedKit.Mpv.Maui.HeadlessTests.csproj" />
   </Folder>
-  <Folder Name="/Solution Items/">
+  <Folder Name="/方案項目/">
     <File Path=".editorconfig" />
     <File Path=".gitignore" />
     <File Path="AGENTS.md" />
@@ -40,23 +40,23 @@
     <File Path="README.md" />
     <File Path="THIRD_PARTY_NOTICES.md" />
   </Folder>
-  <Folder Name="/Solution Items/.agents/skills/">
+  <Folder Name="/方案項目/.agents/skills/">
     <File Path=".agents/skills/libmpv-git-build-tracker/SKILL.md" />
     <File Path=".agents/skills/mediaembedkit-mpv/SKILL.md" />
   </Folder>
-  <Folder Name="/Solution Items/.claude/skills/">
+  <Folder Name="/方案項目/.claude/skills/">
     <File Path=".claude/skills/libmpv-git-build-tracker/SKILL.md" />
     <File Path=".claude/skills/mediaembedkit-mpv/SKILL.md" />
   </Folder>
-  <Folder Name="/Solution Items/.gemini/">
+  <Folder Name="/方案項目/.gemini/">
     <File Path=".gemini/settings.json" />
   </Folder>
-  <Folder Name="/Solution Items/.github/">
+  <Folder Name="/方案項目/.github/">
     <File Path=".github/copilot-instructions.md" />
     <File Path=".github/workflows/ci.yml" />
     <File Path=".github/workflows/release.yml" />
   </Folder>
-  <Folder Name="/Solution Items/docs/">
+  <Folder Name="/方案項目/docs/">
     <File Path="docs/AI_AGENT_INTEGRATION.md" />
     <File Path="docs/CONSUMING_PACKAGES.md" />
     <File Path="docs/DESIGN_TIME_CHECKLIST.md" />
@@ -69,17 +69,17 @@
     <File Path="docs/SUPPORT_MATRIX.md" />
     <File Path="docs/UI_BACKENDS.md" />
   </Folder>
-  <Folder Name="/Solution Items/docs/ai/">
+  <Folder Name="/方案項目/docs/ai/">
     <File Path="docs/ai/AGENT_GUIDE.md" />
   </Folder>
-  <Folder Name="/Solution Items/docs/ai/skills/">
+  <Folder Name="/方案項目/docs/ai/skills/">
     <File Path="docs/ai/skills/libmpv-git-build-tracker.md" />
     <File Path="docs/ai/skills/mediaembedkit-mpv.md" />
   </Folder>
-  <Folder Name="/Solution Items/docs/runtime/">
+  <Folder Name="/方案項目/docs/runtime/">
     <File Path="docs/runtime/libmpv-git-builds.json" />
   </Folder>
-  <Folder Name="/Solution Items/tools/">
+  <Folder Name="/方案項目/tools/">
     <File Path="tools/Bump-Version.ps1" />
     <File Path="tools/Invoke-ConsumerPackageValidation.ps1" />
     <File Path="tools/Invoke-GuiConsumerPlaybackValidation.ps1" />
@@ -87,7 +87,7 @@
     <File Path="tools/Invoke-PackageValidation.ps1" />
     <File Path="tools/Invoke-PreReleaseValidation.ps1" />
   </Folder>
-  <Folder Name="/Solution Items/tools/libmpv/">
+  <Folder Name="/方案項目/tools/libmpv/">
     <File Path="tools/libmpv/Compare-LibMpvHeaders.ps1" />
     <File Path="tools/libmpv/Resolve-MpvGitBuild.ps1" />
     <File Path="tools/libmpv/Update-LibMpvGitBuildManifest.ps1" />
