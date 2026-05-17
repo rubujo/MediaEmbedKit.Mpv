@@ -2618,18 +2618,19 @@ internal static class RuntimeResolver
     /// <summary>
     /// 解析或準備執行階段資料夾。
     /// </summary>
+    /// <remarks>
+    /// 若設定 <c>MEDIAEMBEDKIT_MPV_RUNTIME_DIR</c>，使用指定資料夾；否則使用
+    /// <c>AppContext.BaseDirectory/runtime</c>。兩種情境下若資料夾缺少 libmpv-2.dll
+    /// 都會自動下載一份，符合 CI 第一次跑（cache miss）的需求。
+    /// </remarks>
     /// <returns>包含 libmpv-2.dll 的執行階段資料夾。</returns>
     public static async Task<string> ResolveAsync()
     {
         string? configured = Environment.GetEnvironmentVariable(RuntimeDirectoryEnvironmentVariable);
-        if (!string.IsNullOrWhiteSpace(configured))
-        {
-            string configuredDirectory = Path.GetFullPath(configured!);
-            EnsureLibMpvExists(configuredDirectory);
-            return configuredDirectory;
-        }
+        string runtimeDirectory = !string.IsNullOrWhiteSpace(configured)
+            ? Path.GetFullPath(configured!)
+            : Path.Combine(AppContext.BaseDirectory, "runtime");
 
-        string runtimeDirectory = Path.Combine(AppContext.BaseDirectory, "runtime");
         string libraryPath = Path.Combine(runtimeDirectory, MpvLibraryLoader.GetDefaultLibraryFileName());
         if (!File.Exists(libraryPath))
         {
