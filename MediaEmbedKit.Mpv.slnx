@@ -54,6 +54,7 @@
   </Folder>
   <Folder Name="/方案項目/docs/">
     <File Path="docs/AI_AGENT_INTEGRATION.md" />
+    <File Path="docs/CONSUMING_PACKAGES.md" />
     <File Path="docs/DESIGN_TIME_CHECKLIST.md" />
     <File Path="docs/ENGINEERING_STANDARDS.md" />
     <File Path="docs/LIBMPV_C_API_TEST_MATRIX.md" />

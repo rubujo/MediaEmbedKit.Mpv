@@ -1,4 +1,4 @@
-# MediaEmbedKit.Mpv
+﻿# MediaEmbedKit.Mpv
 
 MediaEmbedKit.Mpv 是 .NET libmpv 包裝器與 Windows 桌面 UI 控制項專案。專案提供核心 libmpv C API 包裝、常用高階播放 API、Windows x64 / ARM64 執行階段資產 helper，以及 WinForms、WPF、Avalonia、WinUI 3 與 .NET MAUI Windows 範例。
 
@@ -94,6 +94,7 @@ dotnet run --project .\tests\MediaEmbedKit.Mpv.PlaybackSmoke\MediaEmbedKit.Mpv.P
 - `docs/SUPPORT_MATRIX.md`：目標框架與支援狀態。
 - `docs/UI_BACKENDS.md`：UI 後端與 AirSpace 限制。
 - `docs/RUNTIME_ASSETS.md`：runtime 下載與更新政策。
+- `docs/CONSUMING_PACKAGES.md`：從 GitHub Release 下載 `.nupkg` 後以本機 NuGet feed 安裝。
 - `docs/HIGH_LEVEL_API.md`：高階 API 與 encoding 操作指南。
 - `docs/CONTROLS_API.md`：五個 UI 框架控制項共通綁定屬性與 Commands。
 - `docs/LIBMPV_C_API_TEST_MATRIX.md`：C API 覆蓋與驗證矩陣。
