@@ -3,7 +3,7 @@
 namespace MediaEmbedKit.Mpv;
 
 /// <summary>
-/// 表示 <see cref="MpvEncoder.EncodeAsync"/> 進行中回報的進度快照。
+/// 表示 <c>MpvEncoder.EncodeAsync</c>（位於 <c>MediaEmbedKit.Mpv.Encoding</c> 套件）進行中回報的進度快照。
 /// </summary>
 public readonly struct MpvEncodingProgress
 {

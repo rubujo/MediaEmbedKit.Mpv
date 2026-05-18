@@ -3,7 +3,7 @@
 namespace MediaEmbedKit.Mpv.Downloads;
 
 /// <summary>
-/// 描述 <see cref="MpvRuntimeHealthReport.IsHealthyFor"/> 可指定的「必備附帶工具」集合。
+/// 描述 <c>MpvRuntimeHealthReport.IsHealthyFor</c>（位於 <c>MediaEmbedKit.Mpv.Diagnostics</c> 套件）可指定的「必備附帶工具」集合。
 /// 核心 libmpv 一律必備，不需透過此列舉表達。
 /// </summary>
 [Flags]

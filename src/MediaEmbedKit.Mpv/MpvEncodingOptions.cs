@@ -640,7 +640,7 @@ public sealed class MpvEncodingOptions
     /// </summary>
     /// <param name="target">要寫入的目標選項。</param>
     /// <remarks>
-    /// 用於 <see cref="MpvEncoder.EncodeTwoPassAsync"/> 的階段選項複製：因為公開屬性
+    /// 用於 <c>MpvEncoder.EncodeTwoPassAsync</c>（位於 <c>MediaEmbedKit.Mpv.Encoding</c> 套件）的階段選項複製：因為公開屬性
     /// 不涵蓋 <c>WithVideoCodecOption</c> / <c>WithAudioCodecOption</c> /
     /// <c>WithMuxerOption</c> / <c>WithMetadataTag</c> / <c>WithoutMetadataTag</c>
     /// 累加的清單，必須單獨複製避免兩階段遺失 codec 參數。
