@@ -7,7 +7,7 @@
 | 項目 | 狀態 |
 | --- | --- |
 | 官方基準 | mpv v0.41.0 |
-| provider 對齊 | shinchiro `20260517` / mpv `059bc7025b`；zhongfly `2026-05-16-059bc7025b` / mpv `059bc7025b` |
+| provider 對齊 | shinchiro `20260518` / mpv `059bc7025b`；zhongfly `2026-05-18-059bc7025b` / mpv `059bc7025b` |
 | 公開匯出函式 | 官方標頭 54 個；`MpvNative` P/Invoke 54 個 |
 | 列舉與旗標 | `MpvErrorCode`、`MpvFormat`、`MpvLogLevel`、`MpvEndFileReason`、render 相關列舉已對齊 v0.41.0 |
 | 原生資料結構 | 事件、節點、stream callback、OpenGL、DRM、render frame info 與 `mpv_byte_array` 皆有受控對應 |
