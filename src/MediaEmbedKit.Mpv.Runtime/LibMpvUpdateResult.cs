@@ -1,6 +1,6 @@
-using MediaEmbedKit.Mpv.Externals;
+﻿using MediaEmbedKit.Mpv.Externals;
 
-﻿namespace MediaEmbedKit.Mpv.Runtime;
+namespace MediaEmbedKit.Mpv.Runtime;
 
 /// <summary>
 /// 表示 libmpv 執行階段更新作業的結果。

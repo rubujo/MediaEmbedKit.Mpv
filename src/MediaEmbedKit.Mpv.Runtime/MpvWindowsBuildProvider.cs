@@ -1,6 +1,6 @@
-using MediaEmbedKit.Mpv.Externals;
+﻿using MediaEmbedKit.Mpv.Externals;
 
-﻿namespace MediaEmbedKit.Mpv.Runtime;
+namespace MediaEmbedKit.Mpv.Runtime;
 
 /// <summary>
 /// 定義 Windows libmpv 建置的下載來源提供者。

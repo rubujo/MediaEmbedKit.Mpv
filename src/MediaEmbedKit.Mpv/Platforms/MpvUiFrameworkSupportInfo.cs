@@ -1,4 +1,4 @@
-namespace MediaEmbedKit.Mpv.Platforms;
+﻿namespace MediaEmbedKit.Mpv.Platforms;
 
 /// <summary>
 /// 描述 UI 架構在特定平台上的 mpv 支援狀態。
