@@ -228,10 +228,13 @@ public static class FFmpegDownloader
     /// <returns>可重用既有工具時為 <see langword="true"/>。</returns>
     private static bool CanUseExistingTools(string ffmpegPath, string ffprobePath, FFmpegDownloadOptions options)
     {
+        // Idempotency skip：ffmpeg.exe + ffprobe.exe 已存在、呼叫端未要求覆寫或釘版 SHA
+        // → 跳過下載 + 解壓。先前要求 BestEffort 才允許 skip，但 OverwriteExisting=false
+        // + 沒 ExpectedSha256 就足夠保證「使用者沒要求重新驗證」—— 信任 disk 上的檔是
+        // 我們上次自己安裝完成寫入的。要強制重抓請設 OverwriteExisting=true。
         return File.Exists(ffmpegPath) &&
             File.Exists(ffprobePath) &&
             !options.OverwriteExisting &&
-            options.VerificationPolicy == MpvNativeAssetVerificationPolicy.BestEffort &&
             string.IsNullOrWhiteSpace(options.ExpectedSha256);
     }
 

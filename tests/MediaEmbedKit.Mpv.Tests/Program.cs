@@ -50,6 +50,8 @@ internal static class Program
         runner.Add("MpvLibraryUpdateScheduler 路徑與列舉", VerifyMpvLibraryUpdateSchedulerLayout);
         runner.Add("DI 擴充註冊播放器工廠", VerifyDependencyInjectionExtensions);
         runner.Add("Provider / ProviderFallbackOrder 預設值（Zhongfly + Shinchiro fallback）", VerifyProviderFallbackOrderDefaults);
+        runner.Add("MpvWindowsBuildDownloadOptions.Clone 深淺層複製", VerifyMpvWindowsBuildDownloadOptionsClone);
+        runner.Add("LibMpvVersionMarker round-trip 寫入讀回", VerifyLibMpvVersionMarkerRoundTrip);
         runner.Add("MpvLicenseAuditor 分類授權狀態", VerifyMpvLicenseAuditorClassification);
         runner.Add("MpvMediaItem fluent helpers", VerifyMpvMediaItemFluentHelpers);
         runner.Add("MpvPlayerOptions.CopyTo 全欄複製", VerifyMpvPlayerOptionsCopyTo);
@@ -313,6 +315,109 @@ internal static class Program
         AssertEx.Equal(0, options.ProviderFallbackOrder.Count, "ProviderFallbackOrder 應支援清空");
         options.ProviderFallbackOrder.Add(MpvWindowsBuildProvider.Shinchiro);
         AssertEx.Equal(1, options.ProviderFallbackOrder.Count, "ProviderFallbackOrder 應支援新增備援 provider");
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// 驗證 <see cref="MpvWindowsBuildDownloadOptions.Clone"/> 產生獨立複本：所有純值
+    /// 欄位等值複製，<see cref="MpvWindowsBuildDownloadOptions.ProviderFallbackOrder"/>
+    /// 拷貝成獨立 list（修改原物件 list 不影響複本）。這是 PR G 內 UpdateLibMpvAsync /
+    /// InstallOrUpdateLibMpvAsync 避免 mutate caller options 的基礎。
+    /// </summary>
+    /// <returns>代表測試流程的工作。</returns>
+    private static Task VerifyMpvWindowsBuildDownloadOptionsClone()
+    {
+        MpvWindowsBuildDownloadOptions original = new MpvWindowsBuildDownloadOptions
+        {
+            Provider = MpvWindowsBuildProvider.Shinchiro,
+            Architecture = MpvWindowsArchitecture.Arm64,
+            UserAgent = "test-ua/1.0",
+            LicensePreference = MpvWindowsBuildLicensePreference.RequireLgpl,
+            OverwriteExisting = true,
+            VerificationPolicy = MpvNativeAssetVerificationPolicy.RequirePinnedSha256,
+            VerifyDigest = false,
+            ExpectedSha256 = "deadbeef",
+            LockReleaseSource = true,
+            SevenZipPath = @"C:\custom\7z.exe",
+            ExtractDirectory = @"C:\custom\extract",
+            ReleaseApiUriOverride = new System.Uri("https://example.com/api"),
+            RetainArchive = true,
+        };
+        original.ProviderFallbackOrder.Clear();
+        original.ProviderFallbackOrder.Add(MpvWindowsBuildProvider.Zhongfly);
+
+        MpvWindowsBuildDownloadOptions copy = original.Clone();
+
+        AssertEx.Equal(original.Provider, copy.Provider, "Provider 應等值複製");
+        AssertEx.Equal(original.Architecture, copy.Architecture, "Architecture 應等值複製");
+        AssertEx.Equal(original.UserAgent, copy.UserAgent, "UserAgent 應等值複製");
+        AssertEx.Equal(original.LicensePreference, copy.LicensePreference, "LicensePreference 應等值複製");
+        AssertEx.Equal(original.OverwriteExisting, copy.OverwriteExisting, "OverwriteExisting 應等值複製");
+        AssertEx.Equal(original.VerificationPolicy, copy.VerificationPolicy, "VerificationPolicy 應等值複製");
+        AssertEx.Equal(original.VerifyDigest, copy.VerifyDigest, "VerifyDigest 應等值複製");
+        AssertEx.Equal(original.ExpectedSha256, copy.ExpectedSha256, "ExpectedSha256 應等值複製");
+        AssertEx.Equal(original.LockReleaseSource, copy.LockReleaseSource, "LockReleaseSource 應等值複製");
+        AssertEx.Equal(original.SevenZipPath, copy.SevenZipPath, "SevenZipPath 應等值複製");
+        AssertEx.Equal(original.ExtractDirectory, copy.ExtractDirectory, "ExtractDirectory 應等值複製");
+        AssertEx.Equal(original.ReleaseApiUriOverride, copy.ReleaseApiUriOverride, "ReleaseApiUriOverride 應等值複製");
+        AssertEx.Equal(original.RetainArchive, copy.RetainArchive, "RetainArchive 應等值複製");
+        AssertEx.Equal(1, copy.ProviderFallbackOrder.Count, "ProviderFallbackOrder 應等值複製");
+        AssertEx.Equal(MpvWindowsBuildProvider.Zhongfly, copy.ProviderFallbackOrder[0], "ProviderFallbackOrder 內容應一致");
+
+        // 互不影響：改原物件不影響複本，反之亦然。
+        copy.OverwriteExisting = false;
+        AssertEx.True(original.OverwriteExisting, "改複本純值欄位不影響原物件");
+        copy.ProviderFallbackOrder.Add(MpvWindowsBuildProvider.Shinchiro);
+        AssertEx.Equal(1, original.ProviderFallbackOrder.Count, "改複本 ProviderFallbackOrder list 不影響原物件");
+
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// 驗證 <see cref="LibMpvVersionMarker"/> JSON round-trip：寫入後讀回的欄位與寫入時
+    /// 一致；缺漏 marker 檔回傳 null；schema 版本不匹配回傳 null（防護未來 schema 演進
+    /// 時舊 marker 不被誤判為當前格式）。
+    /// </summary>
+    /// <returns>代表測試流程的工作。</returns>
+    private static Task VerifyLibMpvVersionMarkerRoundTrip()
+    {
+        string tempRoot = Path.Combine(Path.GetTempPath(), "MediaEmbedKit.Mpv.Tests.MarkerRoundTrip", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(tempRoot);
+        try
+        {
+            string markerPath = Path.Combine(tempRoot, "libmpv-2.dll" + LibMpvVersionMarker.FileExtension);
+
+            // 不存在 → null
+            AssertEx.True(LibMpvVersionMarker.TryRead(markerPath) == null, "不存在 marker 應回傳 null");
+
+            // 寫入 → 讀回，欄位一致
+            LibMpvVersionMarker.Write(markerPath, MpvWindowsBuildProvider.Zhongfly, "2026-05-17-059bc7025b", "mpv-dev-lgpl-x86_64-20260517-git-059bc7025b.7z");
+            LibMpvVersionMarker? read = LibMpvVersionMarker.TryRead(markerPath);
+            AssertEx.True(read != null, "寫入後 marker 應讀得到");
+            AssertEx.Equal(LibMpvVersionMarker.CurrentSchemaVersion, read!.SchemaVersion, "schemaVersion 應為當前版本");
+            AssertEx.Equal(MpvWindowsBuildProvider.Zhongfly.ToString(), read.Provider, "Provider 字串應 round-trip 一致");
+            AssertEx.Equal("2026-05-17-059bc7025b", read.ReleaseTag, "ReleaseTag 應 round-trip 一致");
+            AssertEx.Equal("mpv-dev-lgpl-x86_64-20260517-git-059bc7025b.7z", read.AssetName, "AssetName 應 round-trip 一致");
+
+            // schema 版本不匹配 → null（用未來假設的 schema 版本模擬）
+            File.WriteAllText(markerPath, "{\"schemaVersion\":9999,\"provider\":\"Zhongfly\",\"releaseTag\":\"x\",\"assetName\":\"y\"}");
+            AssertEx.True(LibMpvVersionMarker.TryRead(markerPath) == null, "未知 schemaVersion 應回傳 null");
+
+            // 壞 JSON → null
+            File.WriteAllText(markerPath, "this is not json");
+            AssertEx.True(LibMpvVersionMarker.TryRead(markerPath) == null, "壞 JSON 應回傳 null");
+        }
+        finally
+        {
+            try
+            {
+                Directory.Delete(tempRoot, true);
+            }
+            catch
+            {
+            }
+        }
+
         return Task.CompletedTask;
     }
 

@@ -27,19 +27,24 @@ public static class MpvWindowsRuntimeInstaller
             throw new ArgumentException("執行階段資料夾不可為空白。", nameof(runtimeDirectory));
         }
 
-        options = options ?? new MpvWindowsBuildDownloadOptions();
-        options.OverwriteExisting = true;
+        // UpdateLibMpvAsync = 「明確強制更新到上游最新」語意：呼叫端設不設
+        // OverwriteExisting 都會被強制覆寫並 bypass downloader 的 idempotency
+        // skip path（marker 比對）。但不應 mutate caller 物件 —— 改用內部 clone。
+        // 想要「有需要才更新」請改用 InstallOrUpdateAsync（它讓 downloader 內建的
+        // idempotency skip path 生效）。
+        MpvWindowsBuildDownloadOptions effectiveOptions = (options ?? new MpvWindowsBuildDownloadOptions()).Clone();
+        effectiveOptions.OverwriteExisting = true;
 
         Directory.CreateDirectory(runtimeDirectory);
         bool loaded = MpvLibraryLoader.IsLoaded;
         string extractDirectory = loaded
             ? Path.Combine(runtimeDirectory, ".updates", DateTime.UtcNow.ToString("yyyyMMddHHmmss"))
             : runtimeDirectory;
-        options.ExtractDirectory = extractDirectory;
+        effectiveOptions.ExtractDirectory = extractDirectory;
 
         MpvWindowsBuildDownloadResult mpv = await MpvWindowsBuildDownloader.DownloadAndExtractLatestLibMpvAsync(
             runtimeDirectory,
-            options,
+            effectiveOptions,
             cancellationToken).ConfigureAwait(false);
 
         string libMpvPath = Path.Combine(runtimeDirectory, "libmpv-2.dll");
@@ -48,6 +53,14 @@ public static class MpvWindowsRuntimeInstaller
         {
             File.Copy(updatedLibraryPath, libMpvPath, true);
             updatedLibraryPath = libMpvPath;
+        }
+
+        // .updates/<時戳> 暫存累積問題：每次 staged update 都新建一個時戳資料夾，
+        // 不主動清就會持續累積（LINQPad 等同 AppDomain 多次呼叫尤其明顯）。
+        // 保留「最近 1 個」staged update 供必要時 rollback / 稽核，其餘清掉。
+        if (loaded)
+        {
+            PruneStagedUpdatesDirectory(runtimeDirectory, keepLatest: 1);
         }
 
         return new LibMpvUpdateResult(
@@ -60,6 +73,114 @@ public static class MpvWindowsRuntimeInstaller
             loaded
                 ? "libmpv-2.dll is already loaded in the current process. The update was staged; call ApplyStagedLibMpvUpdate before loading libmpv on next startup, then restart the application."
                 : "libmpv-2.dll was updated before it was loaded. No process restart is required for this update.");
+    }
+
+    /// <summary>
+    /// install-or-update 語意的 libmpv 安裝：不強制 <see cref="MpvWindowsBuildDownloadOptions.OverwriteExisting"/>，
+    /// 讓 <see cref="MpvWindowsBuildDownloader.DownloadAndExtractLatestLibMpvAsync"/>
+    /// 的 sidecar marker idempotency skip path 能生效。同樣不 mutate caller options。
+    /// 若 libmpv 已載入（同一處理序內），會 stage 到 <c>.updates/&lt;時戳&gt;</c>
+    /// 並 auto-prune 舊版本。
+    /// </summary>
+    /// <param name="runtimeDirectory">執行階段資料夾。</param>
+    /// <param name="options">Windows libmpv 建置下載選項；未指定時使用預設選項。</param>
+    /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
+    /// <returns>表示 libmpv 安裝或更新結果的工作。</returns>
+    private static async Task<LibMpvUpdateResult> InstallOrUpdateLibMpvAsync(
+        string runtimeDirectory,
+        MpvWindowsBuildDownloadOptions? options,
+        CancellationToken cancellationToken)
+    {
+        MpvWindowsBuildDownloadOptions effectiveOptions = (options ?? new MpvWindowsBuildDownloadOptions()).Clone();
+
+        bool loaded = MpvLibraryLoader.IsLoaded;
+        string extractDirectory = loaded
+            ? Path.Combine(runtimeDirectory, ".updates", DateTime.UtcNow.ToString("yyyyMMddHHmmss"))
+            : runtimeDirectory;
+        effectiveOptions.ExtractDirectory = extractDirectory;
+
+        MpvWindowsBuildDownloadResult mpv = await MpvWindowsBuildDownloader.DownloadAndExtractLatestLibMpvAsync(
+            runtimeDirectory,
+            effectiveOptions,
+            cancellationToken).ConfigureAwait(false);
+
+        string libMpvPath = Path.Combine(runtimeDirectory, "libmpv-2.dll");
+        string updatedLibraryPath = mpv.LibraryPath!;
+        if (!loaded && !string.Equals(updatedLibraryPath, libMpvPath, StringComparison.OrdinalIgnoreCase))
+        {
+            File.Copy(updatedLibraryPath, libMpvPath, true);
+            updatedLibraryPath = libMpvPath;
+        }
+
+        // libmpv 已載入時走的 staging 路徑會建立 .updates/<時戳>；保留最新 1 個、清掉
+        // 其餘累積版本（避免 LINQPad 等同 AppDomain 多次呼叫造成磁碟濫用）。
+        if (loaded)
+        {
+            PruneStagedUpdatesDirectory(runtimeDirectory, keepLatest: 1);
+        }
+
+        return new LibMpvUpdateResult(
+            runtimeDirectory,
+            libMpvPath,
+            updatedLibraryPath,
+            mpv,
+            !loaded,
+            loaded,
+            loaded
+                ? "libmpv-2.dll is already loaded in the current process. The update was staged; call ApplyStagedLibMpvUpdate before loading libmpv on next startup, then restart the application."
+                : "libmpv-2.dll is current or was installed before being loaded. No process restart is required.");
+    }
+
+    /// <summary>
+    /// 清理 <c>runtime/.updates/</c> 內舊的時戳資料夾，僅保留最新的
+    /// <paramref name="keepLatest"/> 個（依資料夾名稱排序，即時戳排序）。
+    /// 失敗（檔案被鎖、權限等）會吞掉例外 —— 清理是 best-effort，失敗只是磁碟用量問題。
+    /// </summary>
+    /// <param name="runtimeDirectory">runtime 資料夾。</param>
+    /// <param name="keepLatest">要保留的最新 staged update 數量。</param>
+    private static void PruneStagedUpdatesDirectory(string runtimeDirectory, int keepLatest)
+    {
+        if (keepLatest < 0)
+        {
+            keepLatest = 0;
+        }
+
+        string updatesDirectory = Path.Combine(runtimeDirectory, ".updates");
+        if (!Directory.Exists(updatesDirectory))
+        {
+            return;
+        }
+
+        try
+        {
+            string[] entries = Directory.GetDirectories(updatesDirectory);
+            if (entries.Length <= keepLatest)
+            {
+                return;
+            }
+
+            Array.Sort(entries, StringComparer.Ordinal);
+            int toDeleteCount = entries.Length - keepLatest;
+            for (int i = 0; i < toDeleteCount; i++)
+            {
+                try
+                {
+                    Directory.Delete(entries[i], true);
+                }
+                catch (IOException)
+                {
+                }
+                catch (UnauthorizedAccessException)
+                {
+                }
+            }
+        }
+        catch (IOException)
+        {
+        }
+        catch (UnauthorizedAccessException)
+        {
+        }
     }
 
     /// <summary>
@@ -108,7 +229,12 @@ public static class MpvWindowsRuntimeInstaller
         options = options ?? new MpvWindowsRuntimeDownloadOptions();
         Directory.CreateDirectory(runtimeDirectory);
 
-        LibMpvUpdateResult libMpv = await UpdateLibMpvAsync(runtimeDirectory, options.Mpv, cancellationToken).ConfigureAwait(false);
+        // 走 install-or-update（不強制 OverwriteExisting）：讓
+        // MpvWindowsBuildDownloader.DownloadAndExtractLatestLibMpvAsync 的 idempotency
+        // skip path（sidecar marker 比對）能生效，避免每次呼叫都重抓 ~30 MB libmpv .7z
+        // + 重新解壓。對比 UpdateLibMpvAsync（明確強制更新），InstallOrUpdateAsync 是
+        // 「有需要才更新」語意。
+        LibMpvUpdateResult libMpv = await InstallOrUpdateLibMpvAsync(runtimeDirectory, options.Mpv, cancellationToken).ConfigureAwait(false);
         MpvWindowsBuildDownloadResult mpv = libMpv.Download;
         string libMpvPath = libMpv.TargetLibraryPath;
 

@@ -33,6 +33,38 @@ runtime helper 預設要求 GitHub Releases API 提供 `sha256:` digest，並驗
 
 `yt-dlp` 支援使用 `SHA2-256SUMS` 驗證發行檔。Deno 支援使用發行資產同層的 `.sha256sum` 檔案驗證壓縮檔。yt-dlp FFmpeg-Builds 支援使用 `checksums.sha256` 驗證發行檔。libmpv 的 shinchiro 與 zhongfly provider 不在 `RequireProviderChecksum` 支援範圍內；更嚴格的生產下載請使用 `RequirePinnedSha256`、`ExpectedSha256` 與 `LockReleaseSource`。
 
+## 重複呼叫與更新語意（idempotency）
+
+`MpvWindowsRuntimeInstaller.InstallOrUpdateAsync` 的設計意圖是「**有需要才下載**」：
+
+| 元件 | Skip 條件（同時滿足才跳過下載） |
+| --- | --- |
+| **libmpv** | runtime/libmpv-2.dll 存在 + 同目錄有 `libmpv-2.dll.version.json` sidecar marker + marker 內 provider/releaseTag/assetName 全部對得上上游當前 release + `OverwriteExisting=false` + 無 `ExpectedSha256` |
+| **yt-dlp** | runtime/yt-dlp.exe 存在 + `yt-dlp --version` 與上游 release tag 相符 + `OverwriteExisting=false` + 無 `ExpectedSha256` |
+| **Deno** | runtime/deno.exe 存在 + `deno --version` 與上游 release tag 相符 + `OverwriteExisting=false` + 無 `ExpectedSha256` |
+| **FFmpeg**（若啟用） | runtime/ffmpeg.exe + ffprobe.exe 都存在 + `OverwriteExisting=false` + 無 `ExpectedSha256`（FFmpeg 不做版本比對，純檢查檔案存在） |
+
+對「裝完即用」與「CI cache hit」情境，重複呼叫 `InstallOrUpdateAsync` 第二次起應該幾乎零成本（每元件最多打一次 GitHub Releases API 做版本比對）。要強制完整重抓，設 `OverwriteExisting = true` 在對應 Options（或呼叫 `UpdateLibMpvAsync(...)` 顯式重抓 libmpv）。
+
+libmpv 的 sidecar marker 檔（`libmpv-2.dll.version.json`）格式：
+
+```json
+{
+  "schemaVersion": 1,
+  "provider": "Zhongfly",
+  "releaseTag": "2026-05-17-059bc7025b",
+  "assetName": "mpv-dev-lgpl-x86_64-20260517-git-059bc7025b.7z"
+}
+```
+
+helper 在每次成功安裝後寫入此檔，下次安裝時讀回比對。**手動刪除此檔**會強制下次呼叫走完整下載 + 解壓路徑。
+
+### 同處理序內 libmpv 已載入後的 staged update
+
+libmpv-2.dll 一旦載入處理序就無法熱替換（檔案被鎖）。同處理序內呼叫 `UpdateLibMpvAsync` 會把新版 stage 到 `runtime/.updates/<時戳>/`，回傳 `RequiresProcessRestart = true`。下次處理序啟動時先呼叫 `ApplyStagedLibMpvUpdate(...)` 把暫存版本提升為使用版本，再載入 libmpv。
+
+helper 會自動 prune `.updates/` 內舊的時戳資料夾，僅保留最新 1 個供必要時 rollback / 稽核。需要更細的 staging 管理（多版本保留、明確 apply / rollback）請改用 `MpvLibraryUpdateScheduler`。
+
 ## 下載壓縮檔保留策略
 
 `FFmpegDownloadOptions.RetainArchive`、`MpvWindowsBuildDownloadOptions.RetainArchive` 與 `DenoDownloadOptions.RetainArchive` 控制解壓成功後是否保留下載的壓縮檔（zip / 7z）。預設值為 `false`：解壓成功後 helper 立即清掉壓縮檔，避免長期佔用磁碟（一次完整 runtime install 可省 ~290 MB：FFmpeg-Builds zip ~200 MB + libmpv .7z ~50–100 MB + Deno zip ~30 MB）。

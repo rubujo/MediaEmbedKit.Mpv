@@ -160,6 +160,34 @@ public static class MpvWindowsBuildDownloader
         CancellationToken cancellationToken = default(CancellationToken))
     {
         options = options ?? new MpvWindowsBuildDownloadOptions();
+        Directory.CreateDirectory(downloadDirectory);
+
+        // Idempotency skip：runtime/libmpv-2.dll 已存在 + sidecar marker 對得上上游當前
+        // release → 跳過下載與解壓。先前每次 InstallOrUpdateAsync 都重抓 ~30 MB .7z 與
+        // 重新解壓，現在改成「上游無變化就完全不動」。要強制重抓請設 OverwriteExisting=
+        // true 或刪掉 sidecar marker（libmpv-2.dll.version.json）。
+        string targetLibMpvPath = Path.Combine(downloadDirectory, LibMpvDllName);
+        if (!options.OverwriteExisting &&
+            string.IsNullOrWhiteSpace(options.ExpectedSha256) &&
+            File.Exists(targetLibMpvPath))
+        {
+            string markerPath = targetLibMpvPath + LibMpvVersionMarker.FileExtension;
+            LibMpvVersionMarker? marker = LibMpvVersionMarker.TryRead(markerPath);
+            if (marker != null)
+            {
+                MpvWindowsBuildDownloadResult? reused = await TryReuseExistingLibMpvAsync(
+                    downloadDirectory,
+                    options,
+                    marker,
+                    targetLibMpvPath,
+                    cancellationToken).ConfigureAwait(false);
+                if (reused != null)
+                {
+                    return reused;
+                }
+            }
+        }
+
         MpvWindowsBuildDownloadResult archive = await DownloadLatestLibMpvArchiveAsync(downloadDirectory, options, cancellationToken).ConfigureAwait(false);
 
         string extractRoot = options.ExtractDirectory ?? Path.Combine(downloadDirectory, Path.GetFileNameWithoutExtension(archive.AssetName));
@@ -193,6 +221,15 @@ public static class MpvWindowsBuildDownloader
             TryDeleteArchive(archive.ArchivePath);
         }
 
+        // 寫 sidecar marker：紀錄本次安裝的 provider + releaseTag + assetName，下次呼叫
+        // 同函式時 skip path 比對此 marker 與上游 release，匹配就 short-circuit。
+        // Marker 寫到 downloadDirectory 根（與 skip path 讀取位置一致）；通常等同
+        // runtime 根。caller 若沒把 dll 搬到 downloadDirectory/libmpv-2.dll，下次 skip
+        // path 的 File.Exists 檢查會失敗，重抓一次自動修正。
+        // 寫入失敗不擲例外（marker 是 best-effort 快取，缺失下次重抓一次回到原狀）。
+        string targetMarkerPath = Path.Combine(downloadDirectory, LibMpvDllName) + LibMpvVersionMarker.FileExtension;
+        LibMpvVersionMarker.Write(targetMarkerPath, archive.Provider, archive.ReleaseTag, archive.AssetName);
+
         return new MpvWindowsBuildDownloadResult(
             archive.Provider,
             archive.ReleaseTag,
@@ -202,6 +239,68 @@ public static class MpvWindowsBuildDownloader
             archive.Digest,
             extractRoot,
             libraryPath);
+    }
+
+    /// <summary>
+    /// 比對 sidecar marker 與上游當前 release。匹配（同 provider + 同 releaseTag + 同
+    /// assetName）→ 直接 reuse 既有 libmpv-2.dll，回傳合成的 result（archivePath 為空字串
+    /// 表示本次未下載）。任一層 query 上游失敗（網路不通、API 暫掛等）會吞掉例外 fall
+    /// through 到呼叫端的正常下載路徑（仍會走 ProviderFallbackOrder 重試）。
+    /// </summary>
+    /// <param name="downloadDirectory">既有 libmpv-2.dll 所在資料夾。</param>
+    /// <param name="options">Windows libmpv 建置下載選項。</param>
+    /// <param name="marker">已讀到的 sidecar marker。</param>
+    /// <param name="existingLibMpvPath">既有 libmpv-2.dll 路徑。</param>
+    /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
+    /// <returns>匹配可 reuse 時為合成結果；不可 reuse 時為 <see langword="null"/>（呼叫端走正常下載）。</returns>
+    private static async Task<MpvWindowsBuildDownloadResult?> TryReuseExistingLibMpvAsync(
+        string downloadDirectory,
+        MpvWindowsBuildDownloadOptions options,
+        LibMpvVersionMarker marker,
+        string existingLibMpvPath,
+        CancellationToken cancellationToken)
+    {
+        foreach (MpvWindowsBuildProvider provider in BuildProviderSequence(options))
+        {
+            try
+            {
+                Uri defaultApiUri = GetReleaseApiUri(provider);
+                Uri apiUri = provider == options.Provider && options.ReleaseApiUriOverride != null
+                    ? options.ReleaseApiUriOverride
+                    : defaultApiUri;
+                GitHubRelease release = await GetLatestReleaseAsync(options, apiUri, cancellationToken).ConfigureAwait(false);
+                GitHubReleaseAsset asset = SelectLibMpvAsset(release, options);
+
+                if (string.Equals(marker.Provider, provider.ToString(), StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(marker.ReleaseTag, release.TagName, StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(marker.AssetName, asset.Name, StringComparison.OrdinalIgnoreCase))
+                {
+                    return new MpvWindowsBuildDownloadResult(
+                        provider,
+                        release.TagName,
+                        asset.Name,
+                        new Uri(asset.BrowserDownloadUrl),
+                        string.Empty,
+                        asset.Digest,
+                        Path.GetDirectoryName(existingLibMpvPath),
+                        existingLibMpvPath);
+                }
+
+                // 同一 provider 有取到 release 但 marker 不匹配 → 上游已有新版，跳出去走正常下載路徑。
+                // 不再嘗試 fallback provider（避免「主 provider 已升版 → fallback 還沒升 → 假裝沒升」的詭異情境）。
+                return null;
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch
+            {
+                // 此 provider 查詢失敗（網路 / API），試下一個 fallback provider。
+            }
+        }
+
+        return null;
     }
 
     /// <summary>

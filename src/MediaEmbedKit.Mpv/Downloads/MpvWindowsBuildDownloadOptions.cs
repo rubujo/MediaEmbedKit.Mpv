@@ -137,4 +137,38 @@ public sealed class MpvWindowsBuildDownloadOptions
     /// 需在 warm restart 重新驗證 SHA-256 而省下載成本時，應明確設為 <see langword="true"/>。
     /// </value>
     public bool RetainArchive { get; set; }
+
+    /// <summary>
+    /// 建立此設定的淺層複本（含 <see cref="ProviderFallbackOrder"/> 的獨立 List）。
+    /// 供需要暫時調整選項而不污染 caller 物件的內部 helper 使用
+    /// （例如 <see cref="MpvWindowsRuntimeInstaller.UpdateLibMpvAsync"/> 強制
+    /// <see cref="OverwriteExisting"/> = <see langword="true"/> 但不希望寫回 caller）。
+    /// </summary>
+    /// <returns>複本。</returns>
+    internal MpvWindowsBuildDownloadOptions Clone()
+    {
+        MpvWindowsBuildDownloadOptions copy = new MpvWindowsBuildDownloadOptions
+        {
+            Architecture = Architecture,
+            Provider = Provider,
+            UserAgent = UserAgent,
+            LicensePreference = LicensePreference,
+            OverwriteExisting = OverwriteExisting,
+            VerificationPolicy = VerificationPolicy,
+            VerifyDigest = VerifyDigest,
+            ExpectedSha256 = ExpectedSha256,
+            LockReleaseSource = LockReleaseSource,
+            SevenZipPath = SevenZipPath,
+            ExtractDirectory = ExtractDirectory,
+            ReleaseApiUriOverride = ReleaseApiUriOverride,
+            RetainArchive = RetainArchive,
+        };
+        copy.ProviderFallbackOrder.Clear();
+        foreach (MpvWindowsBuildProvider fallback in ProviderFallbackOrder)
+        {
+            copy.ProviderFallbackOrder.Add(fallback);
+        }
+
+        return copy;
+    }
 }

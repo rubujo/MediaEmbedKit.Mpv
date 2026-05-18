@@ -52,7 +52,12 @@ public static class DenoDownloader
         string executablePath = Path.Combine(installDirectory, "deno.exe");
         string? currentVersion = File.Exists(executablePath) ? GetInstalledVersion(executablePath) : null;
 
-        bool canSkipExisting = options.VerificationPolicy == MpvNativeAssetVerificationPolicy.BestEffort &&
+        // Idempotency skip：本機 deno.exe 已是上游最新版且呼叫端未要求覆寫或釘版 SHA →
+        // 跳過下載 + 解壓。先前是 BestEffort 才允許 skip，但 OverwriteExisting=false +
+        // 沒 ExpectedSha256 就足夠保證「使用者沒要求重新驗證」—— 信任 disk 上的檔是
+        // 我們上次自己安裝完成寫入的（裝完即用為主流情境）。要強制重抓請設
+        // OverwriteExisting=true。
+        bool canSkipExisting = !options.OverwriteExisting &&
             string.IsNullOrWhiteSpace(options.ExpectedSha256);
         if (canSkipExisting && string.Equals(NormalizeVersion(currentVersion), NormalizeVersion(release.TagName), StringComparison.OrdinalIgnoreCase))
         {
