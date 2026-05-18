@@ -7,7 +7,7 @@ using WinUiElement = Microsoft.UI.Xaml.UIElement;
 
 using MediaEmbedKit.Mpv.WinUI;
 
-namespace MediaEmbedKit.Mpv.Maui;
+namespace MediaEmbedKit.Mpv.Maui.Windows;
 
 /// <summary>
 /// 提供 .NET MAUI Windows 使用的 libmpv 播放檢視。

@@ -24,6 +24,6 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Maui.Controls" />
     <ProjectReference Include="..\..\src\MediaEmbedKit.Mpv\MediaEmbedKit.Mpv.csproj" />
-    <ProjectReference Include="..\..\src\MediaEmbedKit.Mpv.Maui\MediaEmbedKit.Mpv.Maui.csproj" />
+    <ProjectReference Include="..\..\src\MediaEmbedKit.Mpv.Maui.Windows\MediaEmbedKit.Mpv.Maui.Windows.csproj" />
   </ItemGroup>
 </Project>

@@ -240,7 +240,7 @@ Write-TextFile -Path (Join-Path $resolvedWorkDirectory "Directory.Packages.props
     <PackageVersion Include="MediaEmbedKit.Mpv.Wpf" Version="$packageVersion" />
     <PackageVersion Include="MediaEmbedKit.Mpv.Avalonia" Version="$packageVersion" />
     <PackageVersion Include="MediaEmbedKit.Mpv.WinUI" Version="$packageVersion" />
-    <PackageVersion Include="MediaEmbedKit.Mpv.Maui" Version="$packageVersion" />
+    <PackageVersion Include="MediaEmbedKit.Mpv.Maui.Windows" Version="$packageVersion" />
     <PackageVersion Include="MediaEmbedKit.Mpv.Full" Version="$packageVersion" />
     <PackageVersion Include="Avalonia" Version="$avaloniaVersion" />
     <PackageVersion Include="Avalonia.Desktop" Version="$avaloniaDesktopVersion" />
@@ -270,7 +270,7 @@ $sampleProjects = @(
     },
     @{
         Project = "samples/MauiSample/MediaEmbedKit.Mpv.Samples.Maui.csproj"
-        Package = "MediaEmbedKit.Mpv.Maui"
+        Package = "MediaEmbedKit.Mpv.Maui.Windows"
     }
 )
 

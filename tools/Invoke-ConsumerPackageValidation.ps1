@@ -291,12 +291,12 @@ $projects += New-ConsumerProject -Name "Consumer.Maui" -ProjectText @"
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Maui.Controls" Version="$mauiControlsVersion" />
-    <PackageReference Include="MediaEmbedKit.Mpv.Maui" Version="$packageVersion" />
+    <PackageReference Include="MediaEmbedKit.Mpv.Maui.Windows" Version="$packageVersion" />
   </ItemGroup>
 </Project>
 "@ -CodeText @"
 using System;
-using MediaEmbedKit.Mpv.Maui;
+using MediaEmbedKit.Mpv.Maui.Windows;
 
 namespace Consumer.Maui
 {

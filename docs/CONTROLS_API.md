@@ -10,7 +10,7 @@
 | WPF | `MediaEmbedKit.Mpv.Wpf.MpvWpfPlayer` |
 | Avalonia | `MediaEmbedKit.Mpv.Avalonia.MpvAvaloniaPlayer` |
 | WinUI 3 | `MediaEmbedKit.Mpv.WinUI.MpvWinUiPlayer` |
-| MAUI Windows | `MediaEmbedKit.Mpv.Maui.MpvView` |
+| MAUI Windows | `MediaEmbedKit.Mpv.Maui.Windows.MpvView` |
 
 ## 共通屬性
 

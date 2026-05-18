@@ -31,7 +31,7 @@ $packableProjects = @(
     "src/MediaEmbedKit.Mpv.Wpf/MediaEmbedKit.Mpv.Wpf.csproj",
     "src/MediaEmbedKit.Mpv.Avalonia/MediaEmbedKit.Mpv.Avalonia.csproj",
     "src/MediaEmbedKit.Mpv.WinUI/MediaEmbedKit.Mpv.WinUI.csproj",
-    "src/MediaEmbedKit.Mpv.Maui/MediaEmbedKit.Mpv.Maui.csproj",
+    "src/MediaEmbedKit.Mpv.Maui.Windows/MediaEmbedKit.Mpv.Maui.Windows.csproj",
     "src/MediaEmbedKit.Mpv.Full/MediaEmbedKit.Mpv.Full.csproj"
 )
 
@@ -55,7 +55,7 @@ $expectedPackageIds = @(
     "MediaEmbedKit.Mpv.Wpf",
     "MediaEmbedKit.Mpv.Avalonia",
     "MediaEmbedKit.Mpv.WinUI",
-    "MediaEmbedKit.Mpv.Maui",
+    "MediaEmbedKit.Mpv.Maui.Windows",
     "MediaEmbedKit.Mpv.Full"
 )
 

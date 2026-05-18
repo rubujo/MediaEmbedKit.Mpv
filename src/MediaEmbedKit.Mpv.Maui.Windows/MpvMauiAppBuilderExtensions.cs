@@ -1,6 +1,6 @@
 ﻿using Microsoft.Maui.Hosting;
 
-namespace MediaEmbedKit.Mpv.Maui;
+namespace MediaEmbedKit.Mpv.Maui.Windows;
 
 /// <summary>
 /// 提供 .NET MAUI 應用程式註冊 MediaEmbedKit.Mpv 控制項的擴充方法。

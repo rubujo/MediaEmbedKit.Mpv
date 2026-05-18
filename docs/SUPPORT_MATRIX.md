@@ -21,7 +21,7 @@
 | `MediaEmbedKit.Mpv.Wpf` | `net472;net48;net10.0-windows` | 支援 |
 | `MediaEmbedKit.Mpv.Avalonia` | `net10.0-windows` | 支援 |
 | `MediaEmbedKit.Mpv.WinUI` | `net10.0-windows10.0.19041.0` | 支援 |
-| `MediaEmbedKit.Mpv.Maui` | `net10.0-windows10.0.19041.0` | 支援 |
+| `MediaEmbedKit.Mpv.Maui.Windows` | `net10.0-windows10.0.19041.0` | 支援（Windows-only；套件名自帶 `.Windows` 明示 scope） |
 
 `netstandard2.0` 用於共用核心 API；核心套件僅多 target `net10.0`，UI 套件僅多 target `net10.0-windows`（搭配 .NET Framework 4.7.2 / 4.8）。`net8.0` / `net8.0-windows` 已不在 multi-target 矩陣（核心於 commit 668d367 移除、UI 於後續清理一併移除以縮小發行矩陣）；要在 .NET 8 環境使用 UI 套件，可改 target `net10.0-windows` 或回退到 `net472` / `net48`。基於 Microsoft 對 .NET Framework 使用 .NET Standard 2.0 的建議，本專案不支援 .NET Framework 4.0、4.5 或 4.6.1。
 

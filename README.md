@@ -39,7 +39,7 @@ AI 產製內容可能包含缺漏、錯誤假設或未涵蓋的邊界情境。�
 | `MediaEmbedKit.Mpv.Wpf` | `HwndHost` 控制項，內建 AirSpace 覆蓋層。 |
 | `MediaEmbedKit.Mpv.Avalonia` | Windows x64 / ARM64 OpenGL render API 控制項。 |
 | `MediaEmbedKit.Mpv.WinUI` | WinUI 3 Windows HWND 控制項。 |
-| `MediaEmbedKit.Mpv.Maui` | .NET MAUI Windows handler。 |
+| `MediaEmbedKit.Mpv.Maui.Windows` | .NET MAUI Windows handler（套件名自帶 `.Windows`，明確 Windows-only scope）。 |
 | `MediaEmbedKit.Mpv.Full` | meta package，`<PackageReference>` 拉 5 個 service-layer 套件。 |
 
 未列入支援矩陣的平台、處理器架構與 UI 後端不提供支援承諾。詳細狀態請參閱 `docs/SUPPORT_MATRIX.md` 與 `docs/UI_BACKENDS.md`。
@@ -49,7 +49,7 @@ AI 產製內容可能包含缺漏、錯誤假設或未涵蓋的邊界情境。�
 - libmpv stable v0.41.0 公開 C API 完整包裝（含命令、屬性、節點、事件、render API、stream callback）。
 - 高階播放 API：fluent `MpvAppBuilder`、per-file `MpvMediaItem`、`LoadAsync`、`WatchProperty<T>`、`IAsyncDisposable`、`Microsoft.Extensions.Logging` / `Microsoft.Extensions.DependencyInjection` 整合。詳見 `docs/HIGH_LEVEL_API.md`。
 - 高階 encoding API：單／兩階段轉碼、stream-copy 重新封裝、單軌抽取、影格抽圖、多檔 EDL 串接、多段切割；含 `IProgress<MpvEncodingProgress>` 進度與 `CancellationToken` 取消。詳見 `docs/HIGH_LEVEL_API.md`「Encoding」段。
-- 5 個 UI 框架控制項（WinForms / WPF / Avalonia / WinUI 3 / MAUI Windows）共通綁定屬性與 MVVM Commands。詳見 `docs/CONTROLS_API.md`。
+- 5 個 UI 框架控制項（`.WinForms` / `.Wpf` / `.Avalonia` / `.WinUI` / `.Maui.Windows`）共通綁定屬性與 MVVM Commands。詳見 `docs/CONTROLS_API.md`。
 - Windows x64 / ARM64 runtime helper：libmpv / yt-dlp / Deno / FFmpeg / ffprobe 下載、更新、健康檢查、授權稽核與 provider fallback；架構依目前處理序自動偵測。詳見 `docs/RUNTIME_ASSETS.md`。
 
 ## 基本使用

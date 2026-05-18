@@ -34,7 +34,7 @@
                               ▼                │  .Wpf      (~1.4 k, 含 Airspace)     │
                      ┌──────────────────┐      │  .Avalonia (~1 k, OpenGL render API) │
                      │ .Diagnostics     │      │  .WinUI    (~2.2 k)                  │
-                     │ LicenseAuditor + │      │  .Maui     (~1.3 k, 橋接 WinUI)      │
+                     │ LicenseAuditor + │      │  .Maui.Windows (~1.3 k, 橋接 WinUI)  │
                      │ HealthCheck +    │      └──────────────────────────────────────┘
                      │ UpdateScheduler  │
                      │ (~1.2 k LOC)     │      ┌──────────────────────────────────────┐
@@ -59,7 +59,7 @@
 | `MediaEmbedKit.Mpv.Wpf` | `MpvWpfPlayer`（繼承 `HwndHost`）+ Airspace popup | `.Mpv` | WPF 使用者 |
 | `MediaEmbedKit.Mpv.Avalonia` | `MpvAvaloniaPlayer`（繼承 `OpenGlControlBase`，OpenGL render API，不走 HWND） | `.Mpv` | Avalonia 使用者 |
 | `MediaEmbedKit.Mpv.WinUI` | `MpvWinUiPlayer`（繼承 `Grid`，HWND child + overlay） | `.Mpv` | WinUI 3 使用者 |
-| `MediaEmbedKit.Mpv.Maui` | `MpvView`（繼承 `View`）+ `MpvViewHandler`（Windows 平台橋 WinUI） | `.Mpv`, `.WinUI` | MAUI 使用者 |
+| `MediaEmbedKit.Mpv.Maui.Windows` | `MpvView`（繼承 `View`）+ `MpvViewHandler`（Windows 平台橋 WinUI）。**Windows-only** TFM (`net10.0-windows10.0.19041.0`) —— 套件名自帶 `.Windows` 即明示 scope，避免被誤認為跨平台 | `.Mpv`, `.WinUI` | MAUI Windows 使用者 |
 | `MediaEmbedKit.Mpv.Full`（meta） | `<IncludeBuildOutput>false</IncludeBuildOutput>` + `<ProjectReference>` 拉 5 個 service-layer 套件 | 5 service-layer 套件 | 「service 層都裝」 |
 
 ## 設計決策

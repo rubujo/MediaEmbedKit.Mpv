@@ -5,7 +5,7 @@ using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 using MediaEmbedKit.Mpv;
-using MediaEmbedKit.Mpv.Maui;
+using MediaEmbedKit.Mpv.Maui.Windows;
 using MediaEmbedKit.Mpv.Samples;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;

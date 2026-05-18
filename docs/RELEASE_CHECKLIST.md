@@ -97,7 +97,7 @@
 - `MediaEmbedKit.Mpv.Wpf` WPF consumer。
 - `MediaEmbedKit.Mpv.Avalonia` Avalonia consumer。
 - `MediaEmbedKit.Mpv.WinUI` WinUI 3 consumer。
-- `MediaEmbedKit.Mpv.Maui` MAUI Windows consumer。
+- `MediaEmbedKit.Mpv.Maui.Windows` MAUI Windows consumer。
 
 ## GUI consumer 播放檢查
 

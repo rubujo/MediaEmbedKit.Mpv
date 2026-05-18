@@ -1,4 +1,4 @@
-﻿using MediaEmbedKit.Mpv.Maui;
+﻿using MediaEmbedKit.Mpv.Maui.Windows;
 using Microsoft.Maui.Hosting;
 
 namespace MediaEmbedKit.Mpv.Samples.Maui;

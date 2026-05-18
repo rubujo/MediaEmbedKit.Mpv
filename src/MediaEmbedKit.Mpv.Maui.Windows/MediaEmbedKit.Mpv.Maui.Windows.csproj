@@ -6,11 +6,11 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <WindowsPackageType>None</WindowsPackageType>
     <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
-    <AssemblyName>MediaEmbedKit.Mpv.Maui</AssemblyName>
-    <RootNamespace>MediaEmbedKit.Mpv.Maui</RootNamespace>
-    <Description>.NET MAUI Windows handler for MediaEmbedKit.Mpv.</Description>
-    <PackageId>MediaEmbedKit.Mpv.Maui</PackageId>
-    <Title>MediaEmbedKit.Mpv.Maui</Title>
+    <AssemblyName>MediaEmbedKit.Mpv.Maui.Windows</AssemblyName>
+    <RootNamespace>MediaEmbedKit.Mpv.Maui.Windows</RootNamespace>
+    <Description>.NET MAUI Windows handler for MediaEmbedKit.Mpv. Windows-only (net10.0-windows10.0.19041.0) — bridges to MpvWinUiPlayer. For cross-platform MAUI other than Windows, no real playback support is provided.</Description>
+    <PackageId>MediaEmbedKit.Mpv.Maui.Windows</PackageId>
+    <Title>MediaEmbedKit.Mpv.Maui.Windows</Title>
     <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
   </PropertyGroup>

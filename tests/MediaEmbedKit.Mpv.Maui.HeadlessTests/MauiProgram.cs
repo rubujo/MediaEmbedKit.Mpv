@@ -5,7 +5,7 @@ namespace MediaEmbedKit.Mpv.Maui.HeadlessTests;
 
 /// <summary>
 /// 提供 MAUI headless 測試的入口；不註冊 MpvViewHandler，由 OnAppearing 直接驗證
-/// <see cref="MediaEmbedKit.Mpv.Maui.MpvView"/> 的 BindableProperty 與 Commands。
+/// <see cref="MediaEmbedKit.Mpv.Maui.Windows.MpvView"/> 的 BindableProperty 與 Commands。
 /// </summary>
 public static class MauiProgram
 {

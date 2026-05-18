@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Windows.Input;
 using MediaEmbedKit.Mpv;
-using MediaEmbedKit.Mpv.Maui;
+using MediaEmbedKit.Mpv.Maui.Windows;
 using Microsoft.Maui.Controls;
 
 namespace MediaEmbedKit.Mpv.Maui.HeadlessTests;

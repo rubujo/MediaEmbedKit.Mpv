@@ -5,7 +5,7 @@ using Microsoft.Maui.Platform;
 using WinUiElement = Microsoft.UI.Xaml.UIElement;
 #endif
 
-namespace MediaEmbedKit.Mpv.Maui;
+namespace MediaEmbedKit.Mpv.Maui.Windows;
 
 /// <summary>
 /// 將 <see cref="MpvView"/> 對應到 Windows 平台的 WinUI AirSpace 安全 mpv 控制項。

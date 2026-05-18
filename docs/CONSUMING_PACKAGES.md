@@ -32,7 +32,7 @@
 | `MediaEmbedKit.Mpv.Wpf` | WPF `HwndHost` 控制項 + AirSpace 覆蓋層 | `net472;net48;net10.0-windows` |
 | `MediaEmbedKit.Mpv.Avalonia` | Avalonia OpenGL render API 控制項 | `net10.0-windows` |
 | `MediaEmbedKit.Mpv.WinUI` | WinUI 3 控制項 | `net10.0-windows10.0.19041.0` |
-| `MediaEmbedKit.Mpv.Maui` | .NET MAUI Windows handler（橋接 WinUI） | `net10.0-windows10.0.19041.0` |
+| `MediaEmbedKit.Mpv.Maui.Windows` | .NET MAUI Windows handler（橋接 WinUI）。**Windows-only** — 套件名自帶 `.Windows` 明示 scope | `net10.0-windows10.0.19041.0` |
 
 ### Meta（1 個）
 
@@ -74,8 +74,8 @@ C:\NuGet\MediaEmbedKit.Mpv\
 ├── MediaEmbedKit.Mpv.Avalonia.<version>.snupkg
 ├── MediaEmbedKit.Mpv.WinUI.<version>.nupkg
 ├── MediaEmbedKit.Mpv.WinUI.<version>.snupkg
-├── MediaEmbedKit.Mpv.Maui.<version>.nupkg
-├── MediaEmbedKit.Mpv.Maui.<version>.snupkg
+├── MediaEmbedKit.Mpv.Maui.Windows.<version>.nupkg
+├── MediaEmbedKit.Mpv.Maui.Windows.<version>.snupkg
 ├── MediaEmbedKit.Mpv.Full.<version>.nupkg
 └── MediaEmbedKit.Mpv.Full.<version>.snupkg
 ```
@@ -137,7 +137,7 @@ dotnet nuget add source "C:\NuGet\MediaEmbedKit.Mpv" --name "MediaEmbedKit.Mpv (
   <PackageReference Include="MediaEmbedKit.Mpv.WinForms" Version="<version>" />
   <PackageReference Include="MediaEmbedKit.Mpv.Avalonia" Version="<version>" />
   <PackageReference Include="MediaEmbedKit.Mpv.WinUI" Version="<version>" />
-  <PackageReference Include="MediaEmbedKit.Mpv.Maui" Version="<version>" />
+  <PackageReference Include="MediaEmbedKit.Mpv.Maui.Windows" Version="<version>" />
 
   <!-- 想要 helper 自動下載 libmpv / yt-dlp / Deno / FFmpeg -->
   <PackageReference Include="MediaEmbedKit.Mpv.Runtime" Version="<version>" />

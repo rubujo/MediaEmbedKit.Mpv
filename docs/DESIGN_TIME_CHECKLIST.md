@@ -21,7 +21,7 @@ Visual Studio 2022/2026 的可視 XAML Designer 僅支援 WPF 與 UWP；WinUI 3 
 | `MediaEmbedKit.Mpv.WinForms` | `MpvPlayerControl` | WinForms designer surface | 可加入表單並調整大小；只顯示替代預覽，不建立播放器。 |
 | `MediaEmbedKit.Mpv.Wpf` | `MpvWpfPlayer` | WPF XAML Designer | 可加入 XAML 視覺樹並調整大小；不建立 `HwndHost` 播放器或 AirSpace popup。 |
 | `MediaEmbedKit.Mpv.WinUI` | `MpvWinUiPlayer` | 無 designer surface（XAML Live Preview / Hot Reload only） | XAML 編輯器與 Hot Reload 載入時顯示替代內容；不建立 HWND 後端。 |
-| `MediaEmbedKit.Mpv.Maui` | `MpvView` | 無 designer surface（XAML Live Preview / Hot Reload only） | XAML 編輯器與 Hot Reload 載入 handler 時不初始化 WinUI 播放後端。 |
+| `MediaEmbedKit.Mpv.Maui.Windows` | `MpvView` | 無 designer surface（XAML Live Preview / Hot Reload only） | XAML 編輯器與 Hot Reload 載入 handler 時不初始化 WinUI 播放後端。 |
 | `MediaEmbedKit.Mpv.Avalonia` | `MpvAvaloniaPlayer` | Avalonia for Visual Studio previewer | 可顯示 Avalonia 預覽內容；不建立 libmpv render context。 |
 
 ## 人工確認流程

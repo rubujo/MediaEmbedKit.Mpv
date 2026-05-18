@@ -10,7 +10,7 @@
     <Project Path="src/MediaEmbedKit.Mpv.Wpf/MediaEmbedKit.Mpv.Wpf.csproj" />
     <Project Path="src/MediaEmbedKit.Mpv.Avalonia/MediaEmbedKit.Mpv.Avalonia.csproj" />
     <Project Path="src/MediaEmbedKit.Mpv.WinUI/MediaEmbedKit.Mpv.WinUI.csproj" />
-    <Project Path="src/MediaEmbedKit.Mpv.Maui/MediaEmbedKit.Mpv.Maui.csproj" />
+    <Project Path="src/MediaEmbedKit.Mpv.Maui.Windows/MediaEmbedKit.Mpv.Maui.Windows.csproj" />
   </Folder>
   <Folder Name="/samples/">
     <Project Path="samples/WinFormsSample/MediaEmbedKit.Mpv.Samples.WinForms.csproj" />
