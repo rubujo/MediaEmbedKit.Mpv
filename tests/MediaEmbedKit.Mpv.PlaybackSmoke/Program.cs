@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using MediaEmbedKit.Mpv.Platforms;
@@ -24,6 +25,7 @@ internal static class Program
     /// <returns>所有指定範例通過時傳回 0，否則傳回 1。</returns>
     private static async Task<int> Main(string[] args)
     {
+        ConfigureConsoleEncoding();
         SmokeOptions options = SmokeOptions.Parse(args);
         IReadOnlyList<SmokeSample> samples = SmokeSampleCatalog.GetSamples(options.SampleName);
         if (samples.Count == 0)
@@ -53,6 +55,14 @@ internal static class Program
         int totalCount = samples.Count * options.Iterations;
         Console.WriteLine("播放冒煙測試完成：通過 " + (totalCount - failedCount).ToString(CultureInfo.InvariantCulture) + "，失敗 " + failedCount.ToString(CultureInfo.InvariantCulture) + "。");
         return failedCount == 0 ? 0 : 1;
+    }
+
+    /// <summary>
+    /// 將測試輸出固定為 UTF-8，避免 Windows CI 將中文測試名稱轉成問號。
+    /// </summary>
+    private static void ConfigureConsoleEncoding()
+    {
+        Console.OutputEncoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
     }
 
     /// <summary>

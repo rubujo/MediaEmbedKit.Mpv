@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Headless;
@@ -26,6 +27,7 @@ internal static class Program
     private static int Main(string[] args)
     {
         _ = args;
+        ConfigureConsoleEncoding();
         AppBuilder builder = AppBuilder.Configure<HeadlessTestApp>()
             .UseHeadless(new AvaloniaHeadlessPlatformOptions { UseHeadlessDrawing = true });
 
@@ -53,6 +55,14 @@ internal static class Program
         }, args);
 
         return exitCode;
+    }
+
+    /// <summary>
+    /// 將測試輸出固定為 UTF-8，避免 Windows CI 將中文測試名稱轉成問號。
+    /// </summary>
+    private static void ConfigureConsoleEncoding()
+    {
+        Console.OutputEncoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
     }
 
     /// <summary>

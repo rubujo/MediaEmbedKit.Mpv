@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading.Tasks;
 using MediaEmbedKit.Mpv.Platforms;
 using MediaEmbedKit.Mpv.Externals;
@@ -30,6 +31,7 @@ internal static class Program
     private static async Task<int> Main(string[] args)
     {
         _ = args;
+        ConfigureConsoleEncoding();
         TestRunner runner = new TestRunner();
         runner.Add("yt-dlp 格式預設值對應", VerifyYtdlpFormatPresets);
         runner.Add("yt-dlp 格式參數驗證", VerifyYtdlpFormatValidation);
@@ -72,6 +74,14 @@ internal static class Program
 
         await runner.RunAsync().ConfigureAwait(false);
         return runner.FailedCount == 0 ? 0 : 1;
+    }
+
+    /// <summary>
+    /// 將測試輸出固定為 UTF-8，避免 Windows CI 將中文測試名稱轉成問號。
+    /// </summary>
+    private static void ConfigureConsoleEncoding()
+    {
+        Console.OutputEncoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
     }
 
     /// <summary>

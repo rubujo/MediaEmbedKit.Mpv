@@ -259,6 +259,70 @@ public static class MpvWindowsRuntimeInstaller
     }
 
     /// <summary>
+    /// 已知的 opt-in 工具 archive 檔名（依架構 / 通道列舉所有變體）。consumer 切到
+    /// <c>Include*=false</c> 後對應 downloader 不會跑、無機會清自家 archive，
+    /// 在 <see cref="InstallOrUpdateAsync"/> 收尾統一掃過一次防殘留。
+    /// </summary>
+    private static readonly string[] OptOutFFmpegArchives =
+    {
+        "ffmpeg-master-latest-win64-gpl.zip",
+        "ffmpeg-master-latest-winarm64-gpl.zip",
+    };
+
+    private static readonly string[] OptOutDenoArchives =
+    {
+        "deno-x86_64-pc-windows-msvc.zip",
+        "deno-aarch64-pc-windows-msvc.zip",
+    };
+
+    /// <summary>
+    /// 掃過 opt-out 工具對應的已知 archive 檔名並清掉殘留：consumer 之前曾
+    /// <c>Include*=true</c> 下載過、現在改 <c>Include*=false</c>，對應 downloader 永不
+    /// 執行也就沒機會跑自家 cleanup。失敗不擲例外（best-effort）。
+    /// </summary>
+    /// <param name="runtimeDirectory">runtime 資料夾。</param>
+    /// <param name="options">當前安裝選項；以 <c>Include*</c> 旗標判斷哪些 archive 是 orphan。</param>
+    private static void TryPruneOptOutToolArchives(
+        string runtimeDirectory,
+        MpvWindowsRuntimeDownloadOptions options)
+    {
+        if (!options.IncludeFFmpeg)
+        {
+            foreach (string archiveName in OptOutFFmpegArchives)
+            {
+                TryDeleteFileBestEffort(Path.Combine(runtimeDirectory, archiveName));
+            }
+        }
+
+        if (!options.IncludeDeno)
+        {
+            foreach (string archiveName in OptOutDenoArchives)
+            {
+                TryDeleteFileBestEffort(Path.Combine(runtimeDirectory, archiveName));
+            }
+        }
+    }
+
+    /// <summary>嘗試刪除指定檔案；不存在或失敗皆吞掉例外（best-effort）。</summary>
+    /// <param name="filePath">要刪除的檔案路徑。</param>
+    private static void TryDeleteFileBestEffort(string filePath)
+    {
+        try
+        {
+            if (File.Exists(filePath))
+            {
+                File.Delete(filePath);
+            }
+        }
+        catch (IOException)
+        {
+        }
+        catch (UnauthorizedAccessException)
+        {
+        }
+    }
+
+    /// <summary>
     /// 在 libmpv 載入前套用先前暫存的 libmpv 更新。
     /// </summary>
     /// <param name="runtimeDirectory">要放置 libmpv-2.dll 的執行階段資料夾。</param>
@@ -348,6 +412,12 @@ public static class MpvWindowsRuntimeInstaller
                 options.FFmpeg,
                 cancellationToken).ConfigureAwait(false);
         }
+
+        // 處理 opt-out 工具的 orphan archive：consumer 之前曾 Include=true 下載過
+        // 但現在改 Include=false，對應 downloader 不會跑、其內部 cleanup 也沒機會
+        // 觸發 → archive 永久殘留。此處在每次 InstallOrUpdateAsync 收尾時掃過一次，
+        // 把未啟用工具對應的已知 archive 名清掉。刪除失敗不擲例外（best-effort）。
+        TryPruneOptOutToolArchives(runtimeDirectory, options);
 
         if (options.LoadLibMpv)
         {

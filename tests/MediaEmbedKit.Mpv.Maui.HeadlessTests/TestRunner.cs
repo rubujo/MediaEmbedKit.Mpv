@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Windows.Input;
 using MediaEmbedKit.Mpv;
 using MediaEmbedKit.Mpv.Maui.Windows;
@@ -27,6 +28,7 @@ internal static class TestRunner
     /// </summary>
     internal static void RunAll()
     {
+        ConfigureConsoleEncoding();
         Run("BindableProperty 全部已註冊", VerifyBindablePropertiesRegistered);
         Run("BindableProperty 預設值正確", VerifyDefaultValues);
         Run("Source / Position / Volume / IsPaused / IsMuted CLR setter round-trip", VerifyReadWriteRoundTrip);
@@ -35,6 +37,14 @@ internal static class TestRunner
         Run("Play / Pause / Stop / TogglePause / ToggleMute Commands 可取得且 CanExecute 預設 false（無 player）", VerifyCommandsExposed);
         Run("Commands.Execute 在無 player 時不擲例外", VerifyCommandsSafeWithoutPlayer);
         Run("Binding StringFormat 對 PlaybackState 正常運作", VerifyPlaybackStateBindingFormat);
+    }
+
+    /// <summary>
+    /// 將測試輸出固定為 UTF-8，避免 Windows CI 將中文測試名稱轉成問號。
+    /// </summary>
+    private static void ConfigureConsoleEncoding()
+    {
+        Console.OutputEncoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
     }
 
     /// <summary>

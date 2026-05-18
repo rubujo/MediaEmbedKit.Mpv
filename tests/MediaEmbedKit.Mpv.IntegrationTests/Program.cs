@@ -39,6 +39,7 @@ internal static class Program
     /// <returns>所有測試通過時傳回 0，否則傳回 1。</returns>
     private static async Task<int> Main(string[] args)
     {
+        ConfigureConsoleEncoding();
         if (args.Length > 0 && string.Equals(args[0], SchedulerOnlyArgument, StringComparison.Ordinal))
         {
             try
@@ -248,6 +249,14 @@ internal static class Program
         runner.Add("MpvColor helper FromArgb / FromRgb / TryParse", VerifyMpvColorHelper);
         await runner.RunAsync().ConfigureAwait(false);
         return runner.FailedCount == 0 ? 0 : 1;
+    }
+
+    /// <summary>
+    /// 將測試輸出固定為 UTF-8，避免 Windows CI 將中文測試名稱轉成問號。
+    /// </summary>
+    private static void ConfigureConsoleEncoding()
+    {
+        Console.OutputEncoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
     }
 
     /// <summary>

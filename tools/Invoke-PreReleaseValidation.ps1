@@ -19,6 +19,15 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
+$utf8NoBomEncoding = [System.Text.UTF8Encoding]::new($false)
+if ([System.Environment]::OSVersion.Platform -eq [System.PlatformID]::Win32NT) {
+    & chcp.com 65001 > $null
+}
+
+[Console]::InputEncoding = $utf8NoBomEncoding
+[Console]::OutputEncoding = $utf8NoBomEncoding
+$OutputEncoding = $utf8NoBomEncoding
+
 $rootDirectory = Split-Path -Parent $PSScriptRoot
 $resolvedRoot = [System.IO.Path]::GetFullPath($rootDirectory)
 Set-Location $rootDirectory

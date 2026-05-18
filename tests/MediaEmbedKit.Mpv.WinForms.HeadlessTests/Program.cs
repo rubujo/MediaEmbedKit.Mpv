@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Text;
 using System.Windows.Input;
 using MediaEmbedKit.Mpv;
 using MediaEmbedKit.Mpv.WinForms;
@@ -21,6 +22,7 @@ internal static class Program
     private static int Main(string[] args)
     {
         _ = args;
+        ConfigureConsoleEncoding();
         try
         {
             Run("INPC 屬性預設值正確", VerifyDefaultValues);
@@ -38,6 +40,14 @@ internal static class Program
             Console.Error.WriteLine(ex.StackTrace);
             return 1;
         }
+    }
+
+    /// <summary>
+    /// 將測試輸出固定為 UTF-8，避免 Windows CI 將中文測試名稱轉成問號。
+    /// </summary>
+    private static void ConfigureConsoleEncoding()
+    {
+        Console.OutputEncoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
     }
 
     /// <summary>

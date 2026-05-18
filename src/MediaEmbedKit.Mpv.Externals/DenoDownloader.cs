@@ -54,6 +54,13 @@ public static class DenoDownloader
             string.IsNullOrWhiteSpace(options.ExpectedSha256);
         if (canSkipExisting && string.Equals(NormalizeVersion(currentVersion), NormalizeVersion(release.TagName), StringComparison.OrdinalIgnoreCase))
         {
+            // Skip path 仍須遵守 RetainArchive=false 的「裝完即用情境清掉壓縮檔」設計：
+            // 上次完整下載成功後留下的 47 MB Deno zip 應該清掉。
+            if (!options.RetainArchive)
+            {
+                TryDeleteArchive(archivePath);
+            }
+
             return new DenoDownloadResult(
                 release.TagName,
                 asset.Name,

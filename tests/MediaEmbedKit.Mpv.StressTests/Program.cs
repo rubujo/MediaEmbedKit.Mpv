@@ -52,6 +52,7 @@ internal static class Program
     private static async Task<int> Main(string[] args)
     {
         _ = args;
+        ConfigureConsoleEncoding();
         string runtimeDirectory = await RuntimeResolver.ResolveAsync().ConfigureAwait(false);
         Console.WriteLine("使用執行階段資料夾：" + runtimeDirectory);
 
@@ -85,6 +86,14 @@ internal static class Program
 
         await runner.RunAsync().ConfigureAwait(false);
         return runner.FailedCount == 0 ? 0 : 1;
+    }
+
+    /// <summary>
+    /// 將測試輸出固定為 UTF-8，避免 Windows CI 將中文測試名稱轉成問號。
+    /// </summary>
+    private static void ConfigureConsoleEncoding()
+    {
+        Console.OutputEncoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
     }
 
     /// <summary>

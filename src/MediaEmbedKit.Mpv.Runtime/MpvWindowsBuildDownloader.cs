@@ -215,13 +215,26 @@ public static class MpvWindowsBuildDownloader
         // MpvLibraryLoader.Load 會載入錯誤檔。
         ArchiveSafety.RejectIfReparsePoint(libraryPath, "libmpv mpv-dev archive extracted libmpv-2.dll");
 
-        // 解壓成功後，依 options.RetainArchive 決定是否清掉 .7z。libmpv 7z 約
-        // 50–100 MB；裝完即用情境留著只佔磁碟。warm restart 強驗證請設
-        // RetainArchive=true 保留 archive 供未來 SHA 重驗。
+        // 清掉 extractRoot 內 libmpv-2.dll 以外的所有檔案 + 空目錄。mpv-dev archive
+        // 含 include/*.h 與 libmpv.dll.a 等 C++ build-time 雜物 —— 雖然 ExtractAsync
+        // 已傳 include filter `new[] { LibMpvDllName }`，但部分 extractor (WinRAR /
+        // 系統 7-Zip 的 wildcards 行為) 對 include pattern 處理不一致；後續解壓
+        // 也可能因 archive 結構升版混入殘留。掃過一次保證 extractRoot 只剩
+        // libmpv-2.dll，runtime 根目錄不被汙染。
+        TryRemoveExtractResidue(extractRoot, libraryPath);
+
+        // 解壓成功後，依 options.RetainArchive 決定是否清掉 .7z + 同 downloadDir 內
+        // 舊版本殘留的 mpv-*.7z（升版後舊 archive 從未被清的常見情境）。libmpv 7z
+        // 約 30–100 MB；warm restart 強驗證請設 RetainArchive=true 保留當前版本
+        // archive 供未來 SHA 重驗。
         if (!options.RetainArchive)
         {
             TryDeleteArchive(archive.ArchivePath);
         }
+
+        TryPruneStaleLibMpvArchives(
+            downloadDirectory,
+            keepArchiveName: options.RetainArchive ? archive.AssetName : null);
 
         // 寫 sidecar marker：紀錄本次安裝的 provider + releaseTag + assetName，下次呼叫
         // 同函式時 skip path 比對此 marker 與上游 release，匹配就 short-circuit。
@@ -277,6 +290,13 @@ public static class MpvWindowsBuildDownloader
                     string.Equals(marker.ReleaseTag, release.TagName, StringComparison.OrdinalIgnoreCase) &&
                     string.Equals(marker.AssetName, asset.Name, StringComparison.OrdinalIgnoreCase))
                 {
+                    // Skip path 仍須遵守 RetainArchive=false 「裝完即用情境清掉壓縮檔」設計：
+                    // 上次完整下載成功後留下的 mpv-*-*.7z (~30 MB libmpv archive) 與
+                    // 不同版本殘留的舊 archive 都掃掉，避免長期累積。
+                    TryPruneStaleLibMpvArchives(
+                        downloadDirectory,
+                        keepArchiveName: options.RetainArchive ? asset.Name : null);
+
                     return new MpvWindowsBuildDownloadResult(
                         provider,
                         release.TagName,
@@ -316,6 +336,127 @@ public static class MpvWindowsBuildDownloader
             if (File.Exists(archivePath))
             {
                 File.Delete(archivePath);
+            }
+        }
+        catch (IOException)
+        {
+        }
+        catch (UnauthorizedAccessException)
+        {
+        }
+    }
+
+    /// <summary>
+    /// 掃 <paramref name="downloadDirectory"/> 內 <c>mpv-*.7z</c> 殘留壓縮檔，
+    /// 只保留 <paramref name="keepArchiveName"/> 指定的當前 archive（若為 null
+    /// 則全部清掉）。處理 (a) 升版後舊版 mpv-dev-*-*.7z 殘留、(b) skip path
+    /// 上次留下的 archive 未清等情境。刪除失敗不擲例外（best-effort）。
+    /// </summary>
+    /// <param name="downloadDirectory">runtime 下載資料夾。</param>
+    /// <param name="keepArchiveName">要保留的 archive 檔名；<see langword="null"/> 表示全清。</param>
+    private static void TryPruneStaleLibMpvArchives(string downloadDirectory, string? keepArchiveName)
+    {
+        try
+        {
+            if (!Directory.Exists(downloadDirectory))
+            {
+                return;
+            }
+
+            foreach (string path in Directory.EnumerateFiles(downloadDirectory, "mpv-*.7z"))
+            {
+                string fileName = Path.GetFileName(path);
+                if (keepArchiveName != null &&
+                    string.Equals(fileName, keepArchiveName, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                try
+                {
+                    File.Delete(path);
+                }
+                catch (IOException)
+                {
+                }
+                catch (UnauthorizedAccessException)
+                {
+                }
+            }
+        }
+        catch (IOException)
+        {
+        }
+        catch (UnauthorizedAccessException)
+        {
+        }
+    }
+
+    /// <summary>
+    /// 已知 mpv-dev archive 內 runtime 用不到的殘留檔案。
+    /// </summary>
+    private static readonly string[] LibMpvResidueFiles = { "libmpv.dll.a", "mpv.def" };
+
+    /// <summary>
+    /// 已知 mpv-dev archive 內 runtime 用不到的殘留資料夾。
+    /// </summary>
+    private static readonly string[] LibMpvResidueDirectories = { "include" };
+
+    /// <summary>
+    /// 清掉 <paramref name="extractRoot"/> 內已知 mpv-dev archive 殘留（<c>include/*.h</c>、
+    /// <c>libmpv.dll.a</c>、<c>mpv.def</c> 等 C++ build-time 雜物，runtime 不需要）。
+    /// 用 <strong>whitelist 策略</strong>只動已知殘留檔名/目錄，不暴力刪「非 libmpv-2.dll」
+    /// —— 避免 caller 把 <see cref="MpvWindowsBuildDownloadOptions.ExtractDirectory"/>
+    /// 指向自家資料夾時，誤刪 runtime executables（yt-dlp.exe / deno.exe 等）。
+    /// 刪除失敗不擲例外（best-effort）。
+    /// </summary>
+    /// <param name="extractRoot">解壓根目錄。</param>
+    /// <param name="libMpvPath">libmpv-2.dll 絕對路徑（供參考；whitelist 策略不依賴）。</param>
+    private static void TryRemoveExtractResidue(string extractRoot, string libMpvPath)
+    {
+        _ = libMpvPath;
+
+        try
+        {
+            if (!Directory.Exists(extractRoot))
+            {
+                return;
+            }
+
+            foreach (string residueFile in LibMpvResidueFiles)
+            {
+                string candidate = Path.Combine(extractRoot, residueFile);
+                if (File.Exists(candidate))
+                {
+                    try
+                    {
+                        File.Delete(candidate);
+                    }
+                    catch (IOException)
+                    {
+                    }
+                    catch (UnauthorizedAccessException)
+                    {
+                    }
+                }
+            }
+
+            foreach (string residueDir in LibMpvResidueDirectories)
+            {
+                string candidate = Path.Combine(extractRoot, residueDir);
+                if (Directory.Exists(candidate))
+                {
+                    try
+                    {
+                        Directory.Delete(candidate, true);
+                    }
+                    catch (IOException)
+                    {
+                    }
+                    catch (UnauthorizedAccessException)
+                    {
+                    }
+                }
             }
         }
         catch (IOException)

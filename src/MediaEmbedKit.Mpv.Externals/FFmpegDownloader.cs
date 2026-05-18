@@ -116,6 +116,14 @@ public static class FFmpegDownloader
                     asset.Name);
                 await VerifyProviderChecksumIfRequiredAsync(release, asset, archivePath, options, cancellationToken).ConfigureAwait(false);
 
+                // Skip path 仍須遵守 RetainArchive=false 的「裝完即用情境清掉壓縮檔」
+                // 設計：若 caller 沒明確設 RetainArchive=true，驗證完上次留下的 archive
+                // 後立即刪除，避免長期累積（209 MB FFmpeg-Builds zip 重複留存）。
+                if (!options.RetainArchive)
+                {
+                    TryDeleteArchive(archivePath);
+                }
+
                 return new FFmpegDownloadResult(
                     release.TagName,
                     asset.Name,

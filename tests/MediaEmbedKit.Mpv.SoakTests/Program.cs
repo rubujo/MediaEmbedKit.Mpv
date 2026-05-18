@@ -28,6 +28,7 @@ internal static class Program
 
     private static async Task<int> Main(string[] args)
     {
+        ConfigureConsoleEncoding();
         SoakOptions options;
         try
         {
@@ -154,6 +155,14 @@ internal static class Program
         Console.WriteLine("report file: " + reportTxt);
 
         return report.AllPassed ? 0 : 1;
+    }
+
+    /// <summary>
+    /// 將測試輸出固定為 UTF-8，避免 Windows CI 將中文測試名稱轉成問號。
+    /// </summary>
+    private static void ConfigureConsoleEncoding()
+    {
+        Console.OutputEncoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false);
     }
 
     private static async Task<SoakSample> RunIterationAsync(
