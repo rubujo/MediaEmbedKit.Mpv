@@ -23,6 +23,5 @@
     <ProjectReference Include="..\..\src\MediaEmbedKit.Mpv.Externals\MediaEmbedKit.Mpv.Externals.csproj" />
     <ProjectReference Include="..\..\src\MediaEmbedKit.Mpv.Runtime\MediaEmbedKit.Mpv.Runtime.csproj" />
     <ProjectReference Include="..\..\src\MediaEmbedKit.Mpv.Diagnostics\MediaEmbedKit.Mpv.Diagnostics.csproj" />
-    <ProjectReference Include="..\..\src\MediaEmbedKit.Mpv.Encoding\MediaEmbedKit.Mpv.Encoding.csproj" />
   </ItemGroup>
 </Project>

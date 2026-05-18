@@ -80,7 +80,7 @@ jobs:
 
       - name: Run release gate
         # release gate 內第 8 步「NuGet 套件驗證」會呼叫 Invoke-PackageValidation.ps1，
-        # 它已經把 12 個 packable project pack 到 artifacts/packages/（含 .nupkg 與
+        # 它已經把 11 個 packable project pack 到 artifacts/packages/（含 .nupkg 與
         # .snupkg）。下一步直接拿那邊的檔上傳，不重複 dotnet pack。
         #
         # -IncludeDocSyncCheck：要求 provider 下游事實宣告型文件已與 catalog 同步。

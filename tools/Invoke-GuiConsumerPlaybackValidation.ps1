@@ -136,8 +136,7 @@ function Convert-SampleProjectToPackageReference {
         $PackageId,
         "MediaEmbedKit.Mpv.Externals",
         "MediaEmbedKit.Mpv.Runtime",
-        "MediaEmbedKit.Mpv.Diagnostics",
-        "MediaEmbedKit.Mpv.Encoding"
+        "MediaEmbedKit.Mpv.Diagnostics"
     )
     foreach ($pkg in $packagesToAdd) {
         $packageReference = $project.CreateElement("PackageReference")
@@ -237,7 +236,6 @@ Write-TextFile -Path (Join-Path $resolvedWorkDirectory "Directory.Packages.props
     <PackageVersion Include="MediaEmbedKit.Mpv.Runtime" Version="$packageVersion" />
     <PackageVersion Include="MediaEmbedKit.Mpv.Diagnostics" Version="$packageVersion" />
     <PackageVersion Include="MediaEmbedKit.Mpv.Hosting" Version="$packageVersion" />
-    <PackageVersion Include="MediaEmbedKit.Mpv.Encoding" Version="$packageVersion" />
     <PackageVersion Include="MediaEmbedKit.Mpv.WinForms" Version="$packageVersion" />
     <PackageVersion Include="MediaEmbedKit.Mpv.Wpf" Version="$packageVersion" />
     <PackageVersion Include="MediaEmbedKit.Mpv.Avalonia" Version="$packageVersion" />

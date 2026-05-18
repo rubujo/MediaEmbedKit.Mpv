@@ -3,7 +3,7 @@
 namespace MediaEmbedKit.Mpv;
 
 /// <summary>
-/// 表示 <c>MpvEncoder.SplitAsync</c>（位於 <c>MediaEmbedKit.Mpv.Encoding</c> 套件）一個輸出段的時間範圍與目的路徑。
+/// 表示 <see cref="MpvEncoder.SplitAsync"/> 一個輸出段的時間範圍與目的路徑。
 /// </summary>
 public readonly struct MpvEncodingSegment
 {

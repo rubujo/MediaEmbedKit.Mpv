@@ -5,7 +5,6 @@
     <Project Path="src/MediaEmbedKit.Mpv.Runtime/MediaEmbedKit.Mpv.Runtime.csproj" />
     <Project Path="src/MediaEmbedKit.Mpv.Diagnostics/MediaEmbedKit.Mpv.Diagnostics.csproj" />
     <Project Path="src/MediaEmbedKit.Mpv.Hosting/MediaEmbedKit.Mpv.Hosting.csproj" />
-    <Project Path="src/MediaEmbedKit.Mpv.Encoding/MediaEmbedKit.Mpv.Encoding.csproj" />
     <Project Path="src/MediaEmbedKit.Mpv.Full/MediaEmbedKit.Mpv.Full.csproj" />
     <Project Path="src/MediaEmbedKit.Mpv.WinForms/MediaEmbedKit.Mpv.WinForms.csproj" />
     <Project Path="src/MediaEmbedKit.Mpv.Wpf/MediaEmbedKit.Mpv.Wpf.csproj" />

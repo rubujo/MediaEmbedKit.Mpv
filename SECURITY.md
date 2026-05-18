@@ -39,7 +39,7 @@ helper 自動下載第三方原生二進位（libmpv、yt-dlp、Deno、FFmpeg）
 
 ### 2.3 NuGet 套件 build provenance（Sigstore attestation）
 
-本專案發行的 12 個 `.nupkg` + 12 個 `.snupkg` 透過 [`actions/attest-build-provenance`](https://github.com/actions/attest-build-provenance) 產生 Sigstore-signed build provenance attestation（寫進 Rekor [transparency log](https://search.sigstore.dev/)），證明套件來自 `github.com/rubujo/MediaEmbedKit.Mpv` 的特定 commit + workflow run。
+本專案發行的 11 個 `.nupkg` + 11 個 `.snupkg` 透過 [`actions/attest-build-provenance`](https://github.com/actions/attest-build-provenance) 產生 Sigstore-signed build provenance attestation（寫進 Rekor [transparency log](https://search.sigstore.dev/)），證明套件來自 `github.com/rubujo/MediaEmbedKit.Mpv` 的特定 commit + workflow run。
 
 **驗證方式**（caller 取得 `.nupkg` 後，`<version>` 替換為實際版號）：
 

@@ -26,22 +26,21 @@ AI 產製內容可能包含缺漏、錯誤假設或未涵蓋的邊界情境。�
 
 目前產品支援範圍收斂為 Windows x64 與 Windows ARM64。
 
-本專案分為 12 個套件（11 actual + 1 `.Full` meta）。完整拓樸見 [`docs/PACKAGE_ARCHITECTURE.md`](docs/PACKAGE_ARCHITECTURE.md)。
+本專案分為 11 個套件（10 actual + 1 `.Full` meta）。完整拓樸見 [`docs/PACKAGE_ARCHITECTURE.md`](docs/PACKAGE_ARCHITECTURE.md)。
 
 | 套件 | 狀態 |
 | --- | --- |
-| `MediaEmbedKit.Mpv` | 核心 binding：`MpvPlayer` / `MpvAppBuilder` / value types / shared enum，支援 `netstandard2.0;net472;net48;net10.0`。 |
+| `MediaEmbedKit.Mpv` | 核心 binding：`MpvPlayer` / `MpvAppBuilder` / `MpvEncoder` / value types / shared enum，支援 `netstandard2.0;net472;net48;net10.0`。 |
 | `MediaEmbedKit.Mpv.Externals` | FFmpeg / Deno / yt-dlp downloader + 共用 net infra。 |
 | `MediaEmbedKit.Mpv.Runtime` | libmpv Windows runtime installer + archive 解壓 + cross-process lock + sidecar marker。 |
 | `MediaEmbedKit.Mpv.Diagnostics` | `MpvLicenseAuditor` / `MpvRuntimeHealthCheck` / `MpvLibraryUpdateScheduler`。 |
 | `MediaEmbedKit.Mpv.Hosting` | `Microsoft.Extensions.DependencyInjection` 整合。 |
-| `MediaEmbedKit.Mpv.Encoding` | `MpvEncoder` 高階轉碼 facade。 |
 | `MediaEmbedKit.Mpv.WinForms` | Windows HWND 控制項。 |
 | `MediaEmbedKit.Mpv.Wpf` | `HwndHost` 控制項，內建 AirSpace 覆蓋層。 |
 | `MediaEmbedKit.Mpv.Avalonia` | Windows x64 / ARM64 OpenGL render API 控制項。 |
 | `MediaEmbedKit.Mpv.WinUI` | WinUI 3 Windows HWND 控制項。 |
 | `MediaEmbedKit.Mpv.Maui` | .NET MAUI Windows handler。 |
-| `MediaEmbedKit.Mpv.Full` | meta package，`<PackageReference>` 拉 6 個 service-layer 套件。 |
+| `MediaEmbedKit.Mpv.Full` | meta package，`<PackageReference>` 拉 5 個 service-layer 套件。 |
 
 未列入支援矩陣的平台、處理器架構與 UI 後端不提供支援承諾。詳細狀態請參閱 `docs/SUPPORT_MATRIX.md` 與 `docs/UI_BACKENDS.md`。
 
@@ -117,7 +116,7 @@ options.Mpv.OverwriteExisting = true;  // 強制走完整驗證、不走 idempot
 
 ## 取得套件
 
-本專案不發行至 nuget.org。發行版的 12 個 `.nupkg` 與對應 `.snupkg`（symbol package）由 GitHub Releases 提供，consumer 自行下載後以本機 NuGet feed 安裝。完整步驟（含 `nuget.config` 設定、`packageSourceMapping`、SourceLink 行為、IDE 整合）請參考 `docs/CONSUMING_PACKAGES.md`。
+本專案不發行至 nuget.org。發行版的 11 個 `.nupkg` 與對應 `.snupkg`（symbol package）由 GitHub Releases 提供，consumer 自行下載後以本機 NuGet feed 安裝。完整步驟（含 `nuget.config` 設定、`packageSourceMapping`、SourceLink 行為、IDE 整合）請參考 `docs/CONSUMING_PACKAGES.md`。
 
 ## 範例
 

@@ -15,18 +15,18 @@
                 ┌─ MediaEmbedKit.Mpv ────────────────────────────┐
                 │  核心 binding：Native P/Invoke、MpvPlayer、    │
                 │  render API、MpvLibraryLoader、value types、   │
-                │  encoding 資料型別、shared Platforms enum      │
-                │  (~12 k LOC，僅 Logging.Abstractions 依賴)     │
+                │  MpvEncoder + encoding 資料型別、shared enum   │
+                │  (~13 k LOC，僅 Logging.Abstractions 依賴)     │
                 └────────────────────────┬───────────────────────┘
                                          │
-       ┌──────────────────────┬──────────┴───────────┬─────────────────────┐
-       │                      │                      │                     │
-       ▼                      ▼                      ▼                     ▼
-┌──────────────┐     ┌──────────────────┐     ┌──────────────┐     ┌──────────────┐
-│ .Externals   │←────│ .Runtime         │     │ .Hosting     │     │ .Encoding    │
-│ FFmpeg/Deno/ │     │ libmpv installer │     │ DI ext.      │     │ MpvEncoder   │
-│ yt-dlp +     │     │ archive 4-tier   │     │ (~50)        │     │ (~900)       │
-│ net infra +  │     │ cross-proc lock  │     └──────────────┘     └──────────────┘
+                  ┌──────────────────────┴──────────────────┬───────────────┐
+                  │                                         │               │
+                  ▼                                         ▼               ▼
+┌──────────────┐     ┌──────────────────┐            ┌──────────────┐
+│ .Externals   │←────│ .Runtime         │            │ .Hosting     │
+│ FFmpeg/Deno/ │     │ libmpv installer │            │ DI ext.      │
+│ yt-dlp +     │     │ archive 4-tier   │            │ (~50)        │
+│ net infra +  │     │ cross-proc lock  │            └──────────────┘
 │ ArchiveSafety│     │ sidecar marker   │
 │ (~3 k LOC)   │     │ (~3 k LOC)       │     ┌──────────────────────────────────────┐
 └──────────────┘     └────────┬─────────┘     │ UI controls (各自獨立繼承框架 base) │
@@ -39,29 +39,28 @@
                      │ UpdateScheduler  │
                      │ (~1.2 k LOC)     │      ┌──────────────────────────────────────┐
                      └──────────────────┘      │ .Full (meta)                         │
-                                               │ ProjectRef → 6 個 service 套件       │
+                                               │ ProjectRef → 5 個 service 套件       │
                                                │ (UI 套件 TFM 分散，不入 meta)        │
                                                └──────────────────────────────────────┘
 ```
 
-**11 actual + 1 meta = 12 packages。**
+**10 actual + 1 meta = 11 packages。**
 
 ## Package 清單
 
 | Package | 內容 | 依賴 | 目標使用者 |
 |---|---|---|---|
-| `MediaEmbedKit.Mpv` | Native P/Invoke、MpvPlayer、render、library loader、value types、events、`MpvEncodingOptions` / 結果型別、shared enum (`MpvNativeRuntimePlatform` / `MpvWindowsArchitecture`) | `Microsoft.Extensions.Logging.Abstractions` | 所有人 |
+| `MediaEmbedKit.Mpv` | Native P/Invoke、MpvPlayer、render、library loader、value types、events、`MpvEncoder` 高階轉碼 facade、encoding 資料型別、shared enum (`MpvNativeRuntimePlatform` / `MpvWindowsArchitecture`) | `Microsoft.Extensions.Logging.Abstractions` | 所有人 |
 | `MediaEmbedKit.Mpv.Externals` | FFmpeg / Deno / yt-dlp downloaders + ExternalTool primitives + 共用 net infra (`DownloadUtility` / `BrowserRequestHeaders` / `GitHubReleaseModels`) + `ArchiveSafety` + `MpvNativeAssetVerificationPolicy` + `MpvNativeRuntime*` catalog | `.Mpv` | 要 yt-dlp / Deno / FFmpeg helper 的人 |
 | `MediaEmbedKit.Mpv.Runtime` | libmpv Windows runtime installer + 4-tier archive 解壓 + cross-process lock + sidecar marker + `MpvAppBuilder.UseWindowsRuntimeAutoInstall` extension | `.Mpv`, `.Externals` | 想要 helper 自動裝 runtime 的人 |
 | `MediaEmbedKit.Mpv.Diagnostics` | `MpvLicenseAuditor` + `MpvRuntimeHealthCheck` + `MpvLibraryUpdateScheduler` | `.Mpv`, `.Externals`, `.Runtime` | 商用合規、staging update 需求 |
 | `MediaEmbedKit.Mpv.Hosting` | `Microsoft.Extensions.DependencyInjection` integration（`AddMpvPlayer` / `AddMpvPlayerFactory`） | `.Mpv` | DI 使用者 |
-| `MediaEmbedKit.Mpv.Encoding` | `MpvEncoder` 高階轉碼 facade（9 個 recipe 方法） | `.Mpv` | 做轉檔 / 編碼的人 |
 | `MediaEmbedKit.Mpv.WinForms` | `MpvPlayerControl`（繼承 `System.Windows.Forms.Control`） | `.Mpv` | WinForms 使用者 |
 | `MediaEmbedKit.Mpv.Wpf` | `MpvWpfPlayer`（繼承 `HwndHost`）+ Airspace popup | `.Mpv` | WPF 使用者 |
 | `MediaEmbedKit.Mpv.Avalonia` | `MpvAvaloniaPlayer`（繼承 `OpenGlControlBase`，OpenGL render API，不走 HWND） | `.Mpv` | Avalonia 使用者 |
 | `MediaEmbedKit.Mpv.WinUI` | `MpvWinUiPlayer`（繼承 `Grid`，HWND child + overlay） | `.Mpv` | WinUI 3 使用者 |
 | `MediaEmbedKit.Mpv.Maui` | `MpvView`（繼承 `View`）+ `MpvViewHandler`（Windows 平台橋 WinUI） | `.Mpv`, `.WinUI` | MAUI 使用者 |
-| `MediaEmbedKit.Mpv.Full`（meta） | `<IncludeBuildOutput>false</IncludeBuildOutput>` + `<ProjectReference>` 拉 6 個 service-layer 套件 | 6 service-layer 套件 | 「service 層都裝」 |
+| `MediaEmbedKit.Mpv.Full`（meta） | `<IncludeBuildOutput>false</IncludeBuildOutput>` + `<ProjectReference>` 拉 5 個 service-layer 套件 | 5 service-layer 套件 | 「service 層都裝」 |
 
 ## 設計決策
 

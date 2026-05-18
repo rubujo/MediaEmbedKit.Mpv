@@ -3,7 +3,7 @@
 namespace MediaEmbedKit.Mpv;
 
 /// <summary>
-/// 表示 <c>MpvEncoder.EncodeTwoPassAsync</c>（位於 <c>MediaEmbedKit.Mpv.Encoding</c> 套件）完成後的整體結果。
+/// 表示 <see cref="MpvEncoder.EncodeTwoPassAsync"/> 完成後的整體結果。
 /// </summary>
 public sealed class MpvTwoPassEncodingResult
 {

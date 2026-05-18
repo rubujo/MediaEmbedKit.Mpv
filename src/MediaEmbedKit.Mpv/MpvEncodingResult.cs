@@ -3,7 +3,7 @@
 namespace MediaEmbedKit.Mpv;
 
 /// <summary>
-/// 表示 <c>MpvEncoder.EncodeAsync</c>（位於 <c>MediaEmbedKit.Mpv.Encoding</c> 套件）完成後的結果。
+/// 表示 <see cref="MpvEncoder.EncodeAsync"/> 完成後的結果。
 /// </summary>
 public sealed class MpvEncodingResult
 {
