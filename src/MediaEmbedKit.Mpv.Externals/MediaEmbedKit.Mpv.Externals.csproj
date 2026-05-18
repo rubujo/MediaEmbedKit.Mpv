@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net472;net48;net10.0</TargetFrameworks>
+    <AssemblyName>MediaEmbedKit.Mpv.Externals</AssemblyName>
+    <RootNamespace>MediaEmbedKit.Mpv.Downloads</RootNamespace>
+    <Description>FFmpeg / Deno / yt-dlp downloader helpers — independent of libmpv. Provides GitHub release fetching, SHA-256 verification, and idempotent install for the 3 external tool binaries.</Description>
+    <PackageId>MediaEmbedKit.Mpv.Externals</PackageId>
+    <Title>MediaEmbedKit.Mpv.Externals</Title>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <IsTrimmable>true</IsTrimmable>
+    <IsAotCompatible>true</IsAotCompatible>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETFramework'">
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Runtime.Serialization" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' or '$(TargetFrameworkIdentifier)' == '.NETFramework'">
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" />
+    <PackageReference Include="System.Text.Json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MediaEmbedKit.Mpv\MediaEmbedKit.Mpv.csproj" />
+  </ItemGroup>
+</Project>

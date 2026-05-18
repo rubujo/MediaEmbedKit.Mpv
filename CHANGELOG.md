@@ -6,9 +6,19 @@
 
 ## [Unreleased]
 
+### 變更
+
+- **Multi-package split — Phase 1+2+4 已實作**：將原本單一 `MediaEmbedKit.Mpv` 套件中的 `Downloads/` 拆出 3 個獨立 csproj：
+  - `MediaEmbedKit.Mpv.Externals`：FFmpeg / Deno / yt-dlp downloader + ExternalTool primitives + 共用 net infra（`DownloadUtility` / `BrowserRequestHeaders` / `GitHubReleaseModels` 為 internal，透過 `[InternalsVisibleTo]` 供 `.Runtime` 使用）+ `ArchiveSafety` + `MpvNativeAssetVerificationPolicy`（依賴 `.Mpv` 核心套件，僅為 `MpvNativeRuntimePlatform` 等共用 enum）。
+  - `MediaEmbedKit.Mpv.Runtime`：libmpv Windows runtime installer (`MpvWindowsRuntimeInstaller` / `MpvWindowsBuildDownloader` 等) + 4-tier archive 解壓 fallback (`ArchiveExtraction/`) + 跨 process 互斥鎖 (`RuntimeDirectoryLock`) + sidecar marker (`LibMpvVersionMarker`) + `MpvAppBuilder.UseWindowsRuntimeAutoInstall` 擴充方法。依賴 `.Mpv` + `.Externals`。
+  - `MediaEmbedKit.Mpv.Diagnostics`：`MpvLicenseAuditor` / `MpvRuntimeHealthCheck` / `MpvLibraryUpdateScheduler`。依賴 `.Mpv` + `.Externals` + `.Runtime`。
+- **`MpvAppBuilder.UseWindowsRuntimeAutoInstall` 從核心移到 `.Runtime` 套件作為 extension method**：核心套件 `MpvAppBuilder` 不再依賴 `MpvRuntimeInstallOptions` 等 .Runtime 型別。caller code 仍以 `using MediaEmbedKit.Mpv.Downloads;` 取用此擴充方法，但**必須引用 `MediaEmbedKit.Mpv.Runtime` package**。
+- 共用 enum (`MpvNativeRuntimePlatform` / `MpvNativeRuntimeSupportStatus` / `MpvWindowsArchitecture`) 移到 `MediaEmbedKit.Mpv/Platforms/`，namespace 保留為 `MediaEmbedKit.Mpv.Downloads` 以維持 source-level 相容。
+- consumer 只需在原本的 `MediaEmbedKit.Mpv` package 之外，額外加 `MediaEmbedKit.Mpv.Externals` / `.Runtime` / `.Diagnostics` 的 `<PackageReference>` 即可繼續使用對應功能。
+
 ### 規劃中
 
-- **Multi-package 架構**：v0.0.x 維持單一 `MediaEmbedKit.Mpv` package；v0.1 起逐步拆成 11 個獨立 package（核心 binding / Runtime / Externals / Encoding / Diagnostics / UI.Core / 5 個 UI 框架 / Hosting）+ 1 個 `.Full` meta package。完整拓樸、依賴圖、phase 路線見 [`docs/PACKAGE_ARCHITECTURE.md`](docs/PACKAGE_ARCHITECTURE.md)。**目前無實際拆分動作，僅 architectural decision 記錄。**
+- **Phase 3 (.UI.Core 抽 `MpvPlayerHostBase`)、Phase 5 (.Hosting 拆出)、Phase 6 (.Encoding 拆出 + .Full meta package + release.yml 6→11 個 pack subject)、Phase 7 (validation)** 為下一批要做的拆分項目。完整 phase 路線見 [`docs/PACKAGE_ARCHITECTURE.md`](docs/PACKAGE_ARCHITECTURE.md)。
 
 ## [0.0.1] — 初始發行
 

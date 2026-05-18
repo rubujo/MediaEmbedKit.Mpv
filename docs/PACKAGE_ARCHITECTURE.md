@@ -105,17 +105,21 @@ LibVLCSharp 採用同樣模式（[`LibVLCSharp.Shared`](https://github.com/video
 
 ## 遷移路線（**增量、不 big-bang**）
 
-| Phase | 範圍 | 何時 | 風險 |
+| Phase | 範圍 | 狀態 | 風險 |
 |---|---|---|---|
-| **v0.0.x** | 維持現狀（已 ship 路徑） | 現在 | 零 |
-| **v0.1** | 拆 `.Externals`（最獨立、零依賴 libmpv、最低風險開頭） | v0.0 stable 後 1–2 月 | 低 |
-| **v0.2** | 拆 `.Runtime`（從 `.Mpv` 移出 install / extraction） | v0.1 收 feedback 後 | 中 |
-| **v0.3** | 拆 `.UI.Core` + 重寫 5 UI package 用 base（最大重構） | v0.2 後 | 高 |
-| **v0.4** | 拆 `.Encoding` + `.Diagnostics` | v0.3 後 | 中 |
-| **v0.5** | meta `.Full` 上架 | 最後 | 零 |
+| **v0.0.x** | 維持現狀（已 ship 路徑） | ✅ 已完成 | 零 |
+| **Phase 1+2+4 合併** | 拆 `.Externals` + `.Runtime` + `.Diagnostics`（三者結構性綁定：`MpvWindowsRuntimeInstaller` 同時呼叫 libmpv 與外部工具下載；`MpvLicenseAuditor` 同時用 `ExternalToolProcessRunner` + `MpvLibraryLoader`）| ✅ 已完成 | 中 |
+| **Phase 3** | 拆 `.UI.Core` + 重寫 5 UI package 用 base | 🚧 待做 | 高 |
+| **Phase 5** | 拆 `.Hosting`（DI extensions） | 🚧 待做 | 低 |
+| **Phase 6** | 拆 `.Encoding` + meta `.Full` + 更新 `release.yml` 多 attestation subject | 🚧 待做 | 中 |
+| **Phase 7** | 全 validation（dotnet format / Tests / IntegrationTests / build slnx） | 🚧 待做 | 低 |
 | **v1.0** | 穩定 API freeze | 全部拆完且穩定運行 6+ 個月 | — |
 
-**每 phase 都是獨立 PR / minor version bump，任一 phase 出問題不影響核心。**
+**Phase 1+2+4 合併原因**：原 plan 把這 3 phase 拆開做，但實際依賴分析發現：
+- `.Externals` 拆出後，core 仍剩 `MpvWindowsRuntimeInstaller`（orchestrator），它呼叫 `FFmpegDownloader/DenoDownloader/YtDlpDownloader`，core 反向依賴 `.Externals`（錯方向）。
+- `.Diagnostics` 內 `MpvLicenseAuditor` 用 `ExternalToolProcessRunner`（.Externals）+ `MpvLibraryLoader`（core），不拆 `.Externals` 就不能拆 `.Diagnostics`。
+
+合併一個 commit 同時拆完三 package、繞開 transient 不一致狀態。**剩下的 Phase 3 / 5 / 6 / 7 可獨立 PR。**
 
 ## 風險與對策
 

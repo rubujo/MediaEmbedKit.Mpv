@@ -1,6 +1,9 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/MediaEmbedKit.Mpv/MediaEmbedKit.Mpv.csproj" />
+    <Project Path="src/MediaEmbedKit.Mpv.Externals/MediaEmbedKit.Mpv.Externals.csproj" />
+    <Project Path="src/MediaEmbedKit.Mpv.Runtime/MediaEmbedKit.Mpv.Runtime.csproj" />
+    <Project Path="src/MediaEmbedKit.Mpv.Diagnostics/MediaEmbedKit.Mpv.Diagnostics.csproj" />
     <Project Path="src/MediaEmbedKit.Mpv.WinForms/MediaEmbedKit.Mpv.WinForms.csproj" />
     <Project Path="src/MediaEmbedKit.Mpv.Wpf/MediaEmbedKit.Mpv.Wpf.csproj" />
     <Project Path="src/MediaEmbedKit.Mpv.Avalonia/MediaEmbedKit.Mpv.Avalonia.csproj" />

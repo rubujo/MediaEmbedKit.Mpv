@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;net472;net48;net10.0</TargetFrameworks>
+    <AssemblyName>MediaEmbedKit.Mpv.Diagnostics</AssemblyName>
+    <RootNamespace>MediaEmbedKit.Mpv.Downloads</RootNamespace>
+    <Description>License auditor (LGPL / GPL / NonFree classification), runtime health check, library update scheduler (staged update + rollback) for libmpv runtime.</Description>
+    <PackageId>MediaEmbedKit.Mpv.Diagnostics</PackageId>
+    <Title>MediaEmbedKit.Mpv.Diagnostics</Title>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <IsTrimmable>true</IsTrimmable>
+    <IsAotCompatible>true</IsAotCompatible>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MediaEmbedKit.Mpv\MediaEmbedKit.Mpv.csproj" />
+    <ProjectReference Include="..\MediaEmbedKit.Mpv.Externals\MediaEmbedKit.Mpv.Externals.csproj" />
+    <ProjectReference Include="..\MediaEmbedKit.Mpv.Runtime\MediaEmbedKit.Mpv.Runtime.csproj" />
+  </ItemGroup>
+</Project>

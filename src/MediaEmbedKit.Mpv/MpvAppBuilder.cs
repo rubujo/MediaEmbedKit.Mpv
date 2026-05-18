@@ -1,7 +1,7 @@
 ﻿using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using MediaEmbedKit.Mpv.Downloads;
 using Microsoft.Extensions.Logging;
 
 namespace MediaEmbedKit.Mpv;
@@ -73,34 +73,20 @@ public sealed class MpvAppBuilder
     }
 
     /// <summary>
-    /// 安裝或更新 Windows x64 / ARM64 runtime 後再用其結果建立播放器選項。
+    /// 內部用於由 <c>MediaEmbedKit.Mpv.Runtime</c> 套件的擴充方法注入 runtime 準備邏輯，
+    /// 不揭露 <c>MpvRuntimeInstallOptions</c> 等 .Runtime 型別到核心套件。
     /// </summary>
-    /// <param name="runtimeDirectory">要建立或更新的執行階段資料夾。</param>
-    /// <param name="configure">可進一步調整 <see cref="MpvRuntimeInstallOptions"/> 的委派。</param>
-    /// <returns>目前 builder。</returns>
-    public MpvAppBuilder UseWindowsRuntimeAutoInstall(
-        string runtimeDirectory,
-        Action<MpvRuntimeInstallOptions>? configure = null)
+    /// <param name="preparer">執行 runtime 準備動作的委派，返回 runtime 路徑或 <c>null</c>。</param>
+    /// <param name="applyRuntimeDirectoryToOptions">完成後是否要把資料夾套用到 player 選項。</param>
+    /// <param name="loadRuntimeConfiguration">是否要載入該資料夾的 mpv 設定。</param>
+    internal void SetRuntimePreparer(
+        Func<CancellationToken, Task<string?>> preparer,
+        bool applyRuntimeDirectoryToOptions,
+        bool loadRuntimeConfiguration)
     {
-        if (string.IsNullOrWhiteSpace(runtimeDirectory))
-        {
-            throw new ArgumentException("執行階段資料夾不可為空白。", nameof(runtimeDirectory));
-        }
-
-        _runtimePreparer = async cancellationToken =>
-        {
-            MpvRuntimeInstallOptions installOptions = new MpvRuntimeInstallOptions();
-            configure?.Invoke(installOptions);
-            MpvRuntimeInstallResult result = await MpvRuntimeInstaller.InstallOrUpdateAsync(
-                runtimeDirectory,
-                installOptions,
-                cancellationToken).ConfigureAwait(false);
-
-            return result.IsSupported ? runtimeDirectory : null;
-        };
-        _applyRuntimeDirectoryToOptions = true;
-        _loadRuntimeConfiguration = false;
-        return this;
+        _runtimePreparer = preparer ?? throw new ArgumentNullException(nameof(preparer));
+        _applyRuntimeDirectoryToOptions = applyRuntimeDirectoryToOptions;
+        _loadRuntimeConfiguration = loadRuntimeConfiguration;
     }
 
     /// <summary>
@@ -231,7 +217,18 @@ public sealed class MpvAppBuilder
             runtimeDirectory = await _runtimePreparer(cancellationToken).ConfigureAwait(false);
             if (_applyRuntimeDirectoryToOptions && !string.IsNullOrWhiteSpace(runtimeDirectory))
             {
-                options = MpvRuntimeInstaller.CreatePlayerOptions(runtimeDirectory!, _loadRuntimeConfiguration);
+                options = new MpvPlayerOptions
+                {
+                    MpvLibraryPath = Path.Combine(runtimeDirectory!, "libmpv-2.dll"),
+                    ToolDirectory = runtimeDirectory,
+                    YtdlpPath = Path.Combine(runtimeDirectory!, "yt-dlp.exe") + ";yt-dlp;youtube-dl",
+                    EnableYtdlp = true
+                };
+                if (_loadRuntimeConfiguration)
+                {
+                    options.ConfigDirectory = runtimeDirectory;
+                    options.LoadUserConfig = true;
+                }
             }
             else
             {

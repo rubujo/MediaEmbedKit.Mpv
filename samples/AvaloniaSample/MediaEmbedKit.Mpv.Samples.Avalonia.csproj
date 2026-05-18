@@ -20,5 +20,8 @@
     <PackageReference Include="Avalonia.Desktop" />
     <PackageReference Include="Avalonia.Themes.Fluent" />
     <ProjectReference Include="..\..\src\MediaEmbedKit.Mpv.Avalonia\MediaEmbedKit.Mpv.Avalonia.csproj" />
+    <ProjectReference Include="..\..\src\MediaEmbedKit.Mpv.Externals\MediaEmbedKit.Mpv.Externals.csproj" />
+    <ProjectReference Include="..\..\src\MediaEmbedKit.Mpv.Runtime\MediaEmbedKit.Mpv.Runtime.csproj" />
+    <ProjectReference Include="..\..\src\MediaEmbedKit.Mpv.Diagnostics\MediaEmbedKit.Mpv.Diagnostics.csproj" />
   </ItemGroup>
 </Project>
