@@ -27,6 +27,13 @@ public static class MpvWindowsRuntimeInstaller
             throw new ArgumentException("執行階段資料夾不可為空白。", nameof(runtimeDirectory));
         }
 
+        // cross-process lock：避免兩個 process 共用同 runtime 資料夾並發 install /
+        // update 寫壞 libmpv-2.dll。整段 download + stage + apply + prune 在 lock 內。
+        // lock 非 reentrant；本 public 方法 acquire 後直接做事，不呼叫其他會 acquire
+        // lock 的 public 方法（會 deadlock）。
+        Directory.CreateDirectory(runtimeDirectory);
+        using RuntimeDirectoryLock _ = await RuntimeDirectoryLock.AcquireAsync(runtimeDirectory, cancellationToken: cancellationToken).ConfigureAwait(false);
+
         // UpdateLibMpvAsync = 「明確強制更新到上游最新」語意：呼叫端設不設
         // OverwriteExisting 都會被強制覆寫並 bypass downloader 的 idempotency
         // skip path（marker 比對）。但不應 mutate caller 物件 —— 改用內部 clone。
@@ -124,8 +131,21 @@ public static class MpvWindowsRuntimeInstaller
             throw new ArgumentException("執行階段資料夾不可為空白。", nameof(runtimeDirectory));
         }
 
-        MpvWindowsBuildDownloadOptions effectiveOptions = (options ?? new MpvWindowsBuildDownloadOptions()).Clone();
         Directory.CreateDirectory(runtimeDirectory);
+        using RuntimeDirectoryLock _ = await RuntimeDirectoryLock.AcquireAsync(runtimeDirectory, cancellationToken: cancellationToken).ConfigureAwait(false);
+        return await InstallOrUpdateLibMpvCoreAsync(runtimeDirectory, options, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// <see cref="InstallOrUpdateLibMpvAsync"/> 的 no-lock 內部實作；由 caller 確保已
+    /// 取得 <see cref="RuntimeDirectoryLock"/>（避免 nested re-acquire deadlock）。
+    /// </summary>
+    private static async Task<LibMpvUpdateResult> InstallOrUpdateLibMpvCoreAsync(
+        string runtimeDirectory,
+        MpvWindowsBuildDownloadOptions? options,
+        CancellationToken cancellationToken)
+    {
+        MpvWindowsBuildDownloadOptions effectiveOptions = (options ?? new MpvWindowsBuildDownloadOptions()).Clone();
 
         bool loaded = MpvLibraryLoader.IsLoaded;
         string extractDirectory = loaded
@@ -282,12 +302,17 @@ public static class MpvWindowsRuntimeInstaller
         options = options ?? new MpvWindowsRuntimeDownloadOptions();
         Directory.CreateDirectory(runtimeDirectory);
 
+        // cross-process lock：避免兩個 process 共用同 runtime 資料夾並發 install 寫壞
+        // libmpv-2.dll / yt-dlp.exe / deno.exe / ffmpeg.exe。整段 4 元件 install 在 lock 內。
+        // 內部呼叫 InstallOrUpdateLibMpvCoreAsync（no-lock 版）避免 nested deadlock。
+        using RuntimeDirectoryLock _ = await RuntimeDirectoryLock.AcquireAsync(runtimeDirectory, cancellationToken: cancellationToken).ConfigureAwait(false);
+
         // 走 install-or-update（不強制 OverwriteExisting）：讓
         // MpvWindowsBuildDownloader.DownloadAndExtractLatestLibMpvAsync 的 idempotency
         // skip path（sidecar marker 比對）能生效，避免每次呼叫都重抓 ~30 MB libmpv .7z
         // + 重新解壓。對比 UpdateLibMpvAsync（明確強制更新），InstallOrUpdateAsync 是
         // 「有需要才更新」語意。
-        LibMpvUpdateResult libMpv = await InstallOrUpdateLibMpvAsync(runtimeDirectory, options.Mpv, cancellationToken).ConfigureAwait(false);
+        LibMpvUpdateResult libMpv = await InstallOrUpdateLibMpvCoreAsync(runtimeDirectory, options.Mpv, cancellationToken).ConfigureAwait(false);
         MpvWindowsBuildDownloadResult mpv = libMpv.Download;
         string libMpvPath = libMpv.TargetLibraryPath;
 

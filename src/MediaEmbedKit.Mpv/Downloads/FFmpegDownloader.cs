@@ -158,6 +158,10 @@ public static class FFmpegDownloader
             DownloadUtility.ExtractZipToDirectory(archivePath, extractDirectory, true);
             string extractedFFmpegPath = FindExtractedExecutable(extractDirectory, "ffmpeg.exe");
             string extractedFFprobePath = FindExtractedExecutable(extractDirectory, "ffprobe.exe");
+            // 拒絕 archive 內 ffmpeg.exe / ffprobe.exe 為 symlink / reparse point
+            // （防 CVE-2025-11001 同類攻擊）。
+            ArchiveSafety.RejectIfReparsePoint(extractedFFmpegPath, "FFmpeg-Builds archive extracted ffmpeg.exe");
+            ArchiveSafety.RejectIfReparsePoint(extractedFFprobePath, "FFmpeg-Builds archive extracted ffprobe.exe");
             File.Copy(extractedFFmpegPath, ffmpegPath, true);
             File.Copy(extractedFFprobePath, ffprobePath, true);
         }

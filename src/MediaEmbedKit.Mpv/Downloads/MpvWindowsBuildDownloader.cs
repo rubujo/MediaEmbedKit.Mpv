@@ -213,6 +213,11 @@ public static class MpvWindowsBuildDownloader
             throw new FileNotFoundException("壓縮檔已解壓縮，但找不到 libmpv-2.dll。", LibMpvDllName);
         }
 
+        // 拒絕 archive 內 libmpv-2.dll 為 symlink / reparse point —— 防 CVE-2025-11001 同類
+        // 攻擊：攻擊者把 archive 內 libmpv-2.dll 改成 symlink 指向系統 DLL，
+        // MpvLibraryLoader.Load 會載入錯誤檔。
+        ArchiveSafety.RejectIfReparsePoint(libraryPath, "libmpv mpv-dev archive extracted libmpv-2.dll");
+
         // 解壓成功後，依 options.RetainArchive 決定是否清掉 .7z。libmpv 7z 約
         // 50–100 MB；裝完即用情境留著只佔磁碟。warm restart 強驗證請設
         // RetainArchive=true 保留 archive 供未來 SHA 重驗。

@@ -155,6 +155,10 @@ public static class YtDlpDownloader
 
         DownloadUtility.ReplaceFile(tempPath, executablePath);
 
+        // 防衛性檢查：yt-dlp 直接 download exe（不解壓），理論上 HTTP 不會傳遞 NTFS
+        // reparse point 屬性，但保險起見驗一下。
+        ArchiveSafety.RejectIfReparsePoint(executablePath, "yt-dlp downloaded executable");
+
         return new YtDlpDownloadResult(
             options.Channel,
             release.TagName,

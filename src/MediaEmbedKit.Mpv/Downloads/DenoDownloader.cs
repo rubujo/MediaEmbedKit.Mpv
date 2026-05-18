@@ -97,8 +97,13 @@ public static class DenoDownloader
                 throw new FileNotFoundException("Deno 壓縮檔已解壓縮，但找不到 deno.exe。", "deno.exe");
             }
 
+            // 拒絕 archive 內 deno.exe 為 symlink / reparse point。
+            ArchiveSafety.RejectIfReparsePoint(found, "Deno archive extracted deno.exe");
             File.Copy(found, executablePath, true);
         }
+
+        // 拒絕最終 runtime/deno.exe 為 reparse point（也涵蓋 archive 解壓到 root 的情境）。
+        ArchiveSafety.RejectIfReparsePoint(executablePath, "Deno runtime deno.exe");
 
         // 解壓成功後，依 options.RetainArchive 決定是否清掉壓縮檔。Deno zip 約 30 MB；
         // 裝完即用情境留著只佔磁碟。warm restart 強驗證需求請設 RetainArchive=true。
