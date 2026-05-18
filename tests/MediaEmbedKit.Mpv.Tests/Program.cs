@@ -342,7 +342,6 @@ internal static class Program
             VerificationPolicy = MpvNativeAssetVerificationPolicy.RequirePinnedSha256,
             VerifyDigest = false,
             ExpectedSha256 = "deadbeef",
-            LockReleaseSource = true,
             SevenZipPath = @"C:\custom\7z.exe",
             ExtractDirectory = @"C:\custom\extract",
             ReleaseApiUriOverride = new System.Uri("https://example.com/api"),
@@ -361,7 +360,6 @@ internal static class Program
         AssertEx.Equal(original.VerificationPolicy, copy.VerificationPolicy, "VerificationPolicy 應等值複製");
         AssertEx.Equal(original.VerifyDigest, copy.VerifyDigest, "VerifyDigest 應等值複製");
         AssertEx.Equal(original.ExpectedSha256, copy.ExpectedSha256, "ExpectedSha256 應等值複製");
-        AssertEx.Equal(original.LockReleaseSource, copy.LockReleaseSource, "LockReleaseSource 應等值複製");
         AssertEx.Equal(original.SevenZipPath, copy.SevenZipPath, "SevenZipPath 應等值複製");
         AssertEx.Equal(original.ExtractDirectory, copy.ExtractDirectory, "ExtractDirectory 應等值複製");
         AssertEx.Equal(original.ReleaseApiUriOverride, copy.ReleaseApiUriOverride, "ReleaseApiUriOverride 應等值複製");
@@ -1374,10 +1372,6 @@ internal static class Program
         AssertEx.True(deno.VerifyDigest, "Deno 應預設驗證可用 digest。");
         AssertEx.True(ffmpeg.VerifyDigest, "FFmpeg 應預設驗證可用 digest。");
         AssertEx.True(libMpv.VerifyDigest, "libmpv 應預設驗證可用 digest。");
-        AssertEx.False(ytDlp.LockReleaseSource, "yt-dlp 不應預設鎖定來源。");
-        AssertEx.False(deno.LockReleaseSource, "Deno 不應預設鎖定來源。");
-        AssertEx.False(ffmpeg.LockReleaseSource, "FFmpeg 不應預設鎖定來源。");
-        AssertEx.False(libMpv.LockReleaseSource, "libmpv 不應預設鎖定來源。");
         return Task.CompletedTask;
     }
 

@@ -7,8 +7,9 @@ namespace MediaEmbedKit.Mpv.Wpf;
 
 /// <summary>
 /// 提供可覆蓋在 WPF HWND 視訊主控項上的 Popup 輔助類別。
+/// 僅作為 <see cref="MpvWpfPlayer"/> 內部使用；不暴露為 public API。
 /// </summary>
-public sealed class MpvAirspacePopup : IDisposable
+internal sealed class MpvAirspacePopup : IDisposable
 {
     /// <summary>
     /// Popup 要對齊的目標 WPF 元素。

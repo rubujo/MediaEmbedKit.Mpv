@@ -86,13 +86,6 @@ public static class FFmpegDownloader
             cancellationToken).ConfigureAwait(false);
 
         GitHubReleaseAsset asset = SelectAsset(release, options.Architecture);
-        DownloadUtility.ValidateLockedGitHubSource(
-            apiUri,
-            defaultApiUri,
-            asset.BrowserDownloadUrl,
-            "yt-dlp",
-            "FFmpeg-Builds",
-            options.LockReleaseSource);
 
         string archivePath = Path.Combine(installDirectory, asset.Name);
         string ffmpegPath = Path.Combine(installDirectory, "ffmpeg.exe");

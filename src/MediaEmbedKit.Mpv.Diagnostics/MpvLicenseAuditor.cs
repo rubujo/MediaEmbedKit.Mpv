@@ -148,28 +148,7 @@ public static class MpvLicenseAuditor
     /// <returns>分類後的授權狀態。</returns>
     internal static MpvBuildLicense ClassifyMpvLicense(string configuration)
     {
-        if (string.IsNullOrWhiteSpace(configuration))
-        {
-            return MpvBuildLicense.Unknown;
-        }
-
-        string lower = configuration.ToLowerInvariant();
-        if (lower.Contains("--enable-nonfree") || lower.Contains("--enable-gpl-and-nonfree"))
-        {
-            return MpvBuildLicense.NonFree;
-        }
-
-        if (lower.Contains("--enable-gpl"))
-        {
-            return MpvBuildLicense.Gpl;
-        }
-
-        if (lower.Contains("--enable-lgpl"))
-        {
-            return MpvBuildLicense.Lgpl;
-        }
-
-        return MpvBuildLicense.Unknown;
+        return ClassifyByConfigurationText(configuration);
     }
 
     /// <summary>
@@ -179,12 +158,24 @@ public static class MpvLicenseAuditor
     /// <returns>分類後的授權狀態。</returns>
     internal static MpvBuildLicense ClassifyFFmpegLicense(string versionText)
     {
-        if (string.IsNullOrWhiteSpace(versionText))
+        return ClassifyByConfigurationText(versionText);
+    }
+
+    /// <summary>
+    /// 依 mpv / FFmpeg 建置設定文字（同樣的 configure flag substring）分類授權狀態。
+    /// libmpv 與 FFmpeg 採用相同的 GNU autoconf 風格 <c>--enable-*</c> 旗標慣例，
+    /// 兩者的判定邏輯可共用單一 helper。
+    /// </summary>
+    /// <param name="configurationText">mpv-configuration 屬性或 <c>ffmpeg -version</c> 輸出。</param>
+    /// <returns>分類後的授權狀態。</returns>
+    private static MpvBuildLicense ClassifyByConfigurationText(string configurationText)
+    {
+        if (string.IsNullOrWhiteSpace(configurationText))
         {
             return MpvBuildLicense.Unknown;
         }
 
-        string lower = versionText.ToLowerInvariant();
+        string lower = configurationText.ToLowerInvariant();
         if (lower.Contains("--enable-nonfree") || lower.Contains("--enable-gpl-and-nonfree"))
         {
             return MpvBuildLicense.NonFree;

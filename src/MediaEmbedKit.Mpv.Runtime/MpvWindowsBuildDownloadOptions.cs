@@ -97,31 +97,6 @@ public sealed class MpvWindowsBuildDownloadOptions
     public string? ExpectedSha256 { get; set; }
 
     /// <summary>
-    /// 取得或設定是否鎖定為所選 provider 的內建 GitHub 發行來源。
-    /// </summary>
-    /// <value>拒絕非預設 GitHub Releases API 或下載 URL 時為 <see langword="true"/>。</value>
-    /// <remarks>
-    /// <para>
-    /// <strong>此選項不是供應鏈防線</strong>。它只擋兩件事：呼叫端被誘騙設
-    /// <see cref="ReleaseApiUriOverride"/> 指向假 API；GitHub API 回傳的 download URL
-    /// 不屬於預設 owner/repo。
-    /// </para>
-    /// <para>
-    /// 它<strong>無法防護</strong>以下情境：上游 maintainer 的 GitHub 帳號被入侵
-    /// （攻擊者同時改 binary 與 asset digest，本 helper 會「用攻擊者提供的 hash 驗攻擊者
-    /// 提供的 binary」、驗證通過）、GitHub 本身被入侵、DNS / TLS 中間人攻擊（HttpClient
-    /// 無 cert pinning）。
-    /// </para>
-    /// <para>
-    /// 真正的供應鏈防線是<strong>呼叫端釘版 SHA-256</strong>：設
-    /// <see cref="VerificationPolicy"/> = <see cref="MpvNativeAssetVerificationPolicy.RequirePinnedSha256"/>
-    /// 並把預期 SHA-256 寫進 <see cref="ExpectedSha256"/>（從可信通道取得，例如 vendor
-    /// 自己維護的 SHA pin 清單）。商用 / 受監管環境必須走這條路。
-    /// </para>
-    /// </remarks>
-    public bool LockReleaseSource { get; set; }
-
-    /// <summary>
     /// 取得或設定是否驗證 GitHub 發行資產提供的雜湊值。
     /// </summary>
     /// <value>驗證可用的 SHA-256 摘要時為 <see langword="true"/>。</value>
@@ -180,7 +155,6 @@ public sealed class MpvWindowsBuildDownloadOptions
             VerificationPolicy = VerificationPolicy,
             VerifyDigest = VerifyDigest,
             ExpectedSha256 = ExpectedSha256,
-            LockReleaseSource = LockReleaseSource,
             SevenZipPath = SevenZipPath,
             ExtractDirectory = ExtractDirectory,
             ReleaseApiUriOverride = ReleaseApiUriOverride,

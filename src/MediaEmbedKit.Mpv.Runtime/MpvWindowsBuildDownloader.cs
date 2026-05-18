@@ -93,13 +93,6 @@ public static class MpvWindowsBuildDownloader
             : defaultApiUri;
         GitHubRelease release = await GetLatestReleaseAsync(options, apiUri, cancellationToken).ConfigureAwait(false);
         GitHubReleaseAsset asset = SelectLibMpvAsset(release, options);
-        DownloadUtility.ValidateLockedGitHubSource(
-            apiUri,
-            defaultApiUri,
-            asset.BrowserDownloadUrl,
-            GetRepositoryOwner(provider),
-            GetRepositoryName(provider),
-            options.LockReleaseSource);
 
         string archivePath = Path.Combine(downloadDirectory, asset.Name);
 
