@@ -10,7 +10,8 @@ MediaEmbedKit.Mpv 是獨立 .NET 包裝器與控制項專案，不是 mpv、yt-d
 - 網站：https://mpv.io/
 - 授權：請依上游專案與實際建置設定判定。mpv 預設為 GPLv2-or-later，特定建置可採 LGPLv2.1-or-later。
 - 注意事項：FFmpeg 與其他原生相依項目可能另有授權義務。
-- helper 行為：Windows helper 可從 mpv.io 列出的提供者下載 libmpv 開發封存檔，並以 `MpvWindowsBuildDownloadOptions.LicensePreference` 提供授權偏好選項。**預設為 `PreferLgpl`**（上游有 LGPL 變體時優先選用），商用嚴格合規請設 `RequireLgpl`。
+- helper 行為：Windows helper 可從 mpv.io 列出的提供者下載 libmpv 開發封存檔，並以 `MpvWindowsBuildDownloadOptions.LicensePreference` 提供授權偏好選項。**預設組合 `Provider = Zhongfly` + `LicensePreference = PreferLgpl`** 實際拿到 LGPL libmpv build（zhongfly 是兩家中唯一同時提供 LGPL 變體的來源）。`ProviderFallbackOrder` 預設含 `Shinchiro` 作為兜底。
+- ⚠️ **若手動切到 `Provider = Shinchiro`**：該 provider 不提供 LGPL 變體，`PreferLgpl` 偏好設定會 silently fallback 到 GPL build。商用閉源散發需明確確認授權義務，或改用 `RequireLgpl` 讓「無 LGPL 可選」情境直接 fail-loud。
 
 ## yt-dlp
 
@@ -29,8 +30,8 @@ MediaEmbedKit.Mpv 是獨立 .NET 包裝器與控制項專案，不是 mpv、yt-d
 
 - 專案：https://github.com/FFmpeg/FFmpeg
 - yt-dlp 建置來源：https://github.com/yt-dlp/FFmpeg-Builds
-- 授權：請依 FFmpeg 與實際建置內容判定；yt-dlp FFmpeg-Builds 目前提供 GPL build。
-- helper 行為：只有在應用程式明確呼叫時，才會下載或更新外部 `ffmpeg.exe` 與 `ffprobe.exe`。本專案 NuGet 套件不包含 FFmpeg 二進位檔。
+- 授權：請依 FFmpeg 與實際建置內容判定；**yt-dlp FFmpeg-Builds 僅發 GPL build，無 LGPL 變體**。
+- helper 行為：**預設 `MpvWindowsRuntimeDownloadOptions.IncludeFFmpeg = false`，不會自動下載 FFmpeg**。應用程式明確設為 `true` 才下載 yt-dlp/FFmpeg-Builds 的 GPL build。**使用者啟用此選項即視同自願接受 GPLv2+ 散發義務** —— 本專案僅提供下載與驗證工具，不對授權合規做進一步處理。需要 LGPL FFmpeg 的使用者請自行從 zhongfly `mpv-winbuild` 取 `ffmpeg-lgpl-*.7z`。本專案 NuGet 套件不包含 FFmpeg 二進位檔。
 
 ## 7-Zip（僅 fallback 情境）
 

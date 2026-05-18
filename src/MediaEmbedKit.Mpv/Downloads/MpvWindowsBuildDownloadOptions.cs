@@ -14,19 +14,27 @@ public sealed class MpvWindowsBuildDownloadOptions
     public MpvWindowsBuildDownloadOptions()
     {
         Architecture = MpvWindowsArchitectureExtensions.CurrentProcess();
-        Provider = MpvWindowsBuildProvider.Shinchiro;
+        Provider = MpvWindowsBuildProvider.Zhongfly;
         UserAgent = BrowserRequestHeaders.ChromeStableUserAgent;
         LicensePreference = MpvWindowsBuildLicensePreference.PreferLgpl;
         OverwriteExisting = false;
         VerificationPolicy = MpvNativeAssetVerificationPolicy.RequireGitHubDigest;
-        ProviderFallbackOrder = new List<MpvWindowsBuildProvider>();
+        ProviderFallbackOrder = new List<MpvWindowsBuildProvider>
+        {
+            MpvWindowsBuildProvider.Shinchiro,
+        };
         RetainArchive = false;
     }
 
     /// <summary>
     /// 取得 <see cref="Provider"/> 失敗時的備援嘗試順序。
     /// </summary>
-    /// <value>下載失敗時要依序嘗試的備援 provider 清單；預設為空，呼叫端可加入備援 provider。</value>
+    /// <value>
+    /// 下載失敗時要依序嘗試的備援 provider 清單；**預設為 [<see cref="MpvWindowsBuildProvider.Shinchiro"/>]**。
+    /// 搭配新預設 <see cref="Provider"/> = <see cref="MpvWindowsBuildProvider.Zhongfly"/>，
+    /// zhongfly 失效（API 掛掉、release 結構改變等）時自動 fallback 到 shinchiro，
+    /// 保留歷史 provider 作為兜底。呼叫端可清空或重排此清單以調整 fallback 策略。
+    /// </value>
     /// <remarks>
     /// 集合不包含 <see cref="Provider"/> 本身（會先嘗試 <see cref="Provider"/> 再依序嘗試此清單）。
     /// 集合中重複出現的 provider 與 <see cref="Provider"/> 相同的項目會自動跳過。
@@ -36,7 +44,15 @@ public sealed class MpvWindowsBuildDownloadOptions
     /// <summary>
     /// 取得或設定 Windows libmpv 建置來源提供者。
     /// </summary>
-    /// <value>Windows libmpv 建置提供者。</value>
+    /// <value>
+    /// Windows libmpv 建置提供者。**預設為 <see cref="MpvWindowsBuildProvider.Zhongfly"/>** ——
+    /// 為兩個 provider 中唯一同時提供 GPL 與 LGPL libmpv build 的來源，搭配預設
+    /// <see cref="LicensePreference"/> = <see cref="MpvWindowsBuildLicensePreference.PreferLgpl"/>
+    /// 能實際拿到 LGPL build，對商用閉源散發較安全。<see cref="MpvWindowsBuildProvider.Shinchiro"/>
+    /// 只發 GPL build，切到該 provider 時 <see cref="LicensePreference"/> 偏好 LGPL 會
+    /// silently fallback 到 GPL；商用嚴格合規請改用
+    /// <see cref="MpvWindowsBuildLicensePreference.RequireLgpl"/> 讓不可用情境 fail-loud。
+    /// </value>
     public MpvWindowsBuildProvider Provider { get; set; }
 
     /// <summary>

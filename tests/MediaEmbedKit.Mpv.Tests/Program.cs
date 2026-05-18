@@ -49,7 +49,7 @@ internal static class Program
         runner.Add("MpvRuntimeHealthCheck 缺檔資料夾報告", VerifyMpvRuntimeHealthCheckMissingFiles);
         runner.Add("MpvLibraryUpdateScheduler 路徑與列舉", VerifyMpvLibraryUpdateSchedulerLayout);
         runner.Add("DI 擴充註冊播放器工廠", VerifyDependencyInjectionExtensions);
-        runner.Add("ProviderFallbackOrder 預設為空集合", VerifyProviderFallbackOrderDefaults);
+        runner.Add("Provider / ProviderFallbackOrder 預設值（Zhongfly + Shinchiro fallback）", VerifyProviderFallbackOrderDefaults);
         runner.Add("MpvLicenseAuditor 分類授權狀態", VerifyMpvLicenseAuditorClassification);
         runner.Add("MpvMediaItem fluent helpers", VerifyMpvMediaItemFluentHelpers);
         runner.Add("MpvPlayerOptions.CopyTo 全欄複製", VerifyMpvPlayerOptionsCopyTo);
@@ -296,14 +296,22 @@ internal static class Program
     }
 
     /// <summary>
-    /// 驗證 <see cref="MpvWindowsBuildDownloadOptions.ProviderFallbackOrder"/> 預設為空集合且為可變清單。
+    /// 驗證 <see cref="MpvWindowsBuildDownloadOptions"/> 的 Provider 與
+    /// <see cref="MpvWindowsBuildDownloadOptions.ProviderFallbackOrder"/> 預設值。
+    /// 預設 Provider = Zhongfly（兩家中唯一同時提供 LGPL libmpv），fallback 清單預設
+    /// 含 Shinchiro 作為兜底 —— 一同確認對 release 後使用者「預設拿 LGPL libmpv」
+    /// 的期望成立。
     /// </summary>
     /// <returns>代表測試流程的工作。</returns>
     private static Task VerifyProviderFallbackOrderDefaults()
     {
         MpvWindowsBuildDownloadOptions options = new MpvWindowsBuildDownloadOptions();
-        AssertEx.Equal(0, options.ProviderFallbackOrder.Count, "ProviderFallbackOrder 預設應為空集合");
-        options.ProviderFallbackOrder.Add(MpvWindowsBuildProvider.Zhongfly);
+        AssertEx.Equal(MpvWindowsBuildProvider.Zhongfly, options.Provider, "預設 Provider 應為 Zhongfly（兩家中唯一同時提供 LGPL libmpv）");
+        AssertEx.Equal(1, options.ProviderFallbackOrder.Count, "ProviderFallbackOrder 預設應含 Shinchiro 一個 fallback 項目");
+        AssertEx.Equal(MpvWindowsBuildProvider.Shinchiro, options.ProviderFallbackOrder[0], "ProviderFallbackOrder 預設首項應為 Shinchiro");
+        options.ProviderFallbackOrder.Clear();
+        AssertEx.Equal(0, options.ProviderFallbackOrder.Count, "ProviderFallbackOrder 應支援清空");
+        options.ProviderFallbackOrder.Add(MpvWindowsBuildProvider.Shinchiro);
         AssertEx.Equal(1, options.ProviderFallbackOrder.Count, "ProviderFallbackOrder 應支援新增備援 provider");
         return Task.CompletedTask;
     }

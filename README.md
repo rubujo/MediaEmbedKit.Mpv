@@ -67,6 +67,15 @@ Fluent builder、`MpvMediaItem` per-file 選項、`MpvEncoder` 轉碼、`WatchPr
 
 高階 API 採薄型 helper 設計：常用設定可用 fluent 方式組合，但播放器初始化、runtime 下載與資源釋放仍由應用程式明確控制。
 
+### Runtime 授權預設值
+
+`InstallOrUpdateAsync` 的預設組合往「對不確定散發授權的多數使用者較安全」方向收緊：
+
+- **libmpv = LGPL build**（`Provider = Zhongfly` + `LicensePreference = PreferLgpl`，搭配 `Shinchiro` 作為 fallback）。`PreferLgpl` 是偏好不是保證 —— 切到 `Provider = Shinchiro` 會 silently fallback 到 GPL（該 provider 不發 LGPL 變體）。
+- **FFmpeg 預設不下載**（`IncludeFFmpeg = false`）。yt-dlp/FFmpeg-Builds 僅發 GPL，啟用即視同接受 GPLv2+ 散發義務。
+
+詳細真值表、警示與商用嚴格合規路徑見 [`docs/RUNTIME_ASSETS.md`](docs/RUNTIME_ASSETS.md)。散發前可用 `MpvLicenseAuditor.AnalyzeAsync(runtimeDirectory)` 在執行階段驗證實際拿到的授權。
+
 ## 取得套件
 
 本專案不發行至 nuget.org。發行版的 6 個 `.nupkg` 與對應 `.snupkg`（symbol package）由 GitHub Releases 提供，consumer 自行下載後以本機 NuGet feed 安裝。完整步驟（含 `nuget.config` 設定、`packageSourceMapping`、SourceLink 行為、IDE 整合）請參考 `docs/CONSUMING_PACKAGES.md`。

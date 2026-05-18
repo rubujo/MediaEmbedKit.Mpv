@@ -45,7 +45,32 @@ runtime helper 預設要求 GitHub Releases API 提供 `sha256:` digest，並驗
 
 helper 可從 shinchiro `mpv-winbuild-cmake` 與 zhongfly `mpv-winbuild` 下載對應架構的 `mpv-dev-{token}-*.7z` 資產（x64 token 為 `x86_64`、ARM64 token 為 `aarch64`）。這些來源是 mpv Windows git build，不是 mpv stable release。兩個 provider 的命名規範完全相同，`ProviderFallbackOrder` 機制在 x64 與 ARM64 上行為一致。
 
+**預設 `Provider = Zhongfly`** —— 兩家中唯一同時提供 GPL 與 LGPL libmpv build 的來源；搭配預設 `LicensePreference = PreferLgpl` 能實際拿到 LGPL build。`ProviderFallbackOrder` 預設含 `Shinchiro` 作為兜底，zhongfly 失效時自動 fallback。
+
 下載後必須驗證封存檔包含 `libmpv-2.dll`。provider 對齊狀態記錄於 `docs/runtime/libmpv-git-builds.json`。
+
+### libmpv 授權版本選擇（GPL vs LGPL）
+
+libmpv 與其內嵌的 FFmpeg 兩種授權建置都存在，差異在於 mpv 編譯時 FFmpeg 是否帶 `--enable-gpl`：
+
+- **GPL build**：包含 libx264、libxvid、libxavs 等 GPL-only 編解碼器；散發時整套受 GPLv2+ 義務（公開源碼、衍生作品 copyleft 等）。
+- **LGPL build**：排除 GPL-only 元件；商用閉源散發較容易合規（仍需履行 LGPL 對動態連結與授權聲明的義務）。
+
+`MpvWindowsBuildDownloadOptions.LicensePreference` 控制偏好，**但實際拿到哪種建置取決於 Provider 是否真的提供 LGPL 變體**：
+
+| Provider | 提供的變體 | `PreferLgpl`（預設）實際拿到 | `RequireLgpl` 實際拿到 |
+| --- | --- | --- | --- |
+| `Zhongfly`（預設） | GPL + LGPL | **LGPL build** ✅ | LGPL build |
+| `Shinchiro` | **僅 GPL** | GPL build ⚠️（無 LGPL 可選，silently fallback） | **fail**（fail-loud 提醒） |
+
+> ⚠️ **「`PreferLgpl` 是偏好不是保證」**
+>
+> 若手動切到 `Provider = Shinchiro` 但保持 `PreferLgpl` 預設，**實際拿到的是 GPL build** —— 與「我設了 LGPL 偏好就安全」的直覺不符。商用嚴格合規請採以下任一：
+>
+> - 維持 `Provider = Zhongfly`（預設），或
+> - 切到 `Shinchiro` 但同時設 `LicensePreference = RequireLgpl` —— 因 Shinchiro 無 LGPL 會直接 fail，當作 fail-loud 訊號提醒應換 provider
+
+`MpvLicenseAuditor.AnalyzeAsync(runtimeDirectory)` 可在執行階段解析 `mpv-configuration` 與 `ffmpeg -version` 確認實際拿到的授權標籤；散發前建議納入 release check。
 
 ### .7z 解壓 4-tier fallback chain
 
@@ -125,7 +150,17 @@ Deno helper 支援 Windows x64（`deno-x86_64-pc-windows-msvc.zip`）與 ARM64�
 
 ## FFmpeg
 
-FFmpeg helper 支援從 yt-dlp `FFmpeg-Builds` 下載對應架構的 GPL build：x64 為 `ffmpeg-master-latest-win64-gpl.zip`、ARM64 為 `ffmpeg-master-latest-winarm64-gpl.zip`（兩者皆由 [yt-dlp/FFmpeg-Builds](https://github.com/yt-dlp/FFmpeg-Builds/releases) 與其上游 [BtbN/FFmpeg-Builds](https://github.com/BtbN/FFmpeg-Builds/releases) 自動產製）。下載後 `ffmpeg.exe` 與 `ffprobe.exe` 放在 runtime 資料夾根目錄。`MpvWindowsRuntimeDownloadOptions.IncludeFFmpeg` **預設為 `false`**：yt-dlp/FFmpeg-Builds 目前僅發佈 GPL build，預設下載會讓使用者在不知情下背負 GPL 散發義務。需要 yt-dlp 後處理（merge audio/video、轉檔）或自行編碼的應用程式應明確設為 `true`，並在 release 文件揭露 FFmpeg 授權義務。`FFmpegDownloader.GetWindowsAssetName(MpvWindowsArchitecture)` 提供架構到資產名稱的 mapping。
+FFmpeg helper 支援從 yt-dlp `FFmpeg-Builds` 下載對應架構的 GPL build：x64 為 `ffmpeg-master-latest-win64-gpl.zip`、ARM64 為 `ffmpeg-master-latest-winarm64-gpl.zip`（兩者皆由 [yt-dlp/FFmpeg-Builds](https://github.com/yt-dlp/FFmpeg-Builds/releases) 與其上游 [BtbN/FFmpeg-Builds](https://github.com/BtbN/FFmpeg-Builds/releases) 自動產製）。下載後 `ffmpeg.exe` 與 `ffprobe.exe` 放在 runtime 資料夾根目錄。`FFmpegDownloader.GetWindowsAssetName(MpvWindowsArchitecture)` 提供架構到資產名稱的 mapping。
+
+> ⚠️ **GPL 授權警示 —— `IncludeFFmpeg = true` 即視同接受 GPL 散發義務**
+>
+> `MpvWindowsRuntimeDownloadOptions.IncludeFFmpeg` **預設為 `false`**。明確設為 `true` 會下載 yt-dlp/FFmpeg-Builds 的 **GPL build**（上游無 LGPL 變體 —— 與 libmpv 不同，FFmpeg 沒有「我只是偏好 LGPL」這種半安全選項，要嘛不要 FFmpeg，要嘛接受 GPL）。一旦下載並隨應用程式散發，使用者背負完整 GPLv2+ 義務：公開衍生作品原始碼、保留 license notice、不可加額外限制等。
+>
+> - **商用閉源散發 / 不確定能否履行 GPL 義務**：保持預設 `IncludeFFmpeg = false`。
+> - **僅本機 yt-dlp 後處理、不打包散發**：啟用 FFmpeg 是 OK 的 —— 義務在散發環節。
+> - **需要 LGPL FFmpeg**：本 helper 不支援；可自行從 zhongfly `mpv-winbuild` 取 `ffmpeg-lgpl-*.7z` 解出 `ffmpeg.exe` / `ffprobe.exe` 放到 runtime 資料夾。
+>
+> 本 helper 僅提供下載與驗證工具，不對授權合規做進一步處理 —— 啟用此選項即視同自願接受 GPLv2+ 散發義務。
 
 FFmpeg 沒有本專案可呼叫的內建自我更新命令。若要更新，請重新呼叫 `FFmpegDownloader.DownloadAndExtractLatestAsync(...)` 或 `MpvWindowsRuntimeInstaller.InstallOrUpdateAsync(...)`，並於 `FFmpegDownloadOptions.OverwriteExisting = true` 時覆蓋既有檔案。
 
@@ -171,7 +206,8 @@ MpvPlayerOptions options =
 
 helper 預設值已往「對不確定散發授權的多數使用者較安全」方向收緊：
 
-- `MpvWindowsBuildDownloadOptions.LicensePreference` 預設為 `PreferLgpl`：上游有 LGPL 變體時優先選用，無時 fallback 到 GPL（不打掛現有環境）。商用嚴格合規請設 `RequireLgpl`（沒 LGPL 直接 fail、不靜默 fallback）；不要授權偏好請設 `Any`。
-- `MpvWindowsRuntimeDownloadOptions.IncludeFFmpeg` 預設為 `false`：yt-dlp/FFmpeg-Builds 為 GPL build，預設拉進 runtime 會讓使用者背負未必知情的 GPL 散發義務。需要 FFmpeg 後處理或自行編碼的應用程式應明確設為 `true`。
+- `MpvWindowsBuildDownloadOptions.Provider` 預設為 `Zhongfly`：兩家中唯一同時提供 GPL 與 LGPL libmpv build 的來源，搭配下方 `LicensePreference = PreferLgpl` 能實際拿到 LGPL build。`ProviderFallbackOrder` 預設含 `Shinchiro` 作為兜底。
+- `MpvWindowsBuildDownloadOptions.LicensePreference` 預設為 `PreferLgpl`：上游有 LGPL 變體時優先選用，無時 fallback 到 GPL（不打掛現有環境）。商用嚴格合規請設 `RequireLgpl`（沒 LGPL 直接 fail、不靜默 fallback）；不要授權偏好請設 `Any`。**`PreferLgpl` 是偏好不是保證 —— 切到 `Provider = Shinchiro` 會 silently fallback 到 GPL；詳見上方「libmpv 授權版本選擇」表。**
+- `MpvWindowsRuntimeDownloadOptions.IncludeFFmpeg` 預設為 `false`：yt-dlp/FFmpeg-Builds 只發 GPL build 且**無 LGPL 變體**，預設拉進 runtime 會讓使用者背負未必知情的 GPL 散發義務。需要 FFmpeg 後處理或自行編碼的應用程式應明確設為 `true`，並接受 GPL 義務；詳見下方「FFmpeg」段。
 
 無論採何種預設值，使用者散發 runtime 前均應依 `MpvLicenseAuditor.AnalyzeAsync(runtimeDirectory, probeLibMpv: bool)` 的判定確認義務，並查證對應 provider build 的實際 `mpv-configuration` 與 `ffmpeg -version` 內容。

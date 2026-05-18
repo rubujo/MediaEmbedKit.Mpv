@@ -47,7 +47,7 @@
 | yt-dlp | `yt-dlp.exe`（自 2026-03-17 起亦可走 ARM64 命名） | `yt-dlp_arm64.exe`（自 2026-03-17 起）|
 | Deno | `deno-x86_64-pc-windows-msvc.zip` | `deno-aarch64-pc-windows-msvc.zip`（自 Deno 2.7、2026-02 起）|
 
-libmpv 兩個架構皆由 [shinchiro/mpv-winbuild-cmake](https://github.com/shinchiro/mpv-winbuild-cmake/releases) 與 [zhongfly/mpv-winbuild](https://github.com/zhongfly/mpv-winbuild/releases) 提供，命名規範完全相同；既有 `ProviderFallbackOrder` 機制在兩個架構上行為一致。
+libmpv 兩個架構皆由 [shinchiro/mpv-winbuild-cmake](https://github.com/shinchiro/mpv-winbuild-cmake/releases) 與 [zhongfly/mpv-winbuild](https://github.com/zhongfly/mpv-winbuild/releases) 提供，命名規範完全相同；既有 `ProviderFallbackOrder` 機制在兩個架構上行為一致。**預設 `Provider = Zhongfly` + `ProviderFallbackOrder = [Shinchiro]`** —— zhongfly 是兩家中唯一同時提供 LGPL 與 GPL libmpv build 的來源；shinchiro 只發 GPL。詳見 [`RUNTIME_ASSETS.md`](RUNTIME_ASSETS.md#libmpv-授權版本選擇gpl-vs-lgpl)。
 
 ## 驗證狀態
 
