@@ -127,9 +127,23 @@ function Convert-SampleProjectToPackageReference {
         [void] $project.Project.AppendChild($targetItemGroup)
     }
 
-    $packageReference = $project.CreateElement("PackageReference")
-    [void] $packageReference.SetAttribute("Include", $PackageId)
-    [void] $targetItemGroup.AppendChild($packageReference)
+    # Samples 共用 SampleRuntime.cs / SampleFeatureController.cs / SampleEncodingHelper.cs
+    # 等 helper，這些 helper 直接使用 .Externals 的 downloader / process runner，
+    # .Runtime 的 MpvRuntimeInstaller，.Diagnostics 的 LicenseAuditor 等。所以
+    # 從 ProjectReference 轉 PackageReference 時必須補齊所有相依套件，否則
+    # consumer 模擬會 build 失敗。
+    $packagesToAdd = @(
+        $PackageId,
+        "MediaEmbedKit.Mpv.Externals",
+        "MediaEmbedKit.Mpv.Runtime",
+        "MediaEmbedKit.Mpv.Diagnostics",
+        "MediaEmbedKit.Mpv.Encoding"
+    )
+    foreach ($pkg in $packagesToAdd) {
+        $packageReference = $project.CreateElement("PackageReference")
+        [void] $packageReference.SetAttribute("Include", $pkg)
+        [void] $targetItemGroup.AppendChild($packageReference)
+    }
 
     Save-XmlDocument -Document $project -Path $ProjectPath
 }
@@ -219,11 +233,17 @@ Write-TextFile -Path (Join-Path $resolvedWorkDirectory "Directory.Packages.props
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="MediaEmbedKit.Mpv" Version="$packageVersion" />
+    <PackageVersion Include="MediaEmbedKit.Mpv.Externals" Version="$packageVersion" />
+    <PackageVersion Include="MediaEmbedKit.Mpv.Runtime" Version="$packageVersion" />
+    <PackageVersion Include="MediaEmbedKit.Mpv.Diagnostics" Version="$packageVersion" />
+    <PackageVersion Include="MediaEmbedKit.Mpv.Hosting" Version="$packageVersion" />
+    <PackageVersion Include="MediaEmbedKit.Mpv.Encoding" Version="$packageVersion" />
     <PackageVersion Include="MediaEmbedKit.Mpv.WinForms" Version="$packageVersion" />
     <PackageVersion Include="MediaEmbedKit.Mpv.Wpf" Version="$packageVersion" />
     <PackageVersion Include="MediaEmbedKit.Mpv.Avalonia" Version="$packageVersion" />
     <PackageVersion Include="MediaEmbedKit.Mpv.WinUI" Version="$packageVersion" />
     <PackageVersion Include="MediaEmbedKit.Mpv.Maui" Version="$packageVersion" />
+    <PackageVersion Include="MediaEmbedKit.Mpv.Full" Version="$packageVersion" />
     <PackageVersion Include="Avalonia" Version="$avaloniaVersion" />
     <PackageVersion Include="Avalonia.Desktop" Version="$avaloniaDesktopVersion" />
     <PackageVersion Include="Avalonia.Themes.Fluent" Version="$avaloniaFluentVersion" />
