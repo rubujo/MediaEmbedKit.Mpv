@@ -23,11 +23,17 @@ New-Item -ItemType Directory -Path $resolvedPackageDirectory | Out-Null
 
 $packableProjects = @(
     "src/MediaEmbedKit.Mpv/MediaEmbedKit.Mpv.csproj",
+    "src/MediaEmbedKit.Mpv.Externals/MediaEmbedKit.Mpv.Externals.csproj",
+    "src/MediaEmbedKit.Mpv.Runtime/MediaEmbedKit.Mpv.Runtime.csproj",
+    "src/MediaEmbedKit.Mpv.Diagnostics/MediaEmbedKit.Mpv.Diagnostics.csproj",
+    "src/MediaEmbedKit.Mpv.Hosting/MediaEmbedKit.Mpv.Hosting.csproj",
+    "src/MediaEmbedKit.Mpv.Encoding/MediaEmbedKit.Mpv.Encoding.csproj",
     "src/MediaEmbedKit.Mpv.WinForms/MediaEmbedKit.Mpv.WinForms.csproj",
     "src/MediaEmbedKit.Mpv.Wpf/MediaEmbedKit.Mpv.Wpf.csproj",
     "src/MediaEmbedKit.Mpv.Avalonia/MediaEmbedKit.Mpv.Avalonia.csproj",
     "src/MediaEmbedKit.Mpv.WinUI/MediaEmbedKit.Mpv.WinUI.csproj",
-    "src/MediaEmbedKit.Mpv.Maui/MediaEmbedKit.Mpv.Maui.csproj"
+    "src/MediaEmbedKit.Mpv.Maui/MediaEmbedKit.Mpv.Maui.csproj",
+    "src/MediaEmbedKit.Mpv.Full/MediaEmbedKit.Mpv.Full.csproj"
 )
 
 foreach ($project in $packableProjects) {
@@ -42,11 +48,23 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 
 $expectedPackageIds = @(
     "MediaEmbedKit.Mpv",
+    "MediaEmbedKit.Mpv.Externals",
+    "MediaEmbedKit.Mpv.Runtime",
+    "MediaEmbedKit.Mpv.Diagnostics",
+    "MediaEmbedKit.Mpv.Hosting",
+    "MediaEmbedKit.Mpv.Encoding",
     "MediaEmbedKit.Mpv.WinForms",
     "MediaEmbedKit.Mpv.Wpf",
     "MediaEmbedKit.Mpv.Avalonia",
     "MediaEmbedKit.Mpv.WinUI",
-    "MediaEmbedKit.Mpv.Maui"
+    "MediaEmbedKit.Mpv.Maui",
+    "MediaEmbedKit.Mpv.Full"
+)
+
+# meta package (.Full) 內部沒有 lib DLL，僅靠 PackageReference 把所有子套件
+# 拉進來。後續驗證迴圈中個別跳過 lib/*.dll 檢查即可。
+$metaPackageIds = @(
+    "MediaEmbedKit.Mpv.Full"
 )
 
 $forbiddenRuntimeFiles = @(
@@ -83,8 +101,10 @@ foreach ($packageId in $expectedPackageIds) {
             throw "套件缺少 THIRD_PARTY_NOTICES.md：$($package.Name)"
         }
 
-        if (-not ($entryNames | Where-Object { $_ -like "lib/*/*.dll" })) {
-            throw "套件缺少 lib DLL：$($package.Name)"
+        if ($metaPackageIds -notcontains $packageId) {
+            if (-not ($entryNames | Where-Object { $_ -like "lib/*/*.dll" })) {
+                throw "套件缺少 lib DLL：$($package.Name)"
+            }
         }
 
         foreach ($runtimeFile in $forbiddenRuntimeFiles) {

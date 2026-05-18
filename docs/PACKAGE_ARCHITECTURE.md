@@ -109,10 +109,10 @@ LibVLCSharp 採用同樣模式（[`LibVLCSharp.Shared`](https://github.com/video
 |---|---|---|---|
 | **v0.0.x** | 維持現狀（已 ship 路徑） | ✅ 已完成 | 零 |
 | **Phase 1+2+4 合併** | 拆 `.Externals` + `.Runtime` + `.Diagnostics`（三者結構性綁定：`MpvWindowsRuntimeInstaller` 同時呼叫 libmpv 與外部工具下載；`MpvLicenseAuditor` 同時用 `ExternalToolProcessRunner` + `MpvLibraryLoader`）| ✅ 已完成 | 中 |
+| **Phase 5** | 拆 `.Hosting`（DI extensions） | ✅ 已完成 | 低 |
+| **Phase 6** | 拆 `.Encoding` + meta `.Full` + `tools/Invoke-PackageValidation.ps1` 12 個套件支援 + release.yml 註解更新 | ✅ 已完成 | 中 |
 | **Phase 3** | 拆 `.UI.Core` + 重寫 5 UI package 用 base | 🚧 待做 | 高 |
-| **Phase 5** | 拆 `.Hosting`（DI extensions） | 🚧 待做 | 低 |
-| **Phase 6** | 拆 `.Encoding` + meta `.Full` + 更新 `release.yml` 多 attestation subject | 🚧 待做 | 中 |
-| **Phase 7** | 全 validation（dotnet format / Tests / IntegrationTests / build slnx） | 🚧 待做 | 低 |
+| **Phase 7** | release-gate 全流程驗證（含 GUI consumer playback validation） | 🚧 待做 | 低 |
 | **v1.0** | 穩定 API freeze | 全部拆完且穩定運行 6+ 個月 | — |
 
 **Phase 1+2+4 合併原因**：原 plan 把這 3 phase 拆開做，但實際依賴分析發現：

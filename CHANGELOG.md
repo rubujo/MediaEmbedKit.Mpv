@@ -8,6 +8,12 @@
 
 ### 變更
 
+- **Multi-package split — Phase 5 + Phase 6 已實作**：在 Phase 1+2+4 基礎上再拆 2 個獨立服務 csproj + 1 個 meta package：
+  - `MediaEmbedKit.Mpv.Hosting`：`MpvServiceCollectionExtensions`（`AddMpvPlayer` / `AddMpvPlayerFactory` DI 整合）。核心套件 `MediaEmbedKit.Mpv` 因此可移除 `Microsoft.Extensions.DependencyInjection.Abstractions` PackageReference。依賴 `.Mpv`。
+  - `MediaEmbedKit.Mpv.Encoding`：`MpvEncoder` 高階轉碼 facade（單／兩階段、stream-copy、影格抽圖、多檔 EDL 串接、多段切割）。核心仍保留 `MpvEncodingOptions` / `MpvEncodingProgress` / `MpvEncodingResult` 等資料型別與 `MpvPlayer.ConfigureEncoding` API 整合點。依賴 `.Mpv`。
+  - `MediaEmbedKit.Mpv.Full`（meta package）：以 `<ProjectReference>` 一次拉 6 個 service-layer 套件（core + Externals + Runtime + Diagnostics + Hosting + Encoding）。`<IncludeBuildOutput>false</IncludeBuildOutput>` 保證 nupkg 無 lib DLL。UI 套件 TFM 分散（net48 / net10.0-windows / net10.0-windows10.0.19041.0）不適合塞進 meta，consumer 仍需依使用的 UI 框架單獨加 `<PackageReference>`。
+- **`tools/Invoke-PackageValidation.ps1`** 同步更新：`$packableProjects` 與 `$expectedPackageIds` 從 6 → 12 個；新增 `$metaPackageIds` 對 meta 套件跳過「lib DLL」必要性檢查。
+- **`.github/workflows/release.yml`** 註解從「6 個 packable project」更新為「12 個」。`subject-path` 仍是 glob，自動涵蓋新套件。
 - **Multi-package split — Phase 1+2+4 已實作**：將原本單一 `MediaEmbedKit.Mpv` 套件中的 `Downloads/` 拆出 3 個獨立 csproj：
   - `MediaEmbedKit.Mpv.Externals`：FFmpeg / Deno / yt-dlp downloader + ExternalTool primitives + 共用 net infra（`DownloadUtility` / `BrowserRequestHeaders` / `GitHubReleaseModels` 為 internal，透過 `[InternalsVisibleTo]` 供 `.Runtime` 使用）+ `ArchiveSafety` + `MpvNativeAssetVerificationPolicy`（依賴 `.Mpv` 核心套件，僅為 `MpvNativeRuntimePlatform` 等共用 enum）。
   - `MediaEmbedKit.Mpv.Runtime`：libmpv Windows runtime installer (`MpvWindowsRuntimeInstaller` / `MpvWindowsBuildDownloader` 等) + 4-tier archive 解壓 fallback (`ArchiveExtraction/`) + 跨 process 互斥鎖 (`RuntimeDirectoryLock`) + sidecar marker (`LibMpvVersionMarker`) + `MpvAppBuilder.UseWindowsRuntimeAutoInstall` 擴充方法。依賴 `.Mpv` + `.Externals`。
@@ -18,7 +24,7 @@
 
 ### 規劃中
 
-- **Phase 3 (.UI.Core 抽 `MpvPlayerHostBase`)、Phase 5 (.Hosting 拆出)、Phase 6 (.Encoding 拆出 + .Full meta package + release.yml 6→11 個 pack subject)、Phase 7 (validation)** 為下一批要做的拆分項目。完整 phase 路線見 [`docs/PACKAGE_ARCHITECTURE.md`](docs/PACKAGE_ARCHITECTURE.md)。
+- **Phase 3 (.UI.Core 抽 `MpvPlayerHostBase` 為 5 UI control 共用基底)、Phase 7 (release-gate 全流程驗證)** 為剩餘未完成項目。完整 phase 路線見 [`docs/PACKAGE_ARCHITECTURE.md`](docs/PACKAGE_ARCHITECTURE.md)。
 
 ## [0.0.1] — 初始發行
 
