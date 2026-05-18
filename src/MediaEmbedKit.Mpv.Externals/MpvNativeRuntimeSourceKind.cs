@@ -1,4 +1,4 @@
-﻿namespace MediaEmbedKit.Mpv.Downloads;
+﻿namespace MediaEmbedKit.Mpv.Externals;
 
 /// <summary>
 /// 定義原生 libmpv 來源的取得方式。

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
-namespace MediaEmbedKit.Mpv.Downloads;
+namespace MediaEmbedKit.Mpv.Externals;
 
 /// <summary>
 /// 表示外部工具處理序執行完成後的結果。

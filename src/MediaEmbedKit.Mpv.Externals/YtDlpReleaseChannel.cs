@@ -1,4 +1,4 @@
-﻿namespace MediaEmbedKit.Mpv.Downloads;
+﻿namespace MediaEmbedKit.Mpv.Externals;
 
 /// <summary>
 /// 定義 yt-dlp 可用的 GitHub 發行通道。

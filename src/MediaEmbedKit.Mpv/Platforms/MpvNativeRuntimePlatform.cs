@@ -1,4 +1,4 @@
-﻿namespace MediaEmbedKit.Mpv.Downloads;
+﻿namespace MediaEmbedKit.Mpv.Platforms;
 
 /// <summary>
 /// 定義專案執行階段 catalog 可辨識的原生 libmpv 平台。

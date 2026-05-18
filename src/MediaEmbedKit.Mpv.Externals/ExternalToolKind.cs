@@ -1,4 +1,4 @@
-﻿namespace MediaEmbedKit.Mpv.Downloads;
+﻿namespace MediaEmbedKit.Mpv.Externals;
 
 /// <summary>
 /// 定義執行階段 helper 可管理的外部工具種類。

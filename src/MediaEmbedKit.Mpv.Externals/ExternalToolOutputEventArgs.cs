@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MediaEmbedKit.Mpv.Downloads;
+namespace MediaEmbedKit.Mpv.Externals;
 
 /// <summary>
 /// 提供外部工具單列輸出事件的資料。

@@ -3,7 +3,9 @@ using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace MediaEmbedKit.Mpv.Downloads;
+using MediaEmbedKit.Mpv.Externals;
+
+namespace MediaEmbedKit.Mpv.Runtime;
 
 /// <summary>
 /// 紀錄 <c>runtime/libmpv-2.dll</c> 上次安裝的來源元資料，供

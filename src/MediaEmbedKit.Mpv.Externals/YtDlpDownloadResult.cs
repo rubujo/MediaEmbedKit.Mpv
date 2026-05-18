@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MediaEmbedKit.Mpv.Downloads;
+namespace MediaEmbedKit.Mpv.Externals;
 
 /// <summary>
 /// 表示 yt-dlp 下載或更新作業的結果。

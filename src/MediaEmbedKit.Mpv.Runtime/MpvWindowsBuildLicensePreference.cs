@@ -1,4 +1,6 @@
-﻿namespace MediaEmbedKit.Mpv.Downloads;
+using MediaEmbedKit.Mpv.Externals;
+
+﻿namespace MediaEmbedKit.Mpv.Runtime;
 
 /// <summary>
 /// 定義 Windows libmpv 建置下載時的授權偏好。

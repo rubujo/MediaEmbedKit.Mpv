@@ -1,6 +1,8 @@
 ﻿using System;
 
-namespace MediaEmbedKit.Mpv.Downloads;
+using MediaEmbedKit.Mpv.Platforms;
+
+namespace MediaEmbedKit.Mpv.Externals;
 
 /// <summary>
 /// 描述外部工具在特定平台上的執行階段來源。

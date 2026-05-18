@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace MediaEmbedKit.Mpv.Downloads;
+namespace MediaEmbedKit.Mpv.Externals;
 
 /// <summary>
 /// 表示 GitHub Releases API 傳回的發行資料。

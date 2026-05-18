@@ -1,6 +1,8 @@
 ﻿using System;
 
-namespace MediaEmbedKit.Mpv.Downloads;
+using MediaEmbedKit.Mpv.Platforms;
+
+namespace MediaEmbedKit.Mpv.Externals;
 
 /// <summary>
 /// 提供下載 yt-dlp 專用 FFmpeg Windows x64 建置時使用的選項。

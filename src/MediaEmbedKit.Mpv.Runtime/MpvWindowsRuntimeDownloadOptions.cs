@@ -1,4 +1,6 @@
-﻿namespace MediaEmbedKit.Mpv.Downloads;
+using MediaEmbedKit.Mpv.Externals;
+
+﻿namespace MediaEmbedKit.Mpv.Runtime;
 
 /// <summary>
 /// 提供建立 Windows 執行階段資料夾時使用的下載選項。

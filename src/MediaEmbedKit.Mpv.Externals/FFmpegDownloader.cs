@@ -5,7 +5,9 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MediaEmbedKit.Mpv.Downloads;
+using MediaEmbedKit.Mpv.Platforms;
+
+namespace MediaEmbedKit.Mpv.Externals;
 
 /// <summary>
 /// 提供 yt-dlp FFmpeg-Builds Windows x64 / ARM64 下載、版本查詢與解壓縮 helper。

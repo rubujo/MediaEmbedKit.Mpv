@@ -1,6 +1,8 @@
 ﻿using System;
 
-namespace MediaEmbedKit.Mpv.Downloads;
+using MediaEmbedKit.Mpv.Platforms;
+
+namespace MediaEmbedKit.Mpv.Externals;
 
 /// <summary>
 /// 描述特定平台可參考的原生 libmpv 來源。

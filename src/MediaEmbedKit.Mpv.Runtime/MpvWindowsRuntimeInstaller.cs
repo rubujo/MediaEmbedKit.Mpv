@@ -3,7 +3,9 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MediaEmbedKit.Mpv.Downloads;
+using MediaEmbedKit.Mpv.Externals;
+
+namespace MediaEmbedKit.Mpv.Runtime;
 
 /// <summary>
 /// 提供 Windows 執行階段資料夾的安裝與更新 helper。

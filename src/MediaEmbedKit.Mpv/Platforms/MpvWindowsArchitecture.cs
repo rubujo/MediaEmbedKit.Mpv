@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace MediaEmbedKit.Mpv.Downloads;
+namespace MediaEmbedKit.Mpv.Platforms;
 
 /// <summary>
 /// 定義 Windows libmpv 建置可使用的處理器架構。

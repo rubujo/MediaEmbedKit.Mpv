@@ -4,7 +4,9 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MediaEmbedKit.Mpv.Downloads.ArchiveExtraction;
+using MediaEmbedKit.Mpv.Externals;
+
+namespace MediaEmbedKit.Mpv.Runtime.ArchiveExtraction;
 
 /// <summary>
 /// 使用系統安裝的 7-Zip <c>7z.exe</c>（或呼叫端明確指定的 7z 相容 CLI）解壓 .7z。

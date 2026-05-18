@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace MediaEmbedKit.Mpv.Downloads;
+namespace MediaEmbedKit.Mpv.Externals;
 
 /// <summary>
 /// 對解壓後的檔案做安全檢查，防護惡意 archive 透過 symlink / reparse point 把

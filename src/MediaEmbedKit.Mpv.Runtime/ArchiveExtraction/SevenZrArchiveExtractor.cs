@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MediaEmbedKit.Mpv.Downloads.ArchiveExtraction;
+using MediaEmbedKit.Mpv.Externals;
+
+namespace MediaEmbedKit.Mpv.Runtime.ArchiveExtraction;
 
 /// <summary>
 /// 使用 <see cref="SevenZipBootstrapper"/> 取得 / 重用的 <c>7zr.exe</c> 解壓 .7z。

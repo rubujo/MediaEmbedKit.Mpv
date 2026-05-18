@@ -4,7 +4,9 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MediaEmbedKit.Mpv.Downloads.ArchiveExtraction;
+using MediaEmbedKit.Mpv.Externals;
+
+namespace MediaEmbedKit.Mpv.Runtime.ArchiveExtraction;
 
 /// <summary>
 /// 使用使用者已安裝的 WinRAR <c>WinRAR.exe</c> 解壓 .7z。

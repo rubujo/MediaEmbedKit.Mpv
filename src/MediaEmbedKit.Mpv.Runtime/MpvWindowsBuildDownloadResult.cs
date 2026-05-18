@@ -1,6 +1,8 @@
 ﻿using System;
 
-namespace MediaEmbedKit.Mpv.Downloads;
+using MediaEmbedKit.Mpv.Externals;
+
+namespace MediaEmbedKit.Mpv.Runtime;
 
 /// <summary>
 /// 表示 Windows libmpv 建置下載或解壓縮作業的結果。

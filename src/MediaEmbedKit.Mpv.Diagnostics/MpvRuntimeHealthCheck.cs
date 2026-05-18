@@ -5,7 +5,11 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MediaEmbedKit.Mpv.Downloads;
+using MediaEmbedKit.Mpv.Externals;
+using MediaEmbedKit.Mpv.Runtime;
+using MediaEmbedKit.Mpv.Platforms;
+
+namespace MediaEmbedKit.Mpv.Diagnostics;
 
 /// <summary>
 /// 提供執行階段資料夾的健康檢查工具。

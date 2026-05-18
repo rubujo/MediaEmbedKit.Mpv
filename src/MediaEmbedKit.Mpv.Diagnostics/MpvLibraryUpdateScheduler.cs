@@ -6,7 +6,11 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MediaEmbedKit.Mpv.Downloads;
+using MediaEmbedKit.Mpv.Externals;
+using MediaEmbedKit.Mpv.Runtime;
+using MediaEmbedKit.Mpv.Platforms;
+
+namespace MediaEmbedKit.Mpv.Diagnostics;
 
 /// <summary>
 /// 提供 libmpv-2.dll 的暫存、套用與回滾流程封裝。

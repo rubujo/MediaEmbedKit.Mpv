@@ -1,4 +1,4 @@
-﻿namespace MediaEmbedKit.Mpv.Downloads;
+﻿namespace MediaEmbedKit.Mpv.Externals;
 
 /// <summary>
 /// 指定下載原生執行階段資產時採用的完整性驗證策略。

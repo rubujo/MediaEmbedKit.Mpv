@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MediaEmbedKit.Mpv.Downloads;
+namespace MediaEmbedKit.Mpv.Externals;
 
 /// <summary>
 /// 表示 Deno 下載與解壓縮作業的結果。

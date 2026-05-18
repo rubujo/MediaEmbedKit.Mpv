@@ -9,7 +9,10 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using MediaEmbedKit.Mpv.Downloads;
+using MediaEmbedKit.Mpv.Platforms;
+using MediaEmbedKit.Mpv.Externals;
+using MediaEmbedKit.Mpv.Runtime;
+using MediaEmbedKit.Mpv.Diagnostics;
 using MediaEmbedKit.Mpv.Render;
 
 namespace MediaEmbedKit.Mpv.IntegrationTests;

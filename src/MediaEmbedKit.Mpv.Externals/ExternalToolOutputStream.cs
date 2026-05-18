@@ -1,4 +1,4 @@
-﻿namespace MediaEmbedKit.Mpv.Downloads;
+﻿namespace MediaEmbedKit.Mpv.Externals;
 
 /// <summary>
 /// 定義外部工具輸出的資料流類型。

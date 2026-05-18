@@ -4,7 +4,9 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MediaEmbedKit.Mpv.Downloads.ArchiveExtraction;
+using MediaEmbedKit.Mpv.Externals;
+
+namespace MediaEmbedKit.Mpv.Runtime.ArchiveExtraction;
 
 /// <summary>
 /// 使用 Windows 內建 <c>tar.exe</c>（bsdtar / libarchive 後端）解壓 .7z。

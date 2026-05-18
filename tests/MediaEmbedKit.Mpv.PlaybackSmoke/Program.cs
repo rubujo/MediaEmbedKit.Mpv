@@ -5,7 +5,10 @@ using System.Globalization;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using MediaEmbedKit.Mpv.Downloads;
+using MediaEmbedKit.Mpv.Platforms;
+using MediaEmbedKit.Mpv.Externals;
+using MediaEmbedKit.Mpv.Runtime;
+using MediaEmbedKit.Mpv.Diagnostics;
 
 namespace MediaEmbedKit.Mpv.PlaybackSmoke;
 

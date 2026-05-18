@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MediaEmbedKit.Mpv.Downloads;
+namespace MediaEmbedKit.Mpv.Externals;
 
 /// <summary>
 /// 提供下載 Deno Windows 可執行檔時使用的選項。

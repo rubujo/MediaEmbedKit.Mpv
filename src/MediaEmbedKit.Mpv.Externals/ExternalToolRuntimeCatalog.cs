@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace MediaEmbedKit.Mpv.Downloads;
+using MediaEmbedKit.Mpv.Platforms;
+
+namespace MediaEmbedKit.Mpv.Externals;
 
 /// <summary>
 /// 提供 yt-dlp、Deno 與 FFmpeg 執行階段來源的靜態 catalog。

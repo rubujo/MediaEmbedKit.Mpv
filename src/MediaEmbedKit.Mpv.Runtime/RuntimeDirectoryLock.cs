@@ -3,7 +3,9 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MediaEmbedKit.Mpv.Downloads;
+using MediaEmbedKit.Mpv.Externals;
+
+namespace MediaEmbedKit.Mpv.Runtime;
 
 /// <summary>
 /// Runtime 資料夾的 cross-process 互斥鎖，包覆 install / stage / apply / prune 序列，

@@ -1,6 +1,8 @@
 ﻿using System;
 
-namespace MediaEmbedKit.Mpv.Downloads;
+using MediaEmbedKit.Mpv.Externals;
+
+namespace MediaEmbedKit.Mpv.Runtime;
 
 /// <summary>
 /// 描述 <c>MpvRuntimeHealthReport.IsHealthyFor</c>（位於 <c>MediaEmbedKit.Mpv.Diagnostics</c> 套件）可指定的「必備附帶工具」集合。

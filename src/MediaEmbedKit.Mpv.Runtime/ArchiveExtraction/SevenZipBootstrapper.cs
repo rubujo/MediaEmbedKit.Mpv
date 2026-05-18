@@ -4,7 +4,9 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MediaEmbedKit.Mpv.Downloads.ArchiveExtraction;
+using MediaEmbedKit.Mpv.Externals;
+
+namespace MediaEmbedKit.Mpv.Runtime.ArchiveExtraction;
 
 /// <summary>
 /// 在系統未安裝任何相容 7z 工具、且 Windows 內建 tar.exe 也無法處理時，從 ip7z/7zip

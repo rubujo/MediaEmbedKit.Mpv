@@ -2,7 +2,9 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace MediaEmbedKit.Mpv.Downloads;
+using MediaEmbedKit.Mpv.Externals;
+
+namespace MediaEmbedKit.Mpv.Runtime;
 
 /// <summary>
 /// 提供 <see cref="MpvAppBuilder"/> 的 runtime 安裝整合擴充方法。

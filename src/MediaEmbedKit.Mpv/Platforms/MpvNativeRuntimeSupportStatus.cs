@@ -1,4 +1,4 @@
-﻿namespace MediaEmbedKit.Mpv.Downloads;
+﻿namespace MediaEmbedKit.Mpv.Platforms;
 
 /// <summary>
 /// 定義本專案對原生執行階段來源的支援狀態。
