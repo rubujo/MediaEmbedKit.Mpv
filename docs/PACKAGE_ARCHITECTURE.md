@@ -15,53 +15,53 @@
                  ┌─ MediaEmbedKit.Mpv ─────────────────────────────┐
                  │  核心 binding：Native P/Invoke、MpvPlayer、     │
                  │  render API、MpvLibraryLoader、value types       │
-                 │  (~12 k LOC，零 NuGet 依賴)                     │
+                 │  encoding 資料型別、shared Platforms enum        │
+                 │  (~12 k LOC，僅 Logging.Abstractions 依賴)      │
                  └────────────────────────┬────────────────────────┘
                                           │
-       ┌──────────────────────┬───────────┼──────────────┬──────────────────────┐
-       │                      │           │              │                      │
-       ▼                      ▼           ▼              ▼                      ▼
-┌──────────────┐    ┌─────────────────┐ ┌──────────────────┐    ┌──────────────────────┐
-│ .Runtime     │    │ .Encoding       │ │ .UI.Core         │    │ .Hosting             │
-│ libmpv 下載 │    │ Encoder +        │ │ MpvPlayerHostBase│    │ DI extensions        │
-│ idempotency  │    │ recipes (Split/ │ │ (HWND embedding +│    │ (~50 LOC, 已有)      │
-│ archive 解壓 │    │ TwoPass/Concat) │ │  property forward│    └──────────────────────┘
-│ cross-proc   │    │ codec preset 表 │ │  + lifecycle)    │
-│ lock         │    │ (~2 k LOC)      │ │ (internal-ish)   │
-│ (~3.5 k LOC) │    └─────────────────┘ └────────┬─────────┘
-└──────┬───────┘                                  │
-       │                                          ├── .WinForms (~700 LOC)
-       │                                          ├── .Wpf (~1 k LOC，含 Airspace popup)
-       ▼                                          ├── .Avalonia (~900 LOC)
-┌─────────────────────┐  ┌──────────────────┐    ├── .WinUI (~1 k LOC，砍掉雙實作)
-│ .Externals          │  │ .Diagnostics      │    └── .Maui (~900 LOC)
-│ FFmpeg / Deno /     │  │ LicenseAuditor +  │
-│ yt-dlp downloaders  │  │ HealthCheck +     │
-│ Format selectors    │  │ UpdateScheduler   │
-│ (~2 k LOC)          │  │ (~1.2 k LOC)      │
-│ ⚠️ 不依賴 libmpv    │  └──────────────────┘
-└─────────────────────┘
+       ┌──────────────────────┬───────────┼──────────────┬───────────┬──────────┐
+       │                      │           │              │           │          │
+       ▼                      ▼           ▼              ▼           ▼          ▼
+┌──────────────┐    ┌─────────────────┐ ┌─────────┐  ┌──────────┐ ┌──────────┐ ┌─────────┐
+│ .Externals   │    │ .Runtime         │ │.Encoding│  │.Hosting  │ │.WinForms │ │.Wpf     │
+│ FFmpeg/Deno/ │←───│ libmpv installer │ │MpvEncoder│ │ DI ext.  │ │MpvPlayer-│ │MpvWpf-  │
+│ yt-dlp +     │    │ archive 4-tier   │ │ (~900)   │ │ (~50)    │ │Control   │ │Player   │
+│ net infra +  │    │ cross-proc lock  │ └─────────┘  └──────────┘ │ (~800)   │ │+Airspace│
+│ ArchiveSafety│    │ sidecar marker   │                           └──────────┘ │ (~1.4k) │
+│ (~3 k LOC)   │    │ (~3 k LOC)       │  ┌─────────────┐                       └─────────┘
+└──────────────┘    └────────┬─────────┘  │ .Avalonia   │  ┌─────────┐  ┌──────────────┐
+                             │            │ OpenGL render│  │.WinUI 3 │  │.Maui Windows │
+                             ▼            │ API (~1 k)   │  │ (~2.2k) │  │ handler      │
+                    ┌──────────────────┐  └─────────────┘  └─────────┘  │ (~1.3k)      │
+                    │ .Diagnostics     │                                └──────────────┘
+                    │ LicenseAuditor + │
+                    │ HealthCheck +    │            ┌────────────────────────────────────┐
+                    │ UpdateScheduler  │            │ .Full (meta)                       │
+                    │ (~1.2 k LOC)     │            │ PackageRef → 6 service-layer 套件 │
+                    └──────────────────┘            │ (UI 套件 TFM 分散，不入 meta)      │
+                                                    └────────────────────────────────────┘
 ```
+
+**11 個 service / UI 套件 + 1 meta = 12 packages。**
 
 ## Package 清單
 
-| Package | 內容 | 行數估 | 直接依賴 | 目標使用者 |
+| Package | 內容 | 實際 LOC | 直接依賴 | 目標使用者 |
 |---|---|---:|---|---|
-| `MediaEmbedKit.Mpv` | Native P/Invoke、MpvPlayer、render、library loader、value types、events | ~12 k | （無） | 所有人 |
-| `MediaEmbedKit.Mpv.Runtime` | libmpv 下載、idempotent install、cross-process lock、archive 4-tier 解壓、sidecar marker | ~3.5 k | `.Mpv` | 想要 helper 自動裝 runtime 的人 |
-| `MediaEmbedKit.Mpv.Externals` | FFmpeg / Deno / yt-dlp downloaders、format selector、ytdl JSON parser | ~2 k | （無） | 要 yt-dlp 後處理鏈的人；可獨立用 |
-| `MediaEmbedKit.Mpv.Encoding` | `MpvEncoder` + 9 個 recipe 方法 + codec preset 表 | ~2 k | `.Mpv` | 做轉檔 / 編碼的人 |
-| `MediaEmbedKit.Mpv.Diagnostics` | `MpvLicenseAuditor` + `MpvRuntimeHealthCheck` + `MpvLibraryUpdateScheduler` | ~1.2 k | `.Mpv`, `.Runtime` | 商用合規、staging update 需求 |
-| `MediaEmbedKit.Mpv.UI.Core` | `MpvPlayerHostBase` 共用基底（HWND wid 嵌入、property forwarding、lifecycle、DesignMode sentinel、DPI / visibility） | ~800 | `.Mpv` | 5 UI package 的內部依賴 |
-| `MediaEmbedKit.Mpv.WinForms` | WinForms 控制項，僅 framework-specific 適配 | ~700 | `.UI.Core` | WinForms 使用者 |
-| `MediaEmbedKit.Mpv.Wpf` | WPF `HwndHost` + Airspace popup | ~1 k | `.UI.Core` | WPF 使用者 |
-| `MediaEmbedKit.Mpv.Avalonia` | Avalonia OpenGL render API 控制項 | ~900 | `.UI.Core` | Avalonia 使用者 |
-| `MediaEmbedKit.Mpv.WinUI` | WinUI 3 控制項（砍 `MpvWinUiHwndPlayer` 雙實作） | ~1 k | `.UI.Core` | WinUI 使用者 |
-| `MediaEmbedKit.Mpv.Maui` | MAUI Windows handler | ~900 | `.UI.Core` | MAUI 使用者 |
-| `MediaEmbedKit.Mpv.Hosting` | `Microsoft.Extensions.DependencyInjection` integration | ~50 | `.Mpv` | DI 使用者 |
-| `MediaEmbedKit.Mpv.Full`（meta） | 空 csproj，`<PackageReference>` 拉所有上面的 | 0 | 全部 | 「我什麼都要」+ 不在意大小 |
+| `MediaEmbedKit.Mpv` | Native P/Invoke、MpvPlayer、render、library loader、value types、events、`MpvEncodingOptions` / `MpvEncodingResult` 等資料型別、`MpvNativeRuntimePlatform` / `MpvWindowsArchitecture` 等共用 enum | ~12 k | `Microsoft.Extensions.Logging.Abstractions` | 所有人 |
+| `MediaEmbedKit.Mpv.Externals` | FFmpeg / Deno / yt-dlp downloaders + ExternalTool primitives + 共用 net infra (`DownloadUtility` / `BrowserRequestHeaders` / `GitHubReleaseModels` 為 internal) + `ArchiveSafety` + `MpvNativeAssetVerificationPolicy` + `MpvNativeRuntime*` catalog | ~3 k | `.Mpv` | 要 yt-dlp 後處理鏈的人；可獨立用 |
+| `MediaEmbedKit.Mpv.Runtime` | libmpv Windows runtime installer + 4-tier archive 解壓 + cross-process lock + sidecar marker + `MpvAppBuilder.UseWindowsRuntimeAutoInstall` extension | ~3 k | `.Mpv`, `.Externals` | 想要 helper 自動裝 runtime 的人 |
+| `MediaEmbedKit.Mpv.Diagnostics` | `MpvLicenseAuditor` + `MpvRuntimeHealthCheck` + `MpvLibraryUpdateScheduler` | ~1.2 k | `.Mpv`, `.Externals`, `.Runtime` | 商用合規、staging update 需求 |
+| `MediaEmbedKit.Mpv.Hosting` | `Microsoft.Extensions.DependencyInjection` integration (`AddMpvPlayer` / `AddMpvPlayerFactory`) | ~50 | `.Mpv` | DI 使用者 |
+| `MediaEmbedKit.Mpv.Encoding` | `MpvEncoder` 高階轉碼 facade (9 個 recipe 方法) | ~900 | `.Mpv` | 做轉檔 / 編碼的人 |
+| `MediaEmbedKit.Mpv.WinForms` | WinForms `MpvPlayerControl`（繼承 `System.Windows.Forms.Control`） | ~800 | `.Mpv` | WinForms 使用者 |
+| `MediaEmbedKit.Mpv.Wpf` | WPF `MpvWpfPlayer`（繼承 `HwndHost`） + Airspace popup | ~1.4 k | `.Mpv` | WPF 使用者 |
+| `MediaEmbedKit.Mpv.Avalonia` | Avalonia `MpvAvaloniaPlayer`（繼承 `OpenGlControlBase`，不走 HWND，走 OpenGL render API） | ~1 k | `.Mpv` | Avalonia 使用者 |
+| `MediaEmbedKit.Mpv.WinUI` | WinUI 3 `MpvWinUiPlayer`（繼承 `Grid`，HWND child + overlay）+ `MpvWinUiHwndPlayer` | ~2.2 k | `.Mpv` | WinUI 使用者 |
+| `MediaEmbedKit.Mpv.Maui` | MAUI `MpvView`（繼承 `View`） + `MpvViewHandler`（Windows 平台橋 WinUI） | ~1.3 k | `.Mpv`, `.WinUI` | MAUI 使用者 |
+| `MediaEmbedKit.Mpv.Full`（meta） | `<IncludeBuildOutput>false</IncludeBuildOutput>`，`<ProjectReference>` 拉 6 個 service-layer 套件 (core + Externals + Runtime + Diagnostics + Hosting + Encoding)。UI 套件 TFM 分散不入 meta | 0 | 6 service-layer 套件 | 「service 層都裝」+ 不在意大小 |
 
-**12 packages（11 actual + 1 meta）**。
+**12 packages（11 actual + 1 meta）**。**沒有 `.UI.Core` 套件** —— 原 plan 把它列為「5 UI package 的內部依賴」是 architecturally infeasible 的設計（見下方「`.UI.Core` 為何 abandon」）。
 
 ## 設計決策
 
@@ -74,18 +74,29 @@
 
 業界共識：[Yusuf Aytas, On Writing Wrapper Libraries](https://yusufaytas.com/on-writing-wrapper-libraries) 「wrap with intention, not everything」。
 
-### 為何 `.UI.Core` 抽象
+### `.UI.Core` 為何 abandon
 
-5 UI 控制項共同職責 ~80% 相同：
-- 取得 native window handle 並 set `wid`
-- property forward（Position / Volume / IsPaused 等）
-- IsLoaded / Unloaded lifecycle
-- DesignMode sentinel
-- DPI / visibility 觀察
+原 plan 提議抽 `MpvPlayerHostBase` 共用 abstract 基底給 5 UI 套件繼承。**實作前驗證後發現此設計 architecturally infeasible**：
 
-抽 `MpvPlayerHostBase` → 每個 framework 控制項只剩「framework-specific 屬性系統適配」（5 種 DP / BindableProperty / StyledProperty / AttachedProperty / MAUI handler 寫法）。預估 5 UI 合計 6.2 k → 3.5–4 k LOC。
+**1. C# 不支援多重繼承。** 5 UI 控制項各自必須繼承自己框架的 UI base class，**無法**同時繼承一個共用的 `MpvPlayerHostBase`：
 
-LibVLCSharp 採用同樣模式（[`LibVLCSharp.Shared`](https://github.com/videolan/libvlcsharp)）。
+| 控制項 | 強制繼承的 framework base | 為什麼 |
+|---|---|---|
+| `MpvPlayerControl` | `System.Windows.Forms.Control` | WinForms 控制項必須 |
+| `MpvWpfPlayer` | `System.Windows.Interop.HwndHost` | WPF 嵌入 native HWND 必須 |
+| `MpvAvaloniaPlayer` | `Avalonia.OpenGL.Controls.OpenGlControlBase` | 用 OpenGL render API |
+| `MpvWinUiPlayer` | `Microsoft.UI.Xaml.Controls.Grid` | 容納 HWND child + overlay panel |
+| `MpvView` | `Microsoft.Maui.Controls.View` | MAUI 控制項必須 |
+
+**2. Avalonia 不走 HWND embedding。** 原 plan 假定 5 框架共用「取得 native window handle 並 set `wid`」邏輯。但 [`MpvAvaloniaPlayer`](../src/MediaEmbedKit.Mpv.Avalonia/MpvAvaloniaPlayer.cs:20) 用 `OpenGlControlBase` + `mpv_render_context_create` / `mpv_render_context_render` —— 整套 native handle 邏輯**不適用**。
+
+**3. 預估 LOC 節省被高估。** 原 plan 寫「6.2 k → 3.5–4 k LOC」（40% 節省）。但 5 控制項實際 LOC 大頭是 framework-specific DependencyProperty / StyledProperty / BindableProperty 等屬性系統宣告 —— 這些**無法共用**。剩下能 share 的 plumbing 約 500–800 行（< 12%）。即使改用 composition pattern 也只能省 ~10%。
+
+**4. 「LibVLCSharp 業界先例」引用更正。** 原 doc 引用 [`LibVLCSharp.Shared`](https://www.nuget.org/profiles/videolan) 作為 base class 抽象先例。實際檢視該套件**只是核心 LibVLC 互動 + 跨平台 MediaPlayer**，**並非 UI 控制項 base class**。LibVLCSharp 的 5 個 UI 套件（WinForms / WPF / Forms.WPF / Avalonia / MAUI）各自獨立繼承框架 base，**也未共用 UI 基底**。原引用是錯誤類比。
+
+**結論**：5 個 self-contained 的 UI 控制項（~800–2.2 k LOC each）反而對單人維護更友善 —— 每個讀完就能完全理解該框架的嵌入細節，不需要跳到 `.UI.Core` 看 base。`MpvPlayer` 核心 binding 已是共用點；UI 層的「共用」物理上不可行。
+
+`MediaEmbedKit.Mpv.UI.Core` **不存在**於最終 12 packages 拓樸內。
 
 ### 為何不拆 multi-repo
 
@@ -111,25 +122,26 @@ LibVLCSharp 採用同樣模式（[`LibVLCSharp.Shared`](https://github.com/video
 | **Phase 1+2+4 合併** | 拆 `.Externals` + `.Runtime` + `.Diagnostics`（三者結構性綁定：`MpvWindowsRuntimeInstaller` 同時呼叫 libmpv 與外部工具下載；`MpvLicenseAuditor` 同時用 `ExternalToolProcessRunner` + `MpvLibraryLoader`）| ✅ 已完成 | 中 |
 | **Phase 5** | 拆 `.Hosting`（DI extensions） | ✅ 已完成 | 低 |
 | **Phase 6** | 拆 `.Encoding` + meta `.Full` + `tools/Invoke-PackageValidation.ps1` 12 個套件支援 + release.yml 註解更新 | ✅ 已完成 | 中 |
-| **Phase 3** | 拆 `.UI.Core` + 重寫 5 UI package 用 base | 🚧 待做 | 高 |
-| **Phase 7** | release-gate 全流程驗證（含 GUI consumer playback validation） | 🚧 待做 | 低 |
-| **v1.0** | 穩定 API freeze | 全部拆完且穩定運行 6+ 個月 | — |
+| **Phase 7** | dotnet format / Tests 38/38 / IntegrationTests 50/50 / build slnx / `Invoke-PackageValidation.ps1` 12/12 通過 | ✅ 已完成 | 低 |
+| ~~**Phase 3**~~ | ~~拆 `.UI.Core` + 重寫 5 UI package 用 base~~ | ❌ Abandon | — |
+| **v1.0** | 穩定 API freeze | 12 packages 經 real-world 使用 6+ 個月後 | — |
 
 **Phase 1+2+4 合併原因**：原 plan 把這 3 phase 拆開做，但實際依賴分析發現：
 - `.Externals` 拆出後，core 仍剩 `MpvWindowsRuntimeInstaller`（orchestrator），它呼叫 `FFmpegDownloader/DenoDownloader/YtDlpDownloader`，core 反向依賴 `.Externals`（錯方向）。
 - `.Diagnostics` 內 `MpvLicenseAuditor` 用 `ExternalToolProcessRunner`（.Externals）+ `MpvLibraryLoader`（core），不拆 `.Externals` 就不能拆 `.Diagnostics`。
 
-合併一個 commit 同時拆完三 package、繞開 transient 不一致狀態。**剩下的 Phase 3 / 5 / 6 / 7 可獨立 PR。**
+合併一個 commit 同時拆完三 package、繞開 transient 不一致狀態。
+
+**Phase 3 abandon 原因**：見上方「`.UI.Core` 為何 abandon」段。簡述：C# 無多重繼承 + Avalonia 不走 HWND + LOC 節省被高估 + 業界先例引用錯誤。**Phase 3 不會做。**
 
 ## 風險與對策
 
 | 風險 | 機率 | 對策 |
 |---|---|---|
 | 版本相依矩陣失控 | 中 | 統一版號 + monorepo 同步 release |
-| Consumer 不知裝哪個 package | 中 | `.Full` meta + README 明寫「最小 vs 完整」決策樹 |
-| `.UI.Core` 內部 API 變動拖累 5 UI package | 中 | `MpvPlayerHostBase` 標 `[EditorBrowsable(Never)]` + XML doc 明寫「為 UI package 內部使用」；外部直接用 caller 自負風險 |
+| Consumer 不知裝哪個 package | 中 | `.Full` meta（service 層）+ README 明寫「最小 vs 完整」決策樹 + UI 套件依框架單獨 ref |
 | Pre-v1 拆 package 後 API 還要動 | 高 | 接受。pre-v1 本來就會動 |
-| CI 時間爆增（12 個 pack） | 低 | `dotnet pack` 並行；現有 `release.yml` 加 12 個 file glob + 12 個 attest-build-provenance subject 即可 |
+| CI 時間爆增（12 個 pack） | 低 | `dotnet pack` 並行；現有 `release.yml` 用 glob `*.nupkg` / `*.snupkg`，無需逐套件加 file pattern |
 | 拆 package 期間使用者卡在中間版本 | 中 | CHANGELOG 明寫 phase；每 phase 維持「previous + new package 並存一輪」轉換期 |
 
 ## 拒絕的替代方案
@@ -156,7 +168,7 @@ LibVLCSharp 採用同樣模式（[`LibVLCSharp.Shared`](https://github.com/video
 
 ## Source / 業界先例
 
-- [LibVLCSharp 多 package 拆法](https://www.nuget.org/profiles/videolan)（核心 + 5 UI + 多平台）
+- [LibVLCSharp 多 package 拆法](https://www.nuget.org/profiles/videolan)（核心 + 5 UI + 多平台；**5 UI 各自獨立繼承框架 base，無共用 UI 基底**）
 - [dotnet/aspire monorepo + multi-csproj 模式](https://github.com/dotnet/aspire)
 - [Microsoft.Extensions.* 套件分離模式](https://learn.microsoft.com/dotnet/standard/microservices-architecture/multi-container-microservice-net-applications/use-stack-of-microsoft-tools-and-libraries)
 - [Yusuf Aytas, On Writing Wrapper Libraries](https://yusufaytas.com/on-writing-wrapper-libraries)

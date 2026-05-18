@@ -22,9 +22,13 @@
 - 共用 enum (`MpvNativeRuntimePlatform` / `MpvNativeRuntimeSupportStatus` / `MpvWindowsArchitecture`) 移到 `MediaEmbedKit.Mpv/Platforms/`，namespace 保留為 `MediaEmbedKit.Mpv.Downloads` 以維持 source-level 相容。
 - consumer 只需在原本的 `MediaEmbedKit.Mpv` package 之外，額外加 `MediaEmbedKit.Mpv.Externals` / `.Runtime` / `.Diagnostics` 的 `<PackageReference>` 即可繼續使用對應功能。
 
+### Phase 3 abandon
+
+- **`.UI.Core` 套件 / `MpvPlayerHostBase` 共用基底 abandon**：實作前驗證後發現原 plan architecturally infeasible —— (1) C# 無多重繼承，5 UI 控制項各自必須繼承自己框架的 UI base class（`Control` / `HwndHost` / `OpenGlControlBase` / `Grid` / `View`），無法同時繼承共用 `MpvPlayerHostBase`；(2) Avalonia 用 OpenGL render API 不走 HWND embedding，原 plan「set `wid`」邏輯只適用 4/5 框架；(3) framework-specific DependencyProperty / StyledProperty / BindableProperty 宣告無法共用，實際 LOC 節省 < 12%（遠低於原預估 40%）；(4) 引用「LibVLCSharp.Shared」作為 base class 抽象先例屬錯誤類比 —— 該套件僅核心 MediaPlayer 共用，UI 控制項仍各自獨立繼承。詳細分析見 [`docs/PACKAGE_ARCHITECTURE.md`](docs/PACKAGE_ARCHITECTURE.md) 「`.UI.Core` 為何 abandon」段。最終 12 packages 拓樸**不含** `MediaEmbedKit.Mpv.UI.Core`。
+
 ### 規劃中
 
-- **Phase 3 (.UI.Core 抽 `MpvPlayerHostBase` 為 5 UI control 共用基底)、Phase 7 (release-gate 全流程驗證)** 為剩餘未完成項目。完整 phase 路線見 [`docs/PACKAGE_ARCHITECTURE.md`](docs/PACKAGE_ARCHITECTURE.md)。
+- 無剩餘 phase。Multi-package split 完整：12 packages（11 actual + 1 `.Full` meta）已就緒。
 
 ## [0.0.1] — 初始發行
 
