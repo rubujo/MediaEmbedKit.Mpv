@@ -6,7 +6,9 @@
 
 ## [Unreleased]
 
-（下個 release 的改動寫在這裡。）
+### 規劃中
+
+- **Multi-package 架構**：v0.0.x 維持單一 `MediaEmbedKit.Mpv` package；v0.1 起逐步拆成 11 個獨立 package（核心 binding / Runtime / Externals / Encoding / Diagnostics / UI.Core / 5 個 UI 框架 / Hosting）+ 1 個 `.Full` meta package。完整拓樸、依賴圖、phase 路線見 [`docs/PACKAGE_ARCHITECTURE.md`](docs/PACKAGE_ARCHITECTURE.md)。**目前無實際拆分動作，僅 architectural decision 記錄。**
 
 ## [0.0.1] — 初始發行
 
