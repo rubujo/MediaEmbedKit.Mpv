@@ -104,6 +104,71 @@ libmpv 與其內嵌的 FFmpeg 兩種授權建置都存在，差異在於 mpv 編
 
 `MpvLicenseAuditor.AnalyzeAsync(runtimeDirectory)` 可在執行階段解析 `mpv-configuration` 與 `ffmpeg -version` 確認實際拿到的授權標籤；散發前建議納入 release check。
 
+### GPL vs LGPL 程式面實際差異範圍
+
+**核心結論**：LGPL libmpv **不是「低階版 API」**，C API 幾乎可視為同一套；差異主要在 build 時排除 GPL-only 的 mpv 內部模組與部分輸出 / 輸入後端。本專案 Windows desktop 嵌入用法上實際差異有限。
+
+驗證來源：
+
+- libmpv C API：[`include/mpv/client.h`](https://github.com/mpv-player/mpv/blob/master/include/mpv/client.h) `#define MPV_CLIENT_API_VERSION MPV_MAKE_VERSION(2, 5)` —— 單一 enum 涵蓋兩種 build。
+- mpv build option：[`meson.options`](https://github.com/mpv-player/mpv/blob/master/meson.options) 的 `gpl` option 預設 `true`；設 `false` 即走 LGPL build。
+- GPL-only 模組清單：[`Copyright`](https://github.com/mpv-player/mpv/blob/master/Copyright)。
+
+LGPL build 排除的模組（取自上游 Copyright 完整清單）：
+
+| 模組 | 何時影響 | 對本專案 Windows 嵌入用法的影響 |
+| --- | --- | --- |
+| `video/out/vo_direct3d.c` | legacy Direct3D VO（被 D3D11 / `vo=gpu` 取代） | ⚪ 現代設定不用 |
+| `video/out/vo_x11.c`、`vo_xv.c`、`x11_common.*` | Linux X11 video output | ❌ Linux only |
+| `video/out/vo_vaapi.c` | Linux VAAPI 硬體加速 | ❌ Linux only |
+| `video/out/vo_vdpau.c`、`video/vdpau.c` | NVIDIA Linux 硬體解碼 / 輸出 | ❌ Linux only |
+| `video/out/vo_caca.c` | terminal CACA 顯示 | ⚪ 不適用 desktop |
+| `audio/out/ao_jack.c` | JACK audio | ❌ Linux 多 |
+| `audio/out/ao_oss.c` | BSD OSS audio | ❌ BSD only |
+| `stream/dvb*` | DVB 數位電視 | ⚪ 本專案不承諾 |
+| `stream/stream_cdda.c` | CDDA 音樂 CD | ⚪ 本專案不承諾 |
+| `stream/stream_dvdnav.c` | DVD 導航 | ⚪ 本專案不承諾 |
+
+**沒在 GPL-only 清單上**（LGPL build 仍可用）：
+
+- `vo_gpu` / `vo_gpu_next`（D3D11 / Vulkan / OpenGL）—— 現代 Windows 主播放路徑
+- libmpv render API（OpenGL context、D3D11 texture、Vulkan）
+- WASAPI（Windows audio output）
+- 所有 stream protocol（HTTP / HTTPS / file / smb / sftp 等）
+- 所有編解碼器（這層由 FFmpeg `--enable-gpl` 決定，**不是** mpv `-Dgpl` 控制）
+
+### 對本專案 5 個 UI 框架的實際影響評估
+
+| 框架 / 路徑 | render 方式 | LGPL 影響 |
+| --- | --- | --- |
+| **WinForms** | `wid=` HWND 嵌入 + 預設 `vo=gpu`（D3D11） | ✅ 不影響 |
+| **WPF** | 同上 | ✅ 不影響 |
+| **WinUI 3** | 同上 | ✅ 不影響 |
+| **MAUI Windows** | 同上 | ✅ 不影響 |
+| **Avalonia** | libmpv render API（OpenGL context） | ✅ 不影響 |
+| **Console / 純 API caller** | 視 `MpvPlayerOptions.InitialOptions` 而定 | ⚠️ 若刻意設 `vo=direct3d` 走 legacy 路徑 → LGPL build 沒有；現代 `vo=gpu` 不影響 |
+
+### 容易混淆：mpv `-Dgpl` 差異 vs FFmpeg `--enable-gpl` 差異
+
+「GPL build 比較完整」的觀感常常混到兩層獨立的 license toggle：
+
+1. **mpv `-Dgpl=false`**：排除上表的 mpv 內部 GPL-only 模組（legacy VO / Linux 後端 / DVB / CDDA / DVDNav）。
+2. **FFmpeg `--enable-gpl`**：libx264、libxvid、libxavs 等 GPL-only 編解碼器是否內建（影響 `MpvEncoder` 可用的 preset）。
+
+對 `MpvEncoder` 與相關 encoding preset，**第 2 層差異比第 1 層更實質**。播放一般 mp4 / mkv / YouTube 通常差異不大；轉檔、硬體 encoder、特定 codec preset 才容易浮現。zhongfly 同一 release 內 `mpv-dev-lgpl-*` 與 `ffmpeg-lgpl-*` 是分開的兩個 asset，兩層 toggle 各自獨立。
+
+### 建議：差異實測工具（未實作）
+
+為了把「授權差異」轉成可審計的「功能矩陣差異」，建議加一支實測工具，分別載入 LGPL / GPL `libmpv-2.dll` 並 dump：
+
+- `mpv-version`、`mpv-configuration` properties
+- `protocols`、`decoders`、`demuxers`（透過 mpv property API）
+- `vo=help`、`ao=help`、`hwdec=help`（透過 mpv message handler）
+- `MpvEncoder` preset probe 結果（哪些 video / audio codec preset 在當前 build 可用）
+- 同一組媒體在 5 個 UI 框架 sample 上的播放結果
+
+把輸出固定格式存到 `artifacts/license-matrix-{lgpl|gpl}.json`，release 前 diff 兩份檔即知差異實際範圍。**目前未實作 —— 預定為 release polish 任務之一。**
+
 ### .7z 解壓 4-tier fallback chain
 
 mpv-dev archive 是 `.7z` 格式，需 7z 相容工具才能解壓。helper 依序嘗試以下 4 段 fallback，找到能用的就停；全部失敗才擲 `InvalidOperationException`，訊息含每層失敗細節與使用者可採取的解法。
