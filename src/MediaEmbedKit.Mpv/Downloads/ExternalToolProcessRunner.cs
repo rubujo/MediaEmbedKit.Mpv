@@ -427,21 +427,13 @@ public sealed class ExternalToolProcessRunner
     }
 
     /// <summary>
-    /// 嘗試終止處理序。
+    /// 嘗試終止處理序；委派到 <see cref="DownloadUtility.TryKillProcess"/>，後者會吞各種
+    /// platform 例外、.NET 5+ 路徑同時 kill 整個子處理序樹。
     /// </summary>
     /// <param name="process">要終止的處理序。</param>
     private static void KillProcess(Process process)
     {
-        try
-        {
-            if (!process.HasExited)
-            {
-                process.Kill();
-            }
-        }
-        catch (InvalidOperationException)
-        {
-        }
+        DownloadUtility.TryKillProcess(process);
     }
 
     /// <summary>

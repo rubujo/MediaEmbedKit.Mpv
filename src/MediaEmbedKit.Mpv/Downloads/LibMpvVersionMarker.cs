@@ -76,7 +76,11 @@ internal sealed class LibMpvVersionMarker
         }
     }
 
-    /// <summary>寫入 marker 檔；寫入失敗不擲例外（marker 是 best-effort 快取，缺失只是下次重抓）。</summary>
+    /// <summary>
+    /// 寫入 marker 檔（atomic）：先寫到 <c>{markerPath}.tmp</c>，成功後 rename 取代目標檔。
+    /// 避免系統當機 / 程序強制中斷期間留下半寫入 JSON。寫入失敗不擲例外
+    /// （marker 是 best-effort 快取，缺失只是下次重抓）。
+    /// </summary>
     /// <param name="markerPath">marker 檔完整路徑。</param>
     /// <param name="provider">本次安裝來源 provider。</param>
     /// <param name="releaseTag">本次安裝的 release tag。</param>
@@ -91,10 +95,44 @@ internal sealed class LibMpvVersionMarker
             AssetName = assetName ?? string.Empty,
         };
 
+        string tempPath = markerPath + ".tmp";
         try
         {
             string json = JsonSerializer.Serialize(marker, LibMpvVersionMarkerJsonContext.Default.LibMpvVersionMarker);
-            File.WriteAllText(markerPath, json);
+            File.WriteAllText(tempPath, json);
+
+            // File.Move(overwrite) 在 .NET Core 3+ atomic；netstandard2.0 / net472 需先刪舊檔
+            // 後 Move（短時間窗口下不 atomic，但只造成 marker 缺失，下次重抓一次自動修正）。
+#if NETCOREAPP3_0_OR_GREATER || NET5_0_OR_GREATER
+            File.Move(tempPath, markerPath, overwrite: true);
+#else
+            if (File.Exists(markerPath))
+            {
+                File.Delete(markerPath);
+            }
+
+            File.Move(tempPath, markerPath);
+#endif
+        }
+        catch (IOException)
+        {
+            TryDeleteTempMarker(tempPath);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            TryDeleteTempMarker(tempPath);
+        }
+    }
+
+    /// <summary>清理 atomic write 失敗時殘留的 .tmp 檔，失敗也吞掉。</summary>
+    private static void TryDeleteTempMarker(string tempPath)
+    {
+        try
+        {
+            if (File.Exists(tempPath))
+            {
+                File.Delete(tempPath);
+            }
         }
         catch (IOException)
         {

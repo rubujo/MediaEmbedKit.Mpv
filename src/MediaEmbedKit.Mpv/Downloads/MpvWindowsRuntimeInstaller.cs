@@ -78,20 +78,32 @@ public static class MpvWindowsRuntimeInstaller
     /// <summary>
     /// install-or-update 語意的 libmpv 安裝：不強制 <see cref="MpvWindowsBuildDownloadOptions.OverwriteExisting"/>，
     /// 讓 <see cref="MpvWindowsBuildDownloader.DownloadAndExtractLatestLibMpvAsync"/>
-    /// 的 sidecar marker idempotency skip path 能生效。同樣不 mutate caller options。
-    /// 若 libmpv 已載入（同一處理序內），會 stage 到 <c>.updates/&lt;時戳&gt;</c>
-    /// 並 auto-prune 舊版本。
+    /// 的 sidecar marker idempotency skip path 能生效（runtime/libmpv-2.dll 已是上游
+    /// 最新就跳過下載與解壓）。同樣不 mutate caller options。若 libmpv 已載入（同一
+    /// 處理序內），會 stage 到 <c>.updates/&lt;時戳&gt;</c> 並 auto-prune 舊版本。
     /// </summary>
+    /// <remarks>
+    /// 對比 <see cref="UpdateLibMpvAsync"/>「明確強制更新」：本方法是「有需要才更新」
+    /// 語意，適合 startup ensure-runtime-present 流程。<see cref="InstallOrUpdateAsync"/>
+    /// 內部即呼叫本方法 —— 但本方法也獨立公開，供呼叫端只裝 libmpv（不裝 yt-dlp /
+    /// Deno / FFmpeg）時使用。
+    /// </remarks>
     /// <param name="runtimeDirectory">執行階段資料夾。</param>
     /// <param name="options">Windows libmpv 建置下載選項；未指定時使用預設選項。</param>
     /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
     /// <returns>表示 libmpv 安裝或更新結果的工作。</returns>
-    private static async Task<LibMpvUpdateResult> InstallOrUpdateLibMpvAsync(
+    public static async Task<LibMpvUpdateResult> InstallOrUpdateLibMpvAsync(
         string runtimeDirectory,
-        MpvWindowsBuildDownloadOptions? options,
-        CancellationToken cancellationToken)
+        MpvWindowsBuildDownloadOptions? options = null,
+        CancellationToken cancellationToken = default(CancellationToken))
     {
+        if (string.IsNullOrWhiteSpace(runtimeDirectory))
+        {
+            throw new ArgumentException("執行階段資料夾不可為空白。", nameof(runtimeDirectory));
+        }
+
         MpvWindowsBuildDownloadOptions effectiveOptions = (options ?? new MpvWindowsBuildDownloadOptions()).Clone();
+        Directory.CreateDirectory(runtimeDirectory);
 
         bool loaded = MpvLibraryLoader.IsLoaded;
         string extractDirectory = loaded

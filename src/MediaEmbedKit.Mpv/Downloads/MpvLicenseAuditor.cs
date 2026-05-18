@@ -28,8 +28,29 @@ public static class MpvLicenseAuditor
     /// <summary>
     /// 分析執行階段資料夾中的 libmpv 與 FFmpeg 授權狀態。
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <strong>⚠️ 副作用警示</strong>：<paramref name="probeLibMpv"/> = <see langword="true"/>
+    /// 時本方法會透過 <c>NativeLibrary.Load</c> 載入 <c>libmpv-2.dll</c> 讀取
+    /// <c>mpv-configuration</c> 屬性。<strong>libmpv 一旦載入當前處理序就無法 unload</strong>，
+    /// 之後若要 update libmpv 必須走 staged update + 處理序重啟流程
+    /// （參見 <see cref="MpvLibraryUpdateScheduler"/>）。
+    /// </para>
+    /// <para>
+    /// 對僅需檢查 FFmpeg 授權的情境，請保持 <paramref name="probeLibMpv"/> =
+    /// <see langword="false"/>（預設）—— 方法仍會用 <c>ffmpeg -version</c> 子處理序
+    /// 取得 FFmpeg 授權字串，不會載入 libmpv。
+    /// </para>
+    /// <para>
+    /// 需要 libmpv 授權檢查但不想污染當前處理序，建議在獨立子處理序中呼叫本方法 +
+    /// <paramref name="probeLibMpv"/> = <see langword="true"/>。
+    /// </para>
+    /// </remarks>
     /// <param name="runtimeDirectory">要分析的執行階段資料夾。</param>
-    /// <param name="probeLibMpv">是否實際載入 libmpv 並讀取 mpv-configuration 屬性。</param>
+    /// <param name="probeLibMpv">
+    /// 是否實際載入 libmpv 並讀取 <c>mpv-configuration</c> 屬性。<strong>啟用即不可逆
+    /// 載入 libmpv 至當前處理序</strong>，見上方 remarks。
+    /// </param>
     /// <param name="cancellationToken">取消分析的 token。</param>
     /// <returns>稽核報告。</returns>
     public static async Task<MpvLicenseAuditReport> AnalyzeAsync(

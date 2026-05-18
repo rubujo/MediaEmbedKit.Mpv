@@ -60,6 +60,19 @@ public sealed class YtDlpDownloadOptions
     /// 取得或設定是否鎖定為專案內建的官方 GitHub 發行來源。
     /// </summary>
     /// <value>拒絕非預設 GitHub Releases API 或下載 URL 時為 <see langword="true"/>。</value>
+    /// <remarks>
+    /// <para>
+    /// <strong>此選項不是供應鏈防線</strong>。它只擋兩件事：呼叫端被誘騙設
+    /// <see cref="ReleaseApiUriOverride"/> 指向假 API；GitHub API 回傳的 download URL
+    /// 不屬於預設 owner/repo（yt-dlp/yt-dlp 或對應 nightly / master-builds repo）。
+    /// </para>
+    /// <para>
+    /// 它<strong>無法防護</strong>上游 maintainer 帳號被入侵 / GitHub 被入侵 / DNS /
+    /// TLS 中間人攻擊等供應鏈攻擊。真正的防線是<strong>呼叫端釘版 SHA-256</strong>：
+    /// 設 <see cref="VerificationPolicy"/> = <see cref="MpvNativeAssetVerificationPolicy.RequirePinnedSha256"/>
+    /// 並把預期 SHA-256 寫進 <see cref="ExpectedSha256"/>。商用環境必走此路。
+    /// </para>
+    /// </remarks>
     public bool LockReleaseSource { get; set; }
 
     /// <summary>

@@ -159,8 +159,18 @@ internal static class DownloadUtility
     /// <param name="digest">GitHub 發行資產提供的摘要值。</param>
     public static void VerifyDigestIfAvailable(string filePath, string? digest)
     {
-        if (string.IsNullOrWhiteSpace(digest) || !digest!.StartsWith("sha256:", StringComparison.OrdinalIgnoreCase))
+        if (string.IsNullOrWhiteSpace(digest))
         {
+            return;
+        }
+
+        if (!digest!.StartsWith("sha256:", StringComparison.OrdinalIgnoreCase))
+        {
+            // 防衛性 log：GitHub 未來若改 digest 格式（例如 "sha-256:" 或新演算法），best-effort
+            // 路徑會靜默跳過驗證。明確 trace 出來避免使用者「以為有驗其實沒驗」。strict 政策
+            // (RequireGitHubDigest / RequireProviderChecksum) 走 VerifyGitHubDigest，會 throw。
+            System.Diagnostics.Trace.WriteLine(
+                "VerifyDigestIfAvailable: 未知 digest prefix，已跳過 best-effort 驗證。digest=" + digest);
             return;
         }
 
@@ -260,6 +270,13 @@ internal static class DownloadUtility
         if (string.IsNullOrWhiteSpace(checksumText))
         {
             throw new InvalidOperationException("checksum 檔案內容不可為空白。");
+        }
+
+        // 剝 UTF-8 BOM (U+FEFF)：呼叫端用 Encoding.UTF8.GetString(bytes) 不會自動剝 BOM，
+        // 若上游 checksum 檔以 BOM 開頭，第一個 entry 的解析會壞掉（多了不可見字元）。
+        if (checksumText.Length > 0 && checksumText[0] == '﻿')
+        {
+            checksumText = checksumText.Substring(1);
         }
 
         using (StringReader reader = new StringReader(checksumText))
@@ -537,14 +554,7 @@ internal static class DownloadUtility
 
             if (!process.WaitForExit((int)timeout.TotalMilliseconds))
             {
-                try
-                {
-                    process.Kill();
-                }
-                catch (InvalidOperationException)
-                {
-                }
-
+                TryKillProcess(process);
                 return null;
             }
 
@@ -589,14 +599,7 @@ internal static class DownloadUtility
             bool exited = await WaitForExitAsync(process, timeout, cancellationToken).ConfigureAwait(false);
             if (!exited)
             {
-                try
-                {
-                    process.Kill();
-                }
-                catch (InvalidOperationException)
-                {
-                }
-
+                TryKillProcess(process);
                 throw new TimeoutException(fileName + " 未在指定時間內結束：" + timeout);
             }
 
@@ -628,6 +631,36 @@ internal static class DownloadUtility
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// best-effort 終止處理序，吞掉各 platform 可能的例外（Win32Exception / InvalidOperationException /
+    /// NotSupportedException 等）。.NET 5+ 路徑同時 kill 整個子處理序樹（避免 deno upgrade
+    /// 等場景留下孤兒下載 process）；老 TFM 路徑只 kill top-level。
+    /// </summary>
+    /// <param name="process">要終止的處理序。</param>
+    internal static void TryKillProcess(Process process)
+    {
+        try
+        {
+            if (!process.HasExited)
+            {
+#if NET5_0_OR_GREATER
+                process.Kill(entireProcessTree: true);
+#else
+                process.Kill();
+#endif
+            }
+        }
+        catch (InvalidOperationException)
+        {
+        }
+        catch (System.ComponentModel.Win32Exception)
+        {
+        }
+        catch (NotSupportedException)
+        {
+        }
     }
 
     /// <summary>
