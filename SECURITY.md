@@ -37,7 +37,28 @@ helper 自動下載第三方原生二進位（libmpv、yt-dlp、Deno、FFmpeg）
 
 **範圍**：防護「config 注入」（攻擊者透過設定檔 / 環境變數誘導 caller 切到假 API）。**不防**供應鏈攻擊。
 
-### 2.3 釘版 SHA-256（**商用環境必走**）
+### 2.3 NuGet 套件 build provenance（Sigstore attestation）
+
+本專案發行的 6 個 `.nupkg` + 6 個 `.snupkg` 透過 [`actions/attest-build-provenance`](https://github.com/actions/attest-build-provenance) 產生 Sigstore-signed build provenance attestation（寫進 Rekor [transparency log](https://search.sigstore.dev/)），證明套件來自 `github.com/rubujo/MediaEmbedKit.Mpv` 的特定 commit + workflow run。
+
+**驗證方式**（caller 取得 `.nupkg` 後）：
+
+```powershell
+# 方法 1：GitHub CLI（最簡單）
+gh attestation verify MediaEmbedKit.Mpv.0.0.1.nupkg --owner rubujo
+
+# 方法 2：cosign（不依賴 gh CLI）
+cosign verify-blob-attestation `
+  --bundle MediaEmbedKit.Mpv.0.0.1.nupkg.sigstore `
+  --new-bundle-format `
+  --certificate-identity-regexp 'https://github.com/rubujo/MediaEmbedKit.Mpv/.+' `
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com `
+  MediaEmbedKit.Mpv.0.0.1.nupkg
+```
+
+驗證通過代表：套件確實由本 repo 的 GitHub Actions release workflow 在指定 commit 上 build 出來，未被中途替換。**範圍**：防護「NuGet 套件本身被替換」攻擊。**不防** runtime helper 自動下載的第三方 binary（libmpv / yt-dlp / Deno / FFmpeg）—— 上游 mpv ecosystem 目前尚未採用 Sigstore，那層仍需 caller 走 `ExpectedSha256` 釘版。
+
+### 2.4 釘版 SHA-256（**商用環境必走**）
 
 `MpvNativeAssetVerificationPolicy.RequirePinnedSha256` + `ExpectedSha256` 由 caller 提供預期 SHA-256：
 
@@ -58,11 +79,11 @@ MpvWindowsBuildDownloadOptions options = new MpvWindowsBuildDownloadOptions
 3. 把 SHA pin 設進 `ExpectedSha256`、`VerificationPolicy = RequirePinnedSha256`、`OverwriteExisting = true`（強制重抓驗證，不走 idempotency skip）。
 4. helper 驗證 SHA 失敗即 throw，CI / startup 立即 fail，不會載入未驗證的 binary。
 
-### 2.4 idempotency 與快取
+### 2.5 idempotency 與快取
 
 `InstallOrUpdateAsync` 預設使用 sidecar marker（`libmpv-2.dll.version.json`）skip 第二次後的重複下載。**注意：skip 路徑信任 disk 上的檔是我們上次自己裝完寫入的** —— 若 caller 對「重複呼叫之間檔案被改」有疑慮，請設 `OverwriteExisting = true` 強制走完整下載 + SHA 驗證。
 
-### 2.5 預設 LGPL 偏好（降低法律風險）
+### 2.6 預設 LGPL 偏好（降低法律風險）
 
 - libmpv 預設 `Provider = Zhongfly` + `LicensePreference = PreferLgpl` → 實際拿 LGPL build。
 - FFmpeg 預設 `IncludeFFmpeg = false` → 不下載 GPL FFmpeg。

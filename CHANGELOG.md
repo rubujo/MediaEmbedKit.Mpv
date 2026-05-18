@@ -69,6 +69,7 @@
 - `tools/Sync-ProviderDocs.ps1` 自動同步 catalog 與下游文件，含 `-Check` 模式可掛 release gate。
 - `tools/libmpv/Check-LibMpvHeaderDrift.ps1` 追蹤 mpv git build 公開 header 變更。
 - `.github/workflows/ci.yml` + `release.yml`：PR / push 跑非 GUI release gate；tag push 包含 `-IncludeDocSyncCheck` 阻擋下游文件 drift。
+- `release.yml` 用 [`actions/attest-build-provenance@v4`](https://github.com/actions/attest-build-provenance) 對每個 `.nupkg` / `.snupkg` 產生 Sigstore-signed build provenance attestation（寫進 Rekor transparency log）；consumer 可用 `gh attestation verify` 或 `cosign verify-blob-attestation` 驗證套件來自本 repo 的指定 commit。詳見 [`SECURITY.md`](SECURITY.md) §2.3。
 
 ### 文件
 
