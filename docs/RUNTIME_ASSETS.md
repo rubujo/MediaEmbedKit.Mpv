@@ -29,9 +29,7 @@ runtime helper 預設要求 GitHub Releases API 提供 `sha256:` digest，並驗
 - `MpvNativeAssetVerificationPolicy.RequirePinnedSha256`：要求呼叫端提供 `ExpectedSha256`，以下載內容的 SHA-256 值作為鎖定紀錄。
 - `MpvNativeAssetVerificationPolicy.BestEffort`：GitHub Releases API 提供 SHA-256 digest 時會驗證，未提供時不阻擋下載；**僅作為自訂來源或相容情境**的退路，不再作為預設。
 
-`LockReleaseSource = true` 會鎖定內建 GitHub repository 與下載 URL。啟用後，helper 會拒絕非預設 GitHub Releases API 或非預期 repository 的資產 URL。
-
-`yt-dlp` 支援使用 `SHA2-256SUMS` 驗證發行檔。Deno 支援使用發行資產同層的 `.sha256sum` 檔案驗證壓縮檔。yt-dlp FFmpeg-Builds 支援使用 `checksums.sha256` 驗證發行檔。libmpv 的 shinchiro 與 zhongfly provider 不在 `RequireProviderChecksum` 支援範圍內；更嚴格的生產下載請使用 `RequirePinnedSha256`、`ExpectedSha256` 與 `LockReleaseSource`。
+`yt-dlp` 支援使用 `SHA2-256SUMS` 驗證發行檔。Deno 支援使用發行資產同層的 `.sha256sum` 檔案驗證壓縮檔。yt-dlp FFmpeg-Builds 支援使用 `checksums.sha256` 驗證發行檔。libmpv 的 shinchiro 與 zhongfly provider 不在 `RequireProviderChecksum` 支援範圍內；更嚴格的生產下載請使用 `RequirePinnedSha256` + `ExpectedSha256`（從 vendor 自家可信通道取得 SHA pin），詳見 [`SECURITY.md`](../SECURITY.md) §2.3。
 
 ## 重複呼叫與更新語意（idempotency）
 
