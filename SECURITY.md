@@ -39,21 +39,21 @@ helper 自動下載第三方原生二進位（libmpv、yt-dlp、Deno、FFmpeg）
 
 ### 2.3 NuGet 套件 build provenance（Sigstore attestation）
 
-本專案發行的 6 個 `.nupkg` + 6 個 `.snupkg` 透過 [`actions/attest-build-provenance`](https://github.com/actions/attest-build-provenance) 產生 Sigstore-signed build provenance attestation（寫進 Rekor [transparency log](https://search.sigstore.dev/)），證明套件來自 `github.com/rubujo/MediaEmbedKit.Mpv` 的特定 commit + workflow run。
+本專案發行的 12 個 `.nupkg` + 12 個 `.snupkg` 透過 [`actions/attest-build-provenance`](https://github.com/actions/attest-build-provenance) 產生 Sigstore-signed build provenance attestation（寫進 Rekor [transparency log](https://search.sigstore.dev/)），證明套件來自 `github.com/rubujo/MediaEmbedKit.Mpv` 的特定 commit + workflow run。
 
-**驗證方式**（caller 取得 `.nupkg` 後）：
+**驗證方式**（caller 取得 `.nupkg` 後，`<version>` 替換為實際版號）：
 
 ```powershell
 # 方法 1：GitHub CLI（最簡單）
-gh attestation verify MediaEmbedKit.Mpv.0.0.1.nupkg --owner rubujo
+gh attestation verify MediaEmbedKit.Mpv.<version>.nupkg --owner rubujo
 
 # 方法 2：cosign（不依賴 gh CLI）
 cosign verify-blob-attestation `
-  --bundle MediaEmbedKit.Mpv.0.0.1.nupkg.sigstore `
+  --bundle MediaEmbedKit.Mpv.<version>.nupkg.sigstore `
   --new-bundle-format `
   --certificate-identity-regexp 'https://github.com/rubujo/MediaEmbedKit.Mpv/.+' `
   --certificate-oidc-issuer https://token.actions.githubusercontent.com `
-  MediaEmbedKit.Mpv.0.0.1.nupkg
+  MediaEmbedKit.Mpv.<version>.nupkg
 ```
 
 驗證通過代表：套件確實由本 repo 的 GitHub Actions release workflow 在指定 commit 上 build 出來，未被中途替換。**範圍**：防護「NuGet 套件本身被替換」攻擊。**不防** runtime helper 自動下載的第三方 binary（libmpv / yt-dlp / Deno / FFmpeg）—— 上游 mpv ecosystem 目前尚未採用 Sigstore，那層仍需 caller 走 `ExpectedSha256` 釘版。

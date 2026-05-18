@@ -12,52 +12,78 @@
 
 ## 套件總覽
 
-每個 release tag 會上傳 6 個 `.nupkg` 與對應的 6 個 `.snupkg`：
+每個 release tag 會上傳 12 個 `.nupkg` 與對應的 12 個 `.snupkg`，分為 service 層、UI 層、與 meta 三類：
+
+### Service 層（6 個）
 
 | Package | 用途 | TFM |
 |---|---|---|
-| `MediaEmbedKit.Mpv` | 核心 libmpv 包裝、runtime helper、高階 API | `netstandard2.0;net472;net48;net10.0` |
+| `MediaEmbedKit.Mpv` | 核心 libmpv binding、高階 `MpvPlayer` / `MpvAppBuilder`、value types、events | `netstandard2.0;net472;net48;net10.0` |
+| `MediaEmbedKit.Mpv.Externals` | FFmpeg / Deno / yt-dlp downloader + 共用 net infra | `netstandard2.0;net472;net48;net10.0` |
+| `MediaEmbedKit.Mpv.Runtime` | libmpv Windows runtime installer + 4-tier archive 解壓 + cross-process lock | `netstandard2.0;net472;net48;net10.0` |
+| `MediaEmbedKit.Mpv.Diagnostics` | `MpvLicenseAuditor` / `MpvRuntimeHealthCheck` / `MpvLibraryUpdateScheduler` | `netstandard2.0;net472;net48;net10.0` |
+| `MediaEmbedKit.Mpv.Hosting` | `Microsoft.Extensions.DependencyInjection` 整合（`AddMpvPlayer` / `AddMpvPlayerFactory`） | `netstandard2.0;net472;net48;net10.0` |
+| `MediaEmbedKit.Mpv.Encoding` | `MpvEncoder` 高階轉碼 facade（9 個 recipe 方法） | `netstandard2.0;net472;net48;net10.0` |
+
+### UI 層（5 個）
+
+| Package | 用途 | TFM |
+|---|---|---|
 | `MediaEmbedKit.Mpv.WinForms` | WinForms 控制項 | `net472;net48;net10.0-windows` |
 | `MediaEmbedKit.Mpv.Wpf` | WPF `HwndHost` 控制項 + AirSpace 覆蓋層 | `net472;net48;net10.0-windows` |
 | `MediaEmbedKit.Mpv.Avalonia` | Avalonia OpenGL render API 控制項 | `net10.0-windows` |
 | `MediaEmbedKit.Mpv.WinUI` | WinUI 3 控制項 | `net10.0-windows10.0.19041.0` |
-| `MediaEmbedKit.Mpv.Maui` | .NET MAUI Windows handler | `net10.0-windows10.0.19041.0` |
+| `MediaEmbedKit.Mpv.Maui` | .NET MAUI Windows handler（橋接 WinUI） | `net10.0-windows10.0.19041.0` |
 
-`net8.0` / `net8.0-windows` 已不在多 target 矩陣（核心於 commit 668d367 移除、UI 後續清理一併移除）。要在 .NET 8 環境消費這些套件，可改 target `net10.0-windows` 或回退至 .NET Framework 4.7.2 / 4.8。
+### Meta（1 個）
 
-只裝你需要的：UI 套件會自動透過 `<PackageReference>` 拉入核心 `MediaEmbedKit.Mpv`，不需要分開列出。
+| Package | 用途 | TFM |
+|---|---|---|
+| `MediaEmbedKit.Mpv.Full` | `<PackageReference>` 拉 6 個 service-layer 套件（不含 UI 套件，因 TFM 分散） | `netstandard2.0;net472;net48;net10.0` |
 
-> **本文件以 `<version>` 作為版號 placeholder**；複製範例時請替換為實際版號。
-> 目前 `Directory.Build.props` 的 `<PackageVersion>` 是 **`0.0.1`**，對應 tag 名 `v0.0.1`、
-> nupkg 檔名 `MediaEmbedKit.Mpv.0.0.1.nupkg`。後續升版時用 `tools/Bump-Version.ps1` 一鍵改全部。
+**只裝你需要的**：依賴鏈會自動拉入相依套件 —— 例如裝 `MediaEmbedKit.Mpv.WinForms` 會自動拉入 `MediaEmbedKit.Mpv`；裝 `MediaEmbedKit.Mpv.Diagnostics` 會自動拉入 `.Mpv` / `.Externals` / `.Runtime`。
+
+> **本文件以 `<version>` 作為版號 placeholder**；複製範例時請替換為實際版號。目前 `Directory.Build.props` 的 `<PackageVersion>` 決定 tag 名與 nupkg 檔名（例：`PackageVersion=0.0.1` → tag `v0.0.1` → `MediaEmbedKit.Mpv.0.0.1.nupkg`）。升版時用 `tools/Bump-Version.ps1` 一鍵改全部。
 
 ## 步驟 1：下載
 
-到 repo 的 [GitHub Releases](https://github.com/rubujo/MediaEmbedKit.Mpv/releases) 頁面，挑選想要的 tag（例如 `v0.0.1`），把 `.nupkg` 與 `.snupkg` 一併下載。建議下載**所有 6 個 package**：用不到的留著也沒成本，未來想加 UI framework 就不用再回頭下載。
+到 repo 的 [GitHub Releases](https://github.com/rubujo/MediaEmbedKit.Mpv/releases) 頁面，挑選想要的 tag（例如 `v<version>`），把 `.nupkg` 與 `.snupkg` 一併下載。建議下載**所有 12 個 package**：用不到的留著也沒成本，未來想加 UI framework 或 .Diagnostics 等服務套件就不用再回頭下載。
 
 `.snupkg` 是 symbol package，IDE 除錯時會自動展開 PDB 與原始碼導航（SourceLink 已在 release gate 配置好）。可以選擇不下載，但有的話除錯體驗會明顯好很多。
 
 ## 步驟 2：建立本機 feed 資料夾
 
-挑一個固定位置放下載的檔案；任何資料夾都可以，但要選**不會被 IDE / build 工具清掉**的地方。以目前版號 `0.0.1` 為例的常見 layout：
+挑一個固定位置放下載的檔案；任何資料夾都可以，但要選**不會被 IDE / build 工具清掉**的地方。扁平 layout 範例（`<version>` 替換為實際版號）：
 
 ```text
 C:\NuGet\MediaEmbedKit.Mpv\
-├── MediaEmbedKit.Mpv.0.0.1.nupkg
-├── MediaEmbedKit.Mpv.0.0.1.snupkg
-├── MediaEmbedKit.Mpv.WinForms.0.0.1.nupkg
-├── MediaEmbedKit.Mpv.WinForms.0.0.1.snupkg
-├── MediaEmbedKit.Mpv.Wpf.0.0.1.nupkg
-├── MediaEmbedKit.Mpv.Wpf.0.0.1.snupkg
-├── MediaEmbedKit.Mpv.Avalonia.0.0.1.nupkg
-├── MediaEmbedKit.Mpv.Avalonia.0.0.1.snupkg
-├── MediaEmbedKit.Mpv.WinUI.0.0.1.nupkg
-├── MediaEmbedKit.Mpv.WinUI.0.0.1.snupkg
-├── MediaEmbedKit.Mpv.Maui.0.0.1.nupkg
-└── MediaEmbedKit.Mpv.Maui.0.0.1.snupkg
+├── MediaEmbedKit.Mpv.<version>.nupkg
+├── MediaEmbedKit.Mpv.<version>.snupkg
+├── MediaEmbedKit.Mpv.Externals.<version>.nupkg
+├── MediaEmbedKit.Mpv.Externals.<version>.snupkg
+├── MediaEmbedKit.Mpv.Runtime.<version>.nupkg
+├── MediaEmbedKit.Mpv.Runtime.<version>.snupkg
+├── MediaEmbedKit.Mpv.Diagnostics.<version>.nupkg
+├── MediaEmbedKit.Mpv.Diagnostics.<version>.snupkg
+├── MediaEmbedKit.Mpv.Hosting.<version>.nupkg
+├── MediaEmbedKit.Mpv.Hosting.<version>.snupkg
+├── MediaEmbedKit.Mpv.Encoding.<version>.nupkg
+├── MediaEmbedKit.Mpv.Encoding.<version>.snupkg
+├── MediaEmbedKit.Mpv.WinForms.<version>.nupkg
+├── MediaEmbedKit.Mpv.WinForms.<version>.snupkg
+├── MediaEmbedKit.Mpv.Wpf.<version>.nupkg
+├── MediaEmbedKit.Mpv.Wpf.<version>.snupkg
+├── MediaEmbedKit.Mpv.Avalonia.<version>.nupkg
+├── MediaEmbedKit.Mpv.Avalonia.<version>.snupkg
+├── MediaEmbedKit.Mpv.WinUI.<version>.nupkg
+├── MediaEmbedKit.Mpv.WinUI.<version>.snupkg
+├── MediaEmbedKit.Mpv.Maui.<version>.nupkg
+├── MediaEmbedKit.Mpv.Maui.<version>.snupkg
+├── MediaEmbedKit.Mpv.Full.<version>.nupkg
+└── MediaEmbedKit.Mpv.Full.<version>.snupkg
 ```
 
-要支援多版本並存：放在 `C:\NuGet\MediaEmbedKit.Mpv\` 根目錄就好，NuGet 會自己以檔名解析版本。**不要**手動分子資料夾（如 `0.0.1/`）— 那是 hierarchical layout，需要不同的 source 設定，本流程用扁平最簡單。
+要支援多版本並存：放在 `C:\NuGet\MediaEmbedKit.Mpv\` 根目錄就好，NuGet 會自己以檔名解析版本。**不要**手動分子資料夾（如 `<version>/`）—— 那是 hierarchical layout，需要不同的 source 設定，本流程用扁平最簡單。
 
 ## 步驟 3：把資料夾註冊成 NuGet source
 
@@ -107,15 +133,29 @@ dotnet nuget add source "C:\NuGet\MediaEmbedKit.Mpv" --name "MediaEmbedKit.Mpv (
 
 ```xml
 <ItemGroup>
-  <!-- 核心；通常會被 UI 套件當作依賴自動拉，不需要顯式列出 -->
-  <PackageReference Include="MediaEmbedKit.Mpv" Version="<version>" />
+  <!-- 依需要選裝；UI 套件會自動拉入核心 .Mpv，.Runtime 會拉入 .Externals + .Mpv -->
 
-  <!-- 依你用的 UI framework 二擇一或多選 -->
+  <!-- UI framework（依你用的 UI 二擇一或多選） -->
   <PackageReference Include="MediaEmbedKit.Mpv.Wpf" Version="<version>" />
   <PackageReference Include="MediaEmbedKit.Mpv.WinForms" Version="<version>" />
   <PackageReference Include="MediaEmbedKit.Mpv.Avalonia" Version="<version>" />
   <PackageReference Include="MediaEmbedKit.Mpv.WinUI" Version="<version>" />
   <PackageReference Include="MediaEmbedKit.Mpv.Maui" Version="<version>" />
+
+  <!-- 想要 helper 自動下載 libmpv / yt-dlp / Deno / FFmpeg -->
+  <PackageReference Include="MediaEmbedKit.Mpv.Runtime" Version="<version>" />
+
+  <!-- 商用合規與健康檢查（需要 LicenseAuditor / HealthCheck / UpdateScheduler 才裝） -->
+  <PackageReference Include="MediaEmbedKit.Mpv.Diagnostics" Version="<version>" />
+
+  <!-- 高階轉碼（需要 MpvEncoder 才裝） -->
+  <PackageReference Include="MediaEmbedKit.Mpv.Encoding" Version="<version>" />
+
+  <!-- DI 整合（需要 AddMpvPlayer / AddMpvPlayerFactory 才裝） -->
+  <PackageReference Include="MediaEmbedKit.Mpv.Hosting" Version="<version>" />
+
+  <!-- 一次裝 6 個 service 套件的 meta（UI 仍需另加） -->
+  <PackageReference Include="MediaEmbedKit.Mpv.Full" Version="<version>" />
 </ItemGroup>
 ```
 
@@ -125,7 +165,7 @@ dotnet nuget add source "C:\NuGet\MediaEmbedKit.Mpv" --name "MediaEmbedKit.Mpv (
 dotnet add package MediaEmbedKit.Mpv.Wpf --version <version>
 ```
 
-**alpha / preview 版本注意：** 若使用 `0.x.y-alpha.z` 等含 pre-release suffix 的版號，預設 `dotnet add package` 在不指定 `--version` 時會跳過。請 **明確帶 `--version`** 或加 `--prerelease`。目前 `0.0.1`（無 pre-release suffix）不受此限制。
+**alpha / preview 版本注意：** 若使用 `0.x.y-alpha.z` 等含 pre-release suffix 的版號，預設 `dotnet add package` 在不指定 `--version` 時會跳過。請 **明確帶 `--version`** 或加 `--prerelease`。
 
 ```powershell
 dotnet restore  # 若 IDE 沒自動觸發
@@ -151,7 +191,7 @@ dotnet list package
 
 ## SourceLink 與 symbol package
 
-release gate 已對所有 6 個 packable project 配置 SourceLink + `.snupkg`。本機 feed 安裝後：
+release gate 已對所有 12 個 packable project 配置 SourceLink + `.snupkg`。本機 feed 安裝後：
 
 - **F12 / Go to Definition** 會看到我們的 C# 原始碼（不只是 metadata）
 - **Step Into** 進函式時 IDE 會自動下載／開啟對應 commit 的原始碼
@@ -163,7 +203,7 @@ VS / Rider 預設啟用 SourceLink；如果跳不進去，檢查 IDE 設定的�
 
 新 tag 出來後：
 
-1. 從 GitHub Releases 下載新版的 6 個 `.nupkg`（與 `.snupkg`）
+1. 從 GitHub Releases 下載新版的 12 個 `.nupkg`（與 `.snupkg`）
 2. **丟進同一個資料夾**（不要刪舊版，扁平 layout 允許多版本共存）
 3. 在 `.csproj` 把 `Version="<舊版號>"` 改成新版號
 4. `dotnet restore`
