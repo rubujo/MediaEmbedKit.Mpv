@@ -49,6 +49,12 @@ internal static class BrowserRequestHeaders
     /// </summary>
     /// <param name="headers">要套用標頭的 HTTP 要求標頭集合。</param>
     /// <param name="userAgent">自訂使用者代理字串；未指定時使用專案預設值。</param>
+    /// <remarks>
+    /// 套用完整 Chrome 瀏覽器標頭（含 sec-ch-ua 系列 client hints），適用於下載 CDN
+    /// （GitHub release asset / shinchiro / zhongfly 等）—— 部分 CDN 對非瀏覽器 UA
+    /// 有 rate-limit / anti-bot 行為。對 GitHub <c>api.github.com</c> JSON API 請改用
+    /// <see cref="ApplyForGitHubApi"/>（誠實 UA、不發 client hints）。
+    /// </remarks>
     public static void Apply(HttpRequestHeaders headers, string? userAgent)
     {
         string effectiveUserAgent = string.IsNullOrWhiteSpace(userAgent) ? ChromeStableUserAgent : userAgent!;
@@ -60,6 +66,41 @@ internal static class BrowserRequestHeaders
         headers.TryAddWithoutValidation("sec-ch-ua-full-version-list", CreateSecChUaFullVersionList(chromeVersion));
         headers.TryAddWithoutValidation("sec-ch-ua-mobile", SecChUaMobile);
         headers.TryAddWithoutValidation("sec-ch-ua-platform", SecChUaPlatform);
+    }
+
+    /// <summary>
+    /// 將 GitHub API 適用的誠實 UA 套到指定的 HTTP 要求標頭集合（**不**含 sec-ch-ua
+    /// 系列 client hints —— JSON API 不需要也不期望這些瀏覽器專屬 headers）。
+    /// </summary>
+    /// <param name="headers">要套用標頭的 HTTP 要求標頭集合。</param>
+    /// <param name="userAgent">
+    /// 自訂使用者代理字串；未指定時用 <c>MediaEmbedKit.Mpv/&lt;assemblyVersion&gt; (+repo)</c>
+    /// 形式，符合 GitHub ToS 偏好「標識性 UA」的觀感。
+    /// </param>
+    public static void ApplyForGitHubApi(HttpRequestHeaders headers, string? userAgent)
+    {
+        string effectiveUserAgent = string.IsNullOrWhiteSpace(userAgent) ? GitHubApiUserAgent : userAgent!;
+        headers.UserAgent.ParseAdd(effectiveUserAgent);
+    }
+
+    /// <summary>
+    /// 對 <c>api.github.com</c> 使用的誠實識別 UA。包含 helper 名稱、版本與 repo URL，
+    /// 符合 GitHub ToS 偏好的「標識性 UA」觀感，且不發瀏覽器 client hints（JSON API 不需）。
+    /// </summary>
+    public static readonly string GitHubApiUserAgent = "MediaEmbedKit.Mpv/" + GetAssemblyVersion() + " (+https://github.com/rubujo/MediaEmbedKit.Mpv)";
+
+    /// <summary>取得當前 assembly 版本字串（用於建構 GitHubApiUserAgent）。</summary>
+    private static string GetAssemblyVersion()
+    {
+        try
+        {
+            System.Reflection.AssemblyName name = typeof(BrowserRequestHeaders).Assembly.GetName();
+            return name.Version?.ToString(3) ?? "0.0.0";
+        }
+        catch
+        {
+            return "0.0.0";
+        }
     }
 
     /// <summary>

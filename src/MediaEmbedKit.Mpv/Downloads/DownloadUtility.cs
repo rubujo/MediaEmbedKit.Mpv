@@ -39,15 +39,67 @@ internal static class DownloadUtility
     /// <returns>表示最新 GitHub 發行資料的工作。</returns>
     public static async Task<GitHubRelease> GetLatestReleaseAsync(Uri apiUri, string? userAgent, CancellationToken cancellationToken)
     {
+        // 對 5xx / 429 走指數 backoff retry（500ms / 2s / 8s），共 3 輪。GitHub API 偶發
+        // 5xx / rate-limit 觸發在使用者第一次安裝是最痛的失敗點 —— 重試讓多數臨時故障
+        // 自動恢復。其他 4xx（401、403 不是 429、404 等）不重試，因為 retry 不會自癒。
+        TimeSpan[] backoffs = { TimeSpan.FromMilliseconds(500), TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(8) };
+        for (int attempt = 0; attempt <= backoffs.Length; attempt++)
+        {
+            try
+            {
+                return await GetLatestReleaseOnceAsync(apiUri, userAgent, cancellationToken).ConfigureAwait(false);
+            }
+            catch (HttpRequestException) when (attempt < backoffs.Length)
+            {
+                // 網路層失敗（DNS / connection refused / TLS 等）通常是暫時的，重試一次值得試。
+                await Task.Delay(backoffs[attempt], cancellationToken).ConfigureAwait(false);
+            }
+            catch (TransientHttpStatusException ex) when (attempt < backoffs.Length)
+            {
+                // 5xx 或 429：明確標示為可重試。記下 status code 供 log 追蹤。
+                System.Diagnostics.Trace.WriteLine(
+                    "GetLatestReleaseAsync: HTTP " + (int)ex.StatusCode + " (" + ex.StatusCode + ") on " +
+                    apiUri + ", retry in " + backoffs[attempt].TotalSeconds + "s (attempt " + (attempt + 1) + "/" + backoffs.Length + ")");
+                await Task.Delay(backoffs[attempt], cancellationToken).ConfigureAwait(false);
+            }
+        }
+
+        // 重試耗盡：再呼一次，這次直接讓例外冒出（不再 catch）。
+        return await GetLatestReleaseOnceAsync(apiUri, userAgent, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>單次嘗試取 GitHub 發行資料（不含 retry / backoff）。</summary>
+    private static async Task<GitHubRelease> GetLatestReleaseOnceAsync(Uri apiUri, string? userAgent, CancellationToken cancellationToken)
+    {
         using (HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, apiUri))
         {
-            BrowserRequestHeaders.Apply(request.Headers, userAgent);
+            // api.github.com 用誠實標識性 UA，不發瀏覽器 sec-ch-ua client hints
+            // （JSON API 不需要、GitHub ToS 偏好標識性 UA）。CDN download URL 走另一條
+            // 路徑（DownloadFileAsync），用 Apply() 完整 Chrome 標頭避免 anti-bot。
+            BrowserRequestHeaders.ApplyForGitHubApi(request.Headers, userAgent);
             request.Headers.Accept.ParseAdd("application/vnd.github+json");
 
             using (HttpResponseMessage response = await SharedHttpClient.SendAsync(request, cancellationToken).ConfigureAwait(false))
             {
+                int statusCode = (int)response.StatusCode;
+                if (statusCode >= 500 || statusCode == 429)
+                {
+                    // 包成可被 retry loop catch 的型別。429 額外帶 X-RateLimit-Remaining 給 caller 知道。
+                    string detail = string.Empty;
+                    if (statusCode == 429 && response.Headers.TryGetValues("X-RateLimit-Remaining", out var values))
+                    {
+                        detail = " (X-RateLimit-Remaining=" + string.Join(",", values) + ")";
+                    }
+
+                    throw new TransientHttpStatusException(response.StatusCode, "GitHub API HTTP " + statusCode + detail);
+                }
+
                 response.EnsureSuccessStatusCode();
+#if NET5_0_OR_GREATER
+                Stream stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+#else
                 Stream stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+#endif
                 GitHubRelease? release = await JsonSerializer.DeserializeAsync(
                     stream,
                     GitHubReleaseJsonContext.Default.GitHubRelease,
@@ -60,6 +112,18 @@ internal static class DownloadUtility
                 return release;
             }
         }
+    }
+
+    /// <summary>標示 HTTP 回應為「暫時性、可 retry」（5xx / 429）。</summary>
+    private sealed class TransientHttpStatusException : Exception
+    {
+        public TransientHttpStatusException(System.Net.HttpStatusCode statusCode, string message)
+            : base(message)
+        {
+            StatusCode = statusCode;
+        }
+
+        public System.Net.HttpStatusCode StatusCode { get; }
     }
 
     /// <summary>
@@ -91,10 +155,16 @@ internal static class DownloadUtility
             using (HttpResponseMessage response = await SharedHttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false))
             {
                 response.EnsureSuccessStatusCode();
+#if NET5_0_OR_GREATER
+                using (Stream remote = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false))
+#else
                 using (Stream remote = await response.Content.ReadAsStreamAsync().ConfigureAwait(false))
+#endif
                 using (FileStream local = File.Create(tempPath))
                 {
-                    await remote.CopyToAsync(local).ConfigureAwait(false);
+                    // 把 cancellationToken 傳完整 —— 原本只 SendAsync 帶 token，CopyToAsync
+                    // 沒帶 → cancel 大檔下載（FFmpeg 200 MB / libmpv 30 MB）後仍會跑完才停。
+                    await remote.CopyToAsync(local, 81920, cancellationToken).ConfigureAwait(false);
                 }
             }
         }
@@ -118,10 +188,14 @@ internal static class DownloadUtility
             using (HttpResponseMessage response = await SharedHttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false))
             {
                 response.EnsureSuccessStatusCode();
+#if NET5_0_OR_GREATER
+                using (Stream remote = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false))
+#else
                 using (Stream remote = await response.Content.ReadAsStreamAsync().ConfigureAwait(false))
+#endif
                 using (MemoryStream local = new MemoryStream())
                 {
-                    await remote.CopyToAsync(local).ConfigureAwait(false);
+                    await remote.CopyToAsync(local, 81920, cancellationToken).ConfigureAwait(false);
                     return local.ToArray();
                 }
             }

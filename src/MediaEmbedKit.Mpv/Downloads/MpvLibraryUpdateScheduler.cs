@@ -39,6 +39,13 @@ public sealed class MpvLibraryUpdateScheduler
     private readonly MpvWindowsBuildDownloadOptions _defaultOptions;
 
     /// <summary>
+    /// 同處理序內 apply / rollback / prune 互斥鎖 —— 防 multi-thread startup race
+    /// （IsLoaded 檢查與 File.Copy 之間 TOCTOU；同時跑 apply 與 prune 互踩 staged dir 等）。
+    /// 此 lock 只防同處理序；跨 process race 由 runtimeDirectory file lock 處理。
+    /// </summary>
+    private readonly object _syncRoot = new object();
+
+    /// <summary>
     /// 初始化 <see cref="MpvLibraryUpdateScheduler"/> 類別的新執行個體。
     /// </summary>
     /// <param name="runtimeDirectory">執行階段資料夾，必須是日後 libmpv-2.dll 載入位置的根目錄。</param>
@@ -160,41 +167,53 @@ public sealed class MpvLibraryUpdateScheduler
     /// <returns>套用結果；無暫存可套用時 <see cref="MpvLibraryApplyResult.Applied"/> 為 <see langword="false"/>。</returns>
     public MpvLibraryApplyResult ApplyStagedOnStartup()
     {
-        if (MpvLibraryLoader.IsLoaded)
+        lock (_syncRoot)
         {
-            throw new InvalidOperationException("libmpv 已在當前處理序載入，無法套用暫存的更新；請於下次啟動前呼叫。");
-        }
+            // 在 lock 內再驗一次 IsLoaded：原本 IsLoaded 檢查與 File.Copy 之間的 TOCTOU
+            // 可讓另一執行緒 Load 進來 → File.Copy 撞鎖檔 IOException。
+            if (MpvLibraryLoader.IsLoaded)
+            {
+                throw new InvalidOperationException("libmpv 已在當前處理序載入，無法套用暫存的更新；請於下次啟動前呼叫。");
+            }
 
-        IReadOnlyList<MpvLibraryStagedUpdate> staged = ListStagedUpdates();
-        if (staged.Count == 0)
-        {
-            return new MpvLibraryApplyResult(false, null, null, "沒有可套用的暫存更新。");
-        }
+            IReadOnlyList<MpvLibraryStagedUpdate> staged = ListStagedUpdates();
+            if (staged.Count == 0)
+            {
+                return new MpvLibraryApplyResult(false, null, null, "沒有可套用的暫存更新。");
+            }
 
-        MpvLibraryStagedUpdate latest = staged[staged.Count - 1];
-        string currentPath = CurrentLibraryPath;
-        string previousDirectory = Path.Combine(_runtimeDirectory, PreviousDirectoryName);
-        Directory.CreateDirectory(previousDirectory);
-        string previousPath = PreviousLibraryPath;
-        if (File.Exists(currentPath))
-        {
-            File.Copy(currentPath, previousPath, true);
-        }
+            MpvLibraryStagedUpdate latest = staged[staged.Count - 1];
+            string currentPath = CurrentLibraryPath;
+            string previousDirectory = Path.Combine(_runtimeDirectory, PreviousDirectoryName);
+            Directory.CreateDirectory(previousDirectory);
+            string previousPath = PreviousLibraryPath;
+            if (File.Exists(currentPath))
+            {
+                File.Copy(currentPath, previousPath, true);
+            }
 
-        File.Copy(latest.LibraryPath, currentPath, true);
+            // File.Copy 前再驗一次 IsLoaded —— lock 阻擋同處理序 race，但若多執行緒在
+            // lock 取得後別處 Load（不該發生但保險）會在這裡明確 throw 而非沉默成功。
+            if (MpvLibraryLoader.IsLoaded)
+            {
+                throw new InvalidOperationException("libmpv 已在 apply 過程中被載入，套用中止以避免覆寫鎖檔；請於下次啟動前重試。");
+            }
 
-        try
-        {
-            Directory.Delete(latest.StagedDirectory, true);
-        }
-        catch (IOException)
-        {
-        }
-        catch (UnauthorizedAccessException)
-        {
-        }
+            File.Copy(latest.LibraryPath, currentPath, true);
 
-        return new MpvLibraryApplyResult(true, latest.LibraryPath, previousPath, "已將暫存版本提升為使用版本。");
+            try
+            {
+                Directory.Delete(latest.StagedDirectory, true);
+            }
+            catch (IOException)
+            {
+            }
+            catch (UnauthorizedAccessException)
+            {
+            }
+
+            return new MpvLibraryApplyResult(true, latest.LibraryPath, previousPath, "已將暫存版本提升為使用版本。");
+        }
     }
 
     /// <summary>
@@ -204,36 +223,46 @@ public sealed class MpvLibraryUpdateScheduler
     /// <returns>還原結果；找不到 <c>.previous/</c> 時 <see cref="MpvLibraryRollbackResult.RolledBack"/> 為 <see langword="false"/>。</returns>
     public MpvLibraryRollbackResult Rollback()
     {
-        if (MpvLibraryLoader.IsLoaded)
+        lock (_syncRoot)
         {
-            throw new InvalidOperationException("libmpv 已在當前處理序載入，無法回滾；請於下次啟動前呼叫。");
-        }
-
-        string previousPath = PreviousLibraryPath;
-        if (!File.Exists(previousPath))
-        {
-            return new MpvLibraryRollbackResult(false, null, "找不到 .previous/libmpv-2.dll，無法回滾。");
-        }
-
-        string currentPath = CurrentLibraryPath;
-        File.Copy(previousPath, currentPath, true);
-        try
-        {
-            File.Delete(previousPath);
-            string previousDirectory = Path.Combine(_runtimeDirectory, PreviousDirectoryName);
-            if (Directory.Exists(previousDirectory) && !Directory.EnumerateFileSystemEntries(previousDirectory).Any())
+            if (MpvLibraryLoader.IsLoaded)
             {
-                Directory.Delete(previousDirectory, false);
+                throw new InvalidOperationException("libmpv 已在當前處理序載入，無法回滾；請於下次啟動前呼叫。");
             }
-        }
-        catch (IOException)
-        {
-        }
-        catch (UnauthorizedAccessException)
-        {
-        }
 
-        return new MpvLibraryRollbackResult(true, currentPath, "已從 .previous/ 還原為使用版本。");
+            string previousPath = PreviousLibraryPath;
+            if (!File.Exists(previousPath))
+            {
+                return new MpvLibraryRollbackResult(false, null, "找不到 .previous/libmpv-2.dll，無法回滾。");
+            }
+
+            string currentPath = CurrentLibraryPath;
+
+            // File.Copy 前再驗一次 IsLoaded（同 ApplyStagedOnStartup 的 TOCTOU 防護）。
+            if (MpvLibraryLoader.IsLoaded)
+            {
+                throw new InvalidOperationException("libmpv 已在 rollback 過程中被載入，回滾中止以避免覆寫鎖檔；請於下次啟動前重試。");
+            }
+
+            File.Copy(previousPath, currentPath, true);
+            try
+            {
+                File.Delete(previousPath);
+                string previousDirectory = Path.Combine(_runtimeDirectory, PreviousDirectoryName);
+                if (Directory.Exists(previousDirectory) && !Directory.EnumerateFileSystemEntries(previousDirectory).Any())
+                {
+                    Directory.Delete(previousDirectory, false);
+                }
+            }
+            catch (IOException)
+            {
+            }
+            catch (UnauthorizedAccessException)
+            {
+            }
+
+            return new MpvLibraryRollbackResult(true, currentPath, "已從 .previous/ 還原為使用版本。");
+        }
     }
 
     /// <summary>
@@ -242,22 +271,25 @@ public sealed class MpvLibraryUpdateScheduler
     /// <returns>已被清除的暫存集合。</returns>
     public IReadOnlyList<MpvLibraryStagedUpdate> PruneStagedUpdates()
     {
-        IReadOnlyList<MpvLibraryStagedUpdate> staged = ListStagedUpdates();
-        foreach (MpvLibraryStagedUpdate update in staged)
+        lock (_syncRoot)
         {
-            try
+            IReadOnlyList<MpvLibraryStagedUpdate> staged = ListStagedUpdates();
+            foreach (MpvLibraryStagedUpdate update in staged)
             {
-                Directory.Delete(update.StagedDirectory, true);
+                try
+                {
+                    Directory.Delete(update.StagedDirectory, true);
+                }
+                catch (IOException)
+                {
+                }
+                catch (UnauthorizedAccessException)
+                {
+                }
             }
-            catch (IOException)
-            {
-            }
-            catch (UnauthorizedAccessException)
-            {
-            }
-        }
 
-        return staged;
+            return staged;
+        }
     }
 }
 

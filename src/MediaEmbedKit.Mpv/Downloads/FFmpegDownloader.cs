@@ -65,6 +65,11 @@ public static class FFmpegDownloader
         options = options ?? new FFmpegDownloadOptions();
         Directory.CreateDirectory(installDirectory);
 
+        // 進入時清掉 .ffmpeg-extract/ 內過去失敗殘留的 {guid}/ 子資料夾（防毒鎖檔、
+        // 強制中止、斷電等場景會留下解壓中段的 ~300 MB 孤兒）。本次解壓會用新
+        // {guid}/，不會踩到正在運行的並發解壓（每次都用 Guid.NewGuid()）。
+        TryPruneFFmpegExtractWorkspace(installDirectory);
+
         // yt-dlp/FFmpeg-Builds 同 repo 並存兩種 release：tag=latest（固定 asset 名）
         // 與每小時新增的 autobuild-YYYY-MM-DD-HH-MM（含 build number / commit hash 的
         // 動態 asset 名）。GitHub /releases/latest 取「created_at 最新」會吃到 autobuild
@@ -194,6 +199,44 @@ public static class FFmpegDownloader
             if (File.Exists(archivePath))
             {
                 File.Delete(archivePath);
+            }
+        }
+        catch (IOException)
+        {
+        }
+        catch (UnauthorizedAccessException)
+        {
+        }
+    }
+
+    /// <summary>
+    /// 進入 download flow 時清掉 <c>installDirectory/.ffmpeg-extract/</c> 下過去失敗
+    /// 殘留的 <c>{guid}/</c> 子資料夾。每次解壓用新 <c>Guid.NewGuid()</c>，不會清到
+    /// 並發運行中的解壓 workspace；只清過往斷電 / 防毒鎖 / 強制中止留下的孤兒。
+    /// </summary>
+    /// <param name="installDirectory">FFmpeg 安裝資料夾。</param>
+    private static void TryPruneFFmpegExtractWorkspace(string installDirectory)
+    {
+        string extractParent = Path.Combine(installDirectory, ".ffmpeg-extract");
+        if (!Directory.Exists(extractParent))
+        {
+            return;
+        }
+
+        try
+        {
+            foreach (string entry in Directory.GetDirectories(extractParent))
+            {
+                try
+                {
+                    Directory.Delete(entry, true);
+                }
+                catch (IOException)
+                {
+                }
+                catch (UnauthorizedAccessException)
+                {
+                }
             }
         }
         catch (IOException)

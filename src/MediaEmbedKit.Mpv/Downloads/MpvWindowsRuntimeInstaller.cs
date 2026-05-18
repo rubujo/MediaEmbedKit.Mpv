@@ -49,16 +49,38 @@ public static class MpvWindowsRuntimeInstaller
 
         string libMpvPath = Path.Combine(runtimeDirectory, "libmpv-2.dll");
         string updatedLibraryPath = mpv.LibraryPath!;
-        if (!loaded && !string.Equals(updatedLibraryPath, libMpvPath, StringComparison.OrdinalIgnoreCase))
+
+        // TOCTOU 防護：UpdateLibMpvAsync 開頭檢查 IsLoaded == false 後走 in-place
+        // 解壓路徑；但 download + extract 期間可能有另一執行緒呼叫 MpvLibraryLoader.Load，
+        // 此時若直接 File.Copy 會撞 Windows 鎖檔 IOException。File.Copy 前再驗一次
+        // IsLoaded —— 已被別人載入則改走 stage 路徑（同步 promote 失效，需 restart）。
+        bool actuallyApplied = !loaded;
+        bool requiresRestart = loaded;
+        if (!loaded)
         {
-            File.Copy(updatedLibraryPath, libMpvPath, true);
-            updatedLibraryPath = libMpvPath;
+            if (MpvLibraryLoader.IsLoaded)
+            {
+                // race 中段：另一執行緒已載入 libmpv。把解出的 dll 改 stage 到
+                // .updates/<時戳>/，與 loaded==true 路徑語意一致。
+                string stageDirectory = Path.Combine(runtimeDirectory, ".updates", DateTime.UtcNow.ToString("yyyyMMddHHmmss"));
+                Directory.CreateDirectory(stageDirectory);
+                string stagedLibMpvPath = Path.Combine(stageDirectory, "libmpv-2.dll");
+                File.Copy(updatedLibraryPath, stagedLibMpvPath, true);
+                updatedLibraryPath = stagedLibMpvPath;
+                actuallyApplied = false;
+                requiresRestart = true;
+            }
+            else if (!string.Equals(updatedLibraryPath, libMpvPath, StringComparison.OrdinalIgnoreCase))
+            {
+                File.Copy(updatedLibraryPath, libMpvPath, true);
+                updatedLibraryPath = libMpvPath;
+            }
         }
 
         // .updates/<時戳> 暫存累積問題：每次 staged update 都新建一個時戳資料夾，
         // 不主動清就會持續累積（LINQPad 等同 AppDomain 多次呼叫尤其明顯）。
         // 保留「最近 1 個」staged update 供必要時 rollback / 稽核，其餘清掉。
-        if (loaded)
+        if (loaded || requiresRestart)
         {
             PruneStagedUpdatesDirectory(runtimeDirectory, keepLatest: 1);
         }
@@ -68,9 +90,9 @@ public static class MpvWindowsRuntimeInstaller
             libMpvPath,
             updatedLibraryPath,
             mpv,
-            !loaded,
-            loaded,
-            loaded
+            actuallyApplied,
+            requiresRestart,
+            requiresRestart
                 ? "libmpv-2.dll is already loaded in the current process. The update was staged; call ApplyStagedLibMpvUpdate before loading libmpv on next startup, then restart the application."
                 : "libmpv-2.dll was updated before it was loaded. No process restart is required for this update.");
     }
@@ -118,15 +140,34 @@ public static class MpvWindowsRuntimeInstaller
 
         string libMpvPath = Path.Combine(runtimeDirectory, "libmpv-2.dll");
         string updatedLibraryPath = mpv.LibraryPath!;
-        if (!loaded && !string.Equals(updatedLibraryPath, libMpvPath, StringComparison.OrdinalIgnoreCase))
+
+        // TOCTOU 防護：開頭 IsLoaded 檢查與 File.Copy 之間，可能另一執行緒呼叫
+        // MpvLibraryLoader.Load → 後續 File.Copy 撞 Windows 鎖檔 IOException。
+        // File.Copy 前再驗一次。已被別人載入則改 stage（同 loaded 路徑語意）。
+        bool actuallyApplied = !loaded;
+        bool requiresRestart = loaded;
+        if (!loaded)
         {
-            File.Copy(updatedLibraryPath, libMpvPath, true);
-            updatedLibraryPath = libMpvPath;
+            if (MpvLibraryLoader.IsLoaded)
+            {
+                string stageDirectory = Path.Combine(runtimeDirectory, ".updates", DateTime.UtcNow.ToString("yyyyMMddHHmmss"));
+                Directory.CreateDirectory(stageDirectory);
+                string stagedLibMpvPath = Path.Combine(stageDirectory, "libmpv-2.dll");
+                File.Copy(updatedLibraryPath, stagedLibMpvPath, true);
+                updatedLibraryPath = stagedLibMpvPath;
+                actuallyApplied = false;
+                requiresRestart = true;
+            }
+            else if (!string.Equals(updatedLibraryPath, libMpvPath, StringComparison.OrdinalIgnoreCase))
+            {
+                File.Copy(updatedLibraryPath, libMpvPath, true);
+                updatedLibraryPath = libMpvPath;
+            }
         }
 
         // libmpv 已載入時走的 staging 路徑會建立 .updates/<時戳>；保留最新 1 個、清掉
         // 其餘累積版本（避免 LINQPad 等同 AppDomain 多次呼叫造成磁碟濫用）。
-        if (loaded)
+        if (loaded || requiresRestart)
         {
             PruneStagedUpdatesDirectory(runtimeDirectory, keepLatest: 1);
         }
@@ -136,9 +177,9 @@ public static class MpvWindowsRuntimeInstaller
             libMpvPath,
             updatedLibraryPath,
             mpv,
-            !loaded,
-            loaded,
-            loaded
+            actuallyApplied,
+            requiresRestart,
+            requiresRestart
                 ? "libmpv-2.dll is already loaded in the current process. The update was staged; call ApplyStagedLibMpvUpdate before loading libmpv on next startup, then restart the application."
                 : "libmpv-2.dll is current or was installed before being loaded. No process restart is required.");
     }
