@@ -14,7 +14,7 @@
 
 ## 共通屬性
 
-WinForms 沒有 binding system，相關屬性透過 `control.Player.*` 直接存取；其它 4 個框架均提供下表全部屬性。
+WinForms 透過 `INotifyPropertyChanged` 與 `Control.DataBindings` 支援程式碼資料繫結；WPF、Avalonia、WinUI 3 與 MAUI Windows 則使用各自的 property system。下表列出 5 套控制項共同提供的屬性。
 
 | 屬性 | 型別 | 預設值 | 對應 mpv 屬性 | 唯讀 | 框架 | 說明 |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -25,15 +25,15 @@ WinForms 沒有 binding system，相關屬性透過 `control.Player.*` 直接存
 | `IsPaused` | `bool` | `false` | `pause` | 否 | 全部 | |
 | `IsMuted` | `bool` | `false` | `mute` | 否 | 全部 | |
 | `PlaybackState` | `MpvPlaybackState` | `Idle` | n/a（事件聚合） | 是 | 全部 | 由 libmpv `StartFile`/`FileLoaded`/`EndFile`/`Idle`/`Shutdown` 聚合，詳見 `MpvPlaybackState`。 |
-| `PlaylistIndex` | `int` | `0` | `playlist-pos` | 否 | WPF / Avalonia / WinUI / MAUI | 以 0 起始；設值會跳到該播放清單項目。負數忽略。 |
-| `Chapter` | `int?` | `null` | `chapter` | 否 | WPF / Avalonia / WinUI / MAUI | 以 0 起始；`null` 代表無章節或尚未載入。mpv `-1` 自動映射為 `null`。設值為 `null` 或負數時忽略。 |
+| `PlaylistIndex` | `int` | `0` | `playlist-pos` | 否 | 全部 | 以 0 起始；設值會跳到該播放清單項目。負數不寫入 player。 |
+| `Chapter` | `int?` | `null` | `chapter` | 否 | 全部 | 以 0 起始；`null` 代表無章節或尚未載入。mpv `-1` 自動映射為 `null`。設值為 `null` 或負數時不寫入 player。 |
 | `OverlayContent` | `UIElement?` / `View?` / `WinUiElement?` | `null` | n/a | 否 | WPF / WinUI / MAUI | AirSpace 覆蓋層內容；HwndHost 之上的 WPF / WinUI / MAUI 元素，解決 mpv child HWND 蓋住 framework 內容的 z-order 問題。 |
 | `IsOverlayOpen` | `bool` | `true` | n/a | 否 | WPF / WinUI / MAUI | 控制覆蓋層是否顯示。 |
 | `OverlayView` | `View?` | `null` | n/a | 否 | MAUI | MAUI 專屬；以 MAUI `View` 為覆蓋層內容（與 `OverlayContent` 二擇一）。 |
 
 Avalonia 沒有 child HWND airspace 問題，consumer 用標準 Avalonia `Grid` / `Panel` 組合即可達成覆蓋效果，因此不提供 `OverlayContent` 屬性。
 
-設計階段（VS Toolbox / Blend property grid / Avalonia DevTools）：所有公開繫結屬性均掛 `[Category("MediaEmbedKit.Mpv")]`；`Player` / `PlayerOptions` 等實作用屬性掛 `[Browsable(false)]` 隱藏於 property grid。
+設計階段（VS Toolbox / Blend property grid / Avalonia DevTools）：可在設計工具設定的公開屬性均掛 `[Category("MediaEmbedKit.Mpv")]`；`Player` / `PlayerOptions` 與執行期播放狀態屬性掛 `[Browsable(false)]` 隱藏於 property grid，避免設計工具序列化瞬時播放狀態。
 
 ### 各框架實作型別
 

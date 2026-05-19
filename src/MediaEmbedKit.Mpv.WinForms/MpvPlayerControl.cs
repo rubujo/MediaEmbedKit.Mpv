@@ -58,6 +58,14 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
     /// 後援 <see cref="PlaybackState"/> 的目前值。
     /// </summary>
     private MpvPlaybackState _playbackState;
+    /// <summary>
+    /// 後援 <see cref="PlaylistIndex"/> 的目前值。
+    /// </summary>
+    private int _playlistIndex;
+    /// <summary>
+    /// 後援 <see cref="Chapter"/> 的目前值。
+    /// </summary>
+    private int? _chapter;
 
     /// <summary>
     /// 初始化 <see cref="MpvPlayerControl"/> 類別的新執行個體。
@@ -451,6 +459,81 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
     }
 
     /// <summary>
+    /// 取得或設定目前播放清單索引。
+    /// </summary>
+    /// <value>對應 mpv <c>playlist-pos</c>；以 0 起始，設值會跳到指定播放清單項目。</value>
+    [Browsable(false)]
+    [Bindable(true)]
+    [DefaultValue(0)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public int PlaylistIndex
+    {
+        get { return _playlistIndex; }
+        set
+        {
+            if (_playlistIndex == value)
+            {
+                return;
+            }
+
+            _playlistIndex = value;
+            OnPropertyChanged();
+
+            if (_suppressPlayerWrite || _player == null || value < 0)
+            {
+                return;
+            }
+
+            try
+            {
+                _player.PlaylistIndex = value;
+            }
+            catch (MpvException)
+            {
+            }
+        }
+    }
+
+    /// <summary>
+    /// 取得或設定目前章節索引。
+    /// </summary>
+    /// <value>對應 mpv <c>chapter</c>；以 0 起始，<see langword="null"/> 代表無章節或尚未載入。</value>
+    [Browsable(false)]
+    [Bindable(true)]
+    [DefaultValue(null)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public int? Chapter
+    {
+        get { return _chapter; }
+        set
+        {
+            if (_chapter == value)
+            {
+                return;
+            }
+
+            _chapter = value;
+            OnPropertyChanged();
+
+            if (_suppressPlayerWrite || _player == null || !value.HasValue || value.Value < 0)
+            {
+                return;
+            }
+
+            try
+            {
+                _player.Chapter = value.Value;
+            }
+            catch (MpvException)
+            {
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+            }
+        }
+    }
+
+    /// <summary>
     /// 取得控制項建立播放器時使用的選項。
     /// </summary>
     /// <value>播放器建立選項。</value>
@@ -632,6 +715,8 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
         _propertyWatchers.Add(player.WatchProperty<double>("volume").Subscribe(new MpvDpObserver<double>(value => UpdateFromPlayer(nameof(Volume), ref _volume, value))));
         _propertyWatchers.Add(player.WatchProperty<double>("time-pos").Subscribe(new MpvDpObserver<double>(value => UpdateFromPlayer(nameof(Position), ref _position, TimeSpan.FromSeconds(value)))));
         _propertyWatchers.Add(player.WatchProperty<double>("duration").Subscribe(new MpvDpObserver<double>(value => UpdateFromPlayer(nameof(Duration), ref _duration, TimeSpan.FromSeconds(value)))));
+        _propertyWatchers.Add(player.WatchProperty<long>("playlist-pos").Subscribe(new MpvDpObserver<long>(value => UpdateFromPlayer(nameof(PlaylistIndex), ref _playlistIndex, checked((int)value)))));
+        _propertyWatchers.Add(player.WatchProperty<long>("chapter").Subscribe(new MpvDpObserver<long>(value => UpdateFromPlayer(nameof(Chapter), ref _chapter, value < 0 ? (int?)null : checked((int)value)))));
         player.StateChanged += OnPlayerStateChanged;
 
         if (IsPaused != player.Pause)

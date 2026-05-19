@@ -1,10 +1,11 @@
 # 參考來源
 
-本文件列出專案規範採用的主要來源。最後查核日期：2026-05-19。
+本文件列出專案規範採用的主要來源。最後查核日期：2026-05-20。
 
 ## libmpv 與 mpv
 
 - mpv manual stable：https://mpv.io/manual/stable/#embedding-into-other-programs-libmpv
+- mpv manual stable（properties：`playlist-pos`、`chapter`）：https://mpv.io/manual/stable/
 - mpv GitHub：https://github.com/mpv-player/mpv
 - mpv releases：https://github.com/mpv-player/mpv/releases
 - mpv 安裝頁：https://mpv.io/installation/
@@ -15,6 +16,10 @@
 
 - .NET Standard：https://learn.microsoft.com/dotnet/standard/net-standard
 - Visual Studio 編碼與換行：https://learn.microsoft.com/visualstudio/ide/encodings-and-line-breaks
+- WinForms overview：https://learn.microsoft.com/dotnet/desktop/winforms/overview/
+- WinForms simple data binding：https://learn.microsoft.com/dotnet/desktop/winforms/data/how-to-create-control-binding
+- WinForms `Control.DataBindings`：https://learn.microsoft.com/dotnet/api/system.windows.forms.control.databindings
+- `INotifyPropertyChanged`：https://learn.microsoft.com/dotnet/api/system.componentmodel.inotifypropertychanged
 - .NET MAUI 支援平台：https://learn.microsoft.com/dotnet/maui/supported-platforms
 - .NET MAUI handlers：https://learn.microsoft.com/dotnet/maui/user-interface/handlers/
 - WinForms design-time：https://learn.microsoft.com/dotnet/desktop/winforms/controls-design/designer-overview
