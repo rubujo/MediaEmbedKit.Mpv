@@ -1,11 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
+using System.Net.Sockets;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using MediaEmbedKit.Mpv.Platforms;
 using MediaEmbedKit.Mpv.Externals;
@@ -43,6 +48,11 @@ internal static class Program
         runner.Add("native asset checksum 解析", VerifyNativeAssetChecksumParsing);
         runner.Add("native asset 來源鎖定驗證", VerifyNativeAssetSourceLockValidation);
         runner.Add("下載要求瀏覽器標頭", VerifyBrowserRequestHeaders);
+        runner.Add("FFmpeg fast path 會清理 retained archive", VerifyFFmpegFastPathPrunesArchivesAsync);
+        runner.Add("FFmpeg retained archive 會驗證 provider checksum", VerifyFFmpegRetainedArchiveVerificationAsync);
+        runner.Add("FFmpeg retained archive digest 錯誤會失敗", VerifyFFmpegRetainedArchiveDigestFailureAsync);
+        runner.Add("Deno 解壓不污染 runtime root", VerifyDenoExtractionUsesWorkspaceAsync);
+        runner.Add("下載失敗清理暫存檔", VerifyDownloadFailureCleansTempFileAsync);
         runner.Add("runtime 下載驗證策略預設值", VerifyRuntimeVerificationOptionDefaults);
         runner.Add("Windows runtime FFmpeg 選項預設值", VerifyWindowsRuntimeFFmpegOptionDefaults);
         runner.Add("播放器選項預設值", VerifyPlayerOptionDefaults);
@@ -1320,6 +1330,419 @@ internal static class Program
     }
 
     /// <summary>
+    /// 驗證 FFmpeg fast path 在重用既有工具時仍會清理壓縮檔。
+    /// </summary>
+    /// <returns>代表測試流程的工作。</returns>
+    private static async Task VerifyFFmpegFastPathPrunesArchivesAsync()
+    {
+        string tempDirectory = CreateTempDirectory("ffmpeg-prune");
+        try
+        {
+            string archivePath = Path.Combine(tempDirectory, FFmpegDownloader.WindowsX64AssetName);
+            string staleArchivePath = Path.Combine(tempDirectory, FFmpegDownloader.WindowsArm64AssetName);
+            File.WriteAllText(archivePath, "current ffmpeg archive", Encoding.UTF8);
+            File.WriteAllText(staleArchivePath, "stale ffmpeg archive", Encoding.UTF8);
+            File.WriteAllText(Path.Combine(tempDirectory, "ffmpeg.exe"), "ffmpeg", Encoding.UTF8);
+            File.WriteAllText(Path.Combine(tempDirectory, "ffprobe.exe"), "ffprobe", Encoding.UTF8);
+
+            using (LoopbackHttpServer server = new LoopbackHttpServer())
+            {
+                string releaseJson = BuildReleaseJson(
+                    "latest",
+                    new[]
+                    {
+                        new FakeReleaseAsset(
+                            FFmpegDownloader.WindowsX64AssetName,
+                            server.BuildUri("/ffmpeg.zip").ToString(),
+                            "sha256:" + ComputeSha256Hex(File.ReadAllBytes(archivePath))),
+                    });
+                server.AddText("/release", releaseJson, "application/json");
+                server.AddBytes("/ffmpeg.zip", Encoding.UTF8.GetBytes("should not download"), "application/octet-stream");
+
+                FFmpegDownloadOptions options = new FFmpegDownloadOptions
+                {
+                    Architecture = MpvWindowsArchitecture.X64,
+                    ReleaseApiUriOverride = server.BuildUri("/release"),
+                };
+                FFmpegDownloadResult result = await FFmpegDownloader.DownloadAndExtractLatestAsync(tempDirectory, options).ConfigureAwait(false);
+
+                AssertEx.False(result.Updated, "FFmpeg fast path 不應下載或覆寫工具。");
+                AssertEx.False(File.Exists(archivePath), "RetainArchive=false 時目前 FFmpeg zip 應被清掉。");
+                AssertEx.False(File.Exists(staleArchivePath), "RetainArchive=false 時舊 FFmpeg zip 應被清掉。");
+                AssertEx.Equal(0, server.GetRequestCount("/ffmpeg.zip"), "FFmpeg fast path 不應下載 zip。");
+            }
+        }
+        finally
+        {
+            TryDeleteDirectory(tempDirectory);
+        }
+    }
+
+    /// <summary>
+    /// 驗證 FFmpeg retained archive fast path 會執行 provider checksum 驗證。
+    /// </summary>
+    /// <returns>代表測試流程的工作。</returns>
+    private static async Task VerifyFFmpegRetainedArchiveVerificationAsync()
+    {
+        string tempDirectory = CreateTempDirectory("ffmpeg-retain");
+        try
+        {
+            string archivePath = Path.Combine(tempDirectory, FFmpegDownloader.WindowsX64AssetName);
+            string staleArchivePath = Path.Combine(tempDirectory, FFmpegDownloader.WindowsArm64AssetName);
+            File.WriteAllText(archivePath, "retained ffmpeg archive", Encoding.UTF8);
+            File.WriteAllText(staleArchivePath, "stale ffmpeg archive", Encoding.UTF8);
+            File.WriteAllText(Path.Combine(tempDirectory, "ffmpeg.exe"), "ffmpeg", Encoding.UTF8);
+            File.WriteAllText(Path.Combine(tempDirectory, "ffprobe.exe"), "ffprobe", Encoding.UTF8);
+
+            string archiveSha256 = ComputeSha256Hex(File.ReadAllBytes(archivePath));
+            byte[] checksumBytes = Encoding.UTF8.GetBytes(archiveSha256 + "  " + FFmpegDownloader.WindowsX64AssetName + Environment.NewLine);
+            using (LoopbackHttpServer server = new LoopbackHttpServer())
+            {
+                string releaseJson = BuildReleaseJson(
+                    "latest",
+                    new[]
+                    {
+                        new FakeReleaseAsset(
+                            FFmpegDownloader.WindowsX64AssetName,
+                            server.BuildUri("/ffmpeg.zip").ToString(),
+                            "sha256:" + archiveSha256),
+                        new FakeReleaseAsset(
+                            FFmpegDownloader.ChecksumAssetName,
+                            server.BuildUri("/checksums.sha256").ToString(),
+                            "sha256:" + ComputeSha256Hex(checksumBytes)),
+                    });
+                server.AddText("/release", releaseJson, "application/json");
+                server.AddBytes("/checksums.sha256", checksumBytes, "text/plain");
+                server.AddBytes("/ffmpeg.zip", Encoding.UTF8.GetBytes("should not download"), "application/octet-stream");
+
+                FFmpegDownloadOptions options = new FFmpegDownloadOptions
+                {
+                    Architecture = MpvWindowsArchitecture.X64,
+                    ReleaseApiUriOverride = server.BuildUri("/release"),
+                    RetainArchive = true,
+                    VerificationPolicy = MpvNativeAssetVerificationPolicy.RequireProviderChecksum,
+                };
+                FFmpegDownloadResult result = await FFmpegDownloader.DownloadAndExtractLatestAsync(tempDirectory, options).ConfigureAwait(false);
+
+                AssertEx.False(result.Updated, "FFmpeg retained archive fast path 不應覆寫工具。");
+                AssertEx.True(File.Exists(archivePath), "RetainArchive=true 時目前 FFmpeg zip 應保留。");
+                AssertEx.False(File.Exists(staleArchivePath), "RetainArchive=true 時非目前 FFmpeg zip 應清掉。");
+                AssertEx.Equal(1, server.GetRequestCount("/checksums.sha256"), "RetainArchive=true 應驗證 provider checksum。");
+                AssertEx.Equal(0, server.GetRequestCount("/ffmpeg.zip"), "Retained archive fast path 不應重新下載 zip。");
+            }
+        }
+        finally
+        {
+            TryDeleteDirectory(tempDirectory);
+        }
+    }
+
+    /// <summary>
+    /// 驗證 retained archive 摘要不符時不會靜默改走下載路徑。
+    /// </summary>
+    /// <returns>代表測試流程的工作。</returns>
+    private static async Task VerifyFFmpegRetainedArchiveDigestFailureAsync()
+    {
+        string tempDirectory = CreateTempDirectory("ffmpeg-bad-digest");
+        try
+        {
+            string archivePath = Path.Combine(tempDirectory, FFmpegDownloader.WindowsX64AssetName);
+            File.WriteAllText(archivePath, "bad retained ffmpeg archive", Encoding.UTF8);
+            File.WriteAllText(Path.Combine(tempDirectory, "ffmpeg.exe"), "ffmpeg", Encoding.UTF8);
+            File.WriteAllText(Path.Combine(tempDirectory, "ffprobe.exe"), "ffprobe", Encoding.UTF8);
+
+            using (LoopbackHttpServer server = new LoopbackHttpServer())
+            {
+                string releaseJson = BuildReleaseJson(
+                    "latest",
+                    new[]
+                    {
+                        new FakeReleaseAsset(
+                            FFmpegDownloader.WindowsX64AssetName,
+                            server.BuildUri("/ffmpeg.zip").ToString(),
+                            "sha256:" + new string('0', 64)),
+                    });
+                server.AddText("/release", releaseJson, "application/json");
+                server.AddBytes("/ffmpeg.zip", Encoding.UTF8.GetBytes("should not download"), "application/octet-stream");
+
+                FFmpegDownloadOptions options = new FFmpegDownloadOptions
+                {
+                    Architecture = MpvWindowsArchitecture.X64,
+                    ReleaseApiUriOverride = server.BuildUri("/release"),
+                    RetainArchive = true,
+                };
+
+                bool threw = false;
+                try
+                {
+                    await FFmpegDownloader.DownloadAndExtractLatestAsync(tempDirectory, options).ConfigureAwait(false);
+                }
+                catch (InvalidOperationException)
+                {
+                    threw = true;
+                }
+
+                AssertEx.True(threw, "Retained FFmpeg archive digest 錯誤時應失敗。");
+                AssertEx.Equal(0, server.GetRequestCount("/ffmpeg.zip"), "Retained FFmpeg archive digest 錯誤時不應重新下載。");
+            }
+        }
+        finally
+        {
+            TryDeleteDirectory(tempDirectory);
+        }
+    }
+
+    /// <summary>
+    /// 驗證 Deno zip 只會將 deno.exe 放入 runtime root。
+    /// </summary>
+    /// <returns>代表測試流程的工作。</returns>
+    private static async Task VerifyDenoExtractionUsesWorkspaceAsync()
+    {
+        string tempDirectory = CreateTempDirectory("deno-workspace");
+        try
+        {
+            byte[] zipBytes = CreateZipArchive(new Dictionary<string, string>
+            {
+                { "deno.exe", "fake deno executable" },
+                { "README.txt", "should not remain in runtime root" },
+                { "docs/license.txt", "should not remain in runtime root" },
+            });
+            string zipSha256 = ComputeSha256Hex(zipBytes);
+
+            using (LoopbackHttpServer server = new LoopbackHttpServer())
+            {
+                string releaseJson = BuildReleaseJson(
+                    "v2.7.14",
+                    new[]
+                    {
+                        new FakeReleaseAsset(
+                            "deno-x86_64-pc-windows-msvc.zip",
+                            server.BuildUri("/deno.zip").ToString(),
+                            "sha256:" + zipSha256),
+                    });
+                server.AddText("/release", releaseJson, "application/json");
+                server.AddBytes("/deno.zip", zipBytes, "application/zip");
+
+                DenoDownloadOptions options = new DenoDownloadOptions
+                {
+                    Architecture = DenoWindowsArchitecture.X64,
+                    ReleaseApiUriOverride = server.BuildUri("/release"),
+                };
+                DenoDownloadResult result = await DenoDownloader.DownloadAndExtractLatestAsync(tempDirectory, options).ConfigureAwait(false);
+
+                AssertEx.True(result.Updated, "Deno download path 應標示已更新。");
+                AssertEx.True(File.Exists(Path.Combine(tempDirectory, "deno.exe")), "Deno runtime root 應包含 deno.exe。");
+                AssertEx.False(File.Exists(Path.Combine(tempDirectory, "README.txt")), "Deno zip 額外檔案不應留在 runtime root。");
+                AssertEx.False(Directory.Exists(Path.Combine(tempDirectory, "docs")), "Deno zip 額外資料夾不應留在 runtime root。");
+                AssertEx.False(Directory.Exists(Path.Combine(tempDirectory, ".deno-extract")), "Deno 解壓暫存資料夾應清空並移除。");
+                AssertEx.False(File.Exists(result.ArchivePath), "RetainArchive=false 時 Deno zip 應清掉。");
+            }
+        }
+        finally
+        {
+            TryDeleteDirectory(tempDirectory);
+        }
+    }
+
+    /// <summary>
+    /// 驗證下載失敗時會清掉 <c>.tmp</c> 暫存檔。
+    /// </summary>
+    /// <returns>代表測試流程的工作。</returns>
+    private static async Task VerifyDownloadFailureCleansTempFileAsync()
+    {
+        string tempDirectory = CreateTempDirectory("download-temp");
+        try
+        {
+            string targetPath = Path.Combine(tempDirectory, "asset.bin");
+            using (LoopbackHttpServer server = new LoopbackHttpServer())
+            {
+                server.AddBytes(
+                    "/short.bin",
+                    Encoding.UTF8.GetBytes("partial"),
+                    "application/octet-stream",
+                    declaredContentLength: 1024);
+
+                bool threw = false;
+                try
+                {
+                    await DownloadUtility.DownloadFileAsync(
+                        server.BuildUri("/short.bin").ToString(),
+                        targetPath,
+                        null,
+                        true,
+                        CancellationToken.None).ConfigureAwait(false);
+                }
+                catch (Exception)
+                {
+                    threw = true;
+                }
+
+                AssertEx.True(threw, "Content-Length 不完整的下載應失敗。");
+                AssertEx.False(File.Exists(targetPath + ".tmp"), "下載失敗後不應留下 .tmp 檔。");
+            }
+        }
+        finally
+        {
+            TryDeleteDirectory(tempDirectory);
+        }
+    }
+
+    /// <summary>
+    /// 建立暫存測試資料夾。
+    /// </summary>
+    /// <param name="prefix">資料夾名稱前綴。</param>
+    /// <returns>已建立的暫存資料夾路徑。</returns>
+    private static string CreateTempDirectory(string prefix)
+    {
+        string directory = Path.Combine(Path.GetTempPath(), "MediaEmbedKit.Mpv.Tests", prefix + "-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        return directory;
+    }
+
+    /// <summary>
+    /// 嘗試刪除測試資料夾。
+    /// </summary>
+    /// <param name="directoryPath">要刪除的資料夾。</param>
+    private static void TryDeleteDirectory(string directoryPath)
+    {
+        try
+        {
+            if (Directory.Exists(directoryPath))
+            {
+                Directory.Delete(directoryPath, true);
+            }
+        }
+        catch (IOException)
+        {
+        }
+        catch (UnauthorizedAccessException)
+        {
+        }
+    }
+
+    /// <summary>
+    /// 計算位元組內容的 SHA-256 小寫十六進位字串。
+    /// </summary>
+    /// <param name="content">要計算的內容。</param>
+    /// <returns>SHA-256 小寫十六進位字串。</returns>
+    private static string ComputeSha256Hex(byte[] content)
+    {
+        byte[] hash = SHA256.HashData(content);
+        return Convert.ToHexString(hash).ToLowerInvariant();
+    }
+
+    /// <summary>
+    /// 建立測試用 GitHub release JSON。
+    /// </summary>
+    /// <param name="tagName">發行標籤。</param>
+    /// <param name="assets">發行資產。</param>
+    /// <returns>GitHub release JSON 文字。</returns>
+    private static string BuildReleaseJson(string tagName, IReadOnlyList<FakeReleaseAsset> assets)
+    {
+        StringBuilder builder = new StringBuilder();
+        builder.Append("{\"tag_name\":\"");
+        builder.Append(JsonEscape(tagName));
+        builder.Append("\",\"assets\":[");
+        for (int index = 0; index < assets.Count; index++)
+        {
+            if (index > 0)
+            {
+                builder.Append(',');
+            }
+
+            FakeReleaseAsset asset = assets[index];
+            builder.Append("{\"name\":\"");
+            builder.Append(JsonEscape(asset.Name));
+            builder.Append("\",\"browser_download_url\":\"");
+            builder.Append(JsonEscape(asset.DownloadUrl));
+            builder.Append('"');
+            if (asset.Digest != null)
+            {
+                builder.Append(",\"digest\":\"");
+                builder.Append(JsonEscape(asset.Digest));
+                builder.Append('"');
+            }
+
+            builder.Append('}');
+        }
+
+        builder.Append("]}");
+        return builder.ToString();
+    }
+
+    /// <summary>
+    /// 建立 ZIP 檔內容。
+    /// </summary>
+    /// <param name="entries">ZIP entry 名稱與文字內容。</param>
+    /// <returns>ZIP 位元組內容。</returns>
+    private static byte[] CreateZipArchive(IReadOnlyDictionary<string, string> entries)
+    {
+        using (MemoryStream stream = new MemoryStream())
+        {
+            using (ZipArchive archive = new ZipArchive(stream, ZipArchiveMode.Create, true))
+            {
+                foreach (KeyValuePair<string, string> pair in entries)
+                {
+                    ZipArchiveEntry entry = archive.CreateEntry(pair.Key);
+                    using (StreamWriter writer = new StreamWriter(entry.Open(), new UTF8Encoding(encoderShouldEmitUTF8Identifier: false)))
+                    {
+                        writer.Write(pair.Value);
+                    }
+                }
+            }
+
+            return stream.ToArray();
+        }
+    }
+
+    /// <summary>
+    /// 逸出 JSON 字串值。
+    /// </summary>
+    /// <param name="value">原始值。</param>
+    /// <returns>已逸出的字串。</returns>
+    private static string JsonEscape(string value)
+    {
+        return value.Replace("\\", "\\\\").Replace("\"", "\\\"");
+    }
+
+    /// <summary>
+    /// 測試用 GitHub release 資產描述。
+    /// </summary>
+    private sealed class FakeReleaseAsset
+    {
+        /// <summary>
+        /// 初始化 <see cref="FakeReleaseAsset"/> 類別的新執行個體。
+        /// </summary>
+        /// <param name="name">資產名稱。</param>
+        /// <param name="downloadUrl">下載 URL。</param>
+        /// <param name="digest">資產摘要。</param>
+        public FakeReleaseAsset(string name, string downloadUrl, string? digest)
+        {
+            Name = name;
+            DownloadUrl = downloadUrl;
+            Digest = digest;
+        }
+
+        /// <summary>
+        /// 取得資產名稱。
+        /// </summary>
+        /// <value>資產名稱。</value>
+        public string Name { get; private set; }
+
+        /// <summary>
+        /// 取得下載 URL。
+        /// </summary>
+        /// <value>下載 URL。</value>
+        public string DownloadUrl { get; private set; }
+
+        /// <summary>
+        /// 取得資產摘要。
+        /// </summary>
+        /// <value>資產摘要。</value>
+        public string? Digest { get; private set; }
+    }
+
+    /// <summary>
     /// 驗證來源鎖定會接受預設 GitHub 來源並拒絕非預期來源。
     /// </summary>
     /// <returns>代表測試流程的工作。</returns>
@@ -1595,6 +2018,297 @@ internal static class Program
         AssertEx.True(options.YtdlpPath.StartsWith(Path.Combine(runtimeDirectory, "yt-dlp.exe"), StringComparison.OrdinalIgnoreCase), "yt-dlp 路徑應優先指向執行階段資料夾。");
         return Task.CompletedTask;
     }
+}
+
+/// <summary>
+/// 提供測試用本機 HTTP 伺服器。
+/// </summary>
+internal sealed class LoopbackHttpServer : IDisposable
+{
+    /// <summary>
+    /// 保存路徑到回應內容的對應。
+    /// </summary>
+    private readonly Dictionary<string, LoopbackHttpResponse> _routes = new Dictionary<string, LoopbackHttpResponse>(StringComparer.Ordinal);
+
+    /// <summary>
+    /// 保存各路徑被要求的次數。
+    /// </summary>
+    private readonly Dictionary<string, int> _requestCounts = new Dictionary<string, int>(StringComparer.Ordinal);
+
+    /// <summary>
+    /// 保護路由表與計數器。
+    /// </summary>
+    private readonly object _syncRoot = new object();
+
+    /// <summary>
+    /// 伺服器停止語彙基元。
+    /// </summary>
+    private readonly CancellationTokenSource _cancellation = new CancellationTokenSource();
+
+    /// <summary>
+    /// TCP listener。
+    /// </summary>
+    private readonly TcpListener _listener;
+
+    /// <summary>
+    /// 接受連線背景工作。
+    /// </summary>
+    private readonly Task _acceptTask;
+
+    /// <summary>
+    /// 初始化 <see cref="LoopbackHttpServer"/> 類別的新執行個體。
+    /// </summary>
+    public LoopbackHttpServer()
+    {
+        _listener = new TcpListener(IPAddress.Loopback, 0);
+        _listener.Start();
+        IPEndPoint endpoint = (IPEndPoint)_listener.LocalEndpoint;
+        BaseUri = new Uri("http://127.0.0.1:" + endpoint.Port.ToString(System.Globalization.CultureInfo.InvariantCulture) + "/");
+        _acceptTask = Task.Run(AcceptLoopAsync);
+    }
+
+    /// <summary>
+    /// 取得伺服器基底 URI。
+    /// </summary>
+    /// <value>伺服器基底 URI。</value>
+    public Uri BaseUri { get; private set; }
+
+    /// <summary>
+    /// 建立指定路徑的完整 URI。
+    /// </summary>
+    /// <param name="path">要求路徑。</param>
+    /// <returns>完整 URI。</returns>
+    public Uri BuildUri(string path)
+    {
+        string normalizedPath = path.StartsWith("/", StringComparison.Ordinal) ? path.Substring(1) : path;
+        return new Uri(BaseUri, normalizedPath);
+    }
+
+    /// <summary>
+    /// 加入文字回應。
+    /// </summary>
+    /// <param name="path">要求路徑。</param>
+    /// <param name="content">文字內容。</param>
+    /// <param name="contentType">內容類型。</param>
+    public void AddText(string path, string content, string contentType)
+    {
+        AddBytes(path, Encoding.UTF8.GetBytes(content), contentType);
+    }
+
+    /// <summary>
+    /// 加入位元組回應。
+    /// </summary>
+    /// <param name="path">要求路徑。</param>
+    /// <param name="content">位元組內容。</param>
+    /// <param name="contentType">內容類型。</param>
+    /// <param name="declaredContentLength">宣告的 Content-Length；未指定時使用內容長度。</param>
+    public void AddBytes(string path, byte[] content, string contentType, int? declaredContentLength = null)
+    {
+        string normalizedPath = NormalizePath(path);
+        lock (_syncRoot)
+        {
+            _routes[normalizedPath] = new LoopbackHttpResponse(content, contentType, declaredContentLength);
+        }
+    }
+
+    /// <summary>
+    /// 取得指定路徑的要求次數。
+    /// </summary>
+    /// <param name="path">要求路徑。</param>
+    /// <returns>要求次數。</returns>
+    public int GetRequestCount(string path)
+    {
+        string normalizedPath = NormalizePath(path);
+        lock (_syncRoot)
+        {
+            return _requestCounts.TryGetValue(normalizedPath, out int count) ? count : 0;
+        }
+    }
+
+    /// <summary>
+    /// 停止本機 HTTP 伺服器。
+    /// </summary>
+    public void Dispose()
+    {
+        _cancellation.Cancel();
+        _listener.Stop();
+        try
+        {
+            _acceptTask.Wait(TimeSpan.FromSeconds(1));
+        }
+        catch (AggregateException)
+        {
+        }
+        catch (ObjectDisposedException)
+        {
+        }
+
+        _cancellation.Dispose();
+    }
+
+    /// <summary>
+    /// 接受連線直到伺服器停止。
+    /// </summary>
+    /// <returns>代表背景流程的工作。</returns>
+    private async Task AcceptLoopAsync()
+    {
+        while (!_cancellation.IsCancellationRequested)
+        {
+            TcpClient client;
+            try
+            {
+                client = await _listener.AcceptTcpClientAsync(_cancellation.Token).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                break;
+            }
+            catch (ObjectDisposedException)
+            {
+                break;
+            }
+            catch (SocketException) when (_cancellation.IsCancellationRequested)
+            {
+                break;
+            }
+
+            _ = Task.Run(
+                async delegate
+                {
+                    await HandleClientAsync(client).ConfigureAwait(false);
+                });
+        }
+    }
+
+    /// <summary>
+    /// 處理單一 HTTP 用戶端連線。
+    /// </summary>
+    /// <param name="client">TCP 用戶端。</param>
+    /// <returns>代表處理流程的工作。</returns>
+    private async Task HandleClientAsync(TcpClient client)
+    {
+        using (client)
+        {
+            NetworkStream stream = client.GetStream();
+            using (StreamReader reader = new StreamReader(stream, Encoding.ASCII, detectEncodingFromByteOrderMarks: false, bufferSize: 1024, leaveOpen: true))
+            {
+                string? requestLine = await reader.ReadLineAsync().ConfigureAwait(false);
+                if (requestLine == null)
+                {
+                    return;
+                }
+
+                string path = ExtractPath(requestLine);
+                string? headerLine;
+                do
+                {
+                    headerLine = await reader.ReadLineAsync().ConfigureAwait(false);
+                }
+                while (!string.IsNullOrEmpty(headerLine));
+
+                LoopbackHttpResponse response = GetResponse(path);
+                int declaredLength = response.DeclaredContentLength ?? response.Content.Length;
+                string statusLine = response.StatusCode == 200 ? "HTTP/1.1 200 OK" : "HTTP/1.1 404 Not Found";
+                string headerText = statusLine + "\r\n" +
+                    "Content-Type: " + response.ContentType + "\r\n" +
+                    "Content-Length: " + declaredLength.ToString(System.Globalization.CultureInfo.InvariantCulture) + "\r\n" +
+                    "Connection: close\r\n\r\n";
+                byte[] headerBytes = Encoding.ASCII.GetBytes(headerText);
+                await stream.WriteAsync(headerBytes, _cancellation.Token).ConfigureAwait(false);
+                if (response.Content.Length > 0)
+                {
+                    await stream.WriteAsync(response.Content, _cancellation.Token).ConfigureAwait(false);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// 取得指定路徑的回應。
+    /// </summary>
+    /// <param name="path">要求路徑。</param>
+    /// <returns>HTTP 回應。</returns>
+    private LoopbackHttpResponse GetResponse(string path)
+    {
+        string normalizedPath = NormalizePath(path);
+        lock (_syncRoot)
+        {
+            _requestCounts.TryGetValue(normalizedPath, out int count);
+            _requestCounts[normalizedPath] = count + 1;
+            if (_routes.TryGetValue(normalizedPath, out LoopbackHttpResponse? response))
+            {
+                return response;
+            }
+        }
+
+        return new LoopbackHttpResponse(Encoding.UTF8.GetBytes("not found"), "text/plain", null, 404);
+    }
+
+    /// <summary>
+    /// 從 HTTP request line 取出路徑。
+    /// </summary>
+    /// <param name="requestLine">HTTP request line。</param>
+    /// <returns>要求路徑。</returns>
+    private static string ExtractPath(string requestLine)
+    {
+        string[] parts = requestLine.Split(' ');
+        return parts.Length >= 2 ? parts[1] : "/";
+    }
+
+    /// <summary>
+    /// 正規化要求路徑。
+    /// </summary>
+    /// <param name="path">原始路徑。</param>
+    /// <returns>以斜線開頭的路徑。</returns>
+    private static string NormalizePath(string path)
+    {
+        return path.StartsWith("/", StringComparison.Ordinal) ? path : "/" + path;
+    }
+}
+
+/// <summary>
+/// 表示測試 HTTP 回應。
+/// </summary>
+internal sealed class LoopbackHttpResponse
+{
+    /// <summary>
+    /// 初始化 <see cref="LoopbackHttpResponse"/> 類別的新執行個體。
+    /// </summary>
+    /// <param name="content">回應內容。</param>
+    /// <param name="contentType">內容類型。</param>
+    /// <param name="declaredContentLength">宣告的內容長度。</param>
+    /// <param name="statusCode">HTTP 狀態碼。</param>
+    public LoopbackHttpResponse(byte[] content, string contentType, int? declaredContentLength, int statusCode = 200)
+    {
+        Content = content;
+        ContentType = contentType;
+        DeclaredContentLength = declaredContentLength;
+        StatusCode = statusCode;
+    }
+
+    /// <summary>
+    /// 取得回應內容。
+    /// </summary>
+    /// <value>回應內容。</value>
+    public byte[] Content { get; private set; }
+
+    /// <summary>
+    /// 取得內容類型。
+    /// </summary>
+    /// <value>內容類型。</value>
+    public string ContentType { get; private set; }
+
+    /// <summary>
+    /// 取得宣告的內容長度。
+    /// </summary>
+    /// <value>宣告的內容長度。</value>
+    public int? DeclaredContentLength { get; private set; }
+
+    /// <summary>
+    /// 取得 HTTP 狀態碼。
+    /// </summary>
+    /// <value>HTTP 狀態碼。</value>
+    public int StatusCode { get; private set; }
 }
 
 /// <summary>

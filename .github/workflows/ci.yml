@@ -59,12 +59,12 @@ jobs:
             nuget-${{ runner.os }}-
 
       - name: Cache libmpv / yt-dlp / FFmpeg / Deno runtime
-        # 用 runtime catalog 與 RuntimeResolver 相關來源檔的 hash 當 cache key；
-        # 來源 pin 變動時自動失效並重新下載。
+        # 用 runtime catalog 與實際 runtime / downloader 來源檔的 hash 當 cache key；
+        # 來源 pin 或清理邏輯變動時自動失效並重新下載。
         uses: actions/cache@v5
         with:
           path: .cache\runtime
-          key: runtime-${{ runner.os }}-${{ hashFiles('docs/runtime/libmpv-git-builds.json', 'src/MediaEmbedKit.Mpv/Downloads/**.cs') }}
+          key: runtime-${{ runner.os }}-${{ hashFiles('docs/runtime/libmpv-git-builds.json', 'src/MediaEmbedKit.Mpv.Runtime/**.cs', 'src/MediaEmbedKit.Mpv.Externals/**.cs') }}
           restore-keys: |
             runtime-${{ runner.os }}-
 

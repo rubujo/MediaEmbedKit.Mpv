@@ -31,6 +31,7 @@ public static class DenoDownloader
 
         options = options ?? new DenoDownloadOptions();
         Directory.CreateDirectory(installDirectory);
+        TryPruneDenoExtractWorkspace(installDirectory);
 
         Uri defaultApiUri = new Uri("https://api.github.com/repos/denoland/deno/releases/latest");
         Uri apiUri = options.ReleaseApiUriOverride ?? defaultApiUri;
@@ -87,11 +88,12 @@ public static class DenoDownloader
             asset.Name);
         await VerifyProviderChecksumIfRequiredAsync(release, asset, archivePath, options, cancellationToken).ConfigureAwait(false);
 
-        DownloadUtility.ExtractZipToDirectory(archivePath, installDirectory, true);
-
-        if (!File.Exists(executablePath))
+        string extractParent = Path.Combine(installDirectory, ".deno-extract");
+        string extractDirectory = Path.Combine(extractParent, Guid.NewGuid().ToString("N"));
+        try
         {
-            string? found = Directory.GetFiles(installDirectory, "deno.exe", SearchOption.AllDirectories).FirstOrDefault();
+            DownloadUtility.ExtractZipToDirectory(archivePath, extractDirectory, true);
+            string? found = Directory.GetFiles(extractDirectory, "deno.exe", SearchOption.AllDirectories).FirstOrDefault();
             if (found == null)
             {
                 throw new FileNotFoundException("Deno 壓縮檔已解壓縮，但找不到 deno.exe。", "deno.exe");
@@ -101,8 +103,13 @@ public static class DenoDownloader
             ArchiveSafety.RejectIfReparsePoint(found, "Deno archive extracted deno.exe");
             File.Copy(found, executablePath, true);
         }
+        finally
+        {
+            TryDeleteDirectory(extractDirectory);
+            TryDeleteEmptyDirectory(extractParent);
+        }
 
-        // 拒絕最終 runtime/deno.exe 為 reparse point（也涵蓋 archive 解壓到 root 的情境）。
+        // 拒絕最終 runtime/deno.exe 為 reparse point。
         ArchiveSafety.RejectIfReparsePoint(executablePath, "Deno runtime deno.exe");
 
         // 解壓成功後，依 options.RetainArchive 決定是否清掉壓縮檔。Deno zip 約 30 MB；
@@ -133,6 +140,77 @@ public static class DenoDownloader
             if (File.Exists(archivePath))
             {
                 File.Delete(archivePath);
+            }
+        }
+        catch (IOException)
+        {
+        }
+        catch (UnauthorizedAccessException)
+        {
+        }
+    }
+
+    /// <summary>
+    /// 清理過去 Deno 解壓中止留下的暫存資料夾。
+    /// </summary>
+    /// <param name="installDirectory">Deno 安裝資料夾。</param>
+    private static void TryPruneDenoExtractWorkspace(string installDirectory)
+    {
+        string extractParent = Path.Combine(installDirectory, ".deno-extract");
+        if (!Directory.Exists(extractParent))
+        {
+            return;
+        }
+
+        try
+        {
+            foreach (string entry in Directory.GetDirectories(extractParent))
+            {
+                TryDeleteDirectory(entry);
+            }
+
+            TryDeleteEmptyDirectory(extractParent);
+        }
+        catch (IOException)
+        {
+        }
+        catch (UnauthorizedAccessException)
+        {
+        }
+    }
+
+    /// <summary>
+    /// 嘗試刪除指定資料夾與其內容；失敗時不擲例外。
+    /// </summary>
+    /// <param name="directoryPath">要刪除的資料夾。</param>
+    private static void TryDeleteDirectory(string directoryPath)
+    {
+        try
+        {
+            if (Directory.Exists(directoryPath))
+            {
+                Directory.Delete(directoryPath, true);
+            }
+        }
+        catch (IOException)
+        {
+        }
+        catch (UnauthorizedAccessException)
+        {
+        }
+    }
+
+    /// <summary>
+    /// 嘗試刪除空資料夾；資料夾不存在、非空或刪除失敗皆忽略。
+    /// </summary>
+    /// <param name="directoryPath">要刪除的空資料夾。</param>
+    private static void TryDeleteEmptyDirectory(string directoryPath)
+    {
+        try
+        {
+            if (Directory.Exists(directoryPath) && !Directory.EnumerateFileSystemEntries(directoryPath).Any())
+            {
+                Directory.Delete(directoryPath, false);
             }
         }
         catch (IOException)

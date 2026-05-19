@@ -67,9 +67,11 @@ helper 會自動 prune `.updates/` 內舊的時戳資料夾，僅保留最新 1 
 
 `FFmpegDownloadOptions.RetainArchive`、`MpvWindowsBuildDownloadOptions.RetainArchive` 與 `DenoDownloadOptions.RetainArchive` 控制解壓成功後是否保留下載的壓縮檔（zip / 7z）。預設值為 `false`：解壓成功後 helper 立即清掉壓縮檔，避免長期佔用磁碟（一次完整 runtime install 可省 ~290 MB：FFmpeg-Builds zip ~200 MB + libmpv .7z ~50–100 MB + Deno zip ~30 MB）。
 
-需在「warm restart 重新驗證 SHA-256 而不重新下載」流程下保留壓縮檔的呼叫端，應明確設 `RetainArchive = true`。下次再呼叫 `Download*Async(...)` 時，FFmpeg helper 的 `CanVerifyExistingArchive` fast path 才會找到 archive 並重跑驗證。
+需在「warm restart 重新驗證 SHA-256 而不重新下載」流程下保留壓縮檔的呼叫端，應明確設 `RetainArchive = true`。下次再呼叫 `Download*Async(...)` 時，FFmpeg helper 即使已可重用既有 `ffmpeg.exe` / `ffprobe.exe`，仍會先驗證 retained archive 的 GitHub digest / provider checksum，確認後才走 fast path。
 
 清掉壓縮檔的失敗（檔案被其他處理序鎖、權限不足等）不會擲例外或失敗整個下載流程 —— archive 本身已不再被需要，留下也只是磁碟用量問題。
+
+CI 的 `.cache/runtime` 使用 GitHub Actions cache；cache key 由 `docs/runtime/libmpv-git-builds.json`、`src/MediaEmbedKit.Mpv.Runtime/**.cs` 與 `src/MediaEmbedKit.Mpv.Externals/**.cs` 的 hash 組成。provider catalog、runtime helper 或 downloader 清理邏輯改變時會自然建立新 cache，舊 cache 交由 GitHub Actions eviction policy 清理，不在 workflow 內主動刪除。
 
 ## libmpv
 
@@ -243,6 +245,8 @@ Deno helper 支援 Windows x64（`deno-x86_64-pc-windows-msvc.zip`）與 ARM64�
 
 需要使用 Deno 內建升級流程且要求 checksum 時，使用 `DenoDownloader.RunSelfUpgradeWithChecksumAsync(...)`。若要維持完整下載紀錄與來源鎖定，應使用 `DenoDownloader.DownloadAndExtractLatestAsync(...)` 搭配驗證政策。
 
+`DenoDownloader.DownloadAndExtractLatestAsync(...)` 會先解壓到 `runtime/.deno-extract/<guid>/` 暫存資料夾，只將驗證過的 `deno.exe` 複製到 runtime 根目錄，最後清掉暫存資料夾。即使未來 Deno zip 增加說明檔或子資料夾，也不會污染 runtime 根目錄。
+
 ## FFmpeg
 
 FFmpeg helper 支援從 yt-dlp `FFmpeg-Builds` 下載對應架構的 GPL build：x64 為 `ffmpeg-master-latest-win64-gpl.zip`、ARM64 為 `ffmpeg-master-latest-winarm64-gpl.zip`（兩者皆由 [yt-dlp/FFmpeg-Builds](https://github.com/yt-dlp/FFmpeg-Builds/releases) 與其上游 [BtbN/FFmpeg-Builds](https://github.com/BtbN/FFmpeg-Builds/releases) 自動產製）。下載後 `ffmpeg.exe` 與 `ffprobe.exe` 放在 runtime 資料夾根目錄。`FFmpegDownloader.GetWindowsAssetName(MpvWindowsArchitecture)` 提供架構到資產名稱的 mapping。
@@ -257,7 +261,7 @@ FFmpeg helper 支援從 yt-dlp `FFmpeg-Builds` 下載對應架構的 GPL build�
 >
 > 本 helper 僅提供下載與驗證工具，不對授權合規做進一步處理 —— 啟用此選項即視同自願接受 GPLv2+ 散發義務。
 
-FFmpeg 沒有本專案可呼叫的內建自我更新命令。若要更新，請重新呼叫 `FFmpegDownloader.DownloadAndExtractLatestAsync(...)` 或 `MpvWindowsRuntimeInstaller.InstallOrUpdateAsync(...)`，並於 `FFmpegDownloadOptions.OverwriteExisting = true` 時覆蓋既有檔案。
+FFmpeg 沒有本專案可呼叫的內建自我更新命令。若要更新，請重新呼叫 `FFmpegDownloader.DownloadAndExtractLatestAsync(...)` 或 `MpvWindowsRuntimeInstaller.InstallOrUpdateAsync(...)`，並於 `FFmpegDownloadOptions.OverwriteExisting = true` 時覆蓋既有檔案。既有 `ffmpeg.exe` / `ffprobe.exe` 可重用時，helper 仍會依 `RetainArchive` 處理 `ffmpeg-master-latest-*-gpl.zip`：預設 `false` 清掉所有 FFmpeg-Builds zip，明確 `true` 時驗證並只保留目前 asset。
 
 ### yt-dlp/FFmpeg-Builds 的雙 release 結構
 

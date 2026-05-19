@@ -92,6 +92,15 @@ public static class FFmpegDownloader
         string ffprobePath = Path.Combine(installDirectory, "ffprobe.exe");
         if (CanUseExistingTools(ffmpegPath, ffprobePath, options))
         {
+            if (File.Exists(archivePath) && options.RetainArchive)
+            {
+                await VerifyExistingArchiveAsync(release, asset, archivePath, options, cancellationToken).ConfigureAwait(false);
+            }
+
+            TryPruneFFmpegArchives(
+                installDirectory,
+                keepArchiveName: options.RetainArchive ? asset.Name : null);
+
             return new FFmpegDownloadResult(
                 release.TagName,
                 asset.Name,
@@ -107,22 +116,10 @@ public static class FFmpegDownloader
         {
             try
             {
-                DownloadUtility.VerifyDownloadedAsset(
-                    archivePath,
-                    asset.Digest,
-                    options.VerifyDigest,
-                    options.VerificationPolicy,
-                    options.ExpectedSha256,
-                    asset.Name);
-                await VerifyProviderChecksumIfRequiredAsync(release, asset, archivePath, options, cancellationToken).ConfigureAwait(false);
-
-                // Skip path 仍須遵守 RetainArchive=false 的「裝完即用情境清掉壓縮檔」
-                // 設計：若 caller 沒明確設 RetainArchive=true，驗證完上次留下的 archive
-                // 後立即刪除，避免長期累積（209 MB FFmpeg-Builds zip 重複留存）。
-                if (!options.RetainArchive)
-                {
-                    TryDeleteArchive(archivePath);
-                }
+                await VerifyExistingArchiveAsync(release, asset, archivePath, options, cancellationToken).ConfigureAwait(false);
+                TryPruneFFmpegArchives(
+                    installDirectory,
+                    keepArchiveName: options.RetainArchive ? asset.Name : null);
 
                 return new FFmpegDownloadResult(
                     release.TagName,
@@ -134,7 +131,7 @@ public static class FFmpegDownloader
                     asset.Digest,
                     false);
             }
-            catch (InvalidOperationException)
+            catch (InvalidOperationException) when (!options.RetainArchive)
             {
             }
         }
@@ -176,13 +173,11 @@ public static class FFmpegDownloader
             }
         }
 
-        // 解壓成功後，依 options.RetainArchive 決定是否清掉壓縮檔。FFmpeg-Builds zip
-        // 約 200 MB；裝完即用情境留著只佔磁碟、無用途。warm restart 強驗證需求請設
-        // RetainArchive=true，CanVerifyExistingArchive fast path 才能找到 archive 重用。
-        if (!options.RetainArchive)
-        {
-            TryDeleteArchive(archivePath);
-        }
+        // 解壓成功後，依 options.RetainArchive 決定保留目前 archive 或清掉所有
+        // FFmpeg-Builds zip；也順手移除舊架構 / 舊流程留下的同類 archive。
+        TryPruneFFmpegArchives(
+            installDirectory,
+            keepArchiveName: options.RetainArchive ? asset.Name : null);
 
         return new FFmpegDownloadResult(
             release.TagName,
@@ -206,6 +201,66 @@ public static class FFmpegDownloader
             if (File.Exists(archivePath))
             {
                 File.Delete(archivePath);
+            }
+        }
+        catch (IOException)
+        {
+        }
+        catch (UnauthorizedAccessException)
+        {
+        }
+    }
+
+    /// <summary>
+    /// 驗證既有 FFmpeg-Builds 壓縮檔。
+    /// </summary>
+    /// <param name="release">GitHub 發行資料。</param>
+    /// <param name="asset">發行資產。</param>
+    /// <param name="archivePath">既有壓縮檔路徑。</param>
+    /// <param name="options">下載選項。</param>
+    /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
+    /// <returns>表示驗證流程的工作。</returns>
+    private static async Task VerifyExistingArchiveAsync(
+        GitHubRelease release,
+        GitHubReleaseAsset asset,
+        string archivePath,
+        FFmpegDownloadOptions options,
+        CancellationToken cancellationToken)
+    {
+        DownloadUtility.VerifyDownloadedAsset(
+            archivePath,
+            asset.Digest,
+            options.VerifyDigest,
+            options.VerificationPolicy,
+            options.ExpectedSha256,
+            asset.Name);
+        await VerifyProviderChecksumIfRequiredAsync(release, asset, archivePath, options, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// 清理 runtime 資料夾中的 FFmpeg-Builds 壓縮檔。
+    /// </summary>
+    /// <param name="installDirectory">FFmpeg 安裝資料夾。</param>
+    /// <param name="keepArchiveName">要保留的壓縮檔名稱；為 <see langword="null"/> 時全部刪除。</param>
+    private static void TryPruneFFmpegArchives(string installDirectory, string? keepArchiveName)
+    {
+        try
+        {
+            if (!Directory.Exists(installDirectory))
+            {
+                return;
+            }
+
+            foreach (string path in Directory.EnumerateFiles(installDirectory, "ffmpeg-master-latest-*-gpl.zip"))
+            {
+                string fileName = Path.GetFileName(path);
+                if (keepArchiveName != null &&
+                    string.Equals(fileName, keepArchiveName, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                TryDeleteArchive(path);
             }
         }
         catch (IOException)

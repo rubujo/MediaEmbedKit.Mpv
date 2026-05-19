@@ -1,6 +1,6 @@
 # 參考來源
 
-本文件列出專案規範採用的主要來源。最後查核日期：2026-05-18。
+本文件列出專案規範採用的主要來源。最後查核日期：2026-05-19。
 
 ## libmpv 與 mpv
 
@@ -37,9 +37,11 @@
 - yt-dlp FFmpeg-Builds：https://github.com/yt-dlp/FFmpeg-Builds
 - Deno 安裝：https://docs.deno.com/runtime/getting_started/installation/
 - Deno upgrade checksum：https://docs.deno.com/runtime/reference/cli/upgrade/#checksum-verification
+- Deno 2.7 release note：https://deno.com/blog/v2.7
 - Deno releases：https://github.com/denoland/deno/releases
 - Chrome VersionHistory API：https://developer.chrome.com/docs/web-platform/versionhistory/guide
 - GitHub release asset digest：https://github.blog/changelog/2025-06-03-releases-now-expose-digests-for-release-assets/
+- GitHub Releases REST API：https://docs.github.com/en/rest/releases/releases
 
 ## Encoding 與編碼器
 
@@ -49,6 +51,13 @@
 - FFmpeg ffmpeg-codecs：https://ffmpeg.org/ffmpeg-codecs.html
 - FFmpeg libsvtav1 two-pass commit `5ba2525`（2026-02-25）：https://github.com/FFmpeg/FFmpeg/commit/5ba2525c7affc29cbd99e6266946b382d3fffe8b
 - SVT-AV1 releases：https://gitlab.com/AOMediaCodec/SVT-AV1/-/releases
+
+## CI/CD 與供應鏈
+
+- GitHub Actions dependency caching：https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching
+- GitHub Actions cache REST API：https://docs.github.com/en/rest/actions/cache
+- GitHub Actions secure use：https://docs.github.com/en/actions/security-for-github-actions/security-guides/security-hardening-for-github-actions
+- actions/cache：https://github.com/actions/cache
 
 ## AI Agent 與提交規範
 

@@ -148,28 +148,40 @@ internal static class DownloadUtility
             File.Delete(tempPath);
         }
 
-        using (HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, new Uri(url)))
+        bool completed = false;
+        try
         {
-            BrowserRequestHeaders.Apply(request.Headers, userAgent);
-
-            using (HttpResponseMessage response = await SharedHttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false))
+            using (HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, new Uri(url)))
             {
-                response.EnsureSuccessStatusCode();
-#if NET5_0_OR_GREATER
-                using (Stream remote = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false))
-#else
-                using (Stream remote = await response.Content.ReadAsStreamAsync().ConfigureAwait(false))
-#endif
-                using (FileStream local = File.Create(tempPath))
+                BrowserRequestHeaders.Apply(request.Headers, userAgent);
+
+                using (HttpResponseMessage response = await SharedHttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false))
                 {
-                    // 把 cancellationToken 傳完整 —— 原本只 SendAsync 帶 token，CopyToAsync
-                    // 沒帶 → cancel 大檔下載（FFmpeg 200 MB / libmpv 30 MB）後仍會跑完才停。
-                    await remote.CopyToAsync(local, 81920, cancellationToken).ConfigureAwait(false);
+                    response.EnsureSuccessStatusCode();
+#if NET5_0_OR_GREATER
+                    using (Stream remote = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false))
+#else
+                    using (Stream remote = await response.Content.ReadAsStreamAsync().ConfigureAwait(false))
+#endif
+                    using (FileStream local = File.Create(tempPath))
+                    {
+                        // 把 cancellationToken 傳完整 —— 原本只 SendAsync 帶 token，CopyToAsync
+                        // 沒帶 → cancel 大檔下載（FFmpeg 200 MB / libmpv 30 MB）後仍會跑完才停。
+                        await remote.CopyToAsync(local, 81920, cancellationToken).ConfigureAwait(false);
+                    }
                 }
             }
-        }
 
-        ReplaceFile(tempPath, targetPath);
+            ReplaceFile(tempPath, targetPath);
+            completed = true;
+        }
+        finally
+        {
+            if (!completed)
+            {
+                TryDeleteFile(tempPath);
+            }
+        }
     }
 
     /// <summary>
@@ -750,6 +762,27 @@ internal static class DownloadUtility
         }
 
         File.Move(sourcePath, targetPath);
+    }
+
+    /// <summary>
+    /// 嘗試刪除暫存檔；刪除失敗不擲例外。
+    /// </summary>
+    /// <param name="filePath">要刪除的檔案。</param>
+    private static void TryDeleteFile(string filePath)
+    {
+        try
+        {
+            if (File.Exists(filePath))
+            {
+                File.Delete(filePath);
+            }
+        }
+        catch (IOException)
+        {
+        }
+        catch (UnauthorizedAccessException)
+        {
+        }
     }
 
     /// <summary>

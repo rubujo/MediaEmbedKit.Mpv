@@ -2479,6 +2479,8 @@ internal static class Program
             VerificationPolicy = MpvNativeAssetVerificationPolicy.RequireProviderChecksum,
             // 顯式保留 archive 以驗證 RetainArchive=true 路徑（同步覆蓋預設清除路徑下方）。
             RetainArchive = true,
+            // 此測試目標是 live download + retain，不是重驗舊 cache 內留下的 retained archive。
+            OverwriteExisting = true,
         };
         FFmpegDownloadResult result = await FFmpegDownloader.DownloadAndExtractLatestAsync(runtimeDirectory, options).ConfigureAwait(false);
 
