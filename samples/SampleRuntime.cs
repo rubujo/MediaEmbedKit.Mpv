@@ -309,6 +309,7 @@ internal static class SampleRuntime
 
         MpvRuntimeInstallOptions options = new MpvRuntimeInstallOptions();
         options.Windows.LoadLibMpv = false;
+        options.Windows.IncludeFFmpeg = true;
 
         MpvRuntimeInstallResult result = await MpvRuntimeInstaller.InstallOrUpdateAsync(
             runtimeDirectory,

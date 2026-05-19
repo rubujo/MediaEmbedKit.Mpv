@@ -17,6 +17,7 @@
 
 - GUI 範例會先顯示視窗，再於背景呼叫 `SampleRuntime.InstallOrUpdateAsync()` 準備 `libmpv-2.dll`、`yt-dlp.exe`、`deno.exe`、`ffmpeg.exe` 與 `ffprobe.exe`。
 - Console 範例明確呼叫 runtime helper 後建立 `MpvPlayer`，用於展示核心 API 最小生命週期。
+- 範例為了展示 yt-dlp 後處理、FFmpeg / FFprobe 診斷與完整 runtime，會明確啟用 yt-dlp/FFmpeg-Builds GPL binaries；散發應用程式前請依 [`docs/RUNTIME_ASSETS.md`](../docs/RUNTIME_ASSETS.md) 確認授權義務。
 - 預設播放 YouTube 測試網址，也可輸入本機檔案或媒體網址。
 - 事件清單顯示 libmpv 事件、記錄訊息、屬性變更、ytdl hook 結果與範例生命週期。
 - 關閉視窗或頁面離開時釋放事件橋接器與播放器資源。

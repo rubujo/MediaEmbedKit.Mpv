@@ -197,6 +197,7 @@ internal static class RuntimeProvisioner
 
         MpvRuntimeInstallOptions options = new MpvRuntimeInstallOptions();
         options.Windows.LoadLibMpv = false;
+        options.Windows.IncludeFFmpeg = true;
 
         for (int attempt = 1; attempt <= RetryCount; attempt++)
         {
