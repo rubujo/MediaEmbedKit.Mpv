@@ -1,4 +1,4 @@
-<Solution>
+﻿<Solution>
   <Folder Name="/src/">
     <Project Path="src/MediaEmbedKit.Mpv/MediaEmbedKit.Mpv.csproj" />
     <Project Path="src/MediaEmbedKit.Mpv.Externals/MediaEmbedKit.Mpv.Externals.csproj" />

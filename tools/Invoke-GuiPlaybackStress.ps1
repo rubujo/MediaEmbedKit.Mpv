@@ -1,4 +1,4 @@
-﻿param(
+param(
     [string] $Configuration = "Release",
     [string] $Sample = "all",
     [double] $Seconds = 120,

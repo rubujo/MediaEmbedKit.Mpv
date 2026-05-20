@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <!--
       Meta package：靠 PackageReference 一次拉 5 個 service 層套件 (core / Externals /

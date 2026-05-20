@@ -1,4 +1,4 @@
-﻿# MediaEmbedKit.Mpv 專案規範
+# MediaEmbedKit.Mpv 專案規範
 
 本文件是專案規範入口。細節由專責文件維護；變更支援目標、平台狀態、runtime 政策、工程規則或 AI agent 指示時，必須同步更新對應文件。
 

@@ -1,4 +1,4 @@
-﻿param(
+param(
     [string] $Configuration = "Release",
     [string] $PackageDirectory = "artifacts/packages",
     [string] $WorkDirectory = ".tmp/consumer-package-validation",

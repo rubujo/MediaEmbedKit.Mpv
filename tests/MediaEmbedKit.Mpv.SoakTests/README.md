@@ -1,4 +1,4 @@
-﻿# MediaEmbedKit.Mpv.SoakTests
+# MediaEmbedKit.Mpv.SoakTests
 
 > 連續播放 soak harness：以三路混合工作負載（WAV / MP4 / cancel-in-flight）循環
 > Load → 播放 → Stop → Dispose，每回合強制 full GC 後取樣，跑滿目標時長後

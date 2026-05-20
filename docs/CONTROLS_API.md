@@ -1,4 +1,4 @@
-﻿# 控制項共通綁定 API
+# 控制項共通綁定 API
 
 本文件描述 MediaEmbedKit.Mpv 5 個 UI 框架控制項共同提供的 bindable property 與 ICommand。所有屬性與指令在 WPF、Avalonia、WinUI 3、MAUI Windows 與 WinForms 上具有相同語意，且皆與 libmpv 屬性雙向同步（唯讀者單向）。
 
