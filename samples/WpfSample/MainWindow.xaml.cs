@@ -23,7 +23,7 @@ public partial class MainWindow : Window
     private const int EventLogLimit = 60;
 
     /// <summary>
-    /// 背景 runtime 初始化完成後建立的 WPF 播放控制項。
+    /// 背景執行階段初始化完成後建立的 WPF 播放控制項。
     /// </summary>
     private MpvWpfPlayer? _playerHost;
     /// <summary>
@@ -80,7 +80,7 @@ public partial class MainWindow : Window
         _statusDispatcher = new SampleStatusUpdateDispatcher(() => _features.GetStatusText(), SetStatusText, ScheduleUiUpdate);
         SetRuntimeControlsEnabled(false);
         Loaded += WindowLoaded;
-        AppendEventLine(CreateLifecycleLine("WindowCreated", "WPF 視窗已建立，等待 runtime 初始化。"));
+        AppendEventLine(CreateLifecycleLine("WindowCreated", "WPF 視窗已建立，等待執行階段初始化。"));
     }
 
     /// <summary>
@@ -166,7 +166,7 @@ public partial class MainWindow : Window
         catch (Exception ex)
         {
             Environment.ExitCode = 1;
-            SetStatusText("runtime 初始化失敗");
+            SetStatusText("執行階段初始化失敗");
             AppendEventLine(CreateLifecycleLine("RuntimeError", ex.Message));
             if (SampleRuntime.IsSmokeTestEnabled)
             {

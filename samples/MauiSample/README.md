@@ -5,7 +5,7 @@
 ## 示範內容
 
 - 透過 `UseMediaEmbedKitMpv()` 註冊 MAUI handler。
-- 視窗先顯示，再於背景準備 Windows runtime 資料夾。
+- 視窗先顯示，再於背景準備 Windows 執行階段資料夾。
 - 使用 Windows HWND 後端播放。
 - 優先使用 `OverlayView` 示範 MAUI 覆蓋層；handler 會負責轉換與清理對應的平台檢視。
 - `OverlayContent` 僅保留給需要直接提供 WinUI 元素的 Windows 原生情境，且會優先於 `OverlayView`。

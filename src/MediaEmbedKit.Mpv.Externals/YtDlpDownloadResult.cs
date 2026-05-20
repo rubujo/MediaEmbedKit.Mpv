@@ -26,7 +26,7 @@ public sealed class YtDlpDownloadResult
     /// yt-dlp 可執行檔路徑。
     /// </param>
     /// <param name="digest">
-    /// GitHub 發行資產提供的摘要值。
+    /// GitHub Releases 資產提供的摘要值。
     /// </param>
     /// <param name="updated">
     /// 是否實際更新了本機檔案。
@@ -90,10 +90,10 @@ public sealed class YtDlpDownloadResult
     public string ExecutablePath { get; private set; }
 
     /// <summary>
-    /// 取得 GitHub 發行資產提供的摘要值。
+    /// 取得 GitHub Releases 資產提供的摘要值。
     /// </summary>
     /// <value>
-    /// GitHub 發行資產摘要；未提供時為 <see langword="null"/>。
+    /// GitHub Releases 資產摘要；未提供時為 <see langword="null"/>。
     /// </value>
     public string? Digest { get; private set; }
 

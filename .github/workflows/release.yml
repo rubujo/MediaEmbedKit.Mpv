@@ -2,17 +2,17 @@ name: release
 
 # 觸發策略：
 # - push semver-style tag（v0.1.0-alpha.1 / v1.0.0 等）自動跑
-# - workflow_dispatch 允許手動測試
-# 不 push 到 nuget.org；只把 .nupkg / .snupkg 上傳到對應 GitHub Release 頁面。
+# - 工作流程_dispatch 允許手動測試
+# 不 push 到 nuget.org；只把 .nupkg / .snupkg 上傳到對應 GitHub Releases 頁面。
 
 on:
   push:
     tags:
       - 'v*.*.*'
-  workflow_dispatch:
+  工作流程_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.工作流程 }}-${{ github.ref }}
   cancel-in-progress: false
 
 permissions:
@@ -22,7 +22,7 @@ permissions:
 
 jobs:
   pack-and-release:
-    name: Pack and upload to GitHub Release
+    name: Pack and upload to GitHub Releases
     runs-on: windows-latest
     timeout-minutes: 45
     env:
@@ -58,7 +58,7 @@ jobs:
         # 只 cache workload restore 真正新增到 SDK 目錄的部分；runner image 預裝
         # 的 ref/runtime/aspnetcore packs（~1.4 GB）不要再快取。packs/ 用 glob
         # 篩出 MAUI 相關 platform refs；metadata/ 只抓 workloads 子資料夾。
-        # key 加 v2 後綴強制跳過先前過度涵蓋的舊 cache。
+        # key 加 v2 後綴強制跳過先前過度涵蓋的舊快取。
         uses: actions/cache@v5
         with:
           path: |
@@ -78,12 +78,12 @@ jobs:
         shell: pwsh
         run: dotnet workload restore .\MediaEmbedKit.Mpv.slnx
 
-      - name: Run release gate
-        # release gate 內第 8 步「NuGet 套件驗證」會呼叫 Invoke-PackageValidation.ps1，
-        # 它已經把 11 個 packable project pack 到 artifacts/packages/（含 .nupkg 與
+      - name: Run發行檢查閘門
+        #發行檢查閘門內第 8 步「NuGet 套件驗證」會呼叫 Invoke-PackageValidation.ps1，
+        # 它已經把 11 個可打包專案 pack 到 artifacts/packages/（含 .nupkg 與
         # .snupkg）。下一步直接拿那邊的檔上傳，不重複 dotnet pack。
         #
-        # -IncludeDocSyncCheck：要求 provider 下游事實宣告型文件已與 catalog 同步。
+        # -IncludeDocSyncCheck：要求提供者下游事實宣告型文件已與 catalog 同步。
         # ci.yml（PR-CI）不開此旗標，留給 release 路徑當最後一道把關（drift 不能上正式版）。
         shell: pwsh
         run: |
@@ -93,8 +93,8 @@ jobs:
         # actions/attest-build-provenance 用 GitHub OIDC token 透過 Sigstore Public
         # Good Instance 對每個 .nupkg / .snupkg 產生 build provenance attestation，
         # 寫進 Rekor transparency log。Consumer 端可用 `gh attestation verify` 或
-        # `cosign verify-blob` 驗證套件的 provenance（建置來源是哪個 commit / workflow）。
-        # 上游 mpv / FFmpeg-Builds 等第三方 binary 尚未採用此機制；本步驟只保證
+        # `cosign verify-blob` 驗證套件的 provenance（建置來源是哪個 commit / 工作流程）。
+        # 上游 mpv / FFmpeg-Builds 等第三方 二進位檔 尚未採用此機制；本步驟只保證
         # MediaEmbedKit.Mpv 自家 NuGet 套件的 provenance。詳見 docs/SECURITY_MODEL.md。
         uses: actions/attest-build-provenance@v4
         with:
@@ -102,7 +102,7 @@ jobs:
             artifacts/packages/*.nupkg
             artifacts/packages/*.snupkg
 
-      - name: Upload to GitHub Release
+      - name: Upload to GitHub Releases
         uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3
         with:
           files: |

@@ -21,7 +21,7 @@ public static class MpvEncoder
 
     /// <summary>
     /// 取消後等待 libmpv 主動發送 <c>EndFile</c> 的最長時間；
-    /// 逾時則由 helper 自行終止等待，避免因 libmpv 未發事件而永久卡住。
+    /// 逾時則由輔助工具 自行終止等待，避免因 libmpv 未發事件而永久卡住。
     /// </summary>
     private static readonly TimeSpan CancellationGracePeriod = TimeSpan.FromSeconds(3);
 

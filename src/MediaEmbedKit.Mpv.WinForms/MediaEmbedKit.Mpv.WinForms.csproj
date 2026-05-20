@@ -5,7 +5,7 @@
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <AssemblyName>MediaEmbedKit.Mpv.WinForms</AssemblyName>
     <RootNamespace>MediaEmbedKit.Mpv.WinForms</RootNamespace>
-    <Description>WinForms control for libmpv.</Description>
+    <Description>供 libmpv 使用的 WinForms 控制項。</Description>
     <PackageId>MediaEmbedKit.Mpv.WinForms</PackageId>
     <Title>MediaEmbedKit.Mpv.WinForms</Title>
   </PropertyGroup>

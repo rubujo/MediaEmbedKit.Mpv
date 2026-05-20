@@ -12,7 +12,7 @@ namespace MediaEmbedKit.Mpv.Samples.WinForms;
 /// <summary>
 /// 表示 WinForms 範例的主要視窗。layout 結構、所有控制項實例化、屬性設定與事件繫結
 /// 由 <c>MainForm.Designer.cs</c> 序列化（對齊 VS 2026 designer 產出）。本檔僅處理
-/// designer 無法序列化的部分：runtime 初始化、dispatcher / event bridge 串接、命名
+/// designer 無法序列化的部分：執行階段初始化、dispatcher / event bridge 串接、命名
 /// click handler 對 <see cref="RunFeature"/> / <see cref="RunFeatureAsync"/> wrapper 的轉送、
 /// ComboBox 動態項目填入、DataBindings 設定與 Resize 時對右側對照覆蓋層的位置調整。
 /// </summary>
@@ -99,7 +99,7 @@ public sealed partial class MainForm : Form
         _statusDispatcher = new SampleStatusUpdateDispatcher(() => _features.GetStatusText(), SetStatusText, ScheduleUiUpdate);
 
         SetPlaybackControlsEnabled(false);
-        AppendEventLine(CreateLifecycleLine("FormCreated", "範例視窗已建立，等待 runtime 初始化。"));
+        AppendEventLine(CreateLifecycleLine("FormCreated", "範例視窗已建立，等待執行階段初始化。"));
     }
 
     /// <summary>
@@ -186,7 +186,7 @@ public sealed partial class MainForm : Form
         catch (Exception ex)
         {
             Environment.ExitCode = 1;
-            SetStatusText("runtime 初始化失敗");
+            SetStatusText("執行階段初始化失敗");
             AppendEventLine(CreateLifecycleLine("RuntimeError", ex.Message));
             if (SampleRuntime.IsSmokeTestEnabled || SampleRuntime.IsFeatureSmokeTestEnabled)
             {

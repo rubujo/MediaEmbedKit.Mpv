@@ -1,18 +1,18 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <!--
-      Meta package：靠 PackageReference 一次拉 5 個 service 層套件 (core / Externals /
+      Meta package：靠 PackageReference 一次拉入 5 個服務層套件 (core / Externals /
       Runtime / Diagnostics / Hosting)。不產出自己的 assembly
       (IncludeBuildOutput=false 防止建立空 lib/<tfm>/.dll)。
-      consumer 想「service 層都裝」可單行：<PackageReference Include="MediaEmbedKit.Mpv.Full" />
+      使用端想「服務層都裝」可單行：<PackageReference Include="MediaEmbedKit.Mpv.Full" />
       UI 控制項 (.WinForms / .Wpf / .Avalonia / .WinUI / .Maui) 因 TFM 分散
       (net48 / net10.0-windows / net10.0-windows10.0.19041.0) 各自有特定 SDK 需求，
-      不適合塞進 meta，consumer 需依使用的 UI 框架自行加 ref。
+      不適合塞進 meta，使用端需依使用的 UI 框架自行加 ref。
     -->
     <TargetFrameworks>netstandard2.0;net472;net48;net10.0</TargetFrameworks>
     <AssemblyName>MediaEmbedKit.Mpv.Full</AssemblyName>
     <RootNamespace>MediaEmbedKit.Mpv</RootNamespace>
-    <Description>Meta package — installs all 5 MediaEmbedKit.Mpv service-layer packages (core + Externals + Runtime + Diagnostics + Hosting) in one reference. UI framework packages (.WinForms / .Wpf / .Avalonia / .WinUI / .Maui) must be installed separately based on the chosen UI framework.</Description>
+    <Description>中繼套件：以單一參考安裝 5 個 MediaEmbedKit.Mpv 服務層套件（core、Externals、Runtime、Diagnostics、Hosting）。UI 框架套件（.WinForms、.Wpf、.Avalonia、.WinUI、.Maui）需依選用的 UI 框架另行安裝。</Description>
     <PackageId>MediaEmbedKit.Mpv.Full</PackageId>
     <Title>MediaEmbedKit.Mpv.Full</Title>
     <IncludeBuildOutput>false</IncludeBuildOutput>

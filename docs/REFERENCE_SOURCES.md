@@ -38,17 +38,17 @@
 - yt-dlp：https://github.com/yt-dlp/yt-dlp
 - yt-dlp release files：https://github.com/yt-dlp/yt-dlp/blob/master/README.md#release-files
 - yt-dlp EJS：https://github.com/yt-dlp/yt-dlp/wiki/EJS
-- yt-dlp 外部 JavaScript runtime：https://github.com/yt-dlp/yt-dlp/issues/15012
+- yt-dlp 外部 JavaScript 執行階段：https://github.com/yt-dlp/yt-dlp/issues/15012
 - yt-dlp FFmpeg-Builds：https://github.com/yt-dlp/FFmpeg-Builds
 - Deno 安裝：https://docs.deno.com/runtime/getting_started/installation/
 - Deno upgrade checksum：https://docs.deno.com/runtime/reference/cli/upgrade/#checksum-verification
 - Deno 2.7 release note：https://deno.com/blog/v2.7
 - Deno releases：https://github.com/denoland/deno/releases
 - Chrome VersionHistory API：https://developer.chrome.com/docs/web-platform/versionhistory/guide
-- GitHub release asset digest：https://github.blog/changelog/2025-06-03-releases-now-expose-digests-for-release-assets/
+- GitHub Releases 資產 digest：https://github.blog/changelog/2025-06-03-releases-now-expose-digests-for-release-assets/
 - GitHub Releases REST API：https://docs.github.com/en/rest/releases/releases
 
-## Encoding 與編碼器
+## 編碼 與編碼器
 
 - mpv encoding 文件：https://github.com/mpv-player/mpv/blob/master/DOCS/encoding.rst
 - mpv encode 選項：https://github.com/mpv-player/mpv/blob/master/DOCS/man/encode.rst
@@ -71,7 +71,7 @@
 - AGENTS.md 開放格式：https://agents.md/
 - Agent Skills 規格：https://agentskills.io/specification
 - Claude Code memory：https://docs.claude.com/en/docs/claude-code/memory
-- Claude Code Skills：https://docs.claude.com/en/docs/claude-code/skills
+- Claude Code skills：https://docs.claude.com/en/docs/claude-code/skills
 - Gemini CLI `GEMINI.md`：https://google-gemini.github.io/gemini-cli/docs/cli/gemini-md.html
 - GitHub Copilot repository custom instructions：https://docs.github.com/en/copilot/how-tos/configure-custom-instructions/add-repository-instructions
 - 慣例式提交 1.0.0：https://www.conventionalcommits.org/zh-hant/v1.0.0/

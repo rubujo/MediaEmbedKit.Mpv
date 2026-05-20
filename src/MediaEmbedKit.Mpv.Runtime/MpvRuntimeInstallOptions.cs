@@ -5,7 +5,7 @@ using MediaEmbedKit.Mpv.Externals;
 namespace MediaEmbedKit.Mpv.Runtime;
 
 /// <summary>
-/// 提供平台感知執行階段安裝 helper 的選項。
+/// 提供平台感知執行階段安裝 輔助工具的選項。
 /// </summary>
 public sealed class MpvRuntimeInstallOptions
 {
@@ -21,7 +21,7 @@ public sealed class MpvRuntimeInstallOptions
     /// 取得或設定要覆寫自動偵測結果的平台。
     /// </summary>
     /// <value>
-    /// 指定的平台；未指定時由 helper 自動偵測。
+    /// 指定的平台；未指定時由 輔助工具自動偵測。
     /// </value>
     public MpvNativeRuntimePlatform? Platform { get; set; }
 

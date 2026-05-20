@@ -8,7 +8,7 @@ using MediaEmbedKit.Mpv.Externals;
 namespace MediaEmbedKit.Mpv.Runtime;
 
 /// <summary>
-/// 提供 Windows 執行階段資料夾的安裝與更新 helper。
+/// 提供 Windows 執行階段資料夾的安裝與更新輔助工具。
 /// </summary>
 public static class MpvWindowsRuntimeInstaller
 {
@@ -37,18 +37,18 @@ public static class MpvWindowsRuntimeInstaller
             throw new ArgumentException("執行階段資料夾不可為空白。", nameof(runtimeDirectory));
         }
 
-        // cross-process lock：避免兩個 process 共用同 runtime 資料夾並發 install /
+        // 跨處理序鎖定：避免兩個 process 共用同執行階段資料夾並發 install /
         // update 寫壞 libmpv-2.dll。整段 download + stage + apply + prune 在 lock 內。
         // lock 非 reentrant；本 public 方法 acquire 後直接做事，不呼叫其他會 acquire
-        // lock 的 public 方法（會 deadlock）。
+        // lock 的 public 方法（會死結）。
         Directory.CreateDirectory(runtimeDirectory);
         using RuntimeDirectoryLock _ = await RuntimeDirectoryLock.AcquireAsync(runtimeDirectory, cancellationToken: cancellationToken).ConfigureAwait(false);
 
         // UpdateLibMpvAsync = 「明確強制更新到上游最新」語意：呼叫端設不設
-        // OverwriteExisting 都會被強制覆寫並 bypass downloader 的 idempotency
-        // skip path（marker 比對）。但不應 mutate caller 物件 —— 改用內部 clone。
-        // 想要「有需要才更新」請改用 InstallOrUpdateAsync（它讓 downloader 內建的
-        // idempotency skip path 生效）。
+        // OverwriteExisting 都會被強制覆寫並 略過下載器的冪等流程
+        // skip path（marker 比對）。但不應 mutate 呼叫端物件 —— 改用內部 clone。
+        // 想要「有需要才更新」請改用 InstallOrUpdateAsync（它讓 下載器 內建的
+        // 冪等快速路徑 生效）。
         MpvWindowsBuildDownloadOptions effectiveOptions = (options ?? new MpvWindowsBuildDownloadOptions()).Clone();
         effectiveOptions.OverwriteExisting = true;
 
@@ -77,7 +77,7 @@ public static class MpvWindowsRuntimeInstaller
         {
             if (MpvLibraryLoader.IsLoaded)
             {
-                // race 中段：另一執行緒已載入 libmpv。把解出的 dll 改 stage 到
+                // race 中段：另一執行緒已載入 libmpv。把解出的 dll 改 暫存至
                 // .updates/<時戳>/，與 loaded==true 路徑語意一致。
                 string stageDirectory = Path.Combine(runtimeDirectory, ".updates", DateTime.UtcNow.ToString("yyyyMMddHHmmss"));
                 Directory.CreateDirectory(stageDirectory);
@@ -94,9 +94,9 @@ public static class MpvWindowsRuntimeInstaller
             }
         }
 
-        // .updates/<時戳> 暫存累積問題：每次 staged update 都新建一個時戳資料夾，
+        // .updates/<時戳> 暫存累積問題：每次 暫存更新 都新建一個時戳資料夾，
         // 不主動清就會持續累積（LINQPad 等同 AppDomain 多次呼叫尤其明顯）。
-        // 保留「最近 1 個」staged update 供必要時 rollback / 稽核，其餘清掉。
+        // 保留「最近 1 個」暫存更新 供必要時 回復 / 稽核，其餘清掉。
         if (loaded || requiresRestart)
         {
             PruneStagedUpdatesDirectory(runtimeDirectory, keepLatest: 1);
@@ -117,9 +117,9 @@ public static class MpvWindowsRuntimeInstaller
     /// <summary>
     /// install-or-update 語意的 libmpv 安裝：不強制 <see cref="MpvWindowsBuildDownloadOptions.OverwriteExisting"/>，
     /// 讓 <see cref="MpvWindowsBuildDownloader.DownloadAndExtractLatestLibMpvAsync"/>
-    /// 的 sidecar marker idempotency skip path 能生效（runtime/libmpv-2.dll 已是上游
-    /// 最新就跳過下載與解壓）。同樣不 mutate caller options。若 libmpv 已載入（同一
-    /// 處理序內），會 stage 到 <c>.updates/&lt;時戳&gt;</c> 並 auto-prune 舊版本。
+    /// 的 sidecar 標記 冪等快速路徑 能生效（runtime/libmpv-2.dll 已是上游
+    /// 最新就跳過下載與解壓）。同樣不 修改呼叫端選項。若 libmpv 已載入（同一
+    /// 處理序內），會 暫存至 <c>.updates/&lt;時戳&gt;</c> 並 auto-prune 舊版本。
     /// </summary>
     /// <remarks>
     /// 對比 <see cref="UpdateLibMpvAsync"/>「明確強制更新」：本方法是「有需要才更新」
@@ -128,7 +128,7 @@ public static class MpvWindowsRuntimeInstaller
     /// Deno / FFmpeg）時使用。
     /// </remarks>
     /// <param name="runtimeDirectory">
-    /// 執行階段資料夾。
+    ///執行階段資料夾。
     /// </param>
     /// <param name="options">
     /// Windows libmpv 建置下載選項；未指定時使用預設選項。
@@ -155,11 +155,11 @@ public static class MpvWindowsRuntimeInstaller
     }
 
     /// <summary>
-    /// <see cref="InstallOrUpdateLibMpvAsync"/> 的 no-lock 內部實作；由 caller 確保已
-    /// 取得 <see cref="RuntimeDirectoryLock"/>（避免 nested re-acquire deadlock）。
+    /// <see cref="InstallOrUpdateLibMpvAsync"/> 的 無鎖內部實作；由呼叫端確保已
+    /// 取得 <see cref="RuntimeDirectoryLock"/>（避免 nested re-acquire 死結）。
     /// </summary>
     /// <param name="runtimeDirectory">
-    /// 執行階段資料夾。
+    ///執行階段資料夾。
     /// </param>
     /// <param name="options">
     /// Windows libmpv 建置下載選項；未指定時使用預設選項。
@@ -240,10 +240,10 @@ public static class MpvWindowsRuntimeInstaller
     /// 失敗（檔案被鎖、權限等）會吞掉例外 —— 清理是 best-effort，失敗只是磁碟用量問題。
     /// </summary>
     /// <param name="runtimeDirectory">
-    /// runtime 資料夾。
+    ///執行階段資料夾。
     /// </param>
     /// <param name="keepLatest">
-    /// 要保留的最新 staged update 數量。
+    /// 要保留的最新 暫存更新 數量。
     /// </param>
     private static void PruneStagedUpdatesDirectory(string runtimeDirectory, int keepLatest)
     {
@@ -291,8 +291,8 @@ public static class MpvWindowsRuntimeInstaller
     }
 
     /// <summary>
-    /// 已知的 opt-in 工具 archive 檔名（依架構 / 通道列舉所有變體）。consumer 切到
-    /// <c>Include*=false</c> 後對應 downloader 不會跑、無機會清自家 archive，
+    /// 已知的 opt-in 工具 壓縮檔檔名（依架構 / 通道列舉所有變體）。使用端切到
+    /// <c>Include*=false</c> 後對應 下載器 不會跑、無機會清自家 archive，
     /// 在 <see cref="InstallOrUpdateAsync"/> 收尾統一掃過一次防殘留。
     /// </summary>
     private static readonly string[] OptOutFFmpegArchives =
@@ -308,15 +308,15 @@ public static class MpvWindowsRuntimeInstaller
     };
 
     /// <summary>
-    /// 掃過 opt-out 工具對應的已知 archive 檔名並清掉殘留：consumer 之前曾
-    /// <c>Include*=true</c> 下載過、現在改 <c>Include*=false</c>，對應 downloader 永不
+    /// 掃過 opt-out 工具對應的已知 壓縮檔檔名並清掉殘留：使用端之前曾
+    /// <c>Include*=true</c> 下載過、現在改 <c>Include*=false</c>，對應 下載器 永不
     /// 執行也就沒機會跑自家 cleanup。失敗不擲例外（best-effort）。
     /// </summary>
     /// <param name="runtimeDirectory">
-    /// runtime 資料夾。
+    ///執行階段資料夾。
     /// </param>
     /// <param name="options">
-    /// 當前安裝選項；以 <c>Include*</c> 旗標判斷哪些 archive 是 orphan。
+    /// 當前安裝選項；以 <c>Include*</c> 旗標判斷哪些 壓縮檔是 orphan。
     /// </param>
     private static void TryPruneOptOutToolArchives(
         string runtimeDirectory,
@@ -420,14 +420,14 @@ public static class MpvWindowsRuntimeInstaller
         options = options ?? new MpvWindowsRuntimeDownloadOptions();
         Directory.CreateDirectory(runtimeDirectory);
 
-        // cross-process lock：避免兩個 process 共用同 runtime 資料夾並發 install 寫壞
+        // 跨處理序鎖定：避免兩個 process 共用同執行階段資料夾並發 install 寫壞
         // libmpv-2.dll / yt-dlp.exe / deno.exe / ffmpeg.exe。整段 4 元件 install 在 lock 內。
-        // 內部呼叫 InstallOrUpdateLibMpvCoreAsync（no-lock 版）避免 nested deadlock。
+        // 內部呼叫 InstallOrUpdateLibMpvCoreAsync（no-lock 版）避免 nested 死結。
         using RuntimeDirectoryLock _ = await RuntimeDirectoryLock.AcquireAsync(runtimeDirectory, cancellationToken: cancellationToken).ConfigureAwait(false);
 
         // 走 install-or-update（不強制 OverwriteExisting）：讓
         // MpvWindowsBuildDownloader.DownloadAndExtractLatestLibMpvAsync 的 idempotency
-        // skip path（sidecar marker 比對）能生效，避免每次呼叫都重抓 ~30 MB libmpv .7z
+        // skip path（sidecar 標記 比對）能生效，避免每次呼叫都重新下載 ~30 MB libmpv .7z
         // + 重新解壓。對比 UpdateLibMpvAsync（明確強制更新），InstallOrUpdateAsync 是
         // 「有需要才更新」語意。
         LibMpvUpdateResult libMpv = await InstallOrUpdateLibMpvCoreAsync(runtimeDirectory, options.Mpv, cancellationToken).ConfigureAwait(false);
@@ -465,8 +465,8 @@ public static class MpvWindowsRuntimeInstaller
                 cancellationToken).ConfigureAwait(false);
         }
 
-        // 處理 opt-out 工具的 orphan archive：consumer 之前曾 Include=true 下載過
-        // 但現在改 Include=false，對應 downloader 不會跑、其內部 cleanup 也沒機會
+        // 處理 opt-out 工具的孤立壓縮檔：使用端之前曾 Include=true 下載過
+        // 但現在改 Include=false，對應 下載器 不會跑、其內部 cleanup 也沒機會
         // 觸發 → archive 永久殘留。此處在每次 InstallOrUpdateAsync 收尾時掃過一次，
         // 把未啟用工具對應的已知 archive 名清掉。刪除失敗不擲例外（best-effort）。
         TryPruneOptOutToolArchives(runtimeDirectory, options);

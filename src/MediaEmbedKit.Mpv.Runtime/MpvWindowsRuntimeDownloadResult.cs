@@ -11,7 +11,7 @@ public sealed class MpvWindowsRuntimeDownloadResult
     /// 初始化 <see cref="MpvWindowsRuntimeDownloadResult"/> 類別的新執行個體。
     /// </summary>
     /// <param name="runtimeDirectory">
-    /// 執行階段資料夾路徑。
+    ///執行階段資料夾路徑。
     /// </param>
     /// <param name="libMpvPath">
     /// libmpv 檔案路徑。
@@ -68,7 +68,7 @@ public sealed class MpvWindowsRuntimeDownloadResult
     /// 取得執行階段資料夾路徑。
     /// </summary>
     /// <value>
-    /// 執行階段資料夾路徑。
+    ///執行階段資料夾路徑。
     /// </value>
     public string RuntimeDirectory { get; private set; }
 

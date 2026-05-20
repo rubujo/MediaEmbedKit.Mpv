@@ -46,7 +46,7 @@ function Resolve-WorkspacePath {
 
 $resolvedRuntimeDirectory = Resolve-WorkspacePath -Path $RuntimeDirectory
 if (-not $resolvedRuntimeDirectory.StartsWith($resolvedRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
-    throw "runtime 資料夾必須位於工作區內。"
+    throw "執行階段資料夾必須位於工作區內。"
 }
 
 if ($IncludeWindowsReleaseGate) {
@@ -128,7 +128,7 @@ Invoke-Step "還原套件" { dotnet restore .\MediaEmbedKit.Mpv.slnx }
 Invoke-Step "專案規範檢查" { Invoke-ProjectPolicyCheck }
 
 if ($IncludeDocSyncCheck) {
-    # 驗證 provider 下游事實宣告型文件（LIBMPV_C_API_TEST_MATRIX / HIGH_LEVEL_API /
+    # 驗證 提供者下游事實宣告型文件（LIBMPV_C_API_TEST_MATRIX / HIGH_LEVEL_API /
     # REFERENCE_SOURCES）與 catalog（docs/runtime/libmpv-git-builds.json）同步。
     # 由 release.yml 顯式開啟；ci.yml 不啟用，避免 PR 階段半成品狀態被 drift 卡住。
     # drift 時 Sync-ProviderDocs.ps1 -Check 會 exit 1，Invoke-Step 會抓 LASTEXITCODE 並 throw。
@@ -144,8 +144,8 @@ if (-not $SkipIntegrationTests) {
 
 Invoke-Step "方案建置" { dotnet build .\MediaEmbedKit.Mpv.slnx --configuration $Configuration --no-restore }
 
-Invoke-Step "UI 控制項 headless 測試" {
-    # 5 個 UI framework 各自的控制項層 headless tests（DP / BindableProperty / 5 commands /
+Invoke-Step "UI 控制項無頭測試" {
+    # 5 套 UI 框架各自的控制項層無頭測試（DP / BindableProperty / 5 個命令 /
     # CanExecute / Dispose 重入 / 唯讀 property 守備）。不啟動真實 libmpv，純驗證屬性系統
     # 與 CLR 包裝層；WinUI / MAUI 走 WinUI / MauiWinUI host，啟動後即在 UI thread 跑完後退出。
     dotnet run --project .\tests\MediaEmbedKit.Mpv.WinForms.HeadlessTests\MediaEmbedKit.Mpv.WinForms.HeadlessTests.csproj --configuration $Configuration --no-restore
@@ -161,10 +161,10 @@ if (-not $SkipPackageValidation) {
 
 if (-not $SkipConsumerValidation) {
     if ($SkipPackageValidation) {
-        Invoke-Step "乾淨 consumer package 驗證" { & .\tools\Invoke-ConsumerPackageValidation.ps1 -Configuration $Configuration }
+        Invoke-Step "乾淨 使用端套件 驗證" { & .\tools\Invoke-ConsumerPackageValidation.ps1 -Configuration $Configuration }
     }
     else {
-        Invoke-Step "乾淨 consumer package 驗證" { & .\tools\Invoke-ConsumerPackageValidation.ps1 -Configuration $Configuration -SkipPackageValidation }
+        Invoke-Step "乾淨 使用端套件 驗證" { & .\tools\Invoke-ConsumerPackageValidation.ps1 -Configuration $Configuration -SkipPackageValidation }
     }
 }
 
@@ -173,7 +173,7 @@ if ($IncludeStressTests) {
 }
 
 if ($IncludeConsoleMinimalPlaybackValidation) {
-    Invoke-Step "Console minimal 播放驗證" {
+    Invoke-Step "ConsoleMinimal 播放驗證" {
         $previousRuntimeDirectory = $env:MEDIAEMBEDKIT_MPV_RUNTIME_DIR
         try {
             $env:MEDIAEMBEDKIT_MPV_RUNTIME_DIR = $resolvedRuntimeDirectory
@@ -186,7 +186,7 @@ if ($IncludeConsoleMinimalPlaybackValidation) {
 }
 
 if ($IncludeGuiConsumerPlaybackValidation) {
-    Invoke-Step "GUI consumer 實際播放驗證" { & .\tools\Invoke-GuiConsumerPlaybackValidation.ps1 -Configuration $Configuration -SkipPackageValidation -RuntimeDirectory $resolvedRuntimeDirectory -Seconds $GuiPlaybackSeconds -Iterations $GuiPlaybackIterations -TimeoutSeconds $GuiPlaybackTimeoutSeconds }
+    Invoke-Step "GUI 使用端實際播放驗證" { & .\tools\Invoke-GuiConsumerPlaybackValidation.ps1 -Configuration $Configuration -SkipPackageValidation -RuntimeDirectory $resolvedRuntimeDirectory -Seconds $GuiPlaybackSeconds -Iterations $GuiPlaybackIterations -TimeoutSeconds $GuiPlaybackTimeoutSeconds }
 }
 
 if ($IncludeGuiPlaybackStress) {

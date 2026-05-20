@@ -17,10 +17,10 @@ internal sealed class GitHubRelease
     public string TagName { get; set; } = string.Empty;
 
     /// <summary>
-    /// 取得或設定 GitHub 發行資產集合。
+    /// 取得或設定 GitHub Releases 資產集合。
     /// </summary>
     /// <value>
-    /// GitHub 發行資產陣列。
+    /// GitHub Releases 資產陣列。
     /// </value>
     [JsonPropertyName("assets")]
     public GitHubReleaseAsset[] Assets { get; set; } = new GitHubReleaseAsset[0];
@@ -32,10 +32,10 @@ internal sealed class GitHubRelease
 internal sealed class GitHubReleaseAsset
 {
     /// <summary>
-    /// 取得或設定 GitHub 發行資產名稱。
+    /// 取得或設定 GitHub Releases 資產名稱。
     /// </summary>
     /// <value>
-    /// GitHub 發行資產名稱。
+    /// GitHub Releases 資產名稱。
     /// </value>
     [JsonPropertyName("name")]
     public string Name { get; set; } = string.Empty;
@@ -44,13 +44,13 @@ internal sealed class GitHubReleaseAsset
     /// 取得或設定瀏覽器下載 URL。
     /// </summary>
     /// <value>
-    /// GitHub 發行資產瀏覽器下載 URL。
+    /// GitHub Releases 資產瀏覽器下載 URL。
     /// </value>
     [JsonPropertyName("browser_download_url")]
     public string BrowserDownloadUrl { get; set; } = string.Empty;
 
     /// <summary>
-    /// 取得或設定 GitHub 發行資產摘要值。
+    /// 取得或設定 GitHub Releases 資產摘要值。
     /// </summary>
     /// <value>
     /// 發行資產摘要值；API 未提供時為 <see langword="null"/>。
@@ -60,7 +60,7 @@ internal sealed class GitHubReleaseAsset
 }
 
 /// <summary>
-/// 為 GitHub Releases API DTO 提供 System.Text.Json source-generated 序列化內容，
+/// 為 GitHub Releases API DTO 提供 System.Text.Json source generator 產生的 序列化內容，
 /// 避免 NativeAOT / trimming 下走 reflection-based serializer。
 /// </summary>
 [JsonSerializable(typeof(GitHubRelease))]

@@ -20,10 +20,10 @@ on:
       - 'docs/**'
       - 'samples/*/README.md'
       - 'tests/README.md'
-  workflow_dispatch:
+  工作流程_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.工作流程 }}-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -31,7 +31,7 @@ permissions:
 
 jobs:
   release-gate:
-    name: Release gate (no GUI playback)
+    name: Release gate (no GUI 播放)
     runs-on: windows-latest
     timeout-minutes: 30
     env:
@@ -59,7 +59,7 @@ jobs:
             nuget-${{ runner.os }}-
 
       - name: Cache libmpv / yt-dlp / FFmpeg / Deno runtime
-        # 用 runtime catalog 與實際 runtime / downloader 來源檔的 hash 當 cache key；
+        # 用 runtime catalog 與實際 runtime / 下載器 來源檔的 hash 當 快取鍵值；
         # 來源 pin 或清理邏輯變動時自動失效並重新下載。
         uses: actions/cache@v5
         with:
@@ -74,7 +74,7 @@ jobs:
         # packs/ 用 glob 篩出 MAUI 相關（Maui/Android/iOS/MacCatalyst/tvOS/Tizen），
         # metadata/ 只抓 workloads 子資料夾（其他與 workload 無關）。
         # SDK 版本變動或 workload manifest 變動會自動失效；key 加 v2 後綴強制
-        # 跳過先前過度涵蓋的舊 cache。
+        # 跳過先前過度涵蓋的舊快取。
         uses: actions/cache@v5
         with:
           path: |
@@ -96,7 +96,7 @@ jobs:
         shell: pwsh
         run: dotnet workload restore .\MediaEmbedKit.Mpv.slnx
 
-      - name: Run release gate
+      - name: Run發行檢查閘門
         shell: pwsh
         run: |
           .\tools\Invoke-PreReleaseValidation.ps1

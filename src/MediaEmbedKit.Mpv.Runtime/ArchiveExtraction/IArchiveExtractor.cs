@@ -8,13 +8,13 @@ using MediaEmbedKit.Mpv.Externals;
 namespace MediaEmbedKit.Mpv.Runtime.ArchiveExtraction;
 
 /// <summary>
-/// 抽象 archive 解壓縮工具 —— 用於 libmpv 的 .7z 多段 fallback chain
+/// 抽象化壓縮檔解壓縮工具 —— 用於 libmpv 的 .7z 多段備援鏈
 /// （tar.exe / 系統 7-Zip / WinRAR / 下載 7zr.exe）。
 /// </summary>
 internal interface IArchiveExtractor
 {
     /// <summary>
-    /// 顯示用名稱（用於 fallback chain 失敗訊息）。
+    /// 顯示用名稱（用於備援鏈 失敗訊息）。
     /// </summary>
     string Name { get; }
 

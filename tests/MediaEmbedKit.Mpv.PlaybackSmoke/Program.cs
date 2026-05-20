@@ -192,7 +192,7 @@ internal static class Program
 }
 
 /// <summary>
-/// 在啟動 GUI sample 前準備共用 runtime 資料夾。
+/// 在啟動 GUI sample 前準備共用執行階段資料夾。
 /// </summary>
 internal static class RuntimeProvisioner
 {
@@ -202,10 +202,10 @@ internal static class RuntimeProvisioner
     private const int RetryCount = 3;
 
     /// <summary>
-    /// 確認指定 runtime 資料夾包含播放需要的執行階段檔案。
+    /// 確認指定執行階段資料夾包含播放需要的執行階段檔案。
     /// </summary>
     /// <param name="runtimeDirectory">
-    /// 要檢查或建立的 runtime 資料夾。
+    /// 要檢查或建立的執行階段資料夾。
     /// </param>
     /// <returns>
     /// 代表準備流程的工作。
@@ -231,15 +231,15 @@ internal static class RuntimeProvisioner
                 await MpvRuntimeInstaller.InstallOrUpdateAsync(fullPath, options).ConfigureAwait(false);
                 if (!HasCompleteRuntime(fullPath))
                 {
-                    throw new InvalidOperationException("runtime 資料夾未包含 libmpv-2.dll、yt-dlp.exe、deno.exe、ffmpeg.exe 與 ffprobe.exe。");
+                    throw new InvalidOperationException("執行階段資料夾未包含 libmpv-2.dll、yt-dlp.exe、deno.exe、ffmpeg.exe 與 ffprobe.exe。");
                 }
 
-                Console.WriteLine("[smoke] 共用 runtime 準備完成：" + fullPath);
+                Console.WriteLine("[smoke] 共用執行階段準備完成：" + fullPath);
                 return;
             }
             catch (Exception ex) when (attempt < RetryCount)
             {
-                Console.Error.WriteLine("[smoke] runtime 準備失敗，將重試：" + ex.Message);
+                Console.Error.WriteLine("[smoke]執行階段準備失敗，將重試：" + ex.Message);
                 await Task.Delay(TimeSpan.FromSeconds(2 * attempt)).ConfigureAwait(false);
             }
         }
@@ -248,7 +248,7 @@ internal static class RuntimeProvisioner
         await MpvRuntimeInstaller.InstallOrUpdateAsync(fullPath, options).ConfigureAwait(false);
         if (!HasCompleteRuntime(fullPath))
         {
-            throw new InvalidOperationException("runtime 資料夾未包含 libmpv-2.dll、yt-dlp.exe、deno.exe、ffmpeg.exe 與 ffprobe.exe。");
+            throw new InvalidOperationException("執行階段資料夾未包含 libmpv-2.dll、yt-dlp.exe、deno.exe、ffmpeg.exe 與 ffprobe.exe。");
         }
     }
 
@@ -256,7 +256,7 @@ internal static class RuntimeProvisioner
     /// 判斷指定資料夾是否包含播放測試需要的檔案。
     /// </summary>
     /// <param name="runtimeDirectory">
-    /// 要檢查的 runtime 資料夾。
+    /// 要檢查的執行階段資料夾。
     /// </param>
     /// <returns>
     /// 資料夾包含必要檔案時為 <see langword="true"/>。
@@ -330,10 +330,10 @@ internal sealed class SmokeOptions
     public bool NoBuild { get; set; }
 
     /// <summary>
-    /// 取得或設定範例處理序使用的共用 runtime 資料夾。
+    /// 取得或設定範例處理序使用的共用執行階段資料夾。
     /// </summary>
     /// <value>
-    /// 共用 runtime 資料夾；未指定時由範例自行決定。
+    /// 共用執行階段資料夾；未指定時由範例自行決定。
     /// </value>
     public string? RuntimeDirectory { get; set; }
 

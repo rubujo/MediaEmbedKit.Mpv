@@ -43,7 +43,7 @@ internal static class DownloadUtility
     /// 可取消非同步作業的語彙基元。
     /// </param>
     /// <returns>
-    /// 表示最新 GitHub 發行資料的工作。
+    /// 表示最新 GitHub Releases 資料的工作。
     /// </returns>
     public static async Task<GitHubRelease> GetLatestReleaseAsync(Uri apiUri, string? userAgent, CancellationToken cancellationToken)
     {
@@ -77,7 +77,7 @@ internal static class DownloadUtility
     }
 
     /// <summary>
-    /// 單次嘗試取 GitHub 發行資料（不含 retry / backoff）。
+    /// 單次嘗試取 GitHub Releases 資料（不含 retry / backoff）。
     /// </summary>
     /// <param name="apiUri">
     /// GitHub Releases API 端點。
@@ -106,7 +106,7 @@ internal static class DownloadUtility
                 int statusCode = (int)response.StatusCode;
                 if (statusCode >= 500 || statusCode == 429)
                 {
-                    // 包成可被 retry loop catch 的型別。429 額外帶 X-RateLimit-Remaining 給 caller 知道。
+                    // 包成可被 重試迴圈捕捉 的型別。429 額外帶 X-RateLimit-Remaining 讓呼叫端知道。
                     string detail = string.Empty;
                     if (statusCode == 429 && response.Headers.TryGetValues("X-RateLimit-Remaining", out var values))
                     {
@@ -128,7 +128,7 @@ internal static class DownloadUtility
                     cancellationToken).ConfigureAwait(false);
                 if (release == null || release.Assets == null || release.Assets.Length == 0)
                 {
-                    throw new InvalidOperationException("GitHub 發行資料未包含可下載資產。");
+                    throw new InvalidOperationException("GitHub Releases 資料未包含可下載資產。");
                 }
 
                 return release;
@@ -291,7 +291,7 @@ internal static class DownloadUtility
     /// 要驗證的下載檔案路徑。
     /// </param>
     /// <param name="digest">
-    /// GitHub 發行資產提供的摘要值。
+    /// GitHub Releases 資產提供的摘要值。
     /// </param>
     public static void VerifyDigestIfAvailable(string filePath, string? digest)
     {
@@ -304,7 +304,7 @@ internal static class DownloadUtility
         {
             // 防衛性 log：GitHub 未來若改 digest 格式（例如 "sha-256:" 或新演算法），best-effort
             // 路徑會靜默跳過驗證。明確 trace 出來避免使用者「以為有驗其實沒驗」。strict 政策
-            // (RequireGitHubDigest / RequireProviderChecksum) 走 VerifyGitHubDigest，會 throw。
+            // (RequireGitHubDigest / RequireProviderChecksum) 走 VerifyGitHubDigest，會擲出例外。
             System.Diagnostics.Trace.WriteLine(
                 "VerifyDigestIfAvailable: 未知 digest prefix，已跳過 best-effort 驗證。digest=" + digest);
             return;
@@ -314,13 +314,13 @@ internal static class DownloadUtility
     }
 
     /// <summary>
-    /// 依指定策略驗證 GitHub 發行資產摘要與呼叫端釘選的 SHA-256 值。
+    /// 依指定策略驗證 GitHub Releases 資產摘要與呼叫端釘選的 SHA-256 值。
     /// </summary>
     /// <param name="filePath">
     /// 要驗證的下載檔案路徑。
     /// </param>
     /// <param name="digest">
-    /// GitHub 發行資產提供的摘要值。
+    /// GitHub Releases 資產提供的摘要值。
     /// </param>
     /// <param name="verifyDigestWhenAvailable">
     /// 是否在摘要存在時進行 best-effort 驗證。
@@ -365,13 +365,13 @@ internal static class DownloadUtility
     }
 
     /// <summary>
-    /// 依指定策略驗證下載到記憶體中的 GitHub 發行資產摘要。
+    /// 依指定策略驗證下載到記憶體中的 GitHub Releases 資產摘要。
     /// </summary>
     /// <param name="content">
     /// 要驗證的下載內容。
     /// </param>
     /// <param name="digest">
-    /// GitHub 發行資產提供的摘要值。
+    /// GitHub Releases 資產提供的摘要值。
     /// </param>
     /// <param name="requireDigest">
     /// 是否要求摘要必須存在。
@@ -386,7 +386,7 @@ internal static class DownloadUtility
         {
             if (requireDigest)
             {
-                throw new InvalidOperationException("GitHub 發行資產未提供 SHA-256 摘要：" + assetName);
+                throw new InvalidOperationException("GitHub Releases 資產未提供 SHA-256 摘要：" + assetName);
             }
 
             return;
@@ -425,7 +425,7 @@ internal static class DownloadUtility
     /// 從 GNU 風格 checksum 內容中找出指定資產的 SHA-256 值。
     /// </summary>
     /// <param name="checksumText">
-    /// checksum 檔案內容。
+    /// 總和檢查碼檔案內容。
     /// </param>
     /// <param name="assetName">
     /// 要比對的資產檔名。
@@ -437,11 +437,11 @@ internal static class DownloadUtility
     {
         if (string.IsNullOrWhiteSpace(checksumText))
         {
-            throw new InvalidOperationException("checksum 檔案內容不可為空白。");
+            throw new InvalidOperationException("總和檢查碼檔案內容不可為空白。");
         }
 
         // 剝 UTF-8 BOM (U+FEFF)：呼叫端用 Encoding.UTF8.GetString(bytes) 不會自動剝 BOM，
-        // 若上游 checksum 檔以 BOM 開頭，第一個 entry 的解析會壞掉（多了不可見字元）。
+        // 若上游 總和檢查碼檔以 BOM 開頭，第一個 entry 的解析會壞掉（多了不可見字元）。
         if (checksumText.Length > 0 && checksumText[0] == '﻿')
         {
             checksumText = checksumText.Substring(1);
@@ -466,7 +466,7 @@ internal static class DownloadUtility
             }
         }
 
-        throw new InvalidOperationException("checksum 檔案未包含指定資產的 SHA-256 值：" + assetName);
+        throw new InvalidOperationException("總和檢查碼檔案未包含指定資產的 SHA-256 值：" + assetName);
     }
 
     /// <summary>
@@ -482,10 +482,10 @@ internal static class DownloadUtility
     /// 發行資產的下載 URL。
     /// </param>
     /// <param name="owner">
-    /// 預期的 GitHub repository 擁有者。
+    /// 預期的 GitHub 儲存庫擁有者。
     /// </param>
     /// <param name="repository">
-    /// 預期的 GitHub repository 名稱。
+    /// 預期的 GitHub 儲存庫名稱。
     /// </param>
     /// <param name="lockReleaseSource">
     /// 是否啟用來源鎖定。
@@ -513,7 +513,7 @@ internal static class DownloadUtility
         if (!string.Equals(downloadUri.Host, "github.com", StringComparison.OrdinalIgnoreCase) ||
             !downloadUri.AbsolutePath.StartsWith(expectedPrefix, StringComparison.OrdinalIgnoreCase))
         {
-            throw new InvalidOperationException("來源鎖定已啟用，下載 URL 不屬於預期的 GitHub repository：" + assetUrl);
+            throw new InvalidOperationException("來源鎖定已啟用，下載 URL 不屬於預期的 GitHub 儲存庫：" + assetUrl);
         }
     }
 
@@ -553,13 +553,13 @@ internal static class DownloadUtility
     }
 
     /// <summary>
-    /// 驗證 GitHub 發行資產摘要。
+    /// 驗證 GitHub Releases 資產摘要。
     /// </summary>
     /// <param name="filePath">
     /// 要驗證的下載檔案路徑。
     /// </param>
     /// <param name="digest">
-    /// GitHub 發行資產提供的摘要值。
+    /// GitHub Releases 資產提供的摘要值。
     /// </param>
     /// <param name="requireDigest">
     /// 是否要求摘要必須存在。
@@ -574,7 +574,7 @@ internal static class DownloadUtility
         {
             if (requireDigest)
             {
-                throw new InvalidOperationException("GitHub 發行資產未提供 SHA-256 摘要：" + assetName);
+                throw new InvalidOperationException("GitHub Releases 資產未提供 SHA-256 摘要：" + assetName);
             }
 
             return;
@@ -587,7 +587,7 @@ internal static class DownloadUtility
     /// 從 GitHub digest 欄位擷取 SHA-256 十六進位文字。
     /// </summary>
     /// <param name="digest">
-    /// GitHub 發行資產摘要值。
+    /// GitHub Releases 資產摘要值。
     /// </param>
     /// <returns>
     /// SHA-256 十六進位文字；摘要不存在時為 <see langword="null"/>。

@@ -17,7 +17,7 @@ namespace MediaEmbedKit.Mpv.Runtime.ArchiveExtraction;
 /// BCJ filter 等 shinchiro / zhongfly 實際使用的壓縮方法。實測 Windows 11 24H2
 /// 的 bsdtar 3.8.4 + liblzma 5.8.1 可正確解壓含 LZMA2 的 mpv-dev-*.7z。
 /// 舊版 Windows 10 (1803–2004) 的 tar.exe 是否同樣涵蓋 LZMA2 未經完整驗證；
-/// <see cref="ExtractAsync"/> 若失敗會把 stderr 帶回，由 fallback chain 跳下一個。
+/// <see cref="ExtractAsync"/> 若失敗會把 stderr 帶回，由備援鏈 跳下一個。
 /// </remarks>
 internal sealed class TarArchiveExtractor : IArchiveExtractor
 {
@@ -77,7 +77,7 @@ internal sealed class TarArchiveExtractor : IArchiveExtractor
         Directory.CreateDirectory(targetDirectory);
 
         // bsdtar 對 .7z 的選擇性解壓：檔名直接當位置引數傳入，自動 recursive 搜路徑，
-        // 不需要 --wildcards 或 -r 旗標（已實測 Win11 24H2）。
+        // 不需要 --wildcards 或 -r 旗標（已實測 Windows 11 24H2）。
         List<string> arguments = new List<string> { "-xf", archivePath, "-C", targetDirectory };
         if (includePatterns != null)
         {

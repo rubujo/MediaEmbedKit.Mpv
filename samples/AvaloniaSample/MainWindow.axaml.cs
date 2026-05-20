@@ -135,7 +135,7 @@ public sealed partial class MainWindow : Window
 
         SetRuntimeControlsEnabled(false);
         Opened += WindowOpened;
-        AppendEventLine(CreateLifecycleLine("WindowCreated", "Avalonia 視窗已建立，等待 runtime 初始化。"));
+        AppendEventLine(CreateLifecycleLine("WindowCreated", "Avalonia 視窗已建立，等待執行階段初始化。"));
     }
 
     // InitializeComponent 由 Avalonia.Generators 的 NameGenerator source-gen 提供
@@ -220,7 +220,7 @@ public sealed partial class MainWindow : Window
         catch (Exception ex)
         {
             Environment.ExitCode = 1;
-            SetStatusText("runtime 初始化失敗");
+            SetStatusText("執行階段初始化失敗");
             AppendEventLine(CreateLifecycleLine("RuntimeError", ex.Message));
             if (SampleRuntime.IsSmokeTestEnabled)
             {
@@ -235,7 +235,7 @@ public sealed partial class MainWindow : Window
     }
 
     /// <summary>
-    /// 以 modal 視窗顯示 runtime 初始化錯誤。
+    /// 以 modal 視窗顯示執行階段初始化錯誤。
     /// </summary>
     /// <param name="message">
     /// 要顯示的錯誤訊息。
@@ -261,7 +261,7 @@ public sealed partial class MainWindow : Window
     }
 
     /// <summary>
-    /// 建立 runtime 初始化錯誤視窗內容。
+    /// 建立執行階段初始化錯誤視窗內容。
     /// </summary>
     /// <param name="message">
     /// 要顯示的錯誤訊息。

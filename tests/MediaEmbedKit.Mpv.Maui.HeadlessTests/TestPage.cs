@@ -4,7 +4,7 @@ using Microsoft.Maui.Controls;
 namespace MediaEmbedKit.Mpv.Maui.HeadlessTests;
 
 /// <summary>
-/// 在頁面顯示時跑完所有 headless 測試，再退出應用程式。
+/// 在頁面顯示時跑完所有 無頭測試，再退出應用程式。
 /// </summary>
 public sealed class TestPage : ContentPage
 {

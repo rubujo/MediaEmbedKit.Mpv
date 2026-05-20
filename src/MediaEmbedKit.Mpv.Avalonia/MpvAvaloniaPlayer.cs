@@ -300,7 +300,7 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// <summary>
     /// 通知所有指令重新評估 <see cref="ICommand.CanExecute"/>。
     /// </summary>
-    private void RaiseCommandsCanExecuteChanged()
+    private void Raise命令CanExecuteChanged()
     {
         _playCommand.RaiseCanExecuteChanged();
         _pauseCommand.RaiseCanExecuteChanged();
@@ -658,7 +658,7 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
         }
 
         AttachPlayerBindings(_player!);
-        RaiseCommandsCanExecuteChanged();
+        Raise命令CanExecuteChanged();
         PlayerCreated?.Invoke(this, EventArgs.Empty);
 
         if (_player != null && !string.IsNullOrWhiteSpace(_pendingSource))
@@ -1133,7 +1133,7 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
 
         _player.Dispose();
         _player = null;
-        RaiseCommandsCanExecuteChanged();
+        Raise命令CanExecuteChanged();
     }
 
     /// <summary>

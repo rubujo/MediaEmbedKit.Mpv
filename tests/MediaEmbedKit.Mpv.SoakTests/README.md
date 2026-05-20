@@ -1,10 +1,10 @@
 # MediaEmbedKit.Mpv.SoakTests
 
-> 連續播放 soak harness：以三路混合工作負載（WAV / MP4 / cancel-in-flight）循環
+> 連續播放 長時間測試工具：以三路混合工作負載（WAV / MP4 / cancel-in-flight）循環
 > Load → 播放 → Stop → Dispose，每回合強制 full GC 後取樣，跑滿目標時長後
 > 同時做線性回歸與 Mann-Kendall 趨勢檢定，判斷有無慢性記憶體 / handle 洩漏。
 
-本專案 **不在 release gate 內**（24 小時太長）。實機驗證沒慢性 leak 才執行；
+本專案 **不在發行檢查閘門內**（24 小時太長）。實機驗證沒慢性 leak 才執行；
 日常 leak 哨兵交給 [`MediaEmbedKit.Mpv.StressTests`](../MediaEmbedKit.Mpv.StressTests)
 內的「播放器長時間建立／釋放記憶體 leak 檢查」（50 回合短跑）。
 
@@ -73,7 +73,7 @@ dotnet run --project .\tests\MediaEmbedKit.Mpv.SoakTests\MediaEmbedKit.Mpv.SoakT
 | `--playback-seconds` | 60 | 每回合 wav / mp4 播放（wall clock）秒數；cancel 不適用 |
 | `--idle-seconds` | 5 | 回合間 idle |
 | `--output-dir` | `.tmp/soak-{時戳}/` | samples.csv + report.txt 輸出位置 |
-| `--runtime-directory` | env / auto | 自帶 runtime 資料夾（含 libmpv-2.dll 與 ffmpeg.exe） |
+| `--runtime-directory` | env / auto | 自帶執行階段資料夾（含 libmpv-2.dll 與 ffmpeg.exe） |
 | `--gc-heap-growth-mb` | 100 | GC heap 整段累計成長門檻（MB） |
 | `--working-set-growth-mb` | 300 | Working Set 整段累計成長門檻（MB） |
 | `--handle-growth` | 100 | Handle Count 整段累計成長門檻 |

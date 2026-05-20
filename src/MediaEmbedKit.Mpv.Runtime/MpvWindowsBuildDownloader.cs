@@ -12,7 +12,7 @@ using MediaEmbedKit.Mpv.Externals;
 namespace MediaEmbedKit.Mpv.Runtime;
 
 /// <summary>
-/// 提供 Windows libmpv 建置下載、解壓縮與載入 helper。
+/// 提供 Windows libmpv 建置下載、解壓縮與載入輔助工具。
 /// </summary>
 public static class MpvWindowsBuildDownloader
 {
@@ -82,7 +82,7 @@ public static class MpvWindowsBuildDownloader
     }
 
     /// <summary>
-    /// 從指定 provider 下載最新 Windows libmpv 壓縮檔。
+    /// 從指定提供者 下載最新 Windows libmpv 壓縮檔。
     /// </summary>
     /// <param name="downloadDirectory">
     /// 壓縮檔要下載到的資料夾。
@@ -91,7 +91,7 @@ public static class MpvWindowsBuildDownloader
     /// Windows libmpv 建置下載選項。
     /// </param>
     /// <param name="provider">
-    /// 要嘗試的 provider。
+    /// 要嘗試的提供者。
     /// </param>
     /// <param name="cancellationToken">
     /// 可取消非同步作業的語彙基元。
@@ -121,7 +121,7 @@ public static class MpvWindowsBuildDownloader
 
         if (options.VerificationPolicy == MpvNativeAssetVerificationPolicy.RequireProviderChecksum)
         {
-            throw new InvalidOperationException("目前 Windows libmpv provider 未提供獨立 checksum 資產；請改用 RequirePinnedSha256 並提供 ExpectedSha256。");
+            throw new InvalidOperationException("目前 Windows libmpv 提供者未提供獨立 checksum 資產；請改用 RequirePinnedSha256 並提供 ExpectedSha256。");
         }
 
         DownloadUtility.VerifyDownloadedAsset(
@@ -144,13 +144,13 @@ public static class MpvWindowsBuildDownloader
     }
 
     /// <summary>
-    /// 串接主 provider 與 fallback provider 為去重後的有序嘗試清單。
+    /// 串接主提供者與備援提供者 為去重後的有序嘗試清單。
     /// </summary>
     /// <param name="options">
     /// Windows libmpv 建置下載選項。
     /// </param>
     /// <returns>
-    /// 去重後的 provider 嘗試清單。
+    /// 去重後的提供者嘗試清單。
     /// </returns>
     private static List<MpvWindowsBuildProvider> BuildProviderSequence(MpvWindowsBuildDownloadOptions options)
     {
@@ -189,10 +189,10 @@ public static class MpvWindowsBuildDownloader
         options = options ?? new MpvWindowsBuildDownloadOptions();
         Directory.CreateDirectory(downloadDirectory);
 
-        // Idempotency skip：runtime/libmpv-2.dll 已存在 + sidecar marker 對得上上游當前
-        // release → 跳過下載與解壓。先前每次 InstallOrUpdateAsync 都重抓 ~30 MB .7z 與
-        // 重新解壓，現在改成「上游無變化就完全不動」。要強制重抓請設 OverwriteExisting=
-        // true 或刪掉 sidecar marker（libmpv-2.dll.version.json）。
+        // Idempotency skip：runtime/libmpv-2.dll 已存在 + sidecar 標記 對得上上游當前
+        // 發行資料 → 跳過下載與解壓。先前每次 InstallOrUpdateAsync 都重新下載 ~30 MB .7z 與
+        // 重新解壓，現在改成「上游無變化就完全不動」。要強制重新下載請設 OverwriteExisting=
+        // true 或刪掉 sidecar 標記（libmpv-2.dll.version.json）。
         string targetLibMpvPath = Path.Combine(downloadDirectory, LibMpvDllName);
         if (!options.OverwriteExisting &&
             string.IsNullOrWhiteSpace(options.ExpectedSha256) &&
@@ -220,9 +220,9 @@ public static class MpvWindowsBuildDownloader
         string extractRoot = options.ExtractDirectory ?? Path.Combine(downloadDirectory, Path.GetFileNameWithoutExtension(archive.AssetName));
         Directory.CreateDirectory(extractRoot);
 
-        // 走 4-tier fallback chain（tar.exe → 系統 7-Zip → WinRAR → 下載 7zr.exe）+
+        // 走 4-tier 備援鏈（tar.exe → 系統 7-Zip → WinRAR → 下載 7zr.exe）+
         // 選擇性只解 libmpv-2.dll（mpv-dev archive 還含 include/*.h、libmpv.dll.a 等
-        // C++ build-time 用的雜物，runtime 用不到）。各層失敗時 pipeline 自動跳下一層，
+        // C++ 建置階段 用的雜物，runtime 用不到）。各層失敗時 pipeline 自動跳下一層，
         // 全失敗才擲詳細 exception 給呼叫端。
         ArchiveExtraction.ArchiveExtractionPipeline pipeline = new ArchiveExtraction.ArchiveExtractionPipeline(
             downloadDirectory,
@@ -246,16 +246,16 @@ public static class MpvWindowsBuildDownloader
         ArchiveSafety.RejectIfReparsePoint(libraryPath, "libmpv mpv-dev archive extracted libmpv-2.dll");
 
         // 清掉 extractRoot 內 libmpv-2.dll 以外的所有檔案 + 空目錄。mpv-dev archive
-        // 含 include/*.h 與 libmpv.dll.a 等 C++ build-time 雜物 —— 雖然 ExtractAsync
+        // 含 include/*.h 與 libmpv.dll.a 等 C++ 建置階段雜物 —— 雖然 ExtractAsync
         // 已傳 include filter `new[] { LibMpvDllName }`，但部分 extractor (WinRAR /
-        // 系統 7-Zip 的 wildcards 行為) 對 include pattern 處理不一致；後續解壓
+        // 系統 7-Zip 的 萬用字元行為) 對 include pattern 處理不一致；後續解壓
         // 也可能因 archive 結構升版混入殘留。掃過一次保證 extractRoot 只剩
-        // libmpv-2.dll，runtime 根目錄不被汙染。
+        // libmpv-2.dll，執行階段根目錄不被汙染。
         TryRemoveExtractResidue(extractRoot, libraryPath);
 
         // 解壓成功後，依 options.RetainArchive 決定是否清掉 .7z + 同 downloadDir 內
         // 舊版本殘留的 mpv-*.7z（升版後舊 archive 從未被清的常見情境）。libmpv 7z
-        // 約 30–100 MB；warm restart 強驗證請設 RetainArchive=true 保留當前版本
+        // 約 30–100 MB；暖啟動強驗證請設 RetainArchive=true 保留當前版本
         // archive 供未來 SHA 重驗。
         if (!options.RetainArchive)
         {
@@ -266,12 +266,12 @@ public static class MpvWindowsBuildDownloader
             downloadDirectory,
             keepArchiveName: options.RetainArchive ? archive.AssetName : null);
 
-        // 寫 sidecar marker：紀錄本次安裝的 provider + releaseTag + assetName，下次呼叫
-        // 同函式時 skip path 比對此 marker 與上游 release，匹配就 short-circuit。
+        // 寫入 sidecar 標記：紀錄本次安裝的 provider / releaseTag / assetName，下次呼叫
+        // 同函式時 快速路徑比對此標記與上游發行資料，匹配就短路。
         // Marker 寫到 downloadDirectory 根（與 skip path 讀取位置一致）；通常等同
-        // runtime 根。caller 若沒把 dll 搬到 downloadDirectory/libmpv-2.dll，下次 skip
-        // path 的 File.Exists 檢查會失敗，重抓一次自動修正。
-        // 寫入失敗不擲例外（marker 是 best-effort 快取，缺失下次重抓一次回到原狀）。
+        // 執行階段根目錄。呼叫端若未把 dll 搬到 downloadDirectory/libmpv-2.dll，下次會略過
+        // path 的 File.Exists 檢查會失敗，重新下載一次自動修正。
+        // 寫入失敗不擲例外（marker 是 best-effort 快取，缺失下次重新下載一次回到原狀）。
         string targetMarkerPath = Path.Combine(downloadDirectory, LibMpvDllName) + LibMpvVersionMarker.FileExtension;
         LibMpvVersionMarker.Write(targetMarkerPath, archive.Provider, archive.ReleaseTag, archive.AssetName);
 
@@ -287,8 +287,8 @@ public static class MpvWindowsBuildDownloader
     }
 
     /// <summary>
-    /// 比對 sidecar marker 與上游當前 release。匹配（同 provider + 同 releaseTag + 同
-    /// assetName）→ 直接 reuse 既有 libmpv-2.dll，回傳合成的 result（archivePath 為空字串
+    /// 比對 sidecar 標記與上游當前發行資料。匹配（同 provider / 同 releaseTag / 同
+    /// assetName）→ 直接重用既有 libmpv-2.dll，回傳合成結果（archivePath 為空字串
     /// 表示本次未下載）。任一層 query 上游失敗（網路不通、API 暫掛等）會吞掉例外 fall
     /// through 到呼叫端的正常下載路徑（仍會走 ProviderFallbackOrder 重試）。
     /// </summary>
@@ -299,7 +299,7 @@ public static class MpvWindowsBuildDownloader
     /// Windows libmpv 建置下載選項。
     /// </param>
     /// <param name="marker">
-    /// 已讀到的 sidecar marker。
+    /// 已讀到的 sidecar 標記。
     /// </param>
     /// <param name="existingLibMpvPath">
     /// 既有 libmpv-2.dll 路徑。
@@ -350,8 +350,8 @@ public static class MpvWindowsBuildDownloader
                         existingLibMpvPath);
                 }
 
-                // 同一 provider 有取到 release 但 marker 不匹配 → 上游已有新版，跳出去走正常下載路徑。
-                // 不再嘗試 fallback provider（避免「主 provider 已升版 → fallback 還沒升 → 假裝沒升」的詭異情境）。
+                // 同一提供者有取到發行資料 但 marker 不匹配 → 上游已有新版，跳出去走正常下載路徑。
+                // 不再嘗試備援提供者（避免「主提供者已升版 → 備援來源尚未升版 → 誤判尚未升版」的詭異情境）。
                 return null;
             }
             catch (OperationCanceledException)
@@ -360,7 +360,7 @@ public static class MpvWindowsBuildDownloader
             }
             catch
             {
-                // 此 provider 查詢失敗（網路 / API），試下一個 fallback provider。
+                // 此提供者查詢失敗（網路 / API），試下一個 備援提供者。
             }
         }
 
@@ -400,7 +400,7 @@ public static class MpvWindowsBuildDownloader
     /// runtime 下載資料夾。
     /// </param>
     /// <param name="keepArchiveName">
-    /// 要保留的 archive 檔名；<see langword="null"/> 表示全清。
+    /// 要保留的 壓縮檔檔名；<see langword="null"/> 表示全清。
     /// </param>
     private static void TryPruneStaleLibMpvArchives(string downloadDirectory, string? keepArchiveName)
     {
@@ -452,9 +452,9 @@ public static class MpvWindowsBuildDownloader
 
     /// <summary>
     /// 清掉 <paramref name="extractRoot"/> 內已知 mpv-dev archive 殘留（<c>include/*.h</c>、
-    /// <c>libmpv.dll.a</c>、<c>mpv.def</c> 等 C++ build-time 雜物，runtime 不需要）。
+    /// <c>libmpv.dll.a</c>、<c>mpv.def</c> 等 C++ 建置階段雜物，執行階段不需要）。
     /// 用 <strong>whitelist 策略</strong>只動已知殘留檔名/目錄，不暴力刪「非 libmpv-2.dll」
-    /// —— 避免 caller 把 <see cref="MpvWindowsBuildDownloadOptions.ExtractDirectory"/>
+    /// —— 避免呼叫端把 <see cref="MpvWindowsBuildDownloadOptions.ExtractDirectory"/>
     /// 指向自家資料夾時，誤刪 runtime executables（yt-dlp.exe / deno.exe 等）。
     /// 刪除失敗不擲例外（best-effort）。
     /// </summary>
@@ -545,7 +545,7 @@ public static class MpvWindowsBuildDownloader
     }
 
     /// <summary>
-    /// 從設定的提供者取得最新 GitHub 發行資料。
+    /// 從設定的提供者取得最新 GitHub Releases 資料。
     /// </summary>
     /// <param name="options">
     /// Windows libmpv 建置下載選項。
@@ -557,7 +557,7 @@ public static class MpvWindowsBuildDownloader
     /// 可取消非同步作業的語彙基元。
     /// </param>
     /// <returns>
-    /// 表示 GitHub 發行資料的工作。
+    /// 表示 GitHub Releases 資料的工作。
     /// </returns>
     private static async Task<GitHubRelease> GetLatestReleaseAsync(MpvWindowsBuildDownloadOptions options, Uri apiUri, CancellationToken cancellationToken)
     {
@@ -602,13 +602,13 @@ public static class MpvWindowsBuildDownloader
     }
 
     /// <summary>
-    /// 取得指定 Windows libmpv provider 對應的 GitHub repository 擁有者。
+    /// 取得指定 Windows libmpv 提供者對應的 GitHub 儲存庫擁有者。
     /// </summary>
     /// <param name="provider">
     /// Windows libmpv 建置提供者。
     /// </param>
     /// <returns>
-    /// 對應 provider 的 GitHub repository 擁有者。
+    /// 對應提供者的 GitHub 儲存庫擁有者。
     /// </returns>
     private static string GetRepositoryOwner(MpvWindowsBuildProvider provider)
     {
@@ -622,13 +622,13 @@ public static class MpvWindowsBuildDownloader
     }
 
     /// <summary>
-    /// 取得指定 Windows libmpv provider 對應的 GitHub repository 名稱。
+    /// 取得指定 Windows libmpv 提供者對應的 GitHub 儲存庫名稱。
     /// </summary>
     /// <param name="provider">
     /// Windows libmpv 建置提供者。
     /// </param>
     /// <returns>
-    /// 對應 provider 的 GitHub repository 名稱。
+    /// 對應提供者的 GitHub 儲存庫名稱。
     /// </returns>
     private static string GetRepositoryName(MpvWindowsBuildProvider provider)
     {
@@ -642,16 +642,16 @@ public static class MpvWindowsBuildDownloader
     }
 
     /// <summary>
-    /// 從 GitHub 發行資料選取符合架構與授權偏好的 libmpv 發行資產。
+    /// 從 GitHub Releases 資料選取符合架構與授權偏好的 libmpv 發行資產。
     /// </summary>
     /// <param name="release">
-    /// GitHub 發行資料。
+    /// GitHub Releases 資料。
     /// </param>
     /// <param name="options">
     /// Windows libmpv 建置下載選項。
     /// </param>
     /// <returns>
-    /// 符合條件的 GitHub 發行資產。
+    /// 符合條件的 GitHub Releases 資產。
     /// </returns>
     private static GitHubReleaseAsset SelectLibMpvAsset(GitHubRelease release, MpvWindowsBuildDownloadOptions options)
     {
@@ -712,14 +712,14 @@ public static class MpvWindowsBuildDownloader
     {
         return new InvalidOperationException(
             "No x64 mpv-dev archive matched the requested license preference " + options.LicensePreference + " for " +
-            options.Provider + ". Choose a different provider or license preference.");
+            options.Provider + ". 請選擇不同的提供者或授權偏好設定。");
     }
 
     /// <summary>
     /// 判斷發行資產名稱是否標示為 LGPL 建置。
     /// </summary>
     /// <param name="asset">
-    /// 要檢查的 GitHub 發行資產。
+    /// 要檢查的 GitHub Releases 資產。
     /// </param>
     /// <returns>
     /// 資產名稱包含 LGPL 標示時為 <see langword="true"/>。
@@ -733,7 +733,7 @@ public static class MpvWindowsBuildDownloader
     /// 判斷發行資產名稱是否符合要求的 Windows libmpv 架構。
     /// </summary>
     /// <param name="name">
-    /// GitHub 發行資產名稱。
+    /// GitHub Releases 資產名稱。
     /// </param>
     /// <param name="architecture">
     /// 要求的 Windows libmpv 架構。

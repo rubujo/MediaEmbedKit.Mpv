@@ -9,15 +9,15 @@ namespace MediaEmbedKit.Mpv.Externals;
 /// </summary>
 /// <remarks>
 /// <para>
-/// 本 helper 是 defense-in-depth 層；上游 archive 通常可信，但 helper 從 GitHub 抓
-/// 第三方 binary，威脅模型必須假設 maintainer 帳號被入侵 / archive 被替換的場景
-/// （此時 GitHub asset.digest 也是被入侵者改的，本專案的 SHA 驗證無法擋下）。
+/// 本輔助工具是 defense-in-depth 層；上游 archive 通常可信，但 輔助工具從 GitHub 抓
+/// 第三方 二進位檔，威脅模型必須假設 maintainer 帳號被入侵 / archive 被替換的場景
+/// （此時 GitHub 資產 digest 也是被入侵者改的，本專案的 SHA 驗證無法擋下）。
 /// 解壓後加一道「不接受 reparse point / symlink 指到 archive 外的關鍵檔」檢查，
 /// 至少能擋住「替換 libmpv-2.dll 成指向系統 DLL 的 symlink」這類具體攻擊。
 /// </para>
 /// <para>
 /// 真正的供應鏈防線仍是 caller 提供 <c>ExpectedSha256</c> +
-/// <c>RequirePinnedSha256</c> policy；本 helper 是 defense-in-depth，不是替代。
+/// <c>RequirePinnedSha256</c> policy；本輔助工具是 defense-in-depth，不是替代。
 /// </para>
 /// </remarks>
 internal static class ArchiveSafety
@@ -30,7 +30,7 @@ internal static class ArchiveSafety
     /// 要檢查的檔案路徑。
     /// </param>
     /// <param name="contextDescription">
-    /// 擲例外時要包含的 context 描述（給 caller / log 用）。
+    /// 擲例外時要包含的 context 描述（給 呼叫端 / 記錄 用）。
     /// </param>
     /// <exception cref="InvalidOperationException">
     /// 檔案是 reparse point。

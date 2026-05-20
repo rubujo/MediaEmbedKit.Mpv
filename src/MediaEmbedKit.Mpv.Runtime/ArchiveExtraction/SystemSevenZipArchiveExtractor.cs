@@ -30,7 +30,7 @@ internal sealed class SystemSevenZipArchiveExtractor : IArchiveExtractor
     private readonly string? _explicitPath;
 
     /// <summary>
-    /// 顯示名稱（用於 fallback chain 的失敗訊息）。
+    /// 顯示名稱（用於備援鏈的失敗訊息）。
     /// </summary>
     private readonly string _displayName;
 
@@ -41,7 +41,7 @@ internal sealed class SystemSevenZipArchiveExtractor : IArchiveExtractor
     /// 明確指定的 7z.exe 相容路徑；<see langword="null"/> 走自動偵測。
     /// </param>
     /// <param name="displayName">
-    /// 在 fallback 失敗訊息中使用的顯示名稱。
+    /// 在 備援失敗訊息中使用的顯示名稱。
     /// </param>
     public SystemSevenZipArchiveExtractor(string? explicitPath = null, string? displayName = null)
     {

@@ -32,7 +32,7 @@ public static class DenoWindowsArchitectureExtensions
     /// </returns>
     /// <remarks>
     /// 以 <see cref="RuntimeInformation.OSArchitecture"/> 為準（Deno 需與作業系統原生位元對齊；
-    /// x64 emulation 下仍建議下載 x64 binary 以避免來回轉換）。
+    /// x64 emulation 下仍建議下載 x64 二進位檔，以避免來回轉換）。
     /// </remarks>
     public static DenoWindowsArchitecture CurrentMachine()
     {
@@ -52,7 +52,7 @@ public static class DenoWindowsArchitectureExtensions
     }
 
     /// <summary>
-    /// 將 Deno Windows 架構轉換為 GitHub 發行資產名稱。
+    /// 將 Deno Windows 架構轉換為 GitHub Releases 資產名稱。
     /// </summary>
     /// <param name="architecture">
     /// 要轉換的 Deno Windows 架構。

@@ -5,7 +5,7 @@ using Microsoft.UI.Xaml;
 namespace MediaEmbedKit.Mpv.WinUI.HeadlessTests;
 
 /// <summary>
-/// WinUI 3 headless 測試的應用程式 host。<see cref="OnLaunched"/> 在 UI thread
+/// WinUI 3 無頭測試的應用程式 host。<see cref="OnLaunched"/> 在 UI thread
 /// 排程跑完所有測試案例後立即 <see cref="Application.Exit"/>，不顯示任何視窗。
 /// </summary>
 public partial class App : Application

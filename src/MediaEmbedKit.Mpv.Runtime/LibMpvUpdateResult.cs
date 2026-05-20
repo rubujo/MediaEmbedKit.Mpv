@@ -11,10 +11,10 @@ public sealed class LibMpvUpdateResult
     /// 初始化 <see cref="LibMpvUpdateResult"/> 類別的新執行個體。
     /// </summary>
     /// <param name="runtimeDirectory">
-    /// 執行階段資料夾路徑。
+    ///執行階段資料夾路徑。
     /// </param>
     /// <param name="targetLibraryPath">
-    /// 執行階段資料夾中的 libmpv 目標路徑。
+    ///執行階段資料夾中的 libmpv 目標路徑。
     /// </param>
     /// <param name="updatedLibraryPath">
     /// 本次更新產生的 libmpv 檔案路徑。
@@ -53,7 +53,7 @@ public sealed class LibMpvUpdateResult
     /// 取得執行階段資料夾路徑。
     /// </summary>
     /// <value>
-    /// 執行階段資料夾路徑。
+    ///執行階段資料夾路徑。
     /// </value>
     public string RuntimeDirectory { get; private set; }
 

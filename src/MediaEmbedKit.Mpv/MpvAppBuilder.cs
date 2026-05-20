@@ -7,25 +7,25 @@ using Microsoft.Extensions.Logging;
 namespace MediaEmbedKit.Mpv;
 
 /// <summary>
-/// 提供以 fluent 風格組合 <see cref="MpvPlayer"/> 初始化流程的 builder。
+/// 提供以 鏈式風格組合 <see cref="MpvPlayer"/> 初始化流程的 builder。
 /// 範例：<c>await new MpvAppBuilder().UseWindowsRuntimeAutoInstall().UseYtdlp(...).BuildAsync()</c>。
 /// </summary>
 public sealed class MpvAppBuilder
 {
     /// <summary>
-    /// 待 build 時套用到 <see cref="MpvPlayerOptions"/> 的設定動作清單。
+    /// 待 建置時套用到 <see cref="MpvPlayerOptions"/> 的設定動作清單。
     /// </summary>
     private readonly System.Collections.Generic.List<Action<MpvPlayerOptions>> _optionConfigurators;
     /// <summary>
-    /// 待 build 時要先執行的 runtime 安裝或準備動作。
+    /// 待 建置時要先執行的 runtime 安裝或準備動作。
     /// </summary>
     private Func<CancellationToken, Task<string?>>? _runtimePreparer;
     /// <summary>
-    /// 表示是否要在 runtime 準備完成後把資料夾設定到 <see cref="MpvPlayerOptions"/>。
+    /// 表示是否要在執行階段準備完成後把資料夾設定到 <see cref="MpvPlayerOptions"/>。
     /// </summary>
     private bool _applyRuntimeDirectoryToOptions;
     /// <summary>
-    /// runtime 準備完成後是否要載入該資料夾的 mpv 設定。
+    ///執行階段準備完成後是否要載入該資料夾的 mpv 設定。
     /// </summary>
     private bool _loadRuntimeConfiguration;
 
@@ -58,7 +58,7 @@ public sealed class MpvAppBuilder
     }
 
     /// <summary>
-    /// 將指定 runtime 資料夾直接套用到 <see cref="MpvPlayerOptions"/>，不執行任何安裝動作。
+    /// 將指定執行階段資料夾直接套用到 <see cref="MpvPlayerOptions"/>，不執行任何安裝動作。
     /// </summary>
     /// <param name="runtimeDirectory">
     /// 已備妥 libmpv 與外部工具的執行階段資料夾。
@@ -83,11 +83,11 @@ public sealed class MpvAppBuilder
     }
 
     /// <summary>
-    /// 內部用於由 <c>MediaEmbedKit.Mpv.Runtime</c> 套件的擴充方法注入 runtime 準備邏輯，
+    /// 內部用於由 <c>MediaEmbedKit.Mpv.Runtime</c> 套件的擴充方法注入執行階段準備邏輯，
     /// 不揭露 <c>MpvRuntimeInstallOptions</c> 等 .Runtime 型別到核心套件。
     /// </summary>
     /// <param name="preparer">
-    /// 執行 runtime 準備動作的委派，返回 runtime 路徑或 <c>null</c>。
+    /// 執行執行階段準備動作的委派，傳回 runtime 路徑或 <c>null</c>。
     /// </param>
     /// <param name="applyRuntimeDirectoryToOptions">
     /// 完成後是否要把資料夾套用到 player 選項。

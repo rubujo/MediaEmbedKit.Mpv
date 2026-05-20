@@ -1,7 +1,7 @@
 ﻿namespace MediaEmbedKit.Mpv.Samples;
 
 /// <summary>
-/// 提供範例覆蓋層強調色常數，以 ARGB 整數表示，避免引入特定 UI framework 命名空間。
+/// 提供範例覆蓋層強調色常數，以 ARGB 整數表示，避免引入特定 UI 框架 命名空間。
 /// 其他控制項一律使用 framework 預設外觀以貼近原生樣式。
 /// </summary>
 internal static class SampleTheme

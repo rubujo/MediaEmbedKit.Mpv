@@ -58,7 +58,7 @@ public sealed class MpvCapabilities
     /// 取得 libmpv 回報的 mpv 版本字串。
     /// </summary>
     /// <value>
-    /// 例如 <c>mpv 0.41.0</c> 或包含 provider git build 標記的版本文字。
+    /// 例如 <c>mpv 0.41.0</c> 或包含 提供者 git build 標記的版本文字。
     /// </value>
     public string MpvVersion { get; }
 

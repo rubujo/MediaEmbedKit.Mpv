@@ -28,7 +28,7 @@ public sealed partial class MainWindow : Window
     private const int EventLogLimit = 60;
 
     /// <summary>
-    /// 背景 runtime 初始化完成後建立的 WinUI 播放控制項。
+    /// 背景執行階段初始化完成後建立的 WinUI 播放控制項。
     /// </summary>
     private MpvWinUiPlayer? _playerHost;
     /// <summary>
@@ -95,7 +95,7 @@ public sealed partial class MainWindow : Window
             rootElement.Loaded += RootLoaded;
         }
         Closed += WindowClosed;
-        AppendEventLine(CreateLifecycleLine("WindowCreated", "WinUI 視窗已建立，等待 runtime 初始化。"));
+        AppendEventLine(CreateLifecycleLine("WindowCreated", "WinUI 視窗已建立，等待執行階段初始化。"));
     }
 
     /// <summary>
@@ -144,7 +144,7 @@ public sealed partial class MainWindow : Window
         catch (Exception ex)
         {
             Environment.ExitCode = 1;
-            SetStatusText("runtime 初始化失敗");
+            SetStatusText("執行階段初始化失敗");
             AppendEventLine(CreateLifecycleLine("RuntimeError", ex.Message));
             if (SampleRuntime.IsSmokeTestEnabled)
             {

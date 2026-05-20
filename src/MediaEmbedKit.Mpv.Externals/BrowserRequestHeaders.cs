@@ -55,7 +55,7 @@ internal static class BrowserRequestHeaders
     /// </param>
     /// <remarks>
     /// 套用完整 Chrome 瀏覽器標頭（含 sec-ch-ua 系列 client hints），適用於下載 CDN
-    /// （GitHub release asset / shinchiro / zhongfly 等）—— 部分 CDN 對非瀏覽器 UA
+    /// （GitHub Releases 資產 / shinchiro / zhongfly 等）—— 部分 CDN 對非瀏覽器 UA
     /// 有 rate-limit / anti-bot 行為。對 GitHub <c>api.github.com</c> JSON API 請改用
     /// <see cref="ApplyForGitHubApi"/>（誠實 UA、不發 client hints）。
     /// </remarks>
@@ -90,7 +90,7 @@ internal static class BrowserRequestHeaders
     }
 
     /// <summary>
-    /// 對 <c>api.github.com</c> 使用的誠實識別 UA。包含 helper 名稱、版本與 repo URL，
+    /// 對 <c>api.github.com</c> 使用的誠實識別 UA。包含 輔助工具名稱、版本與 repo URL，
     /// 符合 GitHub ToS 偏好的「標識性 UA」觀感，且不發瀏覽器 client hints（JSON API 不需）。
     /// </summary>
     public static readonly string GitHubApiUserAgent = "MediaEmbedKit.Mpv/" + GetAssemblyVersion() + " (+https://github.com/rubujo/MediaEmbedKit.Mpv)";

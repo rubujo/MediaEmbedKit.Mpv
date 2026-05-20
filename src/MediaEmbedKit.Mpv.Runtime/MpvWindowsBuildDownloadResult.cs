@@ -28,7 +28,7 @@ public sealed class MpvWindowsBuildDownloadResult
     /// 下載後的壓縮檔路徑。
     /// </param>
     /// <param name="digest">
-    /// GitHub 發行資產提供的摘要值。
+    /// GitHub Releases 資產提供的摘要值。
     /// </param>
     /// <param name="extractDirectory">
     /// 壓縮檔解壓縮資料夾。
@@ -93,16 +93,16 @@ public sealed class MpvWindowsBuildDownloadResult
     /// </summary>
     /// <value>
     /// libmpv 壓縮檔路徑。<see cref="MpvWindowsBuildDownloadOptions.RetainArchive"/>
-    /// 預設為 <see langword="false"/>，解壓成功後 helper 會清掉壓縮檔，此路徑指向
-    /// 不存在的檔案；caller 若需確認檔案存在請自行 <see cref="System.IO.File.Exists(string)"/>。
+    /// 預設為 <see langword="false"/>，解壓成功後輔助工具會清掉壓縮檔，此路徑指向
+    /// 不存在的檔案；呼叫端若需確認檔案存在請自行 <see cref="System.IO.File.Exists(string)"/>。
     /// </value>
     public string ArchivePath { get; private set; }
 
     /// <summary>
-    /// 取得 GitHub 發行資產提供的摘要值。
+    /// 取得 GitHub Releases 資產提供的摘要值。
     /// </summary>
     /// <value>
-    /// GitHub 發行資產摘要；未提供時為 <see langword="null"/>。
+    /// GitHub Releases 資產摘要；未提供時為 <see langword="null"/>。
     /// </value>
     public string? Digest { get; private set; }
 

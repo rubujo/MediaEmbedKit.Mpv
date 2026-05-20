@@ -8,7 +8,7 @@ using MediaEmbedKit.Mpv.WinForms;
 namespace MediaEmbedKit.Mpv.WinForms.HeadlessTests;
 
 /// <summary>
-/// 在 STA thread 驗證 <see cref="MpvPlayerControl"/> 公開 INPC 屬性與 5 個 Commands。
+/// 在 STA thread 驗證 <see cref="MpvPlayerControl"/> 公開 INPC 屬性與 5 個命令。
 /// 本套件**不**啟動真實 libmpv，只覆蓋 WinForms 控制項屬性層與 INPC 通知。
 /// </summary>
 internal static class Program
@@ -34,9 +34,9 @@ internal static class Program
             Run("Source setter round-trip 並觸發 PropertyChanged", VerifySourceRoundTrip);
             Run("PlaylistIndex / Chapter 無 player 時接受無效值且不擲例外", VerifyNavigationInvalidValuesSafeWithoutPlayer);
             Run("Duration / PlaybackState 唯讀（無 public setter）", VerifyReadOnlyProperties);
-            Run("5 個 Commands 都已暴露且 CanExecute 在無 player 時為 false", VerifyCommandsExposed);
-            Run("無 player 時 Commands.Execute 不擲例外", VerifyCommandsSafeWithoutPlayer);
-            Console.WriteLine("WinForms headless 測試完成：全部通過。");
+            Run("5 個命令 都已暴露且 CanExecute 在無 player 時為 false", Verify命令Exposed);
+            Run("無 player 時 命令.Execute 不擲例外", Verify命令SafeWithoutPlayer);
+            Console.WriteLine("WinForms 無頭測試完成：全部通過。");
             return 0;
         }
         catch (Exception ex)
@@ -192,9 +192,9 @@ internal static class Program
     }
 
     /// <summary>
-    /// 驗證 5 個 Commands 全暴露且無 player 時 CanExecute=false。
+    /// 驗證 5 個命令 全暴露且無 player 時 CanExecute=false。
     /// </summary>
-    private static void VerifyCommandsExposed()
+    private static void Verify命令Exposed()
     {
         using MpvPlayerControl control = new MpvPlayerControl();
         ICommand[] commands = new[]
@@ -211,9 +211,9 @@ internal static class Program
     }
 
     /// <summary>
-    /// 驗證無 player 時 Commands.Execute 安全（守備路徑）。
+    /// 驗證無 player 時 命令.Execute 安全（守備路徑）。
     /// </summary>
-    private static void VerifyCommandsSafeWithoutPlayer()
+    private static void Verify命令SafeWithoutPlayer()
     {
         using MpvPlayerControl control = new MpvPlayerControl();
         control.PlayCommand.Execute(null);

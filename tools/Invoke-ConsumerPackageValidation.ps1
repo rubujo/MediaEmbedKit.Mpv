@@ -14,7 +14,7 @@ $resolvedPackageDirectory = [System.IO.Path]::GetFullPath((Join-Path $rootDirect
 $resolvedWorkDirectory = [System.IO.Path]::GetFullPath((Join-Path $rootDirectory $WorkDirectory))
 
 if (-not $resolvedWorkDirectory.StartsWith($resolvedRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
-    throw "consumer 驗證工作資料夾必須位於工作區內。"
+    throw "使用端驗證工作資料夾必須位於工作區內。"
 }
 
 if (-not $resolvedPackageDirectory.StartsWith($resolvedRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
@@ -114,12 +114,12 @@ function Invoke-ConsumerBuild {
 
     & dotnet restore $ProjectPath --configfile $nugetConfigPath
     if ($LASTEXITCODE -ne 0) {
-        throw "consumer restore 失敗：$ProjectPath"
+        throw "使用端還原失敗：$ProjectPath"
     }
 
     & dotnet build $ProjectPath --configuration $Configuration --no-restore
     if ($LASTEXITCODE -ne 0) {
-        throw "consumer build 失敗：$ProjectPath"
+        throw "使用端建置失敗：$ProjectPath"
     }
 }
 
@@ -314,4 +314,4 @@ foreach ($project in $projects) {
     Invoke-ConsumerBuild -ProjectPath $project
 }
 
-Write-Host "乾淨 consumer package 驗證完成：$resolvedWorkDirectory"
+Write-Host "乾淨 使用端套件 驗證完成：$resolvedWorkDirectory"

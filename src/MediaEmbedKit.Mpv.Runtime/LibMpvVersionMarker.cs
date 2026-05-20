@@ -14,9 +14,9 @@ namespace MediaEmbedKit.Mpv.Runtime;
 /// </summary>
 /// <remarks>
 /// libmpv-2.dll 沒有內建可程式化讀取的版本字串（FileVersionInfo 的版本與
-/// shinchiro / zhongfly release tag 不直接對應），所以 helper 在每次成功安裝後
+/// shinchiro / zhongfly release tag 不直接對應），所以 輔助工具在每次成功安裝後
 /// 把 release 元資料寫到同目錄的 <c>libmpv-2.dll.version.json</c> sidecar，下次
-/// 安裝時讀此檔比對上游當前 release。匹配（同 provider + 同 releaseTag + 同
+/// 安裝時讀此檔比對上游當前 release。匹配（同 provider / 同 releaseTag / 同
 /// assetName）→ 跳過下載 + 解壓。
 /// </remarks>
 internal sealed class LibMpvVersionMarker
@@ -38,19 +38,19 @@ internal sealed class LibMpvVersionMarker
     public int SchemaVersion { get; set; } = CurrentSchemaVersion;
 
     /// <summary>
-    /// 產生此 marker 的 provider（<see cref="MpvWindowsBuildProvider"/> 的字串形式）。
+    /// 產生此 marker 的提供者（<see cref="MpvWindowsBuildProvider"/> 的字串形式）。
     /// </summary>
     [JsonPropertyName("provider")]
     public string Provider { get; set; } = string.Empty;
 
     /// <summary>
-    /// GitHub release tag 名稱。
+    /// GitHub Releases 標籤名稱稱。
     /// </summary>
     [JsonPropertyName("releaseTag")]
     public string ReleaseTag { get; set; } = string.Empty;
 
     /// <summary>
-    /// 下載 / 解壓的 asset 檔名（含 libmpv-dev / -lgpl / arch 等變體區分）。
+    /// 下載 / 解壓的 資產檔名（含 libmpv-dev / -lgpl / arch 等變體區分）。
     /// </summary>
     [JsonPropertyName("assetName")]
     public string AssetName { get; set; } = string.Empty;
@@ -98,20 +98,20 @@ internal sealed class LibMpvVersionMarker
 
     /// <summary>
     /// 寫入 marker 檔（atomic）：先寫到 <c>{markerPath}.tmp</c>，成功後 rename 取代目標檔。
-    /// 避免系統當機 / 程序強制中斷期間留下半寫入 JSON。寫入失敗不擲例外
-    /// （marker 是 best-effort 快取，缺失只是下次重抓）。
+    /// 避免系統當機 / 處理序強制中斷期間留下半寫入 JSON。寫入失敗不擲例外
+    /// （marker 是 best-effort 快取，缺失只是下次重新下載）。
     /// </summary>
     /// <param name="markerPath">
     /// marker 檔完整路徑。
     /// </param>
     /// <param name="provider">
-    /// 本次安裝來源 provider。
+    /// 本次安裝來源提供者。
     /// </param>
     /// <param name="releaseTag">
     /// 本次安裝的 release tag。
     /// </param>
     /// <param name="assetName">
-    /// 本次安裝的 asset 檔名。
+    /// 本次安裝的 資產檔名。
     /// </param>
     public static void Write(string markerPath, MpvWindowsBuildProvider provider, string releaseTag, string assetName)
     {
@@ -130,7 +130,7 @@ internal sealed class LibMpvVersionMarker
             File.WriteAllText(tempPath, json);
 
             // File.Move(overwrite) 在 .NET Core 3+ atomic；netstandard2.0 / net472 需先刪舊檔
-            // 後 Move（短時間窗口下不 atomic，但只造成 marker 缺失，下次重抓一次自動修正）。
+            // 後 Move（短時間窗口下不 atomic，但只造成 marker 缺失，下次重新下載一次自動修正）。
 #if NETCOREAPP3_0_OR_GREATER || NET5_0_OR_GREATER
             File.Move(tempPath, markerPath, overwrite: true);
 #else

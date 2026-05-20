@@ -27,7 +27,7 @@ namespace MediaEmbedKit.Mpv;
 /// </list>
 /// <para>
 /// 本類別只提供生成與基本格式檢查；MpvPlayer 上對應的字幕色彩屬性 setter 不做
-/// 自動驗證 — 想要 compile-time typed 安全的呼叫端可呼叫 <see cref="FromArgb"/> /
+/// 自動驗證 — 想要 編譯期型別化 安全的呼叫端可呼叫 <see cref="FromArgb"/> /
 /// <see cref="FromRgb"/> / <see cref="TryParse"/> 取得正規化字串再賦值。
 /// </para>
 /// </remarks>

@@ -37,7 +37,7 @@ public sealed class DenoDownloadOptions
     public bool OverwriteExisting { get; set; }
 
     /// <summary>
-    /// 取得或設定是否驗證 GitHub 發行資產提供的雜湊值。
+    /// 取得或設定是否驗證 GitHub Releases 資產提供的雜湊值。
     /// </summary>
     /// <value>
     /// 驗證可用的 SHA-256 摘要時為 <see langword="true"/>。
@@ -82,7 +82,7 @@ public sealed class DenoDownloadOptions
     /// <value>
     /// 保留壓縮檔時為 <see langword="true"/>；預設為 <see langword="false"/>，
     /// 解壓縮成功後刪除壓縮檔以避免長期佔用磁碟（Deno zip 約 30 MB）。
-    /// 需在 warm restart 重新驗證 SHA-256 而省下載成本時，應明確設為 <see langword="true"/>。
+    /// 需在暖啟動重新驗證 SHA-256 而省下載成本時，應明確設為 <see langword="true"/>。
     /// </value>
     public bool RetainArchive { get; set; }
 }

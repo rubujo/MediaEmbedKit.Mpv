@@ -11,12 +11,12 @@ public enum MpvNativeAssetVerificationPolicy
     BestEffort = 0,
 
     /// <summary>
-    /// 要求 GitHub 發行資產必須提供 SHA-256 摘要，且下載內容必須相符。
+    /// 要求 GitHub Releases 資產必須提供 SHA-256 摘要，且下載內容必須相符。
     /// </summary>
     RequireGitHubDigest = 1,
 
     /// <summary>
-    /// 要求 GitHub SHA-256 摘要與 upstream 發行的 checksum 檔案皆必須通過驗證。
+    /// 要求 GitHub SHA-256 摘要與上游發行的 總和檢查碼檔案皆必須通過驗證。
     /// </summary>
     RequireProviderChecksum = 2,
 

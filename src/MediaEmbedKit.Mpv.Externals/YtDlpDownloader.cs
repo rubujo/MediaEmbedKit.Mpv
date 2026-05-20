@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace MediaEmbedKit.Mpv.Externals;
 
 /// <summary>
-/// 提供 yt-dlp Windows 可執行檔下載、版本查詢與自我更新 helper。
+/// 提供 yt-dlp Windows 可執行檔下載、版本查詢與自我更新輔助工具。
 /// </summary>
 public static class YtDlpDownloader
 {
@@ -254,11 +254,11 @@ public static class YtDlpDownloader
     /// 對應通道的 GitHub 最新發行 API URI。
     /// </returns>
     /// <remarks>
-    /// 三個 yt-dlp repo（主 / master-builds / nightly-builds）均為「單軌 release」結構：
+    /// 三個 yt-dlp repo（主 / master-builds / nightly-builds）均為「單軌發行」結構：
     /// tag 為日期版本（如 <c>2026.05.16</c> 或 <c>2026.05.16.203101</c>），無另外的
-    /// <c>latest</c> tag，且 asset 名稱固定（如 <c>yt-dlp.exe</c>、<c>SHA2-256SUMS</c>）。
+    /// <c>latest</c> tag，且 資產名稱固定（如 <c>yt-dlp.exe</c>、<c>SHA2-256SUMS</c>）。
     /// 因此 <c>/releases/latest</c> 端點安全 —— 不會像 <see cref="FFmpegDownloader"/>
-    /// 對應的 yt-dlp/FFmpeg-Builds 那樣，會被 hourly autobuild release 蓋過去取到
+    /// 對應的 yt-dlp/FFmpeg-Builds 那樣，會被 每小時 autobuild 發行 蓋過去取到
     /// 動態命名 asset。請勿「順手對齊」改成 <c>/releases/tags/latest</c>，那會直接 404。
     /// </remarks>
     private static Uri GetReleaseApiUri(YtDlpReleaseChannel channel)
@@ -275,13 +275,13 @@ public static class YtDlpDownloader
     }
 
     /// <summary>
-    /// 取得指定 yt-dlp 發行通道對應的 GitHub repository 名稱。
+    /// 取得指定 yt-dlp 發行通道對應的 GitHub 儲存庫名稱。
     /// </summary>
     /// <param name="channel">
     /// 要查詢的 yt-dlp 發行通道。
     /// </param>
     /// <returns>
-    /// 對應通道的 GitHub repository 名稱。
+    /// 對應通道的 GitHub 儲存庫名稱。
     /// </returns>
     private static string GetRepositoryName(YtDlpReleaseChannel channel)
     {
@@ -297,16 +297,16 @@ public static class YtDlpDownloader
     }
 
     /// <summary>
-    /// 從 GitHub 發行資料選取符合架構的 yt-dlp 發行資產。
+    /// 從 GitHub Releases 資料選取符合架構的 yt-dlp 發行資產。
     /// </summary>
     /// <param name="release">
-    /// GitHub 發行資料。
+    /// GitHub Releases 資料。
     /// </param>
     /// <param name="architecture">
     /// 要選取的 yt-dlp Windows 架構。
     /// </param>
     /// <returns>
-    /// 符合架構的 GitHub 發行資產。
+    /// 符合架構的 GitHub Releases 資產。
     /// </returns>
     private static GitHubReleaseAsset SelectAsset(GitHubRelease release, YtDlpWindowsArchitecture architecture)
     {
@@ -314,7 +314,7 @@ public static class YtDlpDownloader
         GitHubReleaseAsset? asset = release.Assets.FirstOrDefault(item => string.Equals(item.Name, assetName, StringComparison.OrdinalIgnoreCase));
         if (asset == null)
         {
-            throw new InvalidOperationException("GitHub 發行資料中找不到符合 " + architecture + " 的 yt-dlp Windows 資產：" + release.TagName);
+            throw new InvalidOperationException("GitHub Releases 資料中找不到符合 " + architecture + " 的 yt-dlp Windows 資產：" + release.TagName);
         }
 
         return asset;
@@ -324,7 +324,7 @@ public static class YtDlpDownloader
     /// 在策略要求時使用 yt-dlp 發行的 SHA2-256SUMS 驗證下載檔案。
     /// </summary>
     /// <param name="release">
-    /// GitHub 發行資料。
+    /// GitHub Releases 資料。
     /// </param>
     /// <param name="asset">
     /// 已下載的 yt-dlp 發行資產。
@@ -366,23 +366,23 @@ public static class YtDlpDownloader
     }
 
     /// <summary>
-    /// 從 GitHub 發行資料選取指定名稱的 checksum 資產。
+    /// 從 GitHub Releases 資料選取指定名稱的 checksum 資產。
     /// </summary>
     /// <param name="release">
-    /// GitHub 發行資料。
+    /// GitHub Releases 資料。
     /// </param>
     /// <param name="assetName">
     /// 要選取的 checksum 資產名稱。
     /// </param>
     /// <returns>
-    /// 符合名稱的 GitHub 發行資產。
+    /// 符合名稱的 GitHub Releases 資產。
     /// </returns>
     private static GitHubReleaseAsset SelectChecksumAsset(GitHubRelease release, string assetName)
     {
         GitHubReleaseAsset? asset = release.Assets.FirstOrDefault(item => string.Equals(item.Name, assetName, StringComparison.OrdinalIgnoreCase));
         if (asset == null)
         {
-            throw new InvalidOperationException("GitHub 發行資料中找不到 " + assetName + " checksum 資產：" + release.TagName);
+            throw new InvalidOperationException("GitHub Releases 資料中找不到 " + assetName + " checksum 資產：" + release.TagName);
         }
 
         return asset;

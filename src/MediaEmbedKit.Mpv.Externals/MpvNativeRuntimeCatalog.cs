@@ -105,7 +105,7 @@ public static class MpvNativeRuntimeCatalog
             MpvNativeRuntimeSourceKind.DirectArchive,
             MpvNativeRuntimeSupportStatus.Supported,
             "libmpv-2.dll",
-            "mpv.io-listed Windows source. The helper supports x86_64 and aarch64 mpv-dev archives and extracts libmpv-2.dll."),
+            "mpv.io 列出的 Windows 來源。輔助工具支援 x86_64 與 aarch64 mpv-dev 封存檔，並解出 libmpv-2.dll。"),
         new MpvNativeRuntimeSource(
             MpvNativeRuntimePlatform.Windows,
             "zhongfly/mpv-winbuild",
@@ -113,6 +113,6 @@ public static class MpvNativeRuntimeCatalog
             MpvNativeRuntimeSourceKind.DirectArchive,
             MpvNativeRuntimeSupportStatus.Supported,
             "libmpv-2.dll",
-            "mpv.io-listed Windows source. The helper supports x86_64 and aarch64 mpv-dev archives and extracts libmpv-2.dll.")
+            "mpv.io 列出的 Windows 來源。輔助工具支援 x86_64 與 aarch64 mpv-dev 封存檔，並解出 libmpv-2.dll。")
     };
 }

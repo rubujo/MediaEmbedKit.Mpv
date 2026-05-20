@@ -5,7 +5,7 @@
 
 .DESCRIPTION
 GitHub Copilot 與 Copilot CLI 不支援 `@import` 機制，因此必須把 `AGENTS.md`
-內容 inline 到 `.github/copilot-instructions.md`。本腳本維持兩個檔案同步，
+內容內嵌到 `.github/copilot-instructions.md`。本腳本維持兩個檔案同步，
 避免人工漂移。
 
 呼叫端：
@@ -39,19 +39,20 @@ $header = @"
 此檔案由 tools/Sync-CopilotInstructions.ps1 從 AGENTS.md 自動同步。
 請勿手動編輯；要更動規則請改 AGENTS.md，再執行：
   pwsh tools/Sync-CopilotInstructions.ps1
-GitHub Copilot 不支援 @import 機制，因此必須 inline 內容。
+GitHub Copilot 不支援 @import 機制，因此必須內嵌內容。
 -->
 
 # GitHub Copilot 指示
 
-本文件是 GitHub Copilot 與 Copilot CLI 看到的 system instructions。內容必須與 ``AGENTS.md`` 保持一致。
+本文件是 GitHub Copilot 與 Copilot CLI 看到的系統指令。內容必須與 ``AGENTS.md`` 保持一致。
 
 ---
 
 "@
 
-# 使用 LF 與 UTF-8（無 BOM）寫入，與其他 markdown 一致。
-$expected = ($header + $agentsContent).Replace("`r`n", "`n")
+# 使用 CRLF 與 UTF-8（無 BOM）寫入，與其他 Markdown 一致。
+$expected = ($header + $agentsContent).Replace("`r`n", "`n").Replace("`r", "`n").Replace("`n", "`r`n")
+$expectedForComparison = $expected.Replace("`r`n", "`n")
 $utf8NoBom = New-Object System.Text.UTF8Encoding $false
 
 if ($Check) {
@@ -60,8 +61,8 @@ if ($Check) {
         exit 1
     }
 
-    $current = [System.IO.File]::ReadAllText($copilotPath, $utf8NoBom).Replace("`r`n", "`n")
-    if ($current -ne $expected) {
+    $current = [System.IO.File]::ReadAllText($copilotPath, $utf8NoBom).Replace("`r`n", "`n").Replace("`r", "`n")
+    if ($current -ne $expectedForComparison) {
         Write-Error '.github/copilot-instructions.md 與 AGENTS.md 不同步；請執行 Sync-CopilotInstructions.ps1。'
         exit 1
     }

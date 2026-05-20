@@ -4,7 +4,7 @@
 
 ## 示範內容
 
-- 啟動時準備 Windows runtime 資料夾。
+- 啟動時準備 Windows 執行階段資料夾。
 - 使用 HWND 後端播放。
 - 使用控制項內建 `OverlayContent` 顯示影片上方 UI。
 - 透過 `SamplePlayerEventBridge` 輸出 libmpv 事件、記錄訊息與屬性變更。

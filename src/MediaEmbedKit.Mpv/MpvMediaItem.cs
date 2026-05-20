@@ -64,7 +64,7 @@ public sealed class MpvMediaItem
     /// 取得只在播放此媒體時要套用的任意 mpv 選項集合。
     /// </summary>
     /// <value>
-    /// mpv 選項集合；對應 mpv <c>loadfile</c> 命令的 per-file options 參數。
+    /// mpv 選項集合；對應 mpv <c>loadfile</c> 命令的 per-file 選項 參數。
     /// </value>
     public IDictionary<string, string> Options { get; }
 
@@ -85,7 +85,7 @@ public sealed class MpvMediaItem
     public string? YtdlpFormat { get; set; }
 
     /// <summary>
-    /// 以 fluent 風格設定播放此媒體時要套用的起始時間。
+    /// 以 鏈式風格設定播放此媒體時要套用的起始時間。
     /// </summary>
     /// <param name="startTime">
     /// 起始時間。
@@ -100,7 +100,7 @@ public sealed class MpvMediaItem
     }
 
     /// <summary>
-    /// 以 fluent 風格設定播放此媒體時要套用的結束時間。
+    /// 以 鏈式風格設定播放此媒體時要套用的結束時間。
     /// </summary>
     /// <param name="endTime">
     /// 結束時間。
@@ -115,7 +115,7 @@ public sealed class MpvMediaItem
     }
 
     /// <summary>
-    /// 以 fluent 風格加入 HTTP 標頭。
+    /// 以 鏈式風格加入 HTTP 標頭。
     /// </summary>
     /// <param name="name">
     /// HTTP 標頭名稱。
@@ -138,7 +138,7 @@ public sealed class MpvMediaItem
     }
 
     /// <summary>
-    /// 以 fluent 風格加入只在播放此媒體時要套用的 mpv 選項。
+    /// 以 鏈式風格加入只在播放此媒體時要套用的 mpv 選項。
     /// </summary>
     /// <param name="name">
     /// mpv 選項名稱。
@@ -161,7 +161,7 @@ public sealed class MpvMediaItem
     }
 
     /// <summary>
-    /// 以 fluent 風格設定只在播放此媒體時要套用的 yt-dlp 格式 selector。
+    /// 以 鏈式風格設定只在播放此媒體時要套用的 yt-dlp 格式 selector。
     /// </summary>
     /// <param name="selector">
     /// yt-dlp 格式 selector。
@@ -182,7 +182,7 @@ public sealed class MpvMediaItem
     }
 
     /// <summary>
-    /// 以 fluent 風格設定只在播放此媒體時要套用的 yt-dlp 格式預設值。
+    /// 以 鏈式風格設定只在播放此媒體時要套用的 yt-dlp 格式預設值。
     /// </summary>
     /// <param name="preset">
     /// yt-dlp 格式預設值。

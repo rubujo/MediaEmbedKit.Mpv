@@ -1,16 +1,16 @@
 #requires -Version 7.0
 <#
 .SYNOPSIS
-從 docs/runtime/libmpv-git-builds.json 同步 provider build / 查核日期到下游文件。
+從 docs/runtime/libmpv-git-builds.json 同步提供者建置 / 查核日期到下游文件。
 
 .DESCRIPTION
-catalog（docs/runtime/libmpv-git-builds.json）是 provider build 狀態的單一事實
+catalog（docs/runtime/libmpv-git-builds.json）是提供者建置 狀態的單一事實
 來源。下列下游文件含有「目前對齊到哪個 release / 哪個 mpv commit / catalog 何時
-最後查核」的事實宣告，每次 provider bump 都需手動同步，容易漂移。本腳本以
+最後查核」的事實宣告，每次提供者更新 都需手動同步，容易漂移。本腳本以
 catalog 為來源端，用 regex 錨點更新這些固定位置。
 
 同步範圍（4 處事實宣告）：
-- docs/LIBMPV_C_API_TEST_MATRIX.md  「provider 對齊」表格列、render.h 比對段
+- docs/LIBMPV_C_API_TEST_MATRIX.md  「提供者對齊」表格列、render.h 比對段
 - docs/HIGH_LEVEL_API.md             encoder 可用編碼器基線敘述
 - docs/REFERENCE_SOURCES.md          最後查核日期
 
@@ -20,7 +20,7 @@ catalog 為來源端，用 regex 錨點更新這些固定位置。
 
 呼叫端：
 - 跑完 Update-LibMpvGitBuildManifest.ps1 後執行本腳本同步下游文件。
-- CI / release gate 可用 -Check 模式驗證同步狀態，未同步時退出非零。
+- CI /發行檢查閘門可用 -Check 模式驗證同步狀態，未同步時退出非零。
 
 .PARAMETER Check
 僅驗證下游文件是否已同步 catalog；不修改檔案，未同步時以非零代碼結束。
@@ -75,8 +75,8 @@ $builtPhrase = if ($shinchiro.mpvCommit -eq $zhongfly.mpvCommit) {
 $edits = @(
     @{
         Path        = 'docs/LIBMPV_C_API_TEST_MATRIX.md'
-        Pattern     = '(?m)^\| provider 對齊 \|[^\r\n]+'
-        Replacement = "| provider 對齊 | shinchiro $bt$($shinchiro.releaseTag)$bt / mpv $bt$($shinchiro.mpvCommit)$bt；zhongfly $bt$($zhongfly.releaseTag)$bt / mpv $bt$($zhongfly.mpvCommit)$bt |"
+        Pattern     = '(?m)^\| 提供者對齊 \|[^\r\n]+'
+        Replacement = "| 提供者對齊 | shinchiro $bt$($shinchiro.releaseTag)$bt / mpv $bt$($shinchiro.mpvCommit)$bt；zhongfly $bt$($zhongfly.releaseTag)$bt / mpv $bt$($zhongfly.mpvCommit)$bt |"
     }
     @{
         Path        = 'docs/LIBMPV_C_API_TEST_MATRIX.md'
@@ -135,6 +135,6 @@ foreach ($edit in $edits) {
 }
 
 if ($Check -and $driftFound) {
-    Write-Error 'provider 下游文件與 catalog 不同步；請執行：pwsh tools/libmpv/Sync-ProviderDocs.ps1'
+    Write-Error '提供者下游文件與 catalog 不同步；請執行：pwsh tools/libmpv/Sync-ProviderDocs.ps1'
     exit 1
 }

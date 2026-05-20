@@ -16,13 +16,13 @@ namespace MediaEmbedKit.Mpv.Samples.ConsoleMinimal;
 internal static class Program
 {
     /// <summary>
-    /// 執行 Console minimal sample。
+    /// 執行 ConsoleMinimal sample。
     /// </summary>
     /// <param name="args">
     /// 第一個非旗標引數可指定要播放的檔案路徑或媒體網址；可選旗標：<c>--runtime-check</c>、<c>--license-audit</c>、<c>--apply-staged</c>、<c>--encode &lt;output&gt;</c>。
     /// </param>
     /// <returns>
-    /// 處理程序結束代碼。
+    /// 處理序結束代碼。
     /// </returns>
     private static async Task<int> Main(string[] args)
     {
@@ -60,7 +60,7 @@ internal static class Program
 
         try
         {
-            Console.WriteLine("準備 Windows runtime...");
+            Console.WriteLine("準備 Windows 執行階段...");
             string runtimeDirectory = await SampleRuntime.PrepareCoreRuntimeAsync().ConfigureAwait(false);
 
             if (encodeOutput != null)
@@ -160,20 +160,20 @@ internal static class Program
     /// 輸出檔案路徑。
     /// </param>
     /// <param name="runtimeDirectory">
-    /// 執行階段資料夾。
+    ///執行階段資料夾。
     /// </param>
     /// <returns>
-    /// 處理程序結束代碼（0 成功；非 0 失敗）。
+    /// 處理序結束代碼（0 成功；非 0 失敗）。
     /// </returns>
     private static async Task<int> RunEncodeAsync(string inputPath, string outputPath, string runtimeDirectory)
     {
         Console.WriteLine("[encode] input=" + inputPath);
         Console.WriteLine("[encode] output=" + outputPath);
 
-        string extension = System.IO.Path.GetExtension(outputPath).ToLowerInvariant();
+        string 擴充方法 = System.IO.Path.GetExtension(outputPath).ToLowerInvariant();
         bool audioOnly =
-            extension == ".m4a" || extension == ".mp3" || extension == ".ogg"
-            || extension == ".opus" || extension == ".aac" || extension == ".wav";
+            擴充方法 == ".m4a" || 擴充方法 == ".mp3" || 擴充方法 == ".ogg"
+            || 擴充方法 == ".opus" || 擴充方法 == ".aac" || 擴充方法 == ".wav";
 
         MpvEncodingOptions options;
         if (audioOnly)
@@ -238,7 +238,7 @@ internal static class Program
     /// 在 libmpv 載入前嘗試套用先前暫存的更新；若沒有暫存就略過。
     /// </summary>
     /// <param name="runtimeDirectory">
-    /// 執行階段資料夾。
+    ///執行階段資料夾。
     /// </param>
     private static void ApplyStagedRuntimeUpdates(string runtimeDirectory)
     {
@@ -251,7 +251,7 @@ internal static class Program
     /// 印出 <see cref="MpvRuntimeHealthCheck"/> 報告摘要。
     /// </summary>
     /// <param name="runtimeDirectory">
-    /// 執行階段資料夾。
+    ///執行階段資料夾。
     /// </param>
     /// <returns>
     /// 代表分析流程的工作。
@@ -275,7 +275,7 @@ internal static class Program
     /// 印出 <see cref="MpvLicenseAuditor"/> 報告摘要。
     /// </summary>
     /// <param name="runtimeDirectory">
-    /// 執行階段資料夾。
+    ///執行階段資料夾。
     /// </param>
     /// <returns>
     /// 代表分析流程的工作。

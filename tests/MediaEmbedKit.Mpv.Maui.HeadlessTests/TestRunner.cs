@@ -9,17 +9,17 @@ using Microsoft.Maui.Controls;
 namespace MediaEmbedKit.Mpv.Maui.HeadlessTests;
 
 /// <summary>
-/// 驗證 <see cref="MpvView"/> 公開 BindableProperty 與 Commands。MAUI Windows 的
+/// 驗證 <see cref="MpvView"/> 公開 BindableProperty 與 命令。MAUI Windows 的
 /// VisualElement 靜態建構子相依 WinUI host，因此入口採 <see cref="WinUI.App"/>
 /// (<see cref="MauiWinUIApplication"/>) 啟動完整 MAUI Windows host，再由
 /// <see cref="TestPage.OnAppearing"/> 在 UI thread 呼叫 <see cref="RunAll"/>。
 /// 本套件**不**啟動真實 libmpv，也不註冊 <c>MpvViewHandler</c>，只覆蓋 BindableObject
-/// 屬性系統、CLR 包裝層、Commands 守備路徑與唯讀 BindableProperty 的外部寫入語意。
+/// 屬性系統、CLR 包裝層、命令 守備路徑與唯讀 BindableProperty 的外部寫入語意。
 /// </summary>
 internal static class TestRunner
 {
     /// <summary>
-    /// 累計失敗測試的訊息；由 host 程序在 <see cref="WriteSummary"/> 後決定 exit code。
+    /// 累計失敗測試的訊息；由 host 處理序在 <see cref="WriteSummary"/> 後決定 exit code。
     /// </summary>
     internal static readonly List<string> Failures = new List<string>();
 
@@ -34,8 +34,8 @@ internal static class TestRunner
         Run("Source / Position / Volume / IsPaused / IsMuted CLR setter round-trip", VerifyReadWriteRoundTrip);
         Run("Duration / PlaybackState 唯讀 BindableProperty（外部 SetValue 應被拒）", VerifyReadOnlyBindableProperties);
         Run("OverlayView / IsOverlayOpen 預設與 round-trip", VerifyOverlayProperties);
-        Run("Play / Pause / Stop / TogglePause / ToggleMute Commands 可取得且 CanExecute 預設 false（無 player）", VerifyCommandsExposed);
-        Run("Commands.Execute 在無 player 時不擲例外", VerifyCommandsSafeWithoutPlayer);
+        Run("Play / Pause / Stop / TogglePause / ToggleMute 命令 可取得且 CanExecute 預設 false（無 player）", Verify命令Exposed);
+        Run("命令.Execute 在無 player 時不擲例外", Verify命令SafeWithoutPlayer);
         Run("Binding StringFormat 對 PlaybackState 正常運作", VerifyPlaybackStateBindingFormat);
     }
 
@@ -54,12 +54,12 @@ internal static class TestRunner
     {
         if (Failures.Count == 0)
         {
-            Console.WriteLine("MAUI headless 測試完成：全部通過。");
+            Console.WriteLine("MAUI 無頭測試完成：全部通過。");
             Environment.ExitCode = 0;
             return;
         }
 
-        Console.Error.WriteLine("MAUI headless 測試失敗：");
+        Console.Error.WriteLine("MAUI 無頭測試失敗：");
         foreach (string failure in Failures)
         {
             Console.Error.WriteLine("  - " + failure);
@@ -211,9 +211,9 @@ internal static class TestRunner
     }
 
     /// <summary>
-    /// 驗證 5 個 Commands 都已暴露且 CanExecute 在無 player 時為 false。
+    /// 驗證 5 個命令 都已暴露且 CanExecute 在無 player 時為 false。
     /// </summary>
-    private static void VerifyCommandsExposed()
+    private static void Verify命令Exposed()
     {
         MpvView view = new MpvView();
         ICommand[] commands = new[]
@@ -230,9 +230,9 @@ internal static class TestRunner
     }
 
     /// <summary>
-    /// 驗證在無 player 情況下呼叫 Commands.Execute 不擲例外（守備路徑）。
+    /// 驗證在無 player 情況下呼叫 命令.Execute 不擲例外（守備路徑）。
     /// </summary>
-    private static void VerifyCommandsSafeWithoutPlayer()
+    private static void Verify命令SafeWithoutPlayer()
     {
         MpvView view = new MpvView();
         view.PlayCommand.Execute(null);

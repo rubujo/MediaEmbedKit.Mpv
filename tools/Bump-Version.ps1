@@ -5,9 +5,9 @@
 .DESCRIPTION
     讀取 Directory.Build.props 內的 <PackageVersion> 當作目前版號，把新版號寫回 props，
     並同步替換 docs/CONSUMING_PACKAGES.md 內顯示目前版號的具體範例段落（檔名 layout
-    與 PackageVersion 提示行）。其它已改用 <version> placeholder 的範例不動。
+    與 PackageVersion 提示行）。其他已改用 <version> placeholder 的範例不動。
 
-    若有非 SemVer 變更（pre-release suffix 變更等）會出現警告但不阻擋；最終確認權在
+    若有非 SemVer 變更（pre-release 後綴 變更等）會出現警告但不阻擋；最終確認權在
     使用者。Script 不會自動 commit / push / tag，請手動完成 git 操作。
 
 .PARAMETER NewVersion

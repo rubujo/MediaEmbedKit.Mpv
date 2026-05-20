@@ -9,16 +9,16 @@ using Microsoft.UI.Xaml;
 namespace MediaEmbedKit.Mpv.WinUI.HeadlessTests;
 
 /// <summary>
-/// 驗證 <see cref="MpvWinUiPlayer"/> 公開 DependencyProperty 與 Commands。WinUI 3
+/// 驗證 <see cref="MpvWinUiPlayer"/> 公開 DependencyProperty 與 命令。WinUI 3
 /// 控制項需要 Application context 才能建構，因此 entry point 由 WinUI SDK 自動產生並
 /// 啟動 <see cref="App"/>；本類別由 <see cref="App.OnLaunched"/> 在 UI thread 呼叫
 /// <see cref="RunAll"/>。本套件**不**啟動真實 libmpv，只覆蓋 WinUI 屬性系統、CLR
-/// 包裝層、Commands 守備路徑與 Dispose 重入。
+/// 包裝層、命令 守備路徑與 Dispose 重入。
 /// </summary>
 internal static class TestRunner
 {
     /// <summary>
-    /// 累計失敗測試的訊息；由 host 程序在 <see cref="App"/> Exit 後依此決定 exit code。
+    /// 累計失敗測試的訊息；由 host 處理序在 <see cref="App"/> Exit 後依此決定 exit code。
     /// </summary>
     internal static readonly List<string> Failures = new List<string>();
 
@@ -32,19 +32,19 @@ internal static class TestRunner
         Run("DependencyProperty 全部已註冊", VerifyDependencyPropertiesRegistered);
         Run("DependencyProperty 預設值正確", VerifyDefaultValues);
         Run("Source / Position / Volume / IsPaused / IsMuted CLR setter round-trip", VerifyReadWriteRoundTrip);
-        Run("Duration / PlaybackState 模擬唯讀（外部寫入回退）", VerifyReadOnlyDependencyProperties);
+        Run("Duration / PlaybackState 模擬唯讀（外部寫入還原）", VerifyReadOnlyDependencyProperties);
         Run("OverlayContent / IsOverlayOpen 預設與 round-trip", VerifyOverlayProperties);
-        Run("Play / Pause / Stop / TogglePause / ToggleMute Commands 可取得且 CanExecute 預設 false（無 player）", VerifyCommandsExposed);
-        Run("Commands.Execute 在無 player 時不擲例外", VerifyCommandsSafeWithoutPlayer);
+        Run("Play / Pause / Stop / TogglePause / ToggleMute 命令 可取得且 CanExecute 預設 false（無 player）", Verify命令Exposed);
+        Run("命令.Execute 在無 player 時不擲例外", Verify命令SafeWithoutPlayer);
         Run("Dispose 可重入（無 player 與重複 Dispose 都不擲例外）", VerifyDisposeReentrant);
 
         if (Failures.Count == 0)
         {
-            Console.WriteLine("WinUI headless 測試完成：全部通過。");
+            Console.WriteLine("WinUI 無頭測試完成：全部通過。");
         }
         else
         {
-            Console.Error.WriteLine("WinUI headless 測試失敗：");
+            Console.Error.WriteLine("WinUI 無頭測試失敗：");
             foreach (string failure in Failures)
             {
                 Console.Error.WriteLine("  - " + failure);
@@ -164,7 +164,7 @@ internal static class TestRunner
     }
 
     /// <summary>
-    /// 驗證 Duration / PlaybackState 模擬唯讀：外部 SetValue 應回退至先前值。
+    /// 驗證 Duration / PlaybackState 模擬唯讀：外部 SetValue 應還原至先前值。
     /// </summary>
     private static void VerifyReadOnlyDependencyProperties()
     {
@@ -172,10 +172,10 @@ internal static class TestRunner
         try
         {
             player.SetValue(MpvWinUiPlayer.DurationProperty, TimeSpan.FromHours(1));
-            Assert(player.Duration == TimeSpan.Zero, "Duration 外部 SetValue 應被回退為預設值");
+            Assert(player.Duration == TimeSpan.Zero, "Duration 外部 SetValue 應被還原為預設值");
 
             player.SetValue(MpvWinUiPlayer.PlaybackStateProperty, MpvPlaybackState.Playing);
-            Assert(player.PlaybackState == MpvPlaybackState.Idle, "PlaybackState 外部 SetValue 應被回退為預設值");
+            Assert(player.PlaybackState == MpvPlaybackState.Idle, "PlaybackState 外部 SetValue 應被還原為預設值");
         }
         finally
         {
@@ -205,9 +205,9 @@ internal static class TestRunner
     }
 
     /// <summary>
-    /// 驗證 5 個 Commands 都已暴露且 CanExecute 在無 player 時為 false。
+    /// 驗證 5 個命令 都已暴露且 CanExecute 在無 player 時為 false。
     /// </summary>
-    private static void VerifyCommandsExposed()
+    private static void Verify命令Exposed()
     {
         MpvWinUiPlayer player = new MpvWinUiPlayer();
         try
@@ -231,9 +231,9 @@ internal static class TestRunner
     }
 
     /// <summary>
-    /// 驗證在無 player 情況下呼叫 Commands.Execute 不擲例外（守備路徑）。
+    /// 驗證在無 player 情況下呼叫 命令.Execute 不擲例外（守備路徑）。
     /// </summary>
-    private static void VerifyCommandsSafeWithoutPlayer()
+    private static void Verify命令SafeWithoutPlayer()
     {
         MpvWinUiPlayer player = new MpvWinUiPlayer();
         try

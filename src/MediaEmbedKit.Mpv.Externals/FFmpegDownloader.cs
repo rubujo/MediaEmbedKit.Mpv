@@ -10,7 +10,7 @@ using MediaEmbedKit.Mpv.Platforms;
 namespace MediaEmbedKit.Mpv.Externals;
 
 /// <summary>
-/// 提供 yt-dlp FFmpeg-Builds Windows x64 / ARM64 下載、版本查詢與解壓縮 helper。
+/// 提供 yt-dlp FFmpeg-Builds Windows x64 / ARM64 下載、版本查詢與解壓縮輔助工具。
 /// </summary>
 public static class FFmpegDownloader
 {
@@ -25,7 +25,7 @@ public static class FFmpegDownloader
     public const string WindowsArm64AssetName = "ffmpeg-master-latest-winarm64-gpl.zip";
 
     /// <summary>
-    /// FFmpeg-Builds 發行資產 checksum 檔案名稱。
+    /// FFmpeg-Builds 發行資產 總和檢查碼檔案名稱。
     /// </summary>
     public const string ChecksumAssetName = "checksums.sha256";
 
@@ -81,15 +81,15 @@ public static class FFmpegDownloader
 
         // 進入時清掉 .ffmpeg-extract/ 內過去失敗殘留的 {guid}/ 子資料夾（防毒鎖檔、
         // 強制中止、斷電等場景會留下解壓中段的 ~300 MB 孤兒）。本次解壓會用新
-        // {guid}/，不會踩到正在運行的並發解壓（每次都用 Guid.NewGuid()）。
+        // {guid}/，不會踩到正在執行的並發解壓（每次都用 Guid.NewGuid()）。
         TryPruneFFmpegExtractWorkspace(installDirectory);
 
-        // yt-dlp/FFmpeg-Builds 同 repo 並存兩種 release：tag=latest（固定 asset 名）
-        // 與每小時新增的 autobuild-YYYY-MM-DD-HH-MM（含 build number / commit hash 的
-        // 動態 asset 名）。GitHub /releases/latest 取「created_at 最新」會吃到 autobuild
-        // 而拿到不固定的 asset 名稱（ffmpeg-N-{build}-g{commit}-...）→ SelectAsset
-        // 找 ffmpeg-master-latest-* 必爆。改用 /releases/tags/latest 明確抓 tag 名為
-        // latest 的 release，asset 名穩定為 ffmpeg-master-latest-*-gpl.zip。
+        // yt-dlp/FFmpeg-Builds 同一儲存庫並存兩種發行：tag=latest（固定資產名稱）
+        // 與每小時新增的 autobuild-YYYY-MM-DD-HH-MM（含建置編號 / commit hash 的
+        // 動態資產名稱）。GitHub /releases/latest 取「created_at 最新」會吃到 autobuild
+        // 而拿到不固定的 資產名稱（ffmpeg-N-{build}-g{commit}-...）→ SelectAsset
+        // 找 ffmpeg-master-latest-* 必爆。改用 /releases/tags/latest 明確抓 標籤名稱為
+        // latest 的 release，資產名稱穩定為 ffmpeg-master-latest-*-gpl.zip。
         Uri defaultApiUri = new Uri("https://api.github.com/repos/yt-dlp/FFmpeg-Builds/releases/tags/latest");
         Uri apiUri = options.ReleaseApiUriOverride ?? defaultApiUri;
         GitHubRelease release = await DownloadUtility.GetLatestReleaseAsync(
@@ -229,7 +229,7 @@ public static class FFmpegDownloader
     /// 驗證既有 FFmpeg-Builds 壓縮檔。
     /// </summary>
     /// <param name="release">
-    /// GitHub 發行資料。
+    /// GitHub Releases 資料。
     /// </param>
     /// <param name="asset">
     /// 發行資產。
@@ -264,7 +264,7 @@ public static class FFmpegDownloader
     }
 
     /// <summary>
-    /// 清理 runtime 資料夾中的 FFmpeg-Builds 壓縮檔。
+    /// 清理執行階段資料夾中的 FFmpeg-Builds 壓縮檔。
     /// </summary>
     /// <param name="installDirectory">
     /// FFmpeg 安裝資料夾。
@@ -302,9 +302,9 @@ public static class FFmpegDownloader
     }
 
     /// <summary>
-    /// 進入 download flow 時清掉 <c>installDirectory/.ffmpeg-extract/</c> 下過去失敗
+    /// 進入 下載流程 時清掉 <c>installDirectory/.ffmpeg-extract/</c> 下過去失敗
     /// 殘留的 <c>{guid}/</c> 子資料夾。每次解壓用新 <c>Guid.NewGuid()</c>，不會清到
-    /// 並發運行中的解壓 workspace；只清過往斷電 / 防毒鎖 / 強制中止留下的孤兒。
+    /// 並行執行中的解壓 workspace；只清過往斷電 / 防毒鎖 / 強制中止留下的孤兒。
     /// </summary>
     /// <param name="installDirectory">
     /// FFmpeg 安裝資料夾。
@@ -380,7 +380,7 @@ public static class FFmpegDownloader
         // Idempotency skip：ffmpeg.exe + ffprobe.exe 已存在、呼叫端未要求覆寫或釘版 SHA
         // → 跳過下載 + 解壓。先前要求 BestEffort 才允許 skip，但 OverwriteExisting=false
         // + 沒 ExpectedSha256 就足夠保證「使用者沒要求重新驗證」—— 信任 disk 上的檔是
-        // 我們上次自己安裝完成寫入的。要強制重抓請設 OverwriteExisting=true。
+        // 我們上次自己安裝完成寫入的。要強制重新下載請設 OverwriteExisting=true。
         return File.Exists(ffmpegPath) &&
             File.Exists(ffprobePath) &&
             !options.OverwriteExisting &&
@@ -414,16 +414,16 @@ public static class FFmpegDownloader
     }
 
     /// <summary>
-    /// 從 GitHub 發行資料選取 FFmpeg 指定 Windows 架構的發行資產。
+    /// 從 GitHub Releases 資料選取 FFmpeg 指定 Windows 架構的發行資產。
     /// </summary>
     /// <param name="release">
-    /// GitHub 發行資料。
+    /// GitHub Releases 資料。
     /// </param>
     /// <param name="architecture">
     /// 要選取的 Windows 架構。
     /// </param>
     /// <returns>
-    /// 符合指定 Windows 架構的 GitHub 發行資產。
+    /// 符合指定 Windows 架構的 GitHub Releases 資產。
     /// </returns>
     private static GitHubReleaseAsset SelectAsset(GitHubRelease release, MpvWindowsArchitecture architecture)
     {
@@ -431,17 +431,17 @@ public static class FFmpegDownloader
         GitHubReleaseAsset? asset = release.Assets.FirstOrDefault(item => string.Equals(item.Name, expectedName, StringComparison.OrdinalIgnoreCase));
         if (asset == null)
         {
-            throw new InvalidOperationException("GitHub 發行資料中找不到 FFmpeg " + expectedName + " 資產：" + release.TagName);
+            throw new InvalidOperationException("GitHub Releases 資料中找不到 FFmpeg " + expectedName + " 資產：" + release.TagName);
         }
 
         return asset;
     }
 
     /// <summary>
-    /// 在策略要求時使用 FFmpeg-Builds 發行的 checksum 檔案驗證下載檔案。
+    /// 在策略要求時使用 FFmpeg-Builds 發行的 總和檢查碼檔案驗證下載檔案。
     /// </summary>
     /// <param name="release">
-    /// GitHub 發行資料。
+    /// GitHub Releases 資料。
     /// </param>
     /// <param name="asset">
     /// 已下載的 FFmpeg 發行資產。
@@ -483,10 +483,10 @@ public static class FFmpegDownloader
     }
 
     /// <summary>
-    /// 從 GitHub 發行資料選取 FFmpeg-Builds checksum 資產。
+    /// 從 GitHub Releases 資料選取 FFmpeg-Builds checksum 資產。
     /// </summary>
     /// <param name="release">
-    /// GitHub 發行資料。
+    /// GitHub Releases 資料。
     /// </param>
     /// <returns>
     /// checksum 發行資產。
@@ -496,7 +496,7 @@ public static class FFmpegDownloader
         GitHubReleaseAsset? asset = release.Assets.FirstOrDefault(item => string.Equals(item.Name, ChecksumAssetName, StringComparison.OrdinalIgnoreCase));
         if (asset == null)
         {
-            throw new InvalidOperationException("GitHub 發行資料中找不到 FFmpeg checksum 資產：" + release.TagName);
+            throw new InvalidOperationException("GitHub Releases 資料中找不到 FFmpeg checksum 資產：" + release.TagName);
         }
 
         return asset;

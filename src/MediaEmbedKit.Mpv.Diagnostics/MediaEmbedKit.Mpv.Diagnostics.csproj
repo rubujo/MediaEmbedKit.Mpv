@@ -3,7 +3,7 @@
     <TargetFrameworks>netstandard2.0;net472;net48;net10.0</TargetFrameworks>
     <AssemblyName>MediaEmbedKit.Mpv.Diagnostics</AssemblyName>
     <RootNamespace>MediaEmbedKit.Mpv.Downloads</RootNamespace>
-    <Description>License auditor (LGPL / GPL / NonFree classification), runtime health check, library update scheduler (staged update + rollback) for libmpv runtime.</Description>
+    <Description>供 libmpv 執行階段使用的授權稽核（LGPL / GPL / NonFree 分類）、執行階段健檢與函式庫更新排程器（暫存更新與回復）。</Description>
     <PackageId>MediaEmbedKit.Mpv.Diagnostics</PackageId>
     <Title>MediaEmbedKit.Mpv.Diagnostics</Title>
   </PropertyGroup>

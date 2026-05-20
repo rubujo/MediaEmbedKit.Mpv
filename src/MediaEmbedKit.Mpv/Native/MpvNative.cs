@@ -37,11 +37,11 @@ internal static partial class MpvNative
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     internal delegate void MpvWakeupCallback(IntPtr context);
 
-    // -------- 含委派／陣列參數的入口：在 helper 內集中做 marshal 後呼叫 native --------
+    // -------- 含委派／陣列參數的入口：在 輔助方法內集中做封送處理後呼叫原生入口 --------
     //
     // 設計理由：LibraryImport 不直接支援 managed delegate 與 ref/[In] 陣列 marshalling，
     // 但呼叫端用「delegate 欄位 + array」是慣用且乾淨的形式。本檔將 P/Invoke 簽名統一改成
-    // 純 IntPtr（blittable，符合 LibraryImport 限制），並在同檔提供 internal helper（沿用
+    // 純 IntPtr（blittable，符合 LibraryImport 限制），並在同檔提供 internal 輔助方法（沿用
     // 原 native 名稱）為呼叫端遮蔽 Marshal.GetFunctionPointerForDelegate / GCHandle.Alloc(Pinned)
     // 與 GC.KeepAlive 細節。
 
@@ -2106,7 +2106,7 @@ internal static partial class MpvNative
     /// 傳回回呼的內容指標。
     /// </param>
     /// <remarks>
-    /// 此 helper 集中處理 <see cref="Marshal.GetFunctionPointerForDelegate(System.Delegate)"/> 與
+    /// 此輔助方法集中處理 <see cref="Marshal.GetFunctionPointerForDelegate(System.Delegate)"/> 與
     /// <see cref="GC.KeepAlive(object)"/>，呼叫端只負責保存 <paramref name="callback"/> 委派的強參考
     /// （避免委派被 GC）。
     /// </remarks>
@@ -2137,7 +2137,7 @@ internal static partial class MpvNative
     /// </returns>
     /// <remarks>
     /// 呼叫端必須以欄位或其他強參考形式持有 <paramref name="openCallback"/>，直到不再需要被
-    /// libmpv 呼叫為止；本 helper 僅在當次呼叫期間保證委派存活。
+    /// libmpv 呼叫為止；本輔助工具僅在當次呼叫期間保證委派存活。
     /// </remarks>
     internal static int mpv_stream_cb_add_ro(IntPtr ctx, IntPtr protocol, IntPtr userData, MpvStreamOpenCallback openCallback)
     {
@@ -2165,7 +2165,7 @@ internal static partial class MpvNative
     /// 傳回回呼的內容指標。
     /// </param>
     /// <remarks>
-    /// 此 helper 集中處理 <see cref="Marshal.GetFunctionPointerForDelegate(System.Delegate)"/> 與
+    /// 此輔助方法集中處理 <see cref="Marshal.GetFunctionPointerForDelegate(System.Delegate)"/> 與
     /// <see cref="GC.KeepAlive(object)"/>，呼叫端只負責保存 <paramref name="callback"/> 委派的強參考
     /// （避免委派被 GC）。
     /// </remarks>
@@ -2192,7 +2192,7 @@ internal static partial class MpvNative
     /// libmpv 錯誤碼。
     /// </returns>
     /// <remarks>
-    /// 此 helper 在呼叫期間將 <paramref name="parameters"/> 釘選（pinned），確保 libmpv 取得的指標
+    /// 此 輔助工具在呼叫期間將 <paramref name="parameters"/> 釘選（pinned），確保 libmpv 取得的指標
     /// 在 mpv_render_context_create 回傳前不會因 GC 而移動。
     /// </remarks>
     internal static int mpv_render_context_create(out IntPtr result, IntPtr mpv, MpvRenderParam[] parameters)
@@ -2226,7 +2226,7 @@ internal static partial class MpvNative
     /// libmpv 錯誤碼。
     /// </returns>
     /// <remarks>
-    /// 此 helper 在呼叫期間將 <paramref name="parameters"/> 釘選（pinned），確保 libmpv 取得的指標
+    /// 此 輔助工具在呼叫期間將 <paramref name="parameters"/> 釘選（pinned），確保 libmpv 取得的指標
     /// 在 mpv_render_context_render 回傳前不會因 GC 而移動。
     /// </remarks>
     internal static int mpv_render_context_render(IntPtr ctx, MpvRenderParam[] parameters)

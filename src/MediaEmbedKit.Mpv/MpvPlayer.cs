@@ -894,10 +894,10 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     }
 
     /// <summary>
-    /// 取得 mpv ytdl hook 執行 yt-dlp JSON 子程序的結果。
+    /// 取得 mpv ytdl hook 執行 yt-dlp JSON 子處理序的結果。
     /// </summary>
     /// <returns>
-    /// ytdl JSON 子程序結果；尚未解析 URL 或結果不可用時為 <see langword="null"/>。
+    /// ytdl JSON 子處理序結果；尚未解析 URL 或結果不可用時為 <see langword="null"/>。
     /// </returns>
     public MpvYtdlJsonSubprocessResult? GetYtdlJsonSubprocessResult()
     {
@@ -913,13 +913,13 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     }
 
     /// <summary>
-    /// 嘗試取得 mpv ytdl hook 執行 yt-dlp JSON 子程序的結果。
+    /// 嘗試取得 mpv ytdl hook 執行 yt-dlp JSON 子處理序的結果。
     /// </summary>
     /// <param name="result">
-    /// 找到時接收 ytdl JSON 子程序結果；找不到時接收 <see langword="null"/>。
+    /// 找到時接收 ytdl JSON 子處理序結果；找不到時接收 <see langword="null"/>。
     /// </param>
     /// <returns>
-    /// 找到 ytdl JSON 子程序結果時為 <see langword="true"/>。
+    /// 找到 ytdl JSON 子處理序結果時為 <see langword="true"/>。
     /// </returns>
     public bool TryGetYtdlJsonSubprocessResult(out MpvYtdlJsonSubprocessResult? result)
     {

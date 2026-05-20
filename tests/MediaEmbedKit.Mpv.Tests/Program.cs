@@ -45,36 +45,36 @@ internal static class Program
         runner.Add("yt-dlp 格式預設值對應", VerifyYtdlpFormatPresets);
         runner.Add("yt-dlp 格式參數驗證", VerifyYtdlpFormatValidation);
         runner.Add("mpv encoding mode 選項", VerifyEncodingOptions);
-        runner.Add("播放器選項 fluent helper", VerifyPlayerOptionFluentHelpers);
+        runner.Add("播放器選項鏈式輔助方法", VerifyPlayerOptionFluentHelpers);
         runner.Add("外部工具命令列引數格式化", VerifyExternalToolArgumentFormatting);
-        runner.Add("native asset digest 強制驗證", VerifyNativeAssetDigestValidation);
-        runner.Add("native asset 釘選 SHA-256 驗證", VerifyNativeAssetPinnedSha256Validation);
-        runner.Add("native asset checksum 解析", VerifyNativeAssetChecksumParsing);
-        runner.Add("native asset 來源鎖定驗證", VerifyNativeAssetSourceLockValidation);
+        runner.Add("原生資產 digest 強制驗證", VerifyNativeAssetDigestValidation);
+        runner.Add("原生資產釘選 SHA-256 驗證", VerifyNativeAssetPinnedSha256Validation);
+        runner.Add("原生資產 checksum 解析", VerifyNativeAssetChecksumParsing);
+        runner.Add("原生資產來源鎖定驗證", VerifyNativeAssetSourceLockValidation);
         runner.Add("下載要求瀏覽器標頭", VerifyBrowserRequestHeaders);
-        runner.Add("FFmpeg fast path 會清理 retained archive", VerifyFFmpegFastPathPrunesArchivesAsync);
-        runner.Add("FFmpeg retained archive 會驗證 provider checksum", VerifyFFmpegRetainedArchiveVerificationAsync);
-        runner.Add("FFmpeg retained archive digest 錯誤會失敗", VerifyFFmpegRetainedArchiveDigestFailureAsync);
-        runner.Add("Deno 解壓不污染 runtime root", VerifyDenoExtractionUsesWorkspaceAsync);
+        runner.Add("FFmpeg 快速路徑 會清理 保留的封存檔", VerifyFFmpegFastPathPrunesArchivesAsync);
+        runner.Add("FFmpeg 保留的封存檔 會驗證提供者總和檢查碼", VerifyFFmpegRetainedArchiveVerificationAsync);
+        runner.Add("FFmpeg 保留的封存檔 digest 錯誤會失敗", VerifyFFmpegRetainedArchiveDigestFailureAsync);
+        runner.Add("Deno 解壓不污染執行階段根目錄", VerifyDenoExtractionUsesWorkspaceAsync);
         runner.Add("下載失敗清理暫存檔", VerifyDownloadFailureCleansTempFileAsync);
         runner.Add("runtime 下載驗證策略預設值", VerifyRuntimeVerificationOptionDefaults);
-        runner.Add("Windows runtime FFmpeg 選項預設值", VerifyWindowsRuntimeFFmpegOptionDefaults);
+        runner.Add("Windows 執行階段 FFmpeg 選項預設值", VerifyWindowsRuntimeFFmpegOptionDefaults);
         runner.Add("播放器選項預設值", VerifyPlayerOptionDefaults);
         runner.Add("執行階段來源 catalog 收斂", VerifyRuntimeCatalogs);
         runner.Add("未知平台安裝不觸發下載", VerifyUnknownPlatformInstallAsync);
         runner.Add("Windows 執行階段播放器選項", VerifyWindowsRuntimePlayerOptions);
         runner.Add("MpvCapabilities 查詢與防呆", VerifyMpvCapabilities);
-        runner.Add("MpvMediaItem 建構 per-file options", VerifyMpvMediaItemBuildFileOptions);
+        runner.Add("MpvMediaItem 建構 per-file 選項", VerifyMpvMediaItemBuildFileOptions);
         runner.Add("MpvRuntimeHealthCheck 缺檔資料夾報告", VerifyMpvRuntimeHealthCheckMissingFiles);
         runner.Add("MpvLibraryUpdateScheduler 路徑與列舉", VerifyMpvLibraryUpdateSchedulerLayout);
         runner.Add("DI 擴充註冊播放器工廠", VerifyDependencyInjectionExtensions);
-        runner.Add("Provider / ProviderFallbackOrder 預設值（Zhongfly + Shinchiro fallback）", VerifyProviderFallbackOrderDefaults);
+        runner.Add("Provider / ProviderFallbackOrder 預設值（Zhongfly + Shinchiro 備援）", VerifyProviderFallbackOrderDefaults);
         runner.Add("MpvWindowsBuildDownloadOptions.Clone 深淺層複製", VerifyMpvWindowsBuildDownloadOptionsClone);
         runner.Add("LibMpvVersionMarker round-trip 寫入讀回", VerifyLibMpvVersionMarkerRoundTrip);
         runner.Add("ArchiveSafety 拒絕 reparse point", VerifyArchiveSafetyRejectsReparsePoint);
         runner.Add("RuntimeDirectoryLock 跨呼叫互斥（同 process 模擬）", VerifyRuntimeDirectoryLockMutualExclusion);
         runner.Add("MpvLicenseAuditor 分類授權狀態", VerifyMpvLicenseAuditorClassification);
-        runner.Add("MpvMediaItem fluent helpers", VerifyMpvMediaItemFluentHelpers);
+        runner.Add("MpvMediaItem 鏈式輔助方法", VerifyMpvMediaItemFluentHelpers);
         runner.Add("MpvPlayerOptions.CopyTo 全欄複製", VerifyMpvPlayerOptionsCopyTo);
         runner.Add("MpvRelayCommand CanExecute/Execute/RaiseCanExecuteChanged", VerifyMpvRelayCommand);
         runner.Add("MpvEncodingOptions two-pass clone 內部累積清單", VerifyEncodingOptionsTwoPassClone);
@@ -82,7 +82,7 @@ internal static class Program
         runner.Add("MpvRenderParamType.AmbientLight 已標 [Obsolete]", VerifyAmbientLightObsolete);
         runner.Add("MpvPlayer 提供 TryGetProperty* 系列", VerifyTryGetPropertySurface);
         runner.Add("MpvNative 在 net7.0+ 採用 LibraryImport", VerifyMpvNativeUsesLibraryImport);
-        runner.Add("MpvNative 委派／陣列 helper 在 net7.0+ 仍走 LibraryImport", VerifyMpvNativeHelperUsesLibraryImport);
+        runner.Add("MpvNative 委派／陣列 輔助工具在 net7.0+ 仍走 LibraryImport", VerifyMpvNativeHelperUsesLibraryImport);
         runner.Add("Windows ARM64 資產對應正確（libmpv / yt-dlp / Deno / FFmpeg）", VerifyWindowsArm64AssetMapping);
         runner.Add("PackageVersion 與 docs/CONSUMING_PACKAGES.md 同步", VerifyPackageVersionInConsumingDoc);
 
@@ -284,7 +284,7 @@ internal static class Program
     /// <summary>
     /// 驗證原本含委派／陣列參數的 5 個入口已透過 <c>*_native</c> 私有 P/Invoke 統一改為純 IntPtr 簽名，
     /// 並在 <c>net7.0</c> 以上同樣由 P/Invoke source generator 以 <see cref="LibraryImportAttribute"/> 包裝；
-    /// 同時上層 internal helper（沿用原 native 名稱）仍提供既有委派／陣列簽名給呼叫端，呼叫端 0 變更。
+    /// 同時上層 internal 輔助方法（沿用原 native 名稱）仍提供既有委派／陣列簽名給呼叫端，呼叫端 0 變更。
     /// </summary>
     /// <returns>
     /// 代表測試流程的工作。
@@ -317,7 +317,7 @@ internal static class Program
 #endif
         }
 
-        // helper 維持原 native 名稱、保留 delegate / array 簽名給呼叫端：以「不掛任何 P/Invoke 屬性」為驗證。
+        // 輔助方法維持原 native 名稱、保留 delegate / array 簽名給呼叫端：以「不掛任何 P/Invoke 屬性」為驗證。
         string[] helperNames = new[]
         {
             "mpv_set_wakeup_callback",
@@ -331,15 +331,15 @@ internal static class Program
         {
             MethodInfo[] candidates = typeof(MpvNative).GetMethods(BindingFlags.NonPublic | BindingFlags.Static)
                 .Where(m => m.Name == name).ToArray();
-            AssertEx.True(candidates.Length > 0, name + " helper 應存在於 MpvNative。");
+            AssertEx.True(candidates.Length > 0, name + " 輔助方法應存在於 MpvNative。");
             foreach (MethodInfo helper in candidates)
             {
                 AssertEx.False(
                     helper.IsDefined(typeof(DllImportAttribute), inherit: false),
-                    name + " helper 不應直接掛 DllImport（應透過 *_native 私有入口）。");
+                    name + " 輔助工具不應直接掛 DllImport（應透過 *_native 私有入口）。");
                 AssertEx.False(
                     helper.IsDefined(typeof(LibraryImportAttribute), inherit: false),
-                    name + " helper 不應直接掛 LibraryImport（應透過 *_native 私有入口）。");
+                    name + " 輔助工具不應直接掛 LibraryImport（應透過 *_native 私有入口）。");
             }
         }
 
@@ -349,8 +349,8 @@ internal static class Program
     /// <summary>
     /// 驗證 <see cref="MpvWindowsBuildDownloadOptions"/> 的 Provider 與
     /// <see cref="MpvWindowsBuildDownloadOptions.ProviderFallbackOrder"/> 預設值。
-    /// 預設 Provider = Zhongfly（兩家中唯一同時提供 LGPL libmpv），fallback 清單預設
-    /// 含 Shinchiro 作為兜底 —— 一同確認對 release 後使用者「預設拿 LGPL libmpv」
+    /// 預設 Provider = Zhongfly（兩家中唯一同時提供 LGPL libmpv），備援清單預設
+    /// 含 Shinchiro 作為備援 —— 一同確認對 release 後使用者「預設拿 LGPL libmpv」
     /// 的期望成立。
     /// </summary>
     /// <returns>
@@ -360,20 +360,20 @@ internal static class Program
     {
         MpvWindowsBuildDownloadOptions options = new MpvWindowsBuildDownloadOptions();
         AssertEx.Equal(MpvWindowsBuildProvider.Zhongfly, options.Provider, "預設 Provider 應為 Zhongfly（兩家中唯一同時提供 LGPL libmpv）");
-        AssertEx.Equal(1, options.ProviderFallbackOrder.Count, "ProviderFallbackOrder 預設應含 Shinchiro 一個 fallback 項目");
+        AssertEx.Equal(1, options.ProviderFallbackOrder.Count, "ProviderFallbackOrder 預設應含 Shinchiro 一個 備援項目");
         AssertEx.Equal(MpvWindowsBuildProvider.Shinchiro, options.ProviderFallbackOrder[0], "ProviderFallbackOrder 預設首項應為 Shinchiro");
         options.ProviderFallbackOrder.Clear();
         AssertEx.Equal(0, options.ProviderFallbackOrder.Count, "ProviderFallbackOrder 應支援清空");
         options.ProviderFallbackOrder.Add(MpvWindowsBuildProvider.Shinchiro);
-        AssertEx.Equal(1, options.ProviderFallbackOrder.Count, "ProviderFallbackOrder 應支援新增備援 provider");
+        AssertEx.Equal(1, options.ProviderFallbackOrder.Count, "ProviderFallbackOrder 應支援新增備援提供者");
         return Task.CompletedTask;
     }
 
     /// <summary>
     /// 驗證 <see cref="MpvWindowsBuildDownloadOptions.Clone"/> 產生獨立複本：所有純值
     /// 欄位等值複製，<see cref="MpvWindowsBuildDownloadOptions.ProviderFallbackOrder"/>
-    /// 拷貝成獨立 list（修改原物件 list 不影響複本）。這是 PR G 內 UpdateLibMpvAsync /
-    /// InstallOrUpdateLibMpvAsync 避免 mutate caller options 的基礎。
+    /// 複製成獨立 list（修改原物件 list 不影響複本）。這是 PR G 內 UpdateLibMpvAsync /
+    /// InstallOrUpdateLibMpvAsync 避免 修改呼叫端選項 的基礎。
     /// </summary>
     /// <returns>
     /// 代表測試流程的工作。
@@ -479,7 +479,7 @@ internal static class Program
     /// symlink 的拒絕行為。Windows 上建立 directory symlink 需 admin / dev-mode；
     /// 此測試用 <see cref="System.IO.FileAttributes.ReparsePoint"/> attribute 模擬一個
     /// 「看起來像 reparse point」的檔案無法直接做（OS-level 設定），改為驗證：
-    /// 一般檔案不 throw、不存在檔案不 throw、且 helper 提供的訊息含足夠 context。
+    /// 一般檔案不 throw、不存在檔案不 throw、且 輔助工具提供的訊息含足夠脈絡。
     /// 真實 symlink 拒絕情境由 integration test 在實機驗證（需 dev mode 或 admin）。
     /// </summary>
     /// <returns>
@@ -501,7 +501,7 @@ internal static class Program
             ArchiveSafety.RejectIfReparsePoint(ordinary, "test: ordinary file");
             AssertEx.True(File.Exists(ordinary), "一般檔案經檢查後應仍存在");
 
-            // helper 訊息應提到 CVE 與 ExpectedSha256 商用合規路徑（給 throw 路徑的 caller）。
+            // 輔助工具訊息應提到 CVE 與 ExpectedSha256 商用合規路徑（給擲出例外路徑的呼叫端）。
             // 改用 mock — 模擬真正的 reparse point 在這個 unit test 環境不可行（需 admin）。
             // 此處改驗訊息模板正確：建立一個 throw flow 用 dummy file with manual attribute set。
             // Windows API SetFileAttributes 設 ReparsePoint flag 也需要實際 reparse data；
@@ -523,7 +523,7 @@ internal static class Program
 
     /// <summary>
     /// 驗證 <see cref="RuntimeDirectoryLock"/> 同 process 內第二次 AcquireAsync 同一 path
-    /// 會被擋住、釋放第一個鎖後第二個能順利取得。覆蓋 cross-process file lock 在同
+    /// 會被擋住、釋放第一個鎖後第二個能順利取得。覆蓋 跨處理序檔案鎖定 在同
     /// process 內的行為（FileShare.None 的語意即跨 process / 跨 thread 都互斥）。
     /// </summary>
     /// <returns>
@@ -599,7 +599,7 @@ internal static class Program
         AssertEx.Equal(
             MpvBuildLicense.Gpl,
             MpvLicenseAuditor.ClassifyFFmpegLicense("ffmpeg version 7.x ... --enable-gpl --enable-libx264"),
-            "FFmpeg GPL build 版本字串應分類為 Gpl");
+            "FFmpeg GPL 建置版 版本字串應分類為 Gpl");
 
         AssertEx.Equal(
             MpvBuildLicense.NonFree,
@@ -620,7 +620,7 @@ internal static class Program
     }
 
     /// <summary>
-    /// 驗證 <see cref="MpvMediaItem"/> fluent helper 會正確套用設定並回傳目前實例。
+    /// 驗證 <see cref="MpvMediaItem"/> 鏈式輔助方法會正確套用設定並回傳目前實例。
     /// </summary>
     /// <returns>
     /// 代表測試流程的工作。
@@ -1008,7 +1008,7 @@ internal static class Program
     }
 
     /// <summary>
-    /// 驗證 <see cref="MpvMediaItem.BuildFileOptions"/> 會正確產生 mpv per-file options 字典。
+    /// 驗證 <see cref="MpvMediaItem.BuildFileOptions"/> 會正確產生 mpv per-file 選項 字典。
     /// </summary>
     /// <returns>
     /// 代表測試流程的工作。
@@ -1101,7 +1101,7 @@ internal static class Program
     }
 
     /// <summary>
-    /// 驗證 yt-dlp 格式 selector helper 的輸入檢查。
+    /// 驗證 yt-dlp 格式 selector 輔助工具的輸入檢查。
     /// </summary>
     /// <returns>
     /// 代表測試流程的工作。
@@ -1208,7 +1208,7 @@ internal static class Program
     }
 
     /// <summary>
-    /// 驗證播放器選項 fluent helper 會維持原選項物件並設定預期值。
+    /// 驗證播放器選項 鏈式輔助方法會維持原選項物件並設定預期值。
     /// </summary>
     /// <returns>
     /// 代表測試流程的工作。
@@ -1229,7 +1229,7 @@ internal static class Program
             .WithInitialOption("terminal", "no")
             .UseEncoding(encodingOptions);
 
-        AssertEx.True(object.ReferenceEquals(options, returnedOptions), "fluent helper 應傳回原本的播放器選項。");
+        AssertEx.True(object.ReferenceEquals(options, returnedOptions), "鏈式輔助方法 應傳回原本的播放器選項。");
         AssertEx.Equal("runtime\\libmpv-2.dll", options.MpvLibraryPath, "鏈式 libmpv 路徑");
         AssertEx.Equal("runtime", options.ToolDirectory, "鏈式工具資料夾");
         AssertEx.Equal("runtime", options.ConfigDirectory, "鏈式設定資料夾");
@@ -1283,7 +1283,7 @@ internal static class Program
         string tempFile = Path.GetTempFileName();
         try
         {
-            File.WriteAllText(tempFile, "native asset digest");
+            File.WriteAllText(tempFile, "原生資產 digest");
             string sha256 = DownloadUtility.ComputeSha256Hex(tempFile);
             DownloadUtility.VerifyDownloadedAsset(
                 tempFile,
@@ -1370,7 +1370,7 @@ internal static class Program
     }
 
     /// <summary>
-    /// 驗證 GNU 風格 checksum 檔案解析支援 yt-dlp、Deno 與 FFmpeg 常見格式。
+    /// 驗證 GNU 風格 總和檢查碼檔案解析支援 yt-dlp、Deno 與 FFmpeg 常見格式。
     /// </summary>
     /// <returns>
     /// 代表測試流程的工作。
@@ -1404,7 +1404,7 @@ internal static class Program
     }
 
     /// <summary>
-    /// 驗證 FFmpeg fast path 在重用既有工具時仍會清理壓縮檔。
+    /// 驗證 FFmpeg 快速路徑 在重用既有工具時仍會清理壓縮檔。
     /// </summary>
     /// <returns>
     /// 代表測試流程的工作。
@@ -1442,10 +1442,10 @@ internal static class Program
                 };
                 FFmpegDownloadResult result = await FFmpegDownloader.DownloadAndExtractLatestAsync(tempDirectory, options).ConfigureAwait(false);
 
-                AssertEx.False(result.Updated, "FFmpeg fast path 不應下載或覆寫工具。");
+                AssertEx.False(result.Updated, "FFmpeg 快速路徑 不應下載或覆寫工具。");
                 AssertEx.False(File.Exists(archivePath), "RetainArchive=false 時目前 FFmpeg zip 應被清掉。");
                 AssertEx.False(File.Exists(staleArchivePath), "RetainArchive=false 時舊 FFmpeg zip 應被清掉。");
-                AssertEx.Equal(0, server.GetRequestCount("/ffmpeg.zip"), "FFmpeg fast path 不應下載 zip。");
+                AssertEx.Equal(0, server.GetRequestCount("/ffmpeg.zip"), "FFmpeg 快速路徑 不應下載 zip。");
             }
         }
         finally
@@ -1455,7 +1455,7 @@ internal static class Program
     }
 
     /// <summary>
-    /// 驗證 FFmpeg retained archive fast path 會執行 provider checksum 驗證。
+    /// 驗證 FFmpeg 保留的封存檔快速路徑 會執行 提供者總和檢查碼驗證。
     /// </summary>
     /// <returns>
     /// 代表測試流程的工作。
@@ -1502,11 +1502,11 @@ internal static class Program
                 };
                 FFmpegDownloadResult result = await FFmpegDownloader.DownloadAndExtractLatestAsync(tempDirectory, options).ConfigureAwait(false);
 
-                AssertEx.False(result.Updated, "FFmpeg retained archive fast path 不應覆寫工具。");
+                AssertEx.False(result.Updated, "FFmpeg 保留的封存檔快速路徑 不應覆寫工具。");
                 AssertEx.True(File.Exists(archivePath), "RetainArchive=true 時目前 FFmpeg zip 應保留。");
                 AssertEx.False(File.Exists(staleArchivePath), "RetainArchive=true 時非目前 FFmpeg zip 應清掉。");
-                AssertEx.Equal(1, server.GetRequestCount("/checksums.sha256"), "RetainArchive=true 應驗證 provider checksum。");
-                AssertEx.Equal(0, server.GetRequestCount("/ffmpeg.zip"), "Retained archive fast path 不應重新下載 zip。");
+                AssertEx.Equal(1, server.GetRequestCount("/checksums.sha256"), "RetainArchive=true 應驗證提供者總和檢查碼。");
+                AssertEx.Equal(0, server.GetRequestCount("/ffmpeg.zip"), "Retained archive 快速路徑 不應重新下載 zip。");
             }
         }
         finally
@@ -1516,7 +1516,7 @@ internal static class Program
     }
 
     /// <summary>
-    /// 驗證 retained archive 摘要不符時不會靜默改走下載路徑。
+    /// 驗證 保留的封存檔 摘要不符時不會靜默改走下載路徑。
     /// </summary>
     /// <returns>
     /// 代表測試流程的工作。
@@ -1573,7 +1573,7 @@ internal static class Program
     }
 
     /// <summary>
-    /// 驗證 Deno zip 只會將 deno.exe 放入 runtime root。
+    /// 驗證 Deno zip 只會將 deno.exe 放入 執行階段根目錄。
     /// </summary>
     /// <returns>
     /// 代表測試流程的工作。
@@ -1586,8 +1586,8 @@ internal static class Program
             byte[] zipBytes = CreateZipArchive(new Dictionary<string, string>
             {
                 { "deno.exe", "fake deno executable" },
-                { "README.txt", "should not remain in runtime root" },
-                { "docs/license.txt", "should not remain in runtime root" },
+                { "README.txt", "should not remain in 執行階段根目錄" },
+                { "docs/license.txt", "should not remain in 執行階段根目錄" },
             });
             string zipSha256 = ComputeSha256Hex(zipBytes);
 
@@ -1613,9 +1613,9 @@ internal static class Program
                 DenoDownloadResult result = await DenoDownloader.DownloadAndExtractLatestAsync(tempDirectory, options).ConfigureAwait(false);
 
                 AssertEx.True(result.Updated, "Deno download path 應標示已更新。");
-                AssertEx.True(File.Exists(Path.Combine(tempDirectory, "deno.exe")), "Deno runtime root 應包含 deno.exe。");
-                AssertEx.False(File.Exists(Path.Combine(tempDirectory, "README.txt")), "Deno zip 額外檔案不應留在 runtime root。");
-                AssertEx.False(Directory.Exists(Path.Combine(tempDirectory, "docs")), "Deno zip 額外資料夾不應留在 runtime root。");
+                AssertEx.True(File.Exists(Path.Combine(tempDirectory, "deno.exe")), "Deno 執行階段根目錄 應包含 deno.exe。");
+                AssertEx.False(File.Exists(Path.Combine(tempDirectory, "README.txt")), "Deno zip 額外檔案不應留在 執行階段根目錄。");
+                AssertEx.False(Directory.Exists(Path.Combine(tempDirectory, "docs")), "Deno zip 額外資料夾不應留在 執行階段根目錄。");
                 AssertEx.False(Directory.Exists(Path.Combine(tempDirectory, ".deno-extract")), "Deno 解壓暫存資料夾應清空並移除。");
                 AssertEx.False(File.Exists(result.ArchivePath), "RetainArchive=false 時 Deno zip 應清掉。");
             }
@@ -1726,7 +1726,7 @@ internal static class Program
     }
 
     /// <summary>
-    /// 建立測試用 GitHub release JSON。
+    /// 建立測試用 GitHub Releases JSON。
     /// </summary>
     /// <param name="tagName">
     /// 發行標籤。
@@ -1735,7 +1735,7 @@ internal static class Program
     /// 發行資產。
     /// </param>
     /// <returns>
-    /// GitHub release JSON 文字。
+    /// GitHub Releases JSON 文字。
     /// </returns>
     private static string BuildReleaseJson(string tagName, IReadOnlyList<FakeReleaseAsset> assets)
     {
@@ -1814,7 +1814,7 @@ internal static class Program
     }
 
     /// <summary>
-    /// 測試用 GitHub release 資產描述。
+    /// 測試用 GitHub Releases 資產描述。
     /// </summary>
     private sealed class FakeReleaseAsset
     {
@@ -1909,7 +1909,7 @@ internal static class Program
     }
 
     /// <summary>
-    /// 驗證 runtime 下載選項的驗證策略預設值要求 GitHub 發行資產摘要。
+    /// 驗證 runtime 下載選項的驗證策略預設值要求 GitHub Releases 資產摘要。
     /// </summary>
     /// <returns>
     /// 代表測試流程的工作。
@@ -1933,7 +1933,7 @@ internal static class Program
     }
 
     /// <summary>
-    /// 驗證下載 helper 使用的預設瀏覽器標頭與 Chrome Stable 版本一致。
+    /// 驗證下載輔助工具使用的預設瀏覽器標頭與 Chrome Stable 版本一致。
     /// </summary>
     /// <returns>
     /// 代表測試流程的工作。
@@ -1967,8 +1967,8 @@ internal static class Program
     }
 
     /// <summary>
-    /// 驗證 Windows runtime helper 預設不下載 FFmpeg（yt-dlp/FFmpeg-Builds 為 GPL
-    /// build，預設拉進 runtime 會讓使用者背負未必知情的 GPL 散發義務），且可由呼叫
+    /// 驗證 Windows 執行階段輔助工具預設不下載 FFmpeg（yt-dlp/FFmpeg-Builds 為 GPL
+    /// build，預設拉進執行階段會讓使用者背負未必知情的 GPL 散發義務），且可由呼叫
     /// 端明確啟用。
     /// </summary>
     /// <returns>
@@ -1977,9 +1977,9 @@ internal static class Program
     private static Task VerifyWindowsRuntimeFFmpegOptionDefaults()
     {
         MpvWindowsRuntimeDownloadOptions options = new MpvWindowsRuntimeDownloadOptions();
-        AssertEx.False(options.IncludeFFmpeg, "Windows runtime 預設不應下載 FFmpeg（GPL build）。");
+        AssertEx.False(options.IncludeFFmpeg, "Windows 執行階段 預設不應下載 FFmpeg（GPL 建置版）。");
         options.IncludeFFmpeg = true;
-        AssertEx.True(options.IncludeFFmpeg, "Windows runtime 應允許明確啟用 FFmpeg 下載。");
+        AssertEx.True(options.IncludeFFmpeg, "Windows 執行階段 應允許明確啟用 FFmpeg 下載。");
         return Task.CompletedTask;
     }
 
@@ -2006,7 +2006,7 @@ internal static class Program
     }
 
     /// <summary>
-    /// 驗證 catalog 宣告 Windows x64 與 ARM64 來源，並維持兩種 provider（shinchiro / zhongfly）。
+    /// 驗證 catalog 宣告 Windows x64 與 ARM64 來源，並維持兩個提供者（shinchiro / zhongfly）。
     /// </summary>
     /// <returns>
     /// 代表測試流程的工作。
@@ -2068,7 +2068,7 @@ internal static class Program
     }
 
     /// <summary>
-    /// 驗證 ARM64 架構在三個 Architecture enum 與 FFmpeg helper 中對應到正確的資產 token / 檔名。
+    /// 驗證 ARM64 架構在三個 Architecture enum 與 FFmpeg 輔助工具中對應到正確的資產 token / 檔名。
     /// </summary>
     /// <returns>
     /// 代表測試流程的工作。
@@ -2111,7 +2111,7 @@ internal static class Program
         AssertEx.Equal("deno-x86_64-pc-windows-msvc.zip", (string)denoAsset!.Invoke(null, new object[] { DenoWindowsArchitecture.X64 })!, "Deno x64 asset");
         AssertEx.Equal("deno-aarch64-pc-windows-msvc.zip", (string)denoAsset!.Invoke(null, new object[] { DenoWindowsArchitecture.Arm64 })!, "Deno ARM64 asset");
 
-        // FFmpeg：透過 public GetWindowsAssetName helper
+        // FFmpeg：透過 public GetWindowsAssetName 輔助方法
         AssertEx.Equal(FFmpegDownloader.WindowsX64AssetName, FFmpegDownloader.GetWindowsAssetName(MpvWindowsArchitecture.X64), "FFmpeg x64 asset");
         AssertEx.Equal(FFmpegDownloader.WindowsArm64AssetName, FFmpegDownloader.GetWindowsAssetName(MpvWindowsArchitecture.Arm64), "FFmpeg ARM64 asset");
         AssertEx.Equal("ffmpeg-master-latest-winarm64-gpl.zip", FFmpegDownloader.WindowsArm64AssetName, "FFmpeg ARM64 GPL 資產檔名");

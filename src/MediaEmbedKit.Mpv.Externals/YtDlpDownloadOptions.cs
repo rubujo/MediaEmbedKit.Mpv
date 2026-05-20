@@ -45,7 +45,7 @@ public sealed class YtDlpDownloadOptions
     public bool OverwriteExisting { get; set; }
 
     /// <summary>
-    /// 取得或設定是否驗證 GitHub 發行資產提供的雜湊值。
+    /// 取得或設定是否驗證 GitHub Releases 資產提供的雜湊值。
     /// </summary>
     /// <value>
     /// 驗證可用的 SHA-256 摘要時為 <see langword="true"/>。

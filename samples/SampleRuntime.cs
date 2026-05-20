@@ -94,7 +94,7 @@ internal static class SampleRuntime
     /// </summary>
     private const string FeatureSmokeTestEnvironmentVariable = "MEDIAEMBEDKIT_MPV_SAMPLE_FEATURE_SMOKE";
     /// <summary>
-    /// 指定範例共用 runtime 資料夾的環境變數名稱。
+    /// 指定範例共用執行階段資料夾的環境變數名稱。
     /// </summary>
     private const string RuntimeDirectoryEnvironmentVariable = "MEDIAEMBEDKIT_MPV_RUNTIME_DIR";
     /// <summary>
@@ -315,13 +315,13 @@ internal static class SampleRuntime
     }
 
     /// <summary>
-    /// 準備核心播放器範例需要的 Windows runtime（依目前處理序架構選擇 x64 或 ARM64 資產）。
+    /// 準備核心播放器範例需要的 Windows 執行階段（依目前處理序架構選擇 x64 或 ARM64 資產）。
     /// </summary>
     /// <param name="cancellationToken">
     /// 可取消非同步作業的語彙基元。
     /// </param>
     /// <returns>
-    /// 可提供給播放器選項的 runtime 資料夾完整路徑。
+    /// 可提供給播放器選項的執行階段資料夾完整路徑。
     /// </returns>
     internal static async Task<string> PrepareCoreRuntimeAsync(CancellationToken cancellationToken = default(CancellationToken))
     {
@@ -354,7 +354,7 @@ internal static class SampleRuntime
             return _activeRuntimeDirectory;
         }
 
-        throw new PlatformNotSupportedException("目前範例只支援 Windows runtime（x64 / ARM64）自動安裝：" + result.Message);
+        throw new PlatformNotSupportedException("目前範例只支援 Windows 執行階段（x64 / ARM64）自動安裝：" + result.Message);
     }
 
     /// <summary>

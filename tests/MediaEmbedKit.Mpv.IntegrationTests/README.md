@@ -8,7 +8,7 @@
 dotnet run --project .\tests\MediaEmbedKit.Mpv.IntegrationTests\MediaEmbedKit.Mpv.IntegrationTests.csproj
 ```
 
-若要使用既有 runtime 資料夾，可設定：
+若要使用既有執行階段資料夾，可設定：
 
 ```powershell
 $env:MEDIAEMBEDKIT_MPV_RUNTIME_DIR = "D:\path\to\runtime"

@@ -17,13 +17,13 @@ await player.LoadAsync(new MpvMediaItem(url).WithStartTime(TimeSpan.FromSeconds(
 
 ## MpvAppBuilder
 
-`MpvAppBuilder` 是一站式 fluent 入口，將 runtime 準備、`MpvPlayerOptions` 設定、`new MpvPlayer(...)` 與 `InitializeAsync` 合併到一次 `BuildAsync` 呼叫。
+`MpvAppBuilder` 是一站式 fluent 入口，將執行階段準備、`MpvPlayerOptions` 設定、`new MpvPlayer(...)` 與 `InitializeAsync` 合併到一次 `BuildAsync` 呼叫。
 
 | 鏈式方法 | 用途 |
 | --- | --- |
 | `UseLibrary(path)` | 指定 libmpv 原生程式庫路徑。 |
 | `UseRuntime(directory, loadRuntimeConfiguration)` | 直接套用已備妥的執行階段資料夾。 |
-| `UseWindowsRuntimeAutoInstall(directory, configure)` | 由 builder 在 build 時呼叫 `MpvRuntimeInstaller.InstallOrUpdateAsync`。 |
+| `UseWindowsRuntimeAutoInstall(directory, configure)` | 由 builder 在 建置時呼叫 `MpvRuntimeInstaller.InstallOrUpdateAsync`。 |
 | `UseYtdlp(preset)` / `UseYtdlpFormat(selector)` / `UseYtdlpMaximumHeight(height)` | 設定 yt-dlp 格式策略。 |
 | `UseHardwareDecoding(mode)` | 將 `hwdec` 加入初始選項。 |
 | `UseLogger(loggerFactory, logLevel)` | 把 libmpv 記錄訊息轉送到 `ILogger`。 |
@@ -221,9 +221,9 @@ player.AudioDelay = TimeSpan.FromSeconds(-0.05);    // 音訊提前 50ms
 
 包裝的 mpv：`audio-delay`。
 
-### MpvColor helper
+### MpvColor 輔助工具
 
-`SubtitleColor` / `SubtitleBackgroundColor` 接受任意 mpv 色彩字串（`#AARRGGBB` / 命名色彩 / `0xRRGGBB` / 浮點 RGBA）。`MpvColor` 靜態 helper 提供 compile-time typed 構造：
+`SubtitleColor` / `SubtitleBackgroundColor` 接受任意 mpv 色彩字串（`#AARRGGBB` / 命名色彩 / `0xRRGGBB` / 浮點 RGBA）。`MpvColor` 靜態輔助工具提供編譯期型別化建構方式：
 
 ```csharp
 string opaque = MpvColor.FromRgb(0xFF, 0xCC, 0xCC);           // #FFFFCCCC
@@ -296,7 +296,7 @@ await foreach (ExternalToolOutputEventArgs line in runner.StreamFormatsAsync(url
 }
 ```
 
-## Encoding（轉碼）高階 API
+## 編碼（轉碼）高階 API
 
 mpv 的 encoding mode 允許把 player 當作一次性轉碼器：設定 `o=...` 等 `--o*` 選項後 `loadfile` 一次就會輸出檔案。本函式庫在此之上提供：
 
@@ -318,7 +318,7 @@ mpv 的 encoding mode 允許把 player 當作一次性轉碼器：設定 `o=...`
 
 - 視訊：`libx264` / `libx265` / `libvpx-vp9` / `libsvtav1` / `libaom-av1` / `*_nvenc` / `*_qsv` / `*_amf`
 - 音訊：`aac`（內建） / `libopus` / `libmp3lame`
-- 不含：`librav1e`、`libfdk_aac`（GPL build 未編入）
+- 不含：`librav1e`、`libfdk_aac`（GPL 建置版 未編入）
 
 ### 單階段範例
 
@@ -350,9 +350,9 @@ if (!result.Success)
 
 #### 取消行為
 
-呼叫端傳入觸發的 `CancellationToken` 後，helper 會：
+呼叫端傳入觸發的 `CancellationToken` 後，輔助工具會：
 
-1. 對 player 呼叫 `Stop()`，請 libmpv 主動結束（通常會發出 `EndFile` with `Reason=Stop`）。
+1. 對 player 呼叫 `Stop()`，請 libmpv 主動結束（通常會發出 `EndFile` 且 `Reason=Stop`）。
 2. 等待 libmpv 自發 `EndFile` 事件，**最多 3 秒寬限期**（`CancellationGracePeriod`）；多數情況遠少於此時間。
 3. 收到 `EndFile` → 走正常 `BuildResult` 路徑，`MpvEncodingResult.EndReason` 反映 libmpv 回報的真實原因（通常 `Stop`）。
 4. 寬限期逾時（libmpv 因任何原因未發 `EndFile`）→ 走 `BuildCancelledResult`，回傳 `Success=false` / `EndReason=Stop` / `ErrorCode=Generic`，避免 `await EncodeAsync` 永遠卡住。
@@ -376,7 +376,7 @@ MpvTwoPassEncodingResult result = await MpvEncoder.EncodeTwoPassAsync(
     playerOptions);
 ```
 
-helper 會：
+輔助工具會：
 1. 於 `Path.GetTempPath()/mediaembedkit-mpv-2pass-*` 建立暫存 `passlogfile`。
 2. 第一階段：輸出到暫存資料夾內的 `pass1.null`，搭配 `of=null`、`aid=no`，並於 `ovcopts` 注入 `flags=+pass1,passlogfile=<temp>`。
 3. 第二階段：輸出到真正路徑、`flags=+pass2`。
@@ -425,7 +425,7 @@ builder 路徑適合需要混合其他 `Use*` 設定（hwdec、yt-dlp 格式、l
 
 ### libmpv 結構性不支援的場景
 
-下列場景**不是函式庫實作不完整，而是 libmpv 本身設計上不支援**。對應需求請改用 FFmpeg CLI（runtime 資料夾的 `ffmpeg.exe` 已可直接呼叫）或既有 .NET ffmpeg 函式庫（FFMpegCore / Xabe.FFmpeg）。
+下列場景**不是函式庫實作不完整，而是 libmpv 本身設計上不支援**。對應需求請改用 FFmpeg CLI（執行階段資料夾的 `ffmpeg.exe` 已可直接呼叫）或既有 .NET ffmpeg 函式庫（FFMpegCore / Xabe.FFmpeg）。
 
 | 場景 | 為何 libmpv 不支援 | 替代方案 |
 | --- | --- | --- |
@@ -438,7 +438,7 @@ builder 路徑適合需要混合其他 `Use*` 設定（hwdec、yt-dlp 格式、l
 
 關於 EDL 概念：本函式庫 `ConcatenateAsync` 透過 mpv [EDL](https://github.com/mpv-player/mpv/blob/master/DOCS/edl-mpv.rst) v0 demuxer 串接多個輸入，**結果必經重新編碼**（mpv 結構性無 stream-copy 多輸入支援）。若需要對同 codec / 同參數的多檔做零再編碼合併，請改用 FFmpeg `concat` demuxer + `-c copy`。
 
-關於 stream-copy（`MpvVideoCodecPreset.Copy` / `MpvAudioCodecPreset.Copy` / `MpvEncoder.RemuxAsync`）的已知 caveat：mpv encoding mode 的 `ovc=copy` / `oac=copy` 在部分 codec/container 組合下會以 `AudioOutputInitFailed` 或類似錯誤結束（mpv 的 `ao/lavc` 不支援所有 codec 直通）。若 Remux 對特定來源失敗，請改用顯式 codec preset（如 `MpvAudioCodecPreset.Aac`）做完整轉碼，或直接以 FFmpeg `-c copy` 處理。
+關於 stream-copy（`MpvVideoCodecPreset.Copy` / `MpvAudioCodecPreset.Copy` / `MpvEncoder.RemuxAsync`）的已知 注意事項：mpv encoding mode 的 `ovc=copy` / `oac=copy` 在部分 codec/container 組合下會以 `AudioOutputInitFailed` 或類似錯誤結束（mpv 的 `ao/lavc` 不支援所有 codec 直通）。若 Remux 對特定來源失敗，請改用顯式 codec 預設（如 `MpvAudioCodecPreset.Aac`）做完整轉碼，或直接以 FFmpeg `-c copy` 處理。
 
 ## 對照表
 

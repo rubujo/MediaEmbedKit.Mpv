@@ -1,6 +1,6 @@
 ---
 name: libmpv-git-build-tracker
-description: 追蹤 shinchiro 與 zhongfly mpv git build，並對齊 libmpv C API 包裝與 runtime 文件。
+description: 追蹤 shinchiro 與 zhongfly mpv git build，並對齊 libmpv C API 包裝與 執行階段文件。
 ---
 
 # libmpv git build 追蹤

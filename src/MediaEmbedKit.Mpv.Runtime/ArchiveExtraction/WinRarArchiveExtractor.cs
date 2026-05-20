@@ -12,7 +12,7 @@ namespace MediaEmbedKit.Mpv.Runtime.ArchiveExtraction;
 /// 使用使用者已安裝的 WinRAR <c>WinRAR.exe</c> 解壓 .7z。
 /// </summary>
 /// <remarks>
-/// WinRAR 在中文圈裝機率高，是 fallback chain 中對「已有 Windows 解壓工具但不是 7-Zip」
+/// WinRAR 在中文圈裝機率高，是備援鏈中對「已有 Windows 解壓工具但不是 7-Zip」
 /// 使用者的覆蓋層。使用 <c>-ibck</c> 旗標跑背景模式，理論上不顯示 UI；但 WinRAR 試用期
 /// 滿後可能在開啟時顯示提醒視窗，那是 WinRAR 自身行為、本程式無法避免。
 /// </remarks>
@@ -104,7 +104,7 @@ internal sealed class WinRarArchiveExtractor : IArchiveExtractor
         ExternalToolProcessResult result = await runner.RunAsync(arguments, DefaultTimeout, cancellationToken).ConfigureAwait(false);
 
         // WinRAR 結束代碼：0 = 成功、1 = 警告但完成、其他 = 失敗。
-        // 我們把警告也視為成功（0 與 1 都接受），但記下 stderr 供 fallback chain 日誌。
+        // 我們把警告也視為成功（0 與 1 都接受），但記下 stderr 供備援鏈記錄。
         if (result.ExitCode != 0 && result.ExitCode != 1)
         {
             throw new InvalidOperationException(

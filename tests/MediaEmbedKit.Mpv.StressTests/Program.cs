@@ -78,7 +78,7 @@ internal static class Program
             return VerifyRepeatedStreamCancellationAsync(runtimeDirectory);
         });
         runner.Add("外部工具大量輸出與逾時", VerifyExternalToolOutputAndTimeoutAsync);
-        runner.Add("runtime helper 失敗與已載入更新路徑", VerifyRuntimeHelperFailurePathsAsync);
+        runner.Add("執行階段輔助工具失敗與已載入更新路徑", VerifyRuntimeHelperFailurePathsAsync);
         runner.Add("播放器長時間建立／釋放記憶體 leak 檢查", delegate
         {
             return VerifyLongRunMemoryLeakAsync(runtimeDirectory);
@@ -424,7 +424,7 @@ internal static class Program
     }
 
     /// <summary>
-    /// 驗證 runtime helper 的不支援平台與已載入更新路徑。
+    /// 驗證執行階段輔助工具的不支援平台與已載入更新路徑。
     /// </summary>
     /// <returns>
     /// 代表測試流程的工作。
@@ -436,7 +436,7 @@ internal static class Program
         installOptions.Platform = MpvNativeRuntimePlatform.Unknown;
         MpvRuntimeInstallResult result = await MpvRuntimeInstaller.InstallOrUpdateAsync(runtimeDirectory, installOptions).ConfigureAwait(false);
         StressAssert.True(!result.IsSupported, "未知平台不應標示為支援。");
-        StressAssert.True(!Directory.Exists(runtimeDirectory), "未知平台不應建立 runtime 資料夾。");
+        StressAssert.True(!Directory.Exists(runtimeDirectory), "未知平台不應建立執行階段資料夾。");
 
         string stagedDirectory = CreateTemporaryDirectory("staged-update");
         string stagedLibraryPath = Path.Combine(stagedDirectory, "libmpv-2.dll");

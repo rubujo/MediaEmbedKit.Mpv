@@ -15,7 +15,7 @@ using MediaEmbedKit.Mpv.Diagnostics;
 namespace MediaEmbedKit.Mpv.SoakTests;
 
 /// <summary>
-/// 24 小時連續播放 soak harness：循環 Load → 播放 → Stop → 取樣 → 記錄。
+/// 24 小時連續播放 長時間測試工具：循環 Load → 播放 → Stop → 取樣 → 記錄。
 /// 工作負載按 iteration 輪流：WAV（audio only）／MP4（video + audio）／取消（cancel-in-flight）。
 /// 每回合都 subscribe WatchProperty time-pos + pause + dispose，並讀取多個 property
 /// 涵蓋 decoder / event / property cache 路徑。
@@ -684,7 +684,7 @@ internal sealed class SoakOptions
 
     public static void PrintUsage(TextWriter writer)
     {
-        writer.WriteLine("MediaEmbedKit.Mpv.SoakTests — 連續播放 soak harness");
+        writer.WriteLine("MediaEmbedKit.Mpv.SoakTests — 連續播放 長時間測試工具");
         writer.WriteLine();
         writer.WriteLine("用法：");
         writer.WriteLine("  dotnet run --project tests/MediaEmbedKit.Mpv.SoakTests -- [選項]");

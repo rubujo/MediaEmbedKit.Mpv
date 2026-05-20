@@ -1,6 +1,6 @@
 # 技能：MediaEmbedKit.Mpv
 
-本 skill 用於編修 MediaEmbedKit.Mpv 的核心 API、UI 後端、runtime helper、範例、測試與文件。
+本技能用於編修 MediaEmbedKit.Mpv 的核心 API、UI 後端、執行階段輔助工具、範例、測試與文件。
 
 ## 讀取順序
 
@@ -20,18 +20,20 @@
 
 ## 必守規則
 
-- 目前產品支援範圍為 Windows x64 與 Windows ARM64。ARM64 程式碼路徑與 runtime 資產 mapping 已就緒，物理機驗證狀態以 `docs/SUPPORT_MATRIX.md` 為準。
+- 目前產品支援範圍為 Windows x64 與 Windows ARM64。ARM64 程式碼路徑與執行階段資產對應已就緒，實體機器驗證狀態以 `docs/SUPPORT_MATRIX.md` 為準。
 - 核心 libmpv 包裝需維持 stable v0.41.0 公開 C API 覆蓋。
 - WinForms、WPF、WinUI 3 與 MAUI Windows UI 控制項使用 HWND 後端。
 - Avalonia 使用 OpenGL render API 後端。
-- 控制項建構函式不得下載 runtime asset。
-- libmpv 更新需在已載入時暫存並提示重新啟動，不得實作處理序內 hot reload。
-- runtime helper 可同層管理 `libmpv-2.dll`、`yt-dlp.exe`、`deno.exe`、`ffmpeg.exe` 與 `ffprobe.exe`。
-- yt-dlp 格式控制使用 `MpvYtdlpFormatPreset`、`MpvYtdlpFormatSelector` 或自訂 selector。
-- 新 consumer 程式碼建議入口為 `MpvAppBuilder.BuildAsync` 搭配 `await using MpvPlayer`、`MpvMediaItem`、`WatchProperty<T>`；舊式 `new MpvPlayer(options) + Initialize()` 仍保留但不再是首選範例。
-- runtime asset 更新走 `MpvLibraryUpdateScheduler.StageAsync` + `ApplyStagedOnStartup`；不要直接覆蓋已載入處理序的 `libmpv-2.dll`。
-- runtime 啟動前的健檢呼叫 `MpvRuntimeHealthCheck.AnalyzeAsync`；散發授權判定呼叫 `MpvLicenseAuditor.AnalyzeAsync`。
-- C# XML 註解只能使用正體中文，且不得共用註解；具有內容的 XML 文件註解標籤不得使用一行式排版，必須將開始標籤、內容與結束標籤分行。
+- 控制項建構函式不得下載執行階段資產。
+- libmpv 更新需在已載入時暫存並提示重新啟動，不得實作處理序內 Hot Reload。
+- 執行階段輔助工具可同層管理 `libmpv-2.dll`、`yt-dlp.exe`、`deno.exe`、`ffmpeg.exe` 與 `ffprobe.exe`。
+- yt-dlp 格式控制使用 `MpvYtdlpFormatPreset`、`MpvYtdlpFormatSelector` 或自訂選擇器。
+- 新使用端程式碼建議入口為 `MpvAppBuilder.BuildAsync` 搭配 `await using MpvPlayer`、`MpvMediaItem`、`WatchProperty<T>`；舊式 `new MpvPlayer(options) + Initialize()` 仍保留但不再是首選範例。
+- 執行階段資產更新走 `MpvLibraryUpdateScheduler.StageAsync` + `ApplyStagedOnStartup`；不要直接覆蓋已載入處理序的 `libmpv-2.dll`。
+- 執行階段啟動前的健檢呼叫 `MpvRuntimeHealthCheck.AnalyzeAsync`；散發授權判定呼叫 `MpvLicenseAuditor.AnalyzeAsync`。
+- C# XML 註解只能使用正體中文臺灣地區用語，且不得共用註解；具有內容的 XML 文件註解標籤不得使用一行式排版，必須將開始標籤、內容與結束標籤分行。
+- 文件、程式碼註解、使用者可見字串與提交訊息必須使用正體中文臺灣地區用語；除官方名稱、API 名稱、程式識別字、命令、路徑、URL、授權原文與必要技術術語外，避免直接使用英文詞彙。
+- 提及第三方函式庫、軟體、服務、工具、規格或品牌時，必須使用其官方正式名稱與大小寫；中英文與中文數字混排需保留盤古之白。
 - 區域變數、`using` 陳述式與 `foreach` 迴圈變數使用明確型別；只有必要時才使用 `var`。
 - Markdown 文件使用正式、精煉的正體中文。
 - 提交訊息遵循慣例式提交，必須包含主旨與正文。
@@ -46,4 +48,4 @@ dotnet build .\MediaEmbedKit.Mpv.slnx
 ```
 
 使用 `rg` 搜尋程式碼。變更 API 行為、支援範圍或平台宣告時，必須同步更新文件。
-發佈品質相關任務以 `tools/Invoke-PreReleaseValidation.ps1` 為主流程；需要完整 Windows release gate 時使用 `-IncludeWindowsReleaseGate`。
+發佈品質相關任務以 `tools/Invoke-PreReleaseValidation.ps1` 為主流程；需要完整 Windows 發行檢查閘門時使用 `-IncludeWindowsReleaseGate`。

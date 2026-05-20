@@ -108,7 +108,7 @@ internal static class Program
             return VerifyStreamCallbackErrorAndCancellationAsync(runtimeDirectory);
         });
         runner.Add("FFmpeg-Builds 下載與版本執行", VerifyFFmpegDownloadAndExecutionAsync);
-        runner.Add("FFmpeg-Builds tag=latest asset 命名穩定性", VerifyFFmpegBuildsLatestTagAssetNamingAsync);
+        runner.Add("FFmpeg-Builds tag=latest 資產命名穩定性", VerifyFFmpegBuildsLatestTagAssetNamingAsync);
         runner.Add("IAsyncDisposable graceful shutdown", delegate
         {
             return VerifyAsyncDisposableAsync(runtimeDirectory);
@@ -157,7 +157,7 @@ internal static class Program
         {
             return VerifyEncodeCancellationAsync(runtimeDirectory);
         });
-        runner.Add("MpvEncoder codec preset 解析", VerifyEncoderPresetResolution);
+        runner.Add("MpvEncoder codec 預設 解析", VerifyEncoderPresetResolution);
         runner.Add("MpvEncoder Trim 裁切片段", delegate
         {
             return VerifyEncodeTrimAsync(runtimeDirectory);
@@ -238,7 +238,7 @@ internal static class Program
         {
             return VerifyHardwareDecodingPropertyPathAsync(runtimeDirectory);
         });
-        runner.Add("HDR target-prim / target-trc / tone-mapping 屬性 round-trip", delegate
+        runner.Add("HDR target-prim / target-trc / tone-對應表 屬性 round-trip", delegate
         {
             return VerifyHdrPropertyPathAsync(runtimeDirectory);
         });
@@ -250,7 +250,7 @@ internal static class Program
         {
             return VerifySubtitleAudioStylingAsync(runtimeDirectory);
         });
-        runner.Add("MpvColor helper FromArgb / FromRgb / TryParse", VerifyMpvColorHelper);
+        runner.Add("MpvColor 輔助工具 FromArgb / FromRgb / TryParse", VerifyMpvColorHelper);
         await runner.RunAsync().ConfigureAwait(false);
         return runner.FailedCount == 0 ? 0 : 1;
     }
@@ -725,7 +725,7 @@ internal static class Program
     }
 
     /// <summary>
-    /// 驗證 <see cref="MpvEncoder.EncodeAsync"/> 在 <see cref="CancellationToken"/> 觸發後會以非成功結果返回。
+    /// 驗證 <see cref="MpvEncoder.EncodeAsync"/> 在 <see cref="CancellationToken"/> 觸發後會以非成功結果傳回。
     /// </summary>
     /// <param name="runtimeDirectory">
     /// 包含 libmpv 的執行階段資料夾。
@@ -827,7 +827,7 @@ internal static class Program
     {
         // 先用 EncodeAsync 產生一個 AAC m4a 來源，再用 Remux 嘗試把它複製到新檔。
         // mpv encoding 的 oac=copy 在部分 codec/container 組合下會擲 AudioOutputInitFailed
-        // （已知 mpv caveat），本測試僅驗證 API 路徑完整：不擲未處理例外、結果欄位齊全、
+        // （已知 mpv 注意事項），本測試僅驗證 API 路徑完整：不擲未處理例外、結果欄位齊全、
         // 且若有錯誤至少回報合理的 EndReason / ErrorCode。
         string sourceWav = WriteTempWav(TimeSpan.FromSeconds(2));
         string aacPath = Path.Combine(Path.GetTempPath(), "mediaembedkit-remux-src-" + Guid.NewGuid().ToString("N") + ".m4a");
@@ -846,7 +846,7 @@ internal static class Program
                 CreateEncodingPlayerOptions(runtimeDirectory)).ConfigureAwait(false);
 
             // EndReason 必須是已知列舉值之一；ErrorCode 為 Success 或合理錯誤碼。
-            // 不要求 Success 為 true，因為 mpv stream-copy 結構性 caveat。
+            // 不要求 Success 為 true，因為 mpv stream-copy 結構性 注意事項。
             bool reasonValid = result.EndReason == MpvEndFileReason.EndOfFile
                 || result.EndReason == MpvEndFileReason.Error
                 || result.EndReason == MpvEndFileReason.Stop
@@ -1045,7 +1045,7 @@ internal static class Program
     /// 一段約 1 秒的測試 mp4。成功則回傳路徑；mpv 不支援 lavfi 輸入時回傳 <see langword="null"/>。
     /// </summary>
     /// <param name="runtimeDirectory">
-    /// 執行階段資料夾。
+    ///執行階段資料夾。
     /// </param>
     /// <param name="durationSeconds">
     /// 測試影片長度（秒）。
@@ -1090,7 +1090,7 @@ internal static class Program
     /// 第一階段輸出到 null sink，第二階段輸出到實際檔案。
     /// </summary>
     /// <param name="runtimeDirectory">
-    /// 執行階段資料夾。
+    ///執行階段資料夾。
     /// </param>
     /// <returns>
     /// 代表測試流程的工作。
@@ -1139,7 +1139,7 @@ internal static class Program
     /// 驗證 <see cref="MpvEncoder.EncodeTwoPassAsync"/> 不會在目前工作目錄留下 two-pass 統計檔。
     /// </summary>
     /// <param name="runtimeDirectory">
-    /// 執行階段資料夾。
+    ///執行階段資料夾。
     /// </param>
     /// <returns>
     /// 代表測試流程的工作。
@@ -1189,7 +1189,7 @@ internal static class Program
     /// 驗證 <see cref="MpvEncoder.ExtractFrameAsync"/>：抽出單一影格輸出為 PNG。
     /// </summary>
     /// <param name="runtimeDirectory">
-    /// 執行階段資料夾。
+    ///執行階段資料夾。
     /// </param>
     /// <returns>
     /// 代表測試流程的工作。
@@ -1238,7 +1238,7 @@ internal static class Program
     /// 驗證 <see cref="MpvEncodingOptions.WithAudioFilter"/>：mpv 接受 <c>af</c> 選項並完成編碼。
     /// </summary>
     /// <param name="runtimeDirectory">
-    /// 執行階段資料夾。
+    ///執行階段資料夾。
     /// </param>
     /// <returns>
     /// 代表測試流程的工作。
@@ -1274,10 +1274,10 @@ internal static class Program
 
     /// <summary>
     /// 驗證 <see cref="MpvEncoder.EncodeAsync"/> 取消寬限期路徑：
-    /// 已預先取消的 token 觸發後，helper 仍應於 <c>CancellationGracePeriod</c> 內回傳結果而非永久卡住。
+    /// 已預先取消的 token 觸發後，輔助工具仍應於 <c>CancellationGracePeriod</c> 內回傳結果而非永久卡住。
     /// </summary>
     /// <param name="runtimeDirectory">
-    /// 執行階段資料夾。
+    ///執行階段資料夾。
     /// </param>
     /// <returns>
     /// 代表測試流程的工作。
@@ -1305,7 +1305,7 @@ internal static class Program
                     cancellationToken: cts.Token).ConfigureAwait(false);
                 stopwatch.Stop();
 
-                // 此測試的核心：驗證 helper 對預先取消的 token 不會卡住。
+                // 此測試的核心：驗證 輔助工具對預先取消的 token 不會卡住。
                 // 不斷言 Success 或 EndReason，因為實際結果取決於 LoadFile 與 Stop 的 race（
                 // mpv idle 時 Stop 為 no-op；後續 LoadFile 可能在 grace period 內完成）。
                 IntegrationAssert.True(stopwatch.Elapsed < TimeSpan.FromSeconds(15),
@@ -1323,10 +1323,10 @@ internal static class Program
     /// <summary>
     /// 對 5 個硬體 encoder preset 做可用性探測：分別嘗試以該 preset 編碼 1 秒 lavfi 輸入，
     /// 紀錄成功 / 失敗（缺驅動 / 缺硬體 / FFmpeg 沒編入皆視為「不可用」）。
-    /// 本測試不要求任何特定 preset 成功；只驗證我們的 helper 對全部 preset 不擲未處理例外。
+    /// 本測試不要求任何特定 preset 成功；只驗證我們的輔助工具對全部 preset 不擲未處理例外。
     /// </summary>
     /// <param name="runtimeDirectory">
-    /// 執行階段資料夾。
+    ///執行階段資料夾。
     /// </param>
     /// <returns>
     /// 代表測試流程的工作。
@@ -1404,7 +1404,7 @@ internal static class Program
     /// 驗證 <see cref="MpvVideoCodecPreset.Vp9"/> 軟體 preset 能完成編碼。
     /// </summary>
     /// <param name="runtimeDirectory">
-    /// 執行階段資料夾。
+    ///執行階段資料夾。
     /// </param>
     /// <returns>
     /// 代表測試流程的工作。
@@ -1450,7 +1450,7 @@ internal static class Program
     /// 驗證 <see cref="MpvVideoCodecPreset.Av1Aom"/> 軟體 preset 能完成編碼。
     /// </summary>
     /// <param name="runtimeDirectory">
-    /// 執行階段資料夾。
+    ///執行階段資料夾。
     /// </param>
     /// <returns>
     /// 代表測試流程的工作。
@@ -1497,7 +1497,7 @@ internal static class Program
     /// mpv EDL 解碼後一致重新編碼成單一輸出。
     /// </summary>
     /// <param name="runtimeDirectory">
-    /// 執行階段資料夾。
+    ///執行階段資料夾。
     /// </param>
     /// <returns>
     /// 代表測試流程的工作。
@@ -1553,10 +1553,10 @@ internal static class Program
     }
 
     /// <summary>
-    /// 驗證 <see cref="MpvEncoder.EncodeAsync"/> 對「不存在的輸入路徑」回傳合理錯誤而非崩潰或永久卡住。
+    /// 驗證 <see cref="MpvEncoder.EncodeAsync"/> 對「不存在的輸入路徑」回傳合理錯誤而非當機或永久卡住。
     /// </summary>
     /// <param name="runtimeDirectory">
-    /// 執行階段資料夾。
+    ///執行階段資料夾。
     /// </param>
     /// <returns>
     /// 代表測試流程的工作。
@@ -1598,10 +1598,10 @@ internal static class Program
     }
 
     /// <summary>
-    /// 驗證 <see cref="MpvEncoder.EncodeAsync"/> 對「亂碼／非媒體」輸入回傳合理錯誤而非崩潰。
+    /// 驗證 <see cref="MpvEncoder.EncodeAsync"/> 對「亂碼／非媒體」輸入回傳合理錯誤而非當機。
     /// </summary>
     /// <param name="runtimeDirectory">
-    /// 執行階段資料夾。
+    ///執行階段資料夾。
     /// </param>
     /// <returns>
     /// 代表測試流程的工作。
@@ -1643,11 +1643,11 @@ internal static class Program
     }
 
     /// <summary>
-    /// 驗證 <see cref="MpvEncoder.EncodeAsync"/> 對「無法寫入的輸出路徑」回傳錯誤而非崩潰。
+    /// 驗證 <see cref="MpvEncoder.EncodeAsync"/> 對「無法寫入的輸出路徑」回傳錯誤而非當機。
     /// 採用建立同名資料夾來阻擋檔案建立，跨平台可靠。
     /// </summary>
     /// <param name="runtimeDirectory">
-    /// 執行階段資料夾。
+    ///執行階段資料夾。
     /// </param>
     /// <returns>
     /// 代表測試流程的工作。
@@ -1698,7 +1698,7 @@ internal static class Program
     /// 並收到至少一次進度回報。作為「長片穩定性」的最小哨兵。
     /// </summary>
     /// <param name="runtimeDirectory">
-    /// 執行階段資料夾。
+    ///執行階段資料夾。
     /// </param>
     /// <returns>
     /// 代表測試流程的工作。
@@ -1821,7 +1821,7 @@ internal static class Program
 
     /// <summary>
     /// 驗證 libmpv HDR 相關屬性的 wrapper API 路徑：<c>target-prim</c> / <c>target-trc</c> /
-    /// <c>tone-mapping</c> 可寫入 BT.2020 / PQ / HDR tone-mapping 等合法值並讀回。
+    /// <c>tone-對應表</c> 可寫入 BT.2020 / PQ / HDR tone-對應表 等合法值並讀回。
     /// 本測試**不**驗證實際 HDR 渲染輸出 — 那需要 HDR 內容 + HDR 顯示器 + render API 路徑。
     /// 焦點是 wrapper 對這幾條 mpv property 路徑的 Get/Set 行為與 BT.2020/PQ 識別碼合法。
     /// </summary>
@@ -1854,12 +1854,12 @@ internal static class Program
             player.SetPropertyString("target-trc", "auto");
             IntegrationAssert.Equal("auto", player.GetPropertyString("target-trc"), "target-trc=auto round-trip。");
 
-            // tone-mapping：HDR → SDR / HDR → HDR 色調映射演算法選擇。
+            // tone-對應表：HDR → SDR / HDR → HDR 色調映射演算法選擇。
             string[] toneMappingValues = new[] { "auto", "clip", "bt.2390", "reinhard", "hable", "mobius" };
             foreach (string value in toneMappingValues)
             {
-                player.SetPropertyString("tone-mapping", value);
-                IntegrationAssert.Equal(value, player.GetPropertyString("tone-mapping"), "tone-mapping=" + value + " round-trip。");
+                player.SetPropertyString("tone-對應表", value);
+                IntegrationAssert.Equal(value, player.GetPropertyString("tone-對應表"), "tone-對應表=" + value + " round-trip。");
             }
 
             // video-params/* 是 libmpv 報告當前載入媒體的視訊參數（唯讀）；未載入媒體時
@@ -2545,7 +2545,7 @@ internal static class Program
                     IntegrationAssert.True(update == MpvRenderUpdateFlags.None || (update & MpvRenderUpdateFlags.Frame) == MpvRenderUpdateFlags.Frame, "software render 更新旗標應可讀取。");
                     MpvRenderFrameInformation frame = context.GetNextFrameInformation();
                     IntegrationAssert.True(frame.TargetTime >= 0, "software render frame target time 應可讀取。");
-#pragma warning disable CS0618 // 仍須驗證已 deprecated 的 SetAmbientLight 在 software render context 上不會崩潰。
+#pragma warning disable CS0618 // 仍須驗證已 deprecated 的 SetAmbientLight 在 software render context 上不會當機。
                     context.SetAmbientLight(100);
 #pragma warning restore CS0618
                     context.ClearIccProfile();
@@ -2693,20 +2693,20 @@ internal static class Program
             VerificationPolicy = MpvNativeAssetVerificationPolicy.RequireProviderChecksum,
             // 顯式保留 archive 以驗證 RetainArchive=true 路徑（同步覆蓋預設清除路徑下方）。
             RetainArchive = true,
-            // 此測試目標是 live download + retain，不是重驗舊 cache 內留下的 retained archive。
+            // 此測試目標是 live download + retain，不是重驗舊快取 內留下的 保留的封存檔。
             OverwriteExisting = true,
         };
         FFmpegDownloadResult result = await FFmpegDownloader.DownloadAndExtractLatestAsync(runtimeDirectory, options).ConfigureAwait(false);
 
-        IntegrationAssert.True(File.Exists(result.FFmpegPath), "FFmpeg 應解壓縮到 runtime 根目錄。");
-        IntegrationAssert.True(File.Exists(result.FFprobePath), "FFprobe 應解壓縮到 runtime 根目錄。");
-        IntegrationAssert.True(File.Exists(result.ArchivePath), "RetainArchive=true 時 FFmpeg-Builds 壓縮檔應保留於 runtime 根目錄。");
+        IntegrationAssert.True(File.Exists(result.FFmpegPath), "FFmpeg 應解壓縮到 執行階段根目錄。");
+        IntegrationAssert.True(File.Exists(result.FFprobePath), "FFprobe 應解壓縮到 執行階段根目錄。");
+        IntegrationAssert.True(File.Exists(result.ArchivePath), "RetainArchive=true 時 FFmpeg-Builds 壓縮檔應保留於 執行階段根目錄。");
 
         await VerifyExternalToolVersionAsync(result.FFmpegPath, "FFmpeg").ConfigureAwait(false);
         await VerifyExternalToolVersionAsync(result.FFprobePath, "FFprobe").ConfigureAwait(false);
 
         // 切回預設 RetainArchive=false，重新下載一次（OverwriteExisting=true 強制下載），
-        // 驗證解壓後 archive 確實被清掉。runtime 資料夾換到子路徑避免 fast path 重用既有
+        // 驗證解壓後 archive 確實被清掉。執行階段資料夾換到子路徑避免 快速路徑 重用既有
         // 執行檔（CanUseExistingTools 不會觸發、走完整下載 + 解壓 + cleanup 路徑）。
         string cleanupRuntimeDirectory = Path.Combine(runtimeDirectory, "cleanup-default");
         FFmpegDownloadOptions cleanupOptions = new FFmpegDownloadOptions
@@ -2723,14 +2723,14 @@ internal static class Program
 
     /// <summary>
     /// 鎖住 yt-dlp/FFmpeg-Builds 的上游契約：tag=latest 這個 release 必須持續存在、
-    /// tag_name 字面為 "latest"、且 Windows x64 + ARM64 GPL asset 名稱以
+    /// tag_name 字面為 "latest"、且 Windows x64 + ARM64 GPL 資產名稱以
     /// <c>ffmpeg-master-latest-</c> 為前綴。
     /// </summary>
     /// <remarks>
-    /// FFmpeg-Builds 同 repo 並存兩種 release：tag=latest（固定 asset 名）與每小時
-    /// autobuild-YYYY-MM-DD-HH-MM（動態 asset 名）。<see cref="FFmpegDownloader"/>
+    /// FFmpeg-Builds 同一儲存庫並存兩種發行：tag=latest（固定資產名稱）與每小時
+    /// autobuild-YYYY-MM-DD-HH-MM（動態資產名稱）。<see cref="FFmpegDownloader"/>
     /// 依賴 tag=latest 抓固定名 asset；上游若改命名或拆掉這個 release，本測試會
-    /// 立即在 release gate 失敗，避免 production user 自己撞 bug。
+    /// 立即在發行檢查閘門失敗，避免 production user 自己撞 bug。
     /// </remarks>
     /// <returns>
     /// 代表測試流程的工作。

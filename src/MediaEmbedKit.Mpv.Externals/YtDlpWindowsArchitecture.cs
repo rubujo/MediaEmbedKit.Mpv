@@ -57,7 +57,7 @@ public static class YtDlpWindowsArchitectureExtensions
     }
 
     /// <summary>
-    /// 將 yt-dlp Windows 架構轉換為 GitHub 發行資產名稱。
+    /// 將 yt-dlp Windows 架構轉換為 GitHub Releases 資產名稱。
     /// </summary>
     /// <param name="architecture">
     /// 要轉換的 yt-dlp Windows 架構。

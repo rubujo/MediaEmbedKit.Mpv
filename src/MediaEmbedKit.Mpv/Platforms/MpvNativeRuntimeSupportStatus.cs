@@ -6,7 +6,7 @@
 public enum MpvNativeRuntimeSupportStatus
 {
     /// <summary>
-    /// 專案已實作下載或安裝 helper。
+    /// 專案已實作下載或安裝輔助工具。
     /// </summary>
     Supported = 0,
     /// <summary>

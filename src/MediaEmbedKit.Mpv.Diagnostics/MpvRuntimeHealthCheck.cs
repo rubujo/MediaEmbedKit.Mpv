@@ -237,7 +237,7 @@ public sealed class MpvRuntimeHealthReport
     /// 取得被檢查的執行階段資料夾。
     /// </summary>
     /// <value>
-    /// 執行階段資料夾完整路徑。
+    ///執行階段資料夾完整路徑。
     /// </value>
     public string RuntimeDirectory { get; }
 

@@ -137,5 +137,5 @@ if ($anyDrift) {
 }
 else {
     Write-Host ""
-    Write-Host "  所有 provider 的 header 與 $BaseCommit 一致。" -ForegroundColor Green
+    Write-Host "  所有提供者的 header 與 $BaseCommit 一致。" -ForegroundColor Green
 }

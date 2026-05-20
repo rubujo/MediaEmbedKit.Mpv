@@ -10,7 +10,7 @@ using MediaEmbedKit.Mpv.Externals;
 namespace MediaEmbedKit.Mpv.Runtime.ArchiveExtraction;
 
 /// <summary>
-/// libmpv .7z 多段 fallback 解壓 chain 的 orchestrator。依序嘗試
+/// libmpv .7z 多段 備援解壓鏈的協調器。依序嘗試
 /// <c>Windows tar.exe → 系統 7-Zip → WinRAR → 下載 7zr.exe</c>；
 /// 全部失敗時擲出 <see cref="InvalidOperationException"/>，訊息含每層失敗細節
 /// 與使用者可採取的解法。
@@ -23,7 +23,7 @@ namespace MediaEmbedKit.Mpv.Runtime.ArchiveExtraction;
 internal sealed class ArchiveExtractionPipeline
 {
     /// <summary>
-    /// 7zr bootstrap 與 fallback 下載資料夾。
+    /// 7zr bootstrap 與備援下載資料夾。
     /// </summary>
     private readonly string _downloadDirectory;
 
@@ -33,7 +33,7 @@ internal sealed class ArchiveExtractionPipeline
     private readonly string? _userAgent;
 
     /// <summary>
-    /// 使用者明確指定的 7z 相容工具路徑；<see langword="null"/> 表示走自動 fallback chain。
+    /// 使用者明確指定的 7z 相容工具路徑；<see langword="null"/> 表示走自動 備援鏈。
     /// </summary>
     private readonly string? _explicitExtractorPath;
 
@@ -49,7 +49,7 @@ internal sealed class ArchiveExtractionPipeline
     /// <param name="explicitExtractorPath">
     /// 呼叫端明確指定的 7z 相容工具路徑（對應
     /// <see cref="MpvWindowsBuildDownloadOptions.SevenZipPath"/>）；
-    /// <see langword="null"/> 走自動 fallback chain。
+    /// <see langword="null"/> 走自動 備援鏈。
     /// </param>
     public ArchiveExtractionPipeline(string downloadDirectory, string? userAgent, string? explicitExtractorPath)
     {
@@ -64,7 +64,7 @@ internal sealed class ArchiveExtractionPipeline
     }
 
     /// <summary>
-    /// 依 fallback chain 嘗試解壓 <paramref name="archivePath"/> 到 <paramref name="targetDirectory"/>。
+    /// 依備援鏈 嘗試解壓 <paramref name="archivePath"/> 到 <paramref name="targetDirectory"/>。
     /// </summary>
     /// <param name="archivePath">
     /// .7z 壓縮檔路徑。
@@ -82,7 +82,7 @@ internal sealed class ArchiveExtractionPipeline
     /// 表示解壓縮流程的工作。
     /// </returns>
     /// <exception cref="InvalidOperationException">
-    /// 所有 fallback 都失敗。
+    /// 所有備援 都失敗。
     /// </exception>
     /// <exception cref="OperationCanceledException">
     /// 作業被取消。
@@ -139,7 +139,7 @@ internal sealed class ArchiveExtractionPipeline
     }
 
     /// <summary>
-    /// 建立 fallback chain 順序：使用者顯式工具 → tar.exe → 系統 7-Zip → WinRAR → 下載 7zr.exe。
+    /// 建立備援鏈 順序：使用者顯式工具 → tar.exe → 系統 7-Zip → WinRAR → 下載 7zr.exe。
     /// </summary>
     /// <returns>
     /// 依序嘗試的 extractor 清單。
@@ -162,7 +162,7 @@ internal sealed class ArchiveExtractionPipeline
     }
 
     /// <summary>
-    /// 建構 fallback chain 全失敗時的錯誤訊息，包含每層失敗細節與使用者可採取的解法。
+    /// 建構備援鏈全失敗時的錯誤訊息，包含每層失敗細節與使用者可採取的解法。
     /// </summary>
     /// <param name="archivePath">
     /// 嘗試解壓的 archive 路徑。
@@ -188,7 +188,7 @@ internal sealed class ArchiveExtractionPipeline
         sb.AppendLine("  1. 安裝 7-Zip（https://www.7-zip.org/download.html） —— 多數環境最穩；本程式會自動偵測");
         sb.AppendLine("  2. 升級到 Windows 10 1803+ / Windows 11 / Windows Server 2019+，自動啟用內建 tar.exe");
         sb.AppendLine("  3. 透過 MpvWindowsBuildDownloadOptions.SevenZipPath 指定自訂 7z 相容工具");
-        sb.AppendLine("  4. 手動解壓 .7z 取出 libmpv-2.dll，放到 runtime 資料夾根目錄");
+        sb.AppendLine("  4. 手動解壓 .7z 取出 libmpv-2.dll，放到執行階段資料夾根目錄");
         sb.AppendLine();
         sb.AppendLine("詳細說明見 https://github.com/rubujo/MediaEmbedKit.Mpv/blob/main/docs/RUNTIME_ASSETS.md");
         return sb.ToString();

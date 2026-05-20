@@ -4,7 +4,7 @@ using System.Text;
 namespace MediaEmbedKit.Mpv;
 
 /// <summary>
-/// 表示 mpv 內建 ytdl hook 執行 yt-dlp JSON 子程序後留下的結果。
+/// 表示 mpv 內建 ytdl hook 執行 yt-dlp JSON 子處理序後留下的結果。
 /// </summary>
 public sealed class MpvYtdlJsonSubprocessResult
 {
@@ -12,19 +12,19 @@ public sealed class MpvYtdlJsonSubprocessResult
     /// 初始化 <see cref="MpvYtdlJsonSubprocessResult"/> 類別的新執行個體。
     /// </summary>
     /// <param name="status">
-    /// ytdl 子程序結束狀態碼。
+    /// ytdl 子處理序結束狀態碼。
     /// </param>
     /// <param name="standardOutput">
-    /// ytdl 子程序標準輸出內容。
+    /// ytdl 子處理序標準輸出內容。
     /// </param>
     /// <param name="standardError">
-    /// ytdl 子程序標準錯誤內容。
+    /// ytdl 子處理序標準錯誤內容。
     /// </param>
     /// <param name="errorString">
-    /// mpv 子程序命令回報的錯誤文字。
+    /// mpv 子處理序命令回報的錯誤文字。
     /// </param>
     /// <param name="killedByMpv">
-    /// 子程序是否由 mpv 主動終止。
+    /// 子處理序是否由 mpv 主動終止。
     /// </param>
     /// <param name="rawNode">
     /// mpv 原始節點結果。
@@ -46,31 +46,31 @@ public sealed class MpvYtdlJsonSubprocessResult
     }
 
     /// <summary>
-    /// 取得 ytdl 子程序結束狀態碼。
+    /// 取得 ytdl 子處理序結束狀態碼。
     /// </summary>
     /// <value>
-    /// ytdl 子程序結束狀態碼。
+    /// ytdl 子處理序結束狀態碼。
     /// </value>
     public long Status { get; private set; }
 
     /// <summary>
-    /// 取得 ytdl 子程序標準輸出內容。
+    /// 取得 ytdl 子處理序標準輸出內容。
     /// </summary>
     /// <value>
-    /// ytdl 子程序標準輸出內容。
+    /// ytdl 子處理序標準輸出內容。
     /// </value>
     public string StandardOutput { get; private set; }
 
     /// <summary>
-    /// 取得 ytdl 子程序標準錯誤內容。
+    /// 取得 ytdl 子處理序標準錯誤內容。
     /// </summary>
     /// <value>
-    /// ytdl 子程序標準錯誤內容。
+    /// ytdl 子處理序標準錯誤內容。
     /// </value>
     public string StandardError { get; private set; }
 
     /// <summary>
-    /// 取得 mpv 子程序命令回報的錯誤文字。
+    /// 取得 mpv 子處理序命令回報的錯誤文字。
     /// </summary>
     /// <value>
     /// 錯誤文字；沒有錯誤文字時為空字串。
@@ -78,15 +78,15 @@ public sealed class MpvYtdlJsonSubprocessResult
     public string ErrorString { get; private set; }
 
     /// <summary>
-    /// 取得子程序是否由 mpv 主動終止。
+    /// 取得子處理序是否由 mpv 主動終止。
     /// </summary>
     /// <value>
-    /// 子程序由 mpv 主動終止時為 <see langword="true"/>。
+    /// 子處理序由 mpv 主動終止時為 <see langword="true"/>。
     /// </value>
     public bool KilledByMpv { get; private set; }
 
     /// <summary>
-    /// 取得 ytdl 子程序是否以成功狀態完成。
+    /// 取得 ytdl 子處理序是否以成功狀態完成。
     /// </summary>
     /// <value>
     /// 狀態碼為 0 且沒有錯誤文字時為 <see langword="true"/>。
@@ -105,13 +105,13 @@ public sealed class MpvYtdlJsonSubprocessResult
     public MpvNode RawNode { get; private set; }
 
     /// <summary>
-    /// 從 mpv 節點建立 ytdl JSON 子程序結果。
+    /// 從 mpv 節點建立 ytdl JSON 子處理序結果。
     /// </summary>
     /// <param name="node">
     /// mpv 的 <c>user-data/mpv/ytdl/json-subprocess-result</c> 節點。
     /// </param>
     /// <returns>
-    /// 轉換後的 ytdl JSON 子程序結果。
+    /// 轉換後的 ytdl JSON 子處理序結果。
     /// </returns>
     internal static MpvYtdlJsonSubprocessResult FromNode(MpvNode node)
     {

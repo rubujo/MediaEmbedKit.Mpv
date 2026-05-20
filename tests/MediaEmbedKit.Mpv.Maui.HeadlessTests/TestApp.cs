@@ -4,7 +4,7 @@ using Microsoft.Maui.Controls;
 namespace MediaEmbedKit.Mpv.Maui.HeadlessTests;
 
 /// <summary>
-/// MAUI headless 測試的 <see cref="Application"/>；建立一個 <see cref="TestPage"/>，
+/// MAUI 無頭測試的 <see cref="Application"/>；建立一個 <see cref="TestPage"/>，
 /// 在頁面顯示時跑完所有測試後立即關閉應用程式。
 /// </summary>
 public sealed class TestApp : Application

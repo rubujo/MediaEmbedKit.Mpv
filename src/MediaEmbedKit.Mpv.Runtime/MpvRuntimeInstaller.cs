@@ -9,7 +9,7 @@ using MediaEmbedKit.Mpv.Externals;
 namespace MediaEmbedKit.Mpv.Runtime;
 
 /// <summary>
-/// 提供依目前平台選擇執行階段安裝流程的 helper。
+/// 提供依目前平台選擇執行階段安裝流程的輔助工具。
 /// </summary>
 public static class MpvRuntimeInstaller
 {

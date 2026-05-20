@@ -5,7 +5,7 @@
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <AssemblyName>MediaEmbedKit.Mpv.Wpf</AssemblyName>
     <RootNamespace>MediaEmbedKit.Mpv.Wpf</RootNamespace>
-    <Description>WPF HwndHost control and airspace popup helpers for libmpv.</Description>
+    <Description>供 libmpv 使用的 WPF HwndHost 控制項與 airspace 快顯輔助工具。</Description>
     <PackageId>MediaEmbedKit.Mpv.Wpf</PackageId>
     <Title>MediaEmbedKit.Mpv.Wpf</Title>
   </PropertyGroup>

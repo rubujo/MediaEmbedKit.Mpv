@@ -11,8 +11,8 @@ namespace MediaEmbedKit.Mpv.Runtime.ArchiveExtraction;
 /// 使用 <see cref="SevenZipBootstrapper"/> 取得 / 重用的 <c>7zr.exe</c> 解壓 .7z。
 /// </summary>
 /// <remarks>
-/// 是 fallback chain 的終極兜底層 —— 在 tar.exe / 系統 7-Zip / WinRAR 都失敗時，
-/// 從 ip7z/7zip 官方下載 standalone <c>7zr.exe</c> 後解壓。CLI 與
+/// 是備援鏈的終極兜底層 —— 在 tar.exe / 系統 7-Zip / WinRAR 都失敗時，
+/// 從 ip7z/7zip 官方下載獨立版 <c>7zr.exe</c> 後解壓。CLI 與
 /// <see cref="SystemSevenZipArchiveExtractor"/> 完全相容（7z 與 7zr 共用語法），
 /// 此類別本質是「bootstrap + 委派給 SystemSevenZipArchiveExtractor」。
 /// </remarks>
@@ -35,7 +35,7 @@ internal sealed class SevenZrArchiveExtractor : IArchiveExtractor
     /// 7zr.exe bootstrap 下載資料夾。
     /// </param>
     /// <param name="userAgent">
-    /// 下載要求使用的 User-Agent；<see langword="null"/> 用 helper 預設。
+    /// 下載要求使用的 User-Agent；<see langword="null"/> 用 輔助工具預設。
     /// </param>
     public SevenZrArchiveExtractor(string downloadDirectory, string? userAgent)
     {
@@ -51,7 +51,7 @@ internal sealed class SevenZrArchiveExtractor : IArchiveExtractor
     /// <summary>
     /// 永遠回傳 <see langword="true"/> —— 缺失時會在 <see cref="ExtractAsync"/> 內透過
     /// <see cref="SevenZipBootstrapper"/> 自動下載。真正不可用的場景（無網路、ip7z 改
-    /// release 結構等）會在 <see cref="ExtractAsync"/> 內 throw，由 fallback chain 視為
+    /// release 結構等）會在 <see cref="ExtractAsync"/> 內 throw，由備援鏈 視為
     /// 這層失敗（但已是最後一層，會直接 throw 給呼叫端）。
     /// </summary>
     /// <param name="cancellationToken">

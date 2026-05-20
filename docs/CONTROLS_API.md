@@ -1,6 +1,6 @@
 # 控制項共通綁定 API
 
-本文件描述 MediaEmbedKit.Mpv 5 個 UI 框架控制項共同提供的 bindable property 與 ICommand。所有屬性與指令在 WPF、Avalonia、WinUI 3、MAUI Windows 與 WinForms 上具有相同語意，且皆與 libmpv 屬性雙向同步（唯讀者單向）。
+本文件描述 MediaEmbedKit.Mpv 5 套 UI 框架控制項共同提供的 bindable property 與 ICommand。所有屬性與指令在 WPF、Avalonia、WinUI 3、MAUI Windows 與 WinForms 上具有相同語意，且皆與 libmpv 屬性雙向同步（唯讀者單向）。
 
 ## 控制項對應
 
@@ -31,7 +31,7 @@ WinForms 透過 `INotifyPropertyChanged` 與 `Control.DataBindings` 支援程式
 | `IsOverlayOpen` | `bool` | `true` | n/a | 否 | WPF / WinUI / MAUI | 控制覆蓋層是否顯示。 |
 | `OverlayView` | `View?` | `null` | n/a | 否 | MAUI | MAUI 專屬；以 MAUI `View` 為覆蓋層內容（與 `OverlayContent` 二擇一）。 |
 
-Avalonia 沒有 child HWND airspace 問題，consumer 用標準 Avalonia `Grid` / `Panel` 組合即可達成覆蓋效果，因此不提供 `OverlayContent` 屬性。
+Avalonia 沒有 child HWND airspace 問題，使用端用標準 Avalonia `Grid` / `Panel` 組合即可達成覆蓋效果，因此不提供 `OverlayContent` 屬性。
 
 設計階段（VS Toolbox / Blend property grid / Avalonia DevTools）：可在設計工具設定的公開屬性均掛 `[Category("MediaEmbedKit.Mpv")]`；`Player` / `PlayerOptions` 與執行期播放狀態屬性掛 `[Browsable(false)]` 隱藏於 property grid，避免設計工具序列化瞬時播放狀態。
 
@@ -52,7 +52,7 @@ Avalonia 沒有 child HWND airspace 問題，consumer 用標準 Avalonia `Grid` 
 
 但如果您**自行訂閱** `MpvPlayer.EventReceived` / `PropertyChanged` / `StateChanged`（控制項以外的事件），這些 callback 仍然在 libmpv 背景執行緒觸發，必須自行 marshal 至 UI thread 才能修改 UI 元素。詳見 `docs/HIGH_LEVEL_API.md` 的「事件分派與執行緒模型」。
 
-## 共通 Commands
+## 共通 命令
 
 所有控制項都提供下列 `System.Windows.Input.ICommand`，由 `MediaEmbedKit.Mpv.MpvRelayCommand` 包裝；`CanExecute` 與 player 生命週期同步，player 建立或釋放時會呼叫 `RaiseCanExecuteChanged`。
 
@@ -120,6 +120,6 @@ muteButton.Click += (_, _) => playerControl.ToggleMuteCommand.Execute(null);
 
 ## 注意事項
 
-- `MpvWinUiPlayer.Duration` 與 `PlaybackState` 在 WinUI 3 沒有 `RegisterReadOnly` 等效 API，因此公開為一般 DP；但 `DurationProperty` 與 `PlaybackStateProperty` 的 `PropertyChangedCallback` 會在偵測到非 player 來源寫入時立刻回退舊值，對呼叫端模擬唯讀語意。請勿透過 `Mode=TwoWay` binding 或 `SetValue` 寫入這兩個屬性。
+- `MpvWinUiPlayer.Duration` 與 `PlaybackState` 在 WinUI 3 沒有 `RegisterReadOnly` 等效 API，因此公開為一般 DP；但 `DurationProperty` 與 `PlaybackStateProperty` 的 `PropertyChangedCallback` 會在偵測到非 player 來源寫入時立刻還原舊值，對呼叫端模擬唯讀語意。請勿透過 `Mode=TwoWay` binding 或 `SetValue` 寫入這兩個屬性。
 - `MpvView.PlayerCreated` 在跨平台 handler 連線後才觸發；綁定到 `Player` 屬性必須在 `PlayerCreated` 後讀取。MAUI 平台目前僅 Windows 提供實際播放後端，其他 MAUI 目標的 handler 為 stub，呼叫播放相關 API 會擲回 `PlatformNotSupportedException`，詳見 `docs/SUPPORT_MATRIX.md`。
 - `Position` 連續寫入會觸發大量 `seek`；建議搭配 `IsDragging` 一類旗標，只在使用者放開滑桿時寫值。

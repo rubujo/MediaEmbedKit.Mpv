@@ -6,8 +6,8 @@
     <Deterministic>true</Deterministic>
     <!--
       TreatWarningsAsErrors / EnforceCodeStyleInBuild：本機 dev build 仍允許
-      warnings（避免 SourceLink「無遠端」這類本機環境固有 warning 卡住 build），
-      但 CI build 強制 0 warning 才過。release gate 跑的 dotnet format 也會在
+      warnings（避免 Source Link「無遠端」這類本機環境固有 warning 卡住 build），
+      但 CI build 強制 0 warning 才過。發行檢查閘門跑的 dotnet format 也會在
       pre-merge 抓到格式問題。
     -->
     <TreatWarningsAsErrors Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</TreatWarningsAsErrors>
@@ -30,7 +30,7 @@
     <Company>MediaEmbedKit.Mpv contributors</Company>
     <Copyright>Copyright (c) 2026 MediaEmbedKit.Mpv contributors</Copyright>
     <!--
-      PackageVersion 是版號的單一 source of truth；改這裡所有 packable project pack 出來
+      PackageVersion 是版號的單一 source of truth；改這裡所有 可打包專案 pack 出來
       的 .nupkg / .snupkg 檔名與 metadata 都會跟著變。
       docs/CONSUMING_PACKAGES.md 內部分範例會顯示具體版號（檔名 layout 等），請與此
       欄位同步。使用 tools/Bump-Version.ps1 一鍵改全部，避免人工漏掉。
@@ -40,19 +40,19 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageTags>mpv;libmpv;media;video;audio;winforms;wpf;avalonia;winui;maui;yt-dlp</PackageTags>
-    <PackageReleaseNotes>初始版本。Windows x64 / ARM64 libmpv wrapper、runtime helper 與 5 個 UI 框架的桌面控制項。</PackageReleaseNotes>
+    <PackageReleaseNotes>初始版本。Windows x64 / ARM64 libmpv wrapper、執行階段輔助工具與 5 套 UI 框架的桌面控制項。</PackageReleaseNotes>
     <RepositoryType>git</RepositoryType>
     <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
 
     <!--
-      SourceLink + symbol packaging（套用至所有 packable 套件）。
-      consumer 從 NuGet 安裝套件後可直接 step-into 我方原始碼（透過 GitHub raw URL），
+      Source Link + symbol packaging（套用至所有 packable 套件）。
+      使用端從 NuGet 安裝套件後可直接 step-into 我方原始碼（透過 GitHub raw URL），
       exception stack trace 也會解析回完整檔名 / 行號。
       - PublishRepositoryUrl：把 git remote URL 嵌入 NuGet metadata，啟用 NuGet Gallery
         的 source 連結
       - EmbedUntrackedSources：把 generator 產出 / 沒進 git 的 .cs（例如 Avalonia
         NameGenerator 的 .g.cs）也嵌進 PDB，避免 step-into 失敗
-      - DebugType=portable：跨平台、與 SourceLink 相容的 PDB 格式（取代舊式 Windows-only
+      - DebugType=portable：跨平台、與 Source Link 相容的 PDB 格式（取代舊式 Windows-only
         full PDB）
       - IncludeSymbols + SymbolPackageFormat=snupkg：發佈 .snupkg symbol 套件到
         NuGet symbol server，與主套件分離但同版本綁定

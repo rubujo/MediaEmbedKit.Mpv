@@ -143,7 +143,7 @@ internal sealed class MpvPropertyObservable<T> : IObservable<T>, IMpvPropertyObs
 
     /// <summary>
     /// 對所有目前訂閱者送出 <see cref="IObserver{T}.OnCompleted"/> 並清除清單。
-    /// 在 <see cref="MpvPlayer.Dispose"/> 時呼叫，通知 Rx-style consumer 觀察已終止。
+    /// 在 <see cref="MpvPlayer.Dispose"/> 時呼叫，通知 Rx-style 使用端觀察已終止。
     /// </summary>
     public void Complete()
     {

@@ -7,7 +7,7 @@
 [![UI 框架](https://img.shields.io/badge/UI%20框架-WinForms%20%2F%20WPF%20%2F%20Avalonia%20%2F%20WinUI%203%20%2F%20MAUI-107C10?style=for-the-badge)](docs/SUPPORT_MATRIX.md)
 [![授權](https://img.shields.io/badge/授權-CC0%201.0%20Universal-424242?style=for-the-badge)](https://creativecommons.org/publicdomain/zero/1.0/deed.zh-hant)
 
-MediaEmbedKit.Mpv 是 .NET libmpv 包裝器與 Windows 桌面 UI 控制項專案。專案提供核心 libmpv C API 包裝、常用高階播放 API、Windows x64 / ARM64 執行階段資產 helper，以及 WinForms、WPF、Avalonia、WinUI 3 與 .NET MAUI Windows 範例。
+MediaEmbedKit.Mpv 是 .NET libmpv 包裝器與 Windows 桌面 UI 控制項專案。專案提供核心 libmpv C API 包裝、常用高階播放 API、Windows x64 / ARM64 執行階段資產輔助工具，以及 WinForms、WPF、Avalonia、WinUI 3 與 .NET MAUI Windows 範例。
 
 本專案不是 mpv、yt-dlp、Deno、FFmpeg 或其相關建置提供者的官方專案。`MediaEmbedKit` 是本專案名稱；`Mpv` 僅表示本專案與 mpv/libmpv 的整合目標。
 
@@ -26,13 +26,13 @@ AI 產製內容可能包含缺漏、錯誤假設或未涵蓋的邊界情境。�
 
 目前產品支援範圍收斂為 Windows x64 與 Windows ARM64。
 
-本專案分為 11 個套件（10 actual + 1 `.Full` meta）。完整拓樸見 [`docs/PACKAGE_ARCHITECTURE.md`](docs/PACKAGE_ARCHITECTURE.md)。
+本專案分為 11 個套件（10 個實際套件 + 1 個 `.Full` 中繼套件）。完整拓樸見 [`docs/PACKAGE_ARCHITECTURE.md`](docs/PACKAGE_ARCHITECTURE.md)。
 
 | 套件 | 狀態 |
 | --- | --- |
 | `MediaEmbedKit.Mpv` | 核心 binding：`MpvPlayer` / `MpvAppBuilder` / `MpvEncoder` / value types / shared enum，支援 `netstandard2.0;net472;net48;net10.0`。 |
-| `MediaEmbedKit.Mpv.Externals` | FFmpeg / Deno / yt-dlp downloader + 共用 net infra。 |
-| `MediaEmbedKit.Mpv.Runtime` | libmpv Windows runtime installer + archive 解壓 + cross-process lock + sidecar marker。 |
+| `MediaEmbedKit.Mpv.Externals` | FFmpeg / Deno / yt-dlp 下載器 + 共用網路基礎設施。 |
+| `MediaEmbedKit.Mpv.Runtime` | libmpv Windows 執行階段 安裝器 + 壓縮檔解壓 + 跨處理序鎖定 + sidecar 標記。 |
 | `MediaEmbedKit.Mpv.Diagnostics` | `MpvLicenseAuditor` / `MpvRuntimeHealthCheck` / `MpvLibraryUpdateScheduler`。 |
 | `MediaEmbedKit.Mpv.Hosting` | `Microsoft.Extensions.DependencyInjection` 整合。 |
 | `MediaEmbedKit.Mpv.WinForms` | Windows HWND 控制項。 |
@@ -40,7 +40,7 @@ AI 產製內容可能包含缺漏、錯誤假設或未涵蓋的邊界情境。�
 | `MediaEmbedKit.Mpv.Avalonia` | Windows x64 / ARM64 OpenGL render API 控制項。 |
 | `MediaEmbedKit.Mpv.WinUI` | WinUI 3 Windows HWND 控制項。 |
 | `MediaEmbedKit.Mpv.Maui.Windows` | .NET MAUI Windows handler（套件名自帶 `.Windows`，明確 Windows-only scope）。 |
-| `MediaEmbedKit.Mpv.Full` | meta package，`<PackageReference>` 拉 5 個 service-layer 套件。 |
+| `MediaEmbedKit.Mpv.Full` | 中繼套件，`<PackageReference>` 拉入 5 個服務層套件。 |
 
 未列入支援矩陣的平台、處理器架構與 UI 後端不提供支援承諾。詳細狀態請參閱 `docs/SUPPORT_MATRIX.md` 與 `docs/UI_BACKENDS.md`。
 
@@ -48,13 +48,13 @@ AI 產製內容可能包含缺漏、錯誤假設或未涵蓋的邊界情境。�
 
 - libmpv stable v0.41.0 公開 C API 完整包裝（含命令、屬性、節點、事件、render API、stream callback）。
 - 高階播放 API：fluent `MpvAppBuilder`、per-file `MpvMediaItem`、`LoadAsync`、`WatchProperty<T>`、`IAsyncDisposable`、`Microsoft.Extensions.Logging` / `Microsoft.Extensions.DependencyInjection` 整合。詳見 `docs/HIGH_LEVEL_API.md`。
-- 高階 encoding API：單／兩階段轉碼、stream-copy 重新封裝、單軌抽取、影格抽圖、多檔 EDL 串接、多段切割；含 `IProgress<MpvEncodingProgress>` 進度與 `CancellationToken` 取消。詳見 `docs/HIGH_LEVEL_API.md`「Encoding」段。
-- 5 個 UI 框架控制項（`.WinForms` / `.Wpf` / `.Avalonia` / `.WinUI` / `.Maui.Windows`）共通綁定屬性與 MVVM Commands。詳見 `docs/CONTROLS_API.md`。
-- Windows x64 / ARM64 runtime helper：libmpv / yt-dlp / Deno / FFmpeg / ffprobe 下載、更新、健康檢查、授權稽核與 provider fallback；架構依目前處理序自動偵測。詳見 `docs/RUNTIME_ASSETS.md`。
+- 高階編碼 API：單／兩階段轉碼、stream-copy 重新封裝、單軌抽取、影格抽圖、多檔 EDL 串接、多段切割；含 `IProgress<MpvEncodingProgress>` 進度與 `CancellationToken` 取消。詳見 `docs/HIGH_LEVEL_API.md`「編碼」段。
+- 5 套 UI 框架控制項（`.WinForms` / `.Wpf` / `.Avalonia` / `.WinUI` / `.Maui.Windows`）共通綁定屬性與 MVVM 命令。詳見 `docs/CONTROLS_API.md`。
+- Windows x64 / ARM64 執行階段輔助工具：libmpv / yt-dlp / Deno / FFmpeg / ffprobe 下載、更新、健康檢查、授權稽核與提供者備援；架構依目前處理序自動偵測。詳見 `docs/RUNTIME_ASSETS.md`。
 
 ## 基本使用
 
-應用程式可自行部署 `libmpv-2.dll`，或明確呼叫 helper 建立 Windows x64 / ARM64 runtime 資料夾（helper 依目前處理序架構自動選擇對應資產）。下列範例需引用 `MediaEmbedKit.Mpv` + `MediaEmbedKit.Mpv.Runtime` 兩個套件：
+應用程式可自行部署 `libmpv-2.dll`，或明確呼叫輔助工具建立 Windows x64 / ARM64 執行階段資料夾（輔助工具依目前處理序架構自動選擇對應資產）。下列範例需引用 `MediaEmbedKit.Mpv` + `MediaEmbedKit.Mpv.Runtime` 兩個套件：
 
 ```csharp
 MpvWindowsRuntimeDownloadResult runtime =
@@ -68,17 +68,17 @@ player.Initialize();
 player.LoadFile("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
 ```
 
-若要讓 runtime 資料夾同時作為 mpv 設定資料夾，於 `CreatePlayerOptions` 傳入 `loadRuntimeConfiguration: true`。
+若要讓執行階段資料夾同時作為 mpv 設定資料夾，於 `CreatePlayerOptions` 傳入 `loadRuntimeConfiguration: true`。
 
-Fluent builder、`MpvMediaItem` per-file 選項、`MpvEncoder` 轉碼、`WatchProperty<T>` 等高階入口請參考 `docs/HIGH_LEVEL_API.md`。
+鏈式 builder、`MpvMediaItem` per-file 選項、`MpvEncoder` 轉碼、`WatchProperty<T>` 等高階入口請參考 `docs/HIGH_LEVEL_API.md`。
 
-高階 API 採薄型 helper 設計：常用設定可用 fluent 方式組合，但播放器初始化、runtime 下載與資源釋放仍由應用程式明確控制。
+高階 API 採薄型輔助工具設計：常用設定可用 fluent 方式組合，但播放器初始化、執行階段下載與資源釋放仍由應用程式明確控制。
 
-### Runtime 授權預設值
+### 執行階段授權預設值
 
 `InstallOrUpdateAsync` 的預設組合往「對不確定散發授權的多數使用者較安全」方向收緊：
 
-- **libmpv = LGPL build**（`Provider = Zhongfly` + `LicensePreference = PreferLgpl`，搭配 `Shinchiro` 作為 fallback）。`PreferLgpl` 是偏好不是保證 —— 切到 `Provider = Shinchiro` 會 silently fallback 到 GPL（該 provider 不發 LGPL 變體）。
+- **libmpv = LGPL 建置版**（`Provider = Zhongfly` + `LicensePreference = PreferLgpl`，搭配 `Shinchiro` 作為備援）。`PreferLgpl` 是偏好不是保證 —— 切到 `Provider = Shinchiro` 會靜默備援至 GPL 建置版（該提供者不發 LGPL 變體）。
 - **FFmpeg 預設不下載**（`IncludeFFmpeg = false`）。yt-dlp/FFmpeg-Builds 僅發 GPL，啟用即視同接受 GPLv2+ 散發義務。
 
 詳細真值表、警示與商用嚴格合規路徑見 [`docs/RUNTIME_ASSETS.md`](docs/RUNTIME_ASSETS.md)。散發前可用 `MpvLicenseAuditor.AnalyzeAsync(runtimeDirectory)` 在執行階段驗證實際拿到的授權。供應鏈風險模型與商用 SHA pin 建議見 [`docs/SECURITY_MODEL.md`](docs/SECURITY_MODEL.md)。
@@ -90,7 +90,7 @@ Fluent builder、`MpvMediaItem` per-file 選項、`MpvEncoder` 轉碼、`WatchPr
 ```csharp
 MpvWindowsRuntimeDownloadOptions options = new MpvWindowsRuntimeDownloadOptions
 {
-    // ⚠️ yt-dlp/FFmpeg-Builds 僅發 GPL build；啟用即視同接受 GPLv2+ 散發義務。
+    // ⚠️ yt-dlp/FFmpeg-Builds 僅發 GPL 建置版；啟用即視同接受 GPLv2+ 散發義務。
     // 詳見 docs/RUNTIME_ASSETS.md FFmpeg 段的 GPL 授權警示框。
     IncludeFFmpeg = true,
 };
@@ -99,7 +99,7 @@ MpvWindowsRuntimeDownloadResult runtime =
     await MpvWindowsRuntimeInstaller.InstallOrUpdateAsync("runtime", options);
 ```
 
-僅本機 yt-dlp 後處理（不打包散發 runtime）的場景，啟用 FFmpeg 是 OK 的 —— 義務在散發環節。
+僅本機 yt-dlp 後處理（不打包散發執行階段）的場景，啟用 FFmpeg 是 OK 的 —— 義務在散發環節。
 
 ### 商用環境 / 受監管散發
 
@@ -116,11 +116,11 @@ options.Mpv.OverwriteExisting = true;  // 強制走完整驗證、不走 idempot
 
 ## 取得套件
 
-本專案不發行至 nuget.org。發行版的 11 個 `.nupkg` 與對應 `.snupkg`（symbol package）由 GitHub Releases 提供，consumer 自行下載後以本機 NuGet feed 安裝。完整步驟（含 `nuget.config` 設定、`packageSourceMapping`、SourceLink 行為、IDE 整合）請參考 `docs/CONSUMING_PACKAGES.md`。
+本專案不發行至 nuget.org。發行版的 11 個 `.nupkg` 與對應 `.snupkg`（符號套件）由 GitHub Releases 提供，使用端自行下載後，以本機 NuGet 套件來源安裝。完整步驟（含 `nuget.config` 設定、`packageSourceMapping`、Source Link 行為、IDE 整合）請參考 `docs/CONSUMING_PACKAGES.md`。
 
 ## 範例
 
-範例位於 `samples`。GUI 範例會先顯示視窗，再於背景呼叫共用 helper 準備 runtime 資產；Console 範例則示範核心 `MpvPlayer` 最小生命週期。範例涵蓋初始化、事件輸出、播放控制與釋放流程。
+範例位於 `samples`。GUI 範例會先顯示視窗，再於背景呼叫共用輔助工具準備執行階段資產；Console 範例則示範核心 `MpvPlayer` 最小生命週期。範例涵蓋初始化、事件輸出、播放控制與釋放流程。
 
 ```powershell
 dotnet run --project .\samples\WinFormsSample\MediaEmbedKit.Mpv.Samples.WinForms.csproj
@@ -144,27 +144,27 @@ dotnet run --project .\tests\MediaEmbedKit.Mpv.PlaybackSmoke\MediaEmbedKit.Mpv.P
 
 整合測試、播放冒煙測試需要 Windows 原生執行階段；環境條件詳見 `docs/RUNTIME_ASSETS.md`。
 
-發佈前驗證以 `docs/RELEASE_CHECKLIST.md` 與 `tools/Invoke-PreReleaseValidation.ps1` 為主流程。GitHub Actions 的 `ci.yml` / `release.yml` workflow 跑同一個 release gate 腳本（GitHub-hosted runner 無 display 略過 GUI playback）。
+發佈前驗證以 `docs/RELEASE_CHECKLIST.md` 與 `tools/Invoke-PreReleaseValidation.ps1` 為主流程。GitHub Actions 的 `ci.yml` / `release.yml` 工作流程會跑同一個發行檢查閘門腳本（GitHub-hosted runner 無顯示環境而略過 GUI 播放）。
 
-長時間穩定性以 `tests/MediaEmbedKit.Mpv.SoakTests` 提供的 24 小時連續播放 soak harness 驗證；不在 release gate 內，視需要手動執行。
+長時間穩定性以 `tests/MediaEmbedKit.Mpv.SoakTests` 提供的 24 小時連續播放 長時間測試工具 驗證；不在發行檢查閘門內，視需要手動執行。
 
 ## 文件
 
 - `docs/PROJECT_SPEC.md`：專案規範入口。
 - `docs/SUPPORT_MATRIX.md`：目標框架與支援狀態。
 - `docs/UI_BACKENDS.md`：UI 後端與 AirSpace 限制。
-- `docs/RUNTIME_ASSETS.md`：runtime 下載與更新政策。
-- `docs/CONSUMING_PACKAGES.md`：從 GitHub Release 下載 `.nupkg` 後以本機 NuGet feed 安裝。
-- `docs/HIGH_LEVEL_API.md`：高階 API 與 encoding 操作指南。
-- `docs/CONTROLS_API.md`：五個 UI 框架控制項共通綁定屬性與 Commands。
+- `docs/RUNTIME_ASSETS.md`：執行階段下載與更新政策。
+- `docs/CONSUMING_PACKAGES.md`：從 GitHub Releases 下載 `.nupkg` 後，以本機 NuGet 套件來源安裝。
+- `docs/HIGH_LEVEL_API.md`：高階 API 與編碼操作指南。
+- `docs/CONTROLS_API.md`：五個 UI 框架控制項共通綁定屬性與命令。
 - `docs/LIBMPV_C_API_TEST_MATRIX.md`：C API 覆蓋與驗證矩陣。
 - `docs/RELEASE_CHECKLIST.md`：發佈前本機檢查。
 - `docs/DESIGN_TIME_CHECKLIST.md`：Windows UI 控制項設計階段檢查。
 - `docs/ENGINEERING_STANDARDS.md`：工程、文件、提交與格式規範。
-- `docs/AI_AGENT_INTEGRATION.md`：AI agent 入口與 skill 結構。
+- `docs/AI_AGENT_INTEGRATION.md`：AI 代理入口與技能結構。
 
 ## 授權與第三方元件
 
 本儲存庫中的受控原始碼與文件採用 CC0-1.0。第三方原生執行階段二進位檔不簽入本儲存庫，也不因本專案授權而改變其授權條款。
 
-散發 mpv/libmpv、yt-dlp、Deno、FFmpeg 或其相依項目前，請自行確認授權與合規義務。FFmpeg-Builds 目前使用 GPL build；本專案只提供下載 helper，不將該二進位檔納入 NuGet 套件。詳細資訊請參閱 `THIRD_PARTY_NOTICES.md`。
+散發 mpv/libmpv、yt-dlp、Deno、FFmpeg 或其相依項目前，請自行確認授權與合規義務。FFmpeg-Builds 目前使用 GPL 建置版；本專案只提供下載輔助工具，不將該二進位檔納入 NuGet 套件。詳細資訊請參閱 `THIRD_PARTY_NOTICES.md`。

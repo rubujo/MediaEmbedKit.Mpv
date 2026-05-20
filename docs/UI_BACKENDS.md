@@ -11,7 +11,7 @@ WinForms、WPF、WinUI 3 與 .NET MAUI Windows 使用 HWND `wid` 後端。Avalon
 | 後端 | 定位 | 本專案狀態 |
 | --- | --- | --- |
 | HWND | 將 libmpv 輸出接到原生視窗控制代碼。 | WinForms、WPF、WinUI 3 與 .NET MAUI Windows 使用。 |
-| OpenGL render API | 由 UI framework 提供 OpenGL surface，再交由 libmpv render API 繪製。 | Avalonia 使用。 |
+| OpenGL render API | 由 UI 框架 提供 OpenGL surface，再交由 libmpv render API 繪製。 | Avalonia 使用。 |
 
 ## WinForms
 

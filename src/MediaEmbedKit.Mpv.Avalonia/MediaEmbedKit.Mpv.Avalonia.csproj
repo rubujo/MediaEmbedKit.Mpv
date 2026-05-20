@@ -3,7 +3,7 @@
     <TargetFramework>net10.0-windows</TargetFramework>
     <AssemblyName>MediaEmbedKit.Mpv.Avalonia</AssemblyName>
     <RootNamespace>MediaEmbedKit.Mpv.Avalonia</RootNamespace>
-    <Description>Windows (x64 / ARM64) Avalonia OpenGL render API control for MediaEmbedKit.Mpv.</Description>
+    <Description>供 MediaEmbedKit.Mpv 使用的 Windows x64 / ARM64 Avalonia OpenGL render API 控制項。</Description>
     <PackageId>MediaEmbedKit.Mpv.Avalonia</PackageId>
     <Title>MediaEmbedKit.Mpv.Avalonia</Title>
   </PropertyGroup>

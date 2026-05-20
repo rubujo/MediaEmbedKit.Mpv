@@ -323,7 +323,7 @@ public class MpvWpfPlayer : HwndHost
     /// <summary>
     /// 通知所有指令重新評估 <see cref="ICommand.CanExecute"/>。
     /// </summary>
-    private void RaiseCommandsCanExecuteChanged()
+    private void Raise命令CanExecuteChanged()
     {
         _playCommand.RaiseCanExecuteChanged();
         _pauseCommand.RaiseCanExecuteChanged();
@@ -794,7 +794,7 @@ public class MpvWpfPlayer : HwndHost
         }
 
         AttachPlayerBindings(_player);
-        RaiseCommandsCanExecuteChanged();
+        Raise命令CanExecuteChanged();
         PlayerCreated?.Invoke(this, EventArgs.Empty);
     }
 
@@ -1194,7 +1194,7 @@ public class MpvWpfPlayer : HwndHost
 
         _player.Dispose();
         _player = null;
-        RaiseCommandsCanExecuteChanged();
+        Raise命令CanExecuteChanged();
     }
 
     /// <summary>

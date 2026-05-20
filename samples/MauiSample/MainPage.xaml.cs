@@ -140,7 +140,7 @@ public sealed partial class MainPage : ContentPage, IDisposable
         _statusDispatcher = new SampleStatusUpdateDispatcher(() => _features.GetStatusText(), SetStatusText, ScheduleUiUpdate);
 
         SetRuntimeControlsEnabled(false);
-        AppendEventLine(CreateLifecycleLine("PageCreated", "MAUI 頁面已建立，等待 runtime 初始化。"));
+        AppendEventLine(CreateLifecycleLine("PageCreated", "MAUI 頁面已建立，等待執行階段初始化。"));
     }
 
     /// <summary>
@@ -444,7 +444,7 @@ public sealed partial class MainPage : ContentPage, IDisposable
         catch (Exception ex)
         {
             Environment.ExitCode = 1;
-            SetStatusText("runtime 初始化失敗");
+            SetStatusText("執行階段初始化失敗");
             AppendEventLine(CreateLifecycleLine("RuntimeError", ex.Message));
             if (SampleRuntime.IsSmokeTestEnabled)
             {

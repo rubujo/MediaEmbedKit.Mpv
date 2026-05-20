@@ -3,14 +3,14 @@
     <TargetFrameworks>netstandard2.0;net472;net48;net10.0</TargetFrameworks>
     <AssemblyName>MediaEmbedKit.Mpv</AssemblyName>
     <RootNamespace>MediaEmbedKit.Mpv</RootNamespace>
-    <Description>Managed libmpv wrapper for Windows desktop controls.</Description>
+    <Description>供 Windows 桌面控制項使用的受控 libmpv 包裝函式庫。</Description>
     <PackageId>MediaEmbedKit.Mpv</PackageId>
     <Title>MediaEmbedKit.Mpv</Title>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0'">
     <!--
-      LibraryImport source generator 會生成含 unsafe block 的 marshalling 程式碼
+      LibraryImport source generator 會產生含 unsafe block 的 marshalling 程式碼
       （SYSLIB1062）；net7.0+ 走 LibraryImport 路徑時必須啟用。其他 TFM 仍走
       DllImport，不需要 unsafe。
     -->
@@ -18,7 +18,7 @@
     <!--
       66 / 66 P/Invoke 已透過 LibraryImport source generator 產生 marshalling，
       MpvNodeMarshaller 等內部反射路徑已避免使用 type-name 反射；本核心套件對
-      trimming 與 NativeAOT 友善。消費端 (NativeAOT app / trim-published app)
+      trimming 與 NativeAOT 友善。使用端 (NativeAOT app / trim-published app)
       可信賴本套件不會在 trim/AOT 後消失關鍵成員。
     -->
     <IsTrimmable>true</IsTrimmable>

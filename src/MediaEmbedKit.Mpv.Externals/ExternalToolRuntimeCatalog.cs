@@ -232,7 +232,7 @@ public static class ExternalToolRuntimeCatalog
             MpvNativeRuntimeSupportStatus.Supported,
             false,
             string.Empty,
-            "Implemented by FFmpegDownloader for Windows x64; update by re-running the downloader."),
+            "Implemented by FFmpegDownloader for Windows x64; update by re-running the 下載器."),
         new ExternalToolRuntimeSource(
             ExternalToolKind.FFmpeg,
             MpvNativeRuntimePlatform.Windows,
@@ -242,7 +242,7 @@ public static class ExternalToolRuntimeCatalog
             MpvNativeRuntimeSupportStatus.Supported,
             false,
             string.Empty,
-            "Implemented by FFmpegDownloader for Windows ARM64; update by re-running the downloader.")
+            "Implemented by FFmpegDownloader for Windows ARM64; update by re-running the 下載器.")
     };
 
 }

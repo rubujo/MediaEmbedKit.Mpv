@@ -22,7 +22,7 @@ else {
 }
 
 if (-not $resolvedRuntimeDirectory.StartsWith($resolvedRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
-    throw "GUI 播放壓力測試 runtime 資料夾必須位於工作區內。"
+    throw "GUI 播放壓力測試執行階段資料夾必須位於工作區內。"
 }
 
 if ($Seconds -le 0) {

@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace MediaEmbedKit.Mpv.Externals;
 
 /// <summary>
-/// 提供 Deno Windows 可執行檔下載、版本查詢與自我更新 helper。
+/// 提供 Deno Windows 可執行檔下載、版本查詢與自我更新輔助工具。
 /// </summary>
 public static class DenoDownloader
 {
@@ -57,7 +57,7 @@ public static class DenoDownloader
         // Idempotency skip：本機 deno.exe 已是上游最新版且呼叫端未要求覆寫或釘版 SHA →
         // 跳過下載 + 解壓。先前是 BestEffort 才允許 skip，但 OverwriteExisting=false +
         // 沒 ExpectedSha256 就足夠保證「使用者沒要求重新驗證」—— 信任 disk 上的檔是
-        // 我們上次自己安裝完成寫入的（裝完即用為主流情境）。要強制重抓請設
+        // 我們上次自己安裝完成寫入的（裝完即用為主流情境）。要強制重新下載請設
         // OverwriteExisting=true。
         bool canSkipExisting = !options.OverwriteExisting &&
             string.IsNullOrWhiteSpace(options.ExpectedSha256);
@@ -121,7 +121,7 @@ public static class DenoDownloader
         ArchiveSafety.RejectIfReparsePoint(executablePath, "Deno runtime deno.exe");
 
         // 解壓成功後，依 options.RetainArchive 決定是否清掉壓縮檔。Deno zip 約 30 MB；
-        // 裝完即用情境留著只佔磁碟。warm restart 強驗證需求請設 RetainArchive=true。
+        // 裝完即用情境留著只佔磁碟。暖啟動強驗證需求請設 RetainArchive=true。
         if (!options.RetainArchive)
         {
             TryDeleteArchive(archivePath);
@@ -369,16 +369,16 @@ public static class DenoDownloader
     }
 
     /// <summary>
-    /// 從 GitHub 發行資料選取符合架構的 Deno 發行資產。
+    /// 從 GitHub Releases 資料選取符合架構的 Deno 發行資產。
     /// </summary>
     /// <param name="release">
-    /// GitHub 發行資料。
+    /// GitHub Releases 資料。
     /// </param>
     /// <param name="architecture">
     /// 要選取的 Deno Windows 架構。
     /// </param>
     /// <returns>
-    /// 符合架構的 GitHub 發行資產。
+    /// 符合架構的 GitHub Releases 資產。
     /// </returns>
     private static GitHubReleaseAsset SelectAsset(GitHubRelease release, DenoWindowsArchitecture architecture)
     {
@@ -386,7 +386,7 @@ public static class DenoDownloader
         GitHubReleaseAsset? asset = release.Assets.FirstOrDefault(item => string.Equals(item.Name, assetName, StringComparison.OrdinalIgnoreCase));
         if (asset == null)
         {
-            throw new InvalidOperationException("GitHub 發行資料中找不到符合 " + architecture + " 的 Deno Windows 資產：" + release.TagName);
+            throw new InvalidOperationException("GitHub Releases 資料中找不到符合 " + architecture + " 的 Deno Windows 資產：" + release.TagName);
         }
 
         return asset;
@@ -396,7 +396,7 @@ public static class DenoDownloader
     /// 在策略要求時使用 Deno 發行的 sha256sum 檔案驗證下載檔案。
     /// </summary>
     /// <param name="release">
-    /// GitHub 發行資料。
+    /// GitHub Releases 資料。
     /// </param>
     /// <param name="asset">
     /// 已下載的 Deno 發行資產。
@@ -438,23 +438,23 @@ public static class DenoDownloader
     }
 
     /// <summary>
-    /// 從 GitHub 發行資料選取指定名稱的 checksum 資產。
+    /// 從 GitHub Releases 資料選取指定名稱的 checksum 資產。
     /// </summary>
     /// <param name="release">
-    /// GitHub 發行資料。
+    /// GitHub Releases 資料。
     /// </param>
     /// <param name="assetName">
     /// 要選取的 checksum 資產名稱。
     /// </param>
     /// <returns>
-    /// 符合名稱的 GitHub 發行資產。
+    /// 符合名稱的 GitHub Releases 資產。
     /// </returns>
     private static GitHubReleaseAsset SelectChecksumAsset(GitHubRelease release, string assetName)
     {
         GitHubReleaseAsset? asset = release.Assets.FirstOrDefault(item => string.Equals(item.Name, assetName, StringComparison.OrdinalIgnoreCase));
         if (asset == null)
         {
-            throw new InvalidOperationException("GitHub 發行資料中找不到 " + assetName + " checksum 資產：" + release.TagName);
+            throw new InvalidOperationException("GitHub Releases 資料中找不到 " + assetName + " checksum 資產：" + release.TagName);
         }
 
         return asset;

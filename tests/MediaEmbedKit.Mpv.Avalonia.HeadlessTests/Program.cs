@@ -48,7 +48,7 @@ internal static class Program
                 Run("PlayerCreated 事件可訂閱／取消訂閱", VerifyPlayerCreatedSubscription);
                 Run("多個 StyledProperty 連續寫入保留最後值", VerifyMultiplePropertyWritesPreserveLastValue);
                 Run("Dispose 後重複呼叫不擲例外", VerifyDoubleDisposeIsSafe);
-                Console.WriteLine("Avalonia headless 測試完成：全部通過。");
+                Console.WriteLine("Avalonia 無頭測試完成：全部通過。");
             }
             catch (Exception ex)
             {

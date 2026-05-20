@@ -3,7 +3,7 @@
     <TargetFrameworks>netstandard2.0;net472;net48;net10.0</TargetFrameworks>
     <AssemblyName>MediaEmbedKit.Mpv.Externals</AssemblyName>
     <RootNamespace>MediaEmbedKit.Mpv.Downloads</RootNamespace>
-    <Description>FFmpeg / Deno / yt-dlp downloader helpers — independent of libmpv. Provides GitHub release fetching, SHA-256 verification, and idempotent install for the 3 external tool binaries.</Description>
+    <Description>FFmpeg、Deno 與 yt-dlp 下載輔助工具，與 libmpv 相互獨立；提供 GitHub Releases 讀取、SHA-256 驗證與 3 個外部工具二進位檔的冪等安裝。</Description>
     <PackageId>MediaEmbedKit.Mpv.Externals</PackageId>
     <Title>MediaEmbedKit.Mpv.Externals</Title>
   </PropertyGroup>

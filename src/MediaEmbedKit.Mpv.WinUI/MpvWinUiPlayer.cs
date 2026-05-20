@@ -53,7 +53,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// 識別 <see cref="Duration"/> 相依性屬性。
     /// </summary>
     /// <remarks>
-    /// WinUI 3 沒有 WPF 的 <c>RegisterReadOnly</c> 等效 API；本控制項以 callback 在偵測到外部寫入時回退舊值，
+    /// WinUI 3 沒有 WPF 的 <c>RegisterReadOnly</c> 等效 API；本控制項以 callback 在偵測到外部寫入時還原舊值，
     /// 對呼叫端（XAML binding、<c>SetValue</c>）模擬唯讀語意。請只透過 <see cref="MpvPlayer"/> 的播放事件更新此屬性。
     /// </remarks>
     public static readonly DependencyProperty DurationProperty = DependencyProperty.Register(
@@ -93,7 +93,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// 識別 <see cref="PlaybackState"/> 相依性屬性。
     /// </summary>
     /// <remarks>
-    /// WinUI 3 沒有 WPF 的 <c>RegisterReadOnly</c> 等效 API；本控制項以 callback 在偵測到外部寫入時回退舊值，
+    /// WinUI 3 沒有 WPF 的 <c>RegisterReadOnly</c> 等效 API；本控制項以 callback 在偵測到外部寫入時還原舊值，
     /// 對呼叫端（XAML binding、<c>SetValue</c>）模擬唯讀語意。請只透過 <see cref="MpvPlayer"/> 的播放事件更新此屬性。
     /// </remarks>
     public static readonly DependencyProperty PlaybackStateProperty = DependencyProperty.Register(
@@ -341,7 +341,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// <summary>
     /// 通知所有指令重新評估 <see cref="ICommand.CanExecute"/>。
     /// </summary>
-    private void RaiseCommandsCanExecuteChanged()
+    private void Raise命令CanExecuteChanged()
     {
         _playCommand.RaiseCanExecuteChanged();
         _pauseCommand.RaiseCanExecuteChanged();
@@ -481,7 +481,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// </value>
     /// <remarks>
     /// 對外語意為唯讀；WinUI 3 沒有 <c>RegisterReadOnly</c>，因此使用一般 <see cref="DependencyProperty"/>，
-    /// 但 <see cref="DurationProperty"/> 的 callback 會在偵測到非播放器來源的寫入時自動回退。請勿透過
+    /// 但 <see cref="DurationProperty"/> 的 callback 會在偵測到非播放器來源的寫入時自動還原。請勿透過
     /// XAML binding（<c>Mode=TwoWay</c>）或 <c>SetValue</c> 寫入此屬性。
     /// </remarks>
     [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
@@ -537,7 +537,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// </value>
     /// <remarks>
     /// 對外語意為唯讀；WinUI 3 沒有 <c>RegisterReadOnly</c>，因此使用一般 <see cref="DependencyProperty"/>，
-    /// 但 <see cref="PlaybackStateProperty"/> 的 callback 會在偵測到非播放器來源的寫入時自動回退。請勿透過
+    /// 但 <see cref="PlaybackStateProperty"/> 的 callback 會在偵測到非播放器來源的寫入時自動還原。請勿透過
     /// XAML binding（<c>Mode=TwoWay</c>）或 <c>SetValue</c> 寫入此屬性。
     /// </remarks>
     [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
@@ -819,7 +819,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
             AttachPlayerBindings(player);
         }
 
-        RaiseCommandsCanExecuteChanged();
+        Raise命令CanExecuteChanged();
         PlayerCreated?.Invoke(this, EventArgs.Empty);
     }
 
@@ -1118,7 +1118,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     }
 
     /// <summary>
-    /// 處理 <see cref="DurationProperty"/> 變更：偵測到外部寫入時回退舊值，模擬唯讀語意。
+    /// 處理 <see cref="DurationProperty"/> 變更：偵測到外部寫入時還原舊值，模擬唯讀語意。
     /// </summary>
     /// <param name="dependencyObject">
     /// 屬性所屬的相依性物件。
@@ -1152,7 +1152,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     }
 
     /// <summary>
-    /// 處理 <see cref="PlaybackStateProperty"/> 變更：偵測到外部寫入時回退舊值，模擬唯讀語意。
+    /// 處理 <see cref="PlaybackStateProperty"/> 變更：偵測到外部寫入時還原舊值，模擬唯讀語意。
     /// </summary>
     /// <param name="dependencyObject">
     /// 屬性所屬的相依性物件。
@@ -1265,7 +1265,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
 
         if (hadPlayer)
         {
-            RaiseCommandsCanExecuteChanged();
+            Raise命令CanExecuteChanged();
         }
     }
 

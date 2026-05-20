@@ -128,10 +128,10 @@ function Convert-SampleProjectToPackageReference {
     }
 
     # Samples 共用 SampleRuntime.cs / SampleFeatureController.cs / SampleEncodingHelper.cs
-    # 等 helper，這些 helper 直接使用 .Externals 的 downloader / process runner，
+    # 等輔助工具，這些輔助工具直接使用 .Externals 的下載器 / 處理序執行器，
     # .Runtime 的 MpvRuntimeInstaller，.Diagnostics 的 LicenseAuditor 等。所以
     # 從 ProjectReference 轉 PackageReference 時必須補齊所有相依套件，否則
-    # consumer 模擬會 build 失敗。
+    # 使用端模擬會 build 失敗。
     $packagesToAdd = @(
         $PackageId,
         "MediaEmbedKit.Mpv.Externals",
@@ -178,8 +178,8 @@ $resolvedWorkDirectory = Resolve-WorkspacePath -Path $WorkDirectory
 $resolvedRuntimeDirectory = Resolve-WorkspacePath -Path $RuntimeDirectory
 
 Assert-WorkspacePath -Path $resolvedPackageDirectory -Description "套件資料夾"
-Assert-WorkspacePath -Path $resolvedWorkDirectory -Description "GUI consumer 驗證工作資料夾"
-Assert-WorkspacePath -Path $resolvedRuntimeDirectory -Description "GUI consumer runtime 資料夾"
+Assert-WorkspacePath -Path $resolvedWorkDirectory -Description "GUI 使用端驗證工作資料夾"
+Assert-WorkspacePath -Path $resolvedRuntimeDirectory -Description "GUI 使用端執行階段資料夾"
 
 if (-not $SkipPackageValidation) {
     & (Join-Path $rootDirectory "tools/Invoke-PackageValidation.ps1") -Configuration $Configuration -OutputDirectory $PackageDirectory
@@ -310,7 +310,7 @@ if ($NoBuild) {
 
 & dotnet @arguments
 if ($LASTEXITCODE -ne 0) {
-    throw "GUI consumer 實際播放驗證失敗。"
+    throw "GUI 使用端實際播放驗證失敗。"
 }
 
-Write-Host "GUI consumer 實際播放驗證完成：$resolvedWorkDirectory"
+Write-Host "GUI 使用端實際播放驗證完成：$resolvedWorkDirectory"

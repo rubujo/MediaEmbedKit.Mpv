@@ -59,7 +59,7 @@ $expectedPackageIds = @(
     "MediaEmbedKit.Mpv.Full"
 )
 
-# meta package (.Full) 內部沒有 lib DLL，僅靠 PackageReference 把所有子套件
+# 中繼套件 (.Full) 內部沒有 lib DLL，僅靠 PackageReference 把所有子套件
 # 拉進來。後續驗證迴圈中個別跳過 lib/*.dll 檢查即可。
 $metaPackageIds = @(
     "MediaEmbedKit.Mpv.Full"

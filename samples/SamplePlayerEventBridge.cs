@@ -375,7 +375,7 @@ internal sealed class SamplePlayerEventBridge : IDisposable
     }
 
     /// <summary>
-    /// 將 mpv ytdl hook 的 yt-dlp JSON 子程序結果寫入事件清單。
+    /// 將 mpv ytdl hook 的 yt-dlp JSON 子處理序結果寫入事件清單。
     /// </summary>
     private void WriteYtdlJsonSubprocessResult()
     {
@@ -395,7 +395,7 @@ internal sealed class SamplePlayerEventBridge : IDisposable
         }
         catch (MpvException ex)
         {
-            Append("ytdl-result", "讀取 yt-dlp 子程序結果失敗：" + ex.ErrorCode);
+            Append("ytdl-result", "讀取 yt-dlp 子處理序結果失敗：" + ex.ErrorCode);
             return;
         }
 

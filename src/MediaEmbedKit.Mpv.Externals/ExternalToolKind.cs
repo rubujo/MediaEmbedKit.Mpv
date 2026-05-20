@@ -1,7 +1,7 @@
 ﻿namespace MediaEmbedKit.Mpv.Externals;
 
 /// <summary>
-/// 定義執行階段 helper 可管理的外部工具種類。
+/// 定義執行階段 輔助工具可管理的外部工具種類。
 /// </summary>
 public enum ExternalToolKind
 {

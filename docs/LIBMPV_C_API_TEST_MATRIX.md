@@ -7,7 +7,7 @@
 | 項目 | 狀態 |
 | --- | --- |
 | 官方基準 | mpv v0.41.0 |
-| provider 對齊 | shinchiro `20260519` / mpv `8fc1a10`；zhongfly `2026-05-19-98c3ae4add` / mpv `98c3ae4add` |
+| 提供者對齊 | shinchiro `20260519` / mpv `8fc1a10`；zhongfly `2026-05-19-98c3ae4add` / mpv `98c3ae4add` |
 | 公開匯出函式 | 官方標頭 54 個；`MpvNative` P/Invoke 54 個 |
 | 列舉與旗標 | `MpvErrorCode`、`MpvFormat`、`MpvLogLevel`、`MpvEndFileReason`、render 相關列舉已對齊 v0.41.0 |
 | 原生資料結構 | 事件、節點、stream callback、OpenGL、DRM、render frame info 與 `mpv_byte_array` 皆有受控對應 |
@@ -19,7 +19,7 @@
 | 版本與錯誤 | `ClientApiVersion()`、`MpvError`、`MpvException` | 已驗證初始化、完整列舉錯誤訊息、屬性錯誤、格式錯誤、選項錯誤與命令錯誤。 |
 | 用戶端生命週期 | `MpvPlayer`、`Initialize()`、`Dispose()`、client handle API | 已驗證單一 player、多 client、weak client、raw client destroy 與 shutdown 事件。 |
 | 設定與 scripts | `ConfigDirectory`、`ConfigFiles`、`InputConfigFile`、`ScriptFiles`、`LoadScript()` | 已驗證設定檔錯誤、script 載入錯誤與 Lua script message 往返。 |
-| 選項 | `SetOptionString()`、`SetOptionFlag()`、`SetOptionInt64()`、`SetOptionDouble()`、`SetOptionNode()`、`MpvPlayerOptions` fluent helper、`MpvEncodingOptions` | 已驗證初始化前常用選項、無效選項錯誤、播放選項組態、fluent helper 與 encoding mode 選項套用。 |
+| 選項 | `SetOptionString()`、`SetOptionFlag()`、`SetOptionInt64()`、`SetOptionDouble()`、`SetOptionNode()`、`MpvPlayerOptions` 鏈式輔助方法、`MpvEncodingOptions` | 已驗證初始化前常用選項、無效選項錯誤、播放選項組態、鏈式輔助方法與 encoding mode 選項套用。 |
 | 命令 | `Command()`、`CommandNode()`、`CommandNamed()`、`GetCommandList()` | 已驗證同步命令、命令錯誤、節點回傳與常用高階 API。 |
 | 非同步命令 | `CommandAsync()`、`AbortAsyncCommand()`、`CommandReply` | 已驗證成功、錯誤回覆、命令回覆事件與取消未知要求後的後續命令穩定性。 |
 | 屬性 | `GetProperty*()`、`SetProperty*()`、常用強型別屬性 | 已驗證字串、旗標、數值、節點、格式錯誤與常用播放屬性。 |
@@ -52,20 +52,20 @@
 | --- | --- | --- |
 | 生命週期 | `MpvPlayer.InitializeAsync`、`MpvPlayer.ShutdownAsync`、`MpvPlayer.DisposeAsync` | 整合測試已覆蓋 graceful shutdown 與 cancellation。 |
 | Capability 快照 | `MpvPlayer.GetCapabilities`、`MpvCapabilities`、`SupportsProtocol` | 整合測試以實際 runtime 驗證 client API 版本與協定。 |
-| Fluent builder | `MpvAppBuilder`、`BuildAsync` | 整合測試覆蓋 `UseRuntime` + `ConfigureOptions` 端到端流程。 |
-| 媒體項目 | `MpvMediaItem`、`MpvPlayer.Load`、`MpvPlayer.LoadAsync` | 整合測試以本機 WAV 驗證 per-file options + FileLoaded 等候。 |
+| 鏈式 builder | `MpvAppBuilder`、`BuildAsync` | 整合測試覆蓋 `UseRuntime` + `ConfigureOptions` 端到端流程。 |
+| 媒體項目 | `MpvMediaItem`、`MpvPlayer.Load`、`MpvPlayer.LoadAsync` | 整合測試以本機 WAV 驗證 per-file 選項 + FileLoaded 等候。 |
 | 屬性 observable | `MpvPlayer.WatchProperty<T>`、`IObservable<T>` | 整合測試覆蓋多訂閱者共享與 Player Dispose 時 OnCompleted。 |
 | ILogger 整合 | `MpvPlayerOptions.LoggerFactory` | 由 `MpvPlayer` 建構期掛接；整合測試以記憶體 logger 驗證等級對應。 |
 
-## Runtime helper
+## 執行階段輔助工具
 
 | 區域 | 受控入口 | 驗證狀態 |
 | --- | --- | --- |
 | 暫存／套用／回滾 | `MpvLibraryUpdateScheduler` | 整合測試以 fake fixture 走 stage → apply → rollback 路徑。 |
 | 啟動健檢 | `MpvRuntimeHealthCheck.AnalyzeAsync` | 整合測試以實際 runtime 驗證 `probeLibMpv: true`。 |
 | 授權稽核 | `MpvLicenseAuditor.AnalyzeAsync`、`MpvBuildLicense` | 單元測試覆蓋 mpv-configuration / ffmpeg -version 分類規則。 |
-| Provider fallback | `MpvWindowsBuildDownloadOptions.ProviderFallbackOrder` | 單元測試覆蓋預設值；下載端 fallback 走 release gate。 |
-| 串流外部工具輸出 | `ExternalToolProcessRunner.StreamAsync`、`YtDlpProcessRunner.StreamFormatsAsync`、`DenoProcessRunner.StreamVersionAsync` | 程式碼路徑共用 base StreamAsync；release gate 期間實戰驗證。 |
+| 提供者備援 | `MpvWindowsBuildDownloadOptions.ProviderFallbackOrder` | 單元測試覆蓋預設值；下載端備援走發行檢查閘門。 |
+| 串流外部工具輸出 | `ExternalToolProcessRunner.StreamAsync`、`YtDlpProcessRunner.StreamFormatsAsync`、`DenoProcessRunner.StreamVersionAsync` | 程式碼路徑共用 base StreamAsync；發行檢查閘門期間實戰驗證。 |
 
 ## 完成定義
 

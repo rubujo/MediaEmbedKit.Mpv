@@ -3,7 +3,7 @@
 /// <summary>
 /// 提供 mpv encoding mode 常用音訊編碼器的預設值。
 /// 涵蓋 2026-05 shinchiro / zhongfly Windows x64 build 實際內建的 FFmpeg 編碼器；
-/// <c>libfdk_aac</c> 因 GPL build 未編入而不列入，需要時請改用內建 <c>aac</c>。
+/// <c>libfdk_aac</c> 因 GPL 建置版 未編入而不列入，需要時請改用內建 <c>aac</c>。
 /// </summary>
 public enum MpvAudioCodecPreset
 {

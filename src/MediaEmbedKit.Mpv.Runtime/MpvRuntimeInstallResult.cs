@@ -7,7 +7,7 @@ using MediaEmbedKit.Mpv.Externals;
 namespace MediaEmbedKit.Mpv.Runtime;
 
 /// <summary>
-/// 表示平台感知執行階段安裝 helper 的結果。
+/// 表示平台感知執行階段安裝 輔助工具的結果。
 /// </summary>
 public sealed class MpvRuntimeInstallResult
 {
@@ -21,7 +21,7 @@ public sealed class MpvRuntimeInstallResult
     /// 本專案對該平台的支援狀態。
     /// </param>
     /// <param name="runtimeDirectory">
-    /// 執行階段資料夾路徑。
+    ///執行階段資料夾路徑。
     /// </param>
     /// <param name="message">
     /// 安裝結果訊息。
@@ -79,7 +79,7 @@ public sealed class MpvRuntimeInstallResult
     /// 取得執行階段資料夾路徑。
     /// </summary>
     /// <value>
-    /// 執行階段資料夾路徑。
+    ///執行階段資料夾路徑。
     /// </value>
     public string RuntimeDirectory { get; private set; }
 

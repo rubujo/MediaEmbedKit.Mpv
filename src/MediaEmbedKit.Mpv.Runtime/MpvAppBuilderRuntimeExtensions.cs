@@ -26,7 +26,7 @@ public static class MpvAppBuilderRuntimeExtensions
     /// 可進一步調整 <see cref="MpvRuntimeInstallOptions"/> 的委派。
     /// </param>
     /// <returns>
-    /// 傳入的 builder（fluent 風格）。
+    /// 傳入的 builder（鏈式風格）。
     /// </returns>
     /// <exception cref="ArgumentNullException">
     /// <paramref name="builder"/> 為 <c>null</c>。
