@@ -81,7 +81,7 @@ Fluent builder、`MpvMediaItem` per-file 選項、`MpvEncoder` 轉碼、`WatchPr
 - **libmpv = LGPL build**（`Provider = Zhongfly` + `LicensePreference = PreferLgpl`，搭配 `Shinchiro` 作為 fallback）。`PreferLgpl` 是偏好不是保證 —— 切到 `Provider = Shinchiro` 會 silently fallback 到 GPL（該 provider 不發 LGPL 變體）。
 - **FFmpeg 預設不下載**（`IncludeFFmpeg = false`）。yt-dlp/FFmpeg-Builds 僅發 GPL，啟用即視同接受 GPLv2+ 散發義務。
 
-詳細真值表、警示與商用嚴格合規路徑見 [`docs/RUNTIME_ASSETS.md`](docs/RUNTIME_ASSETS.md)。散發前可用 `MpvLicenseAuditor.AnalyzeAsync(runtimeDirectory)` 在執行階段驗證實際拿到的授權。供應鏈威脅模型與商用 SHA pin 流程見 [`SECURITY.md`](SECURITY.md)。
+詳細真值表、警示與商用嚴格合規路徑見 [`docs/RUNTIME_ASSETS.md`](docs/RUNTIME_ASSETS.md)。散發前可用 `MpvLicenseAuditor.AnalyzeAsync(runtimeDirectory)` 在執行階段驗證實際拿到的授權。供應鏈風險模型與商用 SHA pin 建議見 [`docs/SECURITY_MODEL.md`](docs/SECURITY_MODEL.md)。
 
 ### 需要 yt-dlp 後處理 / FFmpeg 時
 
@@ -112,7 +112,7 @@ options.Mpv.ExpectedSha256 = "<從 vendor 維護的 SHA pin 清單取得>";
 options.Mpv.OverwriteExisting = true;  // 強制走完整驗證、不走 idempotency skip
 ```
 
-完整 threat model 與 vendor SHA pin 維護建議見 [`SECURITY.md`](SECURITY.md)。
+完整供應鏈風險模型與 vendor SHA pin 維護建議見 [`docs/SECURITY_MODEL.md`](docs/SECURITY_MODEL.md)。
 
 ## 取得套件
 

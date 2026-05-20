@@ -7,6 +7,7 @@
 | 目標框架與平台狀態 | `docs/SUPPORT_MATRIX.md` |
 | UI 後端與 AirSpace 限制 | `docs/UI_BACKENDS.md` |
 | libmpv、yt-dlp、Deno、FFmpeg runtime 政策 | `docs/RUNTIME_ASSETS.md` |
+| 供應鏈風險模型與 SHA pin 建議 | `docs/SECURITY_MODEL.md` |
 | libmpv C API 覆蓋與測試矩陣 | `docs/LIBMPV_C_API_TEST_MATRIX.md` |
 | 高階 API 與 ergonomics 指南 | `docs/HIGH_LEVEL_API.md` |
 | 控制項共通綁定 API | `docs/CONTROLS_API.md` |

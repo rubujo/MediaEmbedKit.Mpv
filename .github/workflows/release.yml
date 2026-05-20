@@ -95,7 +95,7 @@ jobs:
         # 寫進 Rekor transparency log。Consumer 端可用 `gh attestation verify` 或
         # `cosign verify-blob` 驗證套件的 provenance（建置來源是哪個 commit / workflow）。
         # 上游 mpv / FFmpeg-Builds 等第三方 binary 尚未採用此機制；本步驟只保證
-        # MediaEmbedKit.Mpv 自家 NuGet 套件的 provenance。詳見 SECURITY.md。
+        # MediaEmbedKit.Mpv 自家 NuGet 套件的 provenance。詳見 docs/SECURITY_MODEL.md。
         uses: actions/attest-build-provenance@v4
         with:
           subject-path: |

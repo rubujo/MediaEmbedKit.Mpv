@@ -80,7 +80,7 @@ internal static class SevenZipBootstrapper
         {
             throw new InvalidOperationException(
                 "ip7z/7zip release " + release.TagName + " 沒有名為 " + AssetName + " 的 asset；" +
-                "上游可能改了發佈內容，請更新 SevenZipBootstrapper 或回報 issue。");
+                "上游可能改了發佈內容，請更新 SevenZipBootstrapper 或查核上游發行內容。");
         }
 
         DownloadUtility.ValidateLockedGitHubSource(
