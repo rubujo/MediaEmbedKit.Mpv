@@ -15,10 +15,18 @@ public static class MpvWindowsRuntimeInstaller
     /// <summary>
     /// 更新執行階段資料夾中的 libmpv-2.dll。
     /// </summary>
-    /// <param name="runtimeDirectory">包含 libmpv 與外部工具的執行階段資料夾。</param>
-    /// <param name="options">Windows libmpv 建置下載選項；未指定時使用預設選項。</param>
-    /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
-    /// <returns>表示 libmpv 更新結果的工作。</returns>
+    /// <param name="runtimeDirectory">
+    /// 包含 libmpv 與外部工具的執行階段資料夾。
+    /// </param>
+    /// <param name="options">
+    /// Windows libmpv 建置下載選項；未指定時使用預設選項。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 可取消非同步作業的語彙基元。
+    /// </param>
+    /// <returns>
+    /// 表示 libmpv 更新結果的工作。
+    /// </returns>
     public static async Task<LibMpvUpdateResult> UpdateLibMpvAsync(
         string runtimeDirectory,
         MpvWindowsBuildDownloadOptions? options = null,
@@ -119,10 +127,18 @@ public static class MpvWindowsRuntimeInstaller
     /// 內部即呼叫本方法 —— 但本方法也獨立公開，供呼叫端只裝 libmpv（不裝 yt-dlp /
     /// Deno / FFmpeg）時使用。
     /// </remarks>
-    /// <param name="runtimeDirectory">執行階段資料夾。</param>
-    /// <param name="options">Windows libmpv 建置下載選項；未指定時使用預設選項。</param>
-    /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
-    /// <returns>表示 libmpv 安裝或更新結果的工作。</returns>
+    /// <param name="runtimeDirectory">
+    /// 執行階段資料夾。
+    /// </param>
+    /// <param name="options">
+    /// Windows libmpv 建置下載選項；未指定時使用預設選項。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 可取消非同步作業的語彙基元。
+    /// </param>
+    /// <returns>
+    /// 表示 libmpv 安裝或更新結果的工作。
+    /// </returns>
     public static async Task<LibMpvUpdateResult> InstallOrUpdateLibMpvAsync(
         string runtimeDirectory,
         MpvWindowsBuildDownloadOptions? options = null,
@@ -142,6 +158,18 @@ public static class MpvWindowsRuntimeInstaller
     /// <see cref="InstallOrUpdateLibMpvAsync"/> 的 no-lock 內部實作；由 caller 確保已
     /// 取得 <see cref="RuntimeDirectoryLock"/>（避免 nested re-acquire deadlock）。
     /// </summary>
+    /// <param name="runtimeDirectory">
+    /// 執行階段資料夾。
+    /// </param>
+    /// <param name="options">
+    /// Windows libmpv 建置下載選項；未指定時使用預設選項。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 可取消非同步作業的語彙基元。
+    /// </param>
+    /// <returns>
+    /// 表示 libmpv 安裝或更新結果的工作。
+    /// </returns>
     private static async Task<LibMpvUpdateResult> InstallOrUpdateLibMpvCoreAsync(
         string runtimeDirectory,
         MpvWindowsBuildDownloadOptions? options,
@@ -211,8 +239,12 @@ public static class MpvWindowsRuntimeInstaller
     /// <paramref name="keepLatest"/> 個（依資料夾名稱排序，即時戳排序）。
     /// 失敗（檔案被鎖、權限等）會吞掉例外 —— 清理是 best-effort，失敗只是磁碟用量問題。
     /// </summary>
-    /// <param name="runtimeDirectory">runtime 資料夾。</param>
-    /// <param name="keepLatest">要保留的最新 staged update 數量。</param>
+    /// <param name="runtimeDirectory">
+    /// runtime 資料夾。
+    /// </param>
+    /// <param name="keepLatest">
+    /// 要保留的最新 staged update 數量。
+    /// </param>
     private static void PruneStagedUpdatesDirectory(string runtimeDirectory, int keepLatest)
     {
         if (keepLatest < 0)
@@ -280,8 +312,12 @@ public static class MpvWindowsRuntimeInstaller
     /// <c>Include*=true</c> 下載過、現在改 <c>Include*=false</c>，對應 downloader 永不
     /// 執行也就沒機會跑自家 cleanup。失敗不擲例外（best-effort）。
     /// </summary>
-    /// <param name="runtimeDirectory">runtime 資料夾。</param>
-    /// <param name="options">當前安裝選項；以 <c>Include*</c> 旗標判斷哪些 archive 是 orphan。</param>
+    /// <param name="runtimeDirectory">
+    /// runtime 資料夾。
+    /// </param>
+    /// <param name="options">
+    /// 當前安裝選項；以 <c>Include*</c> 旗標判斷哪些 archive 是 orphan。
+    /// </param>
     private static void TryPruneOptOutToolArchives(
         string runtimeDirectory,
         MpvWindowsRuntimeDownloadOptions options)
@@ -303,8 +339,12 @@ public static class MpvWindowsRuntimeInstaller
         }
     }
 
-    /// <summary>嘗試刪除指定檔案；不存在或失敗皆吞掉例外（best-effort）。</summary>
-    /// <param name="filePath">要刪除的檔案路徑。</param>
+    /// <summary>
+    /// 嘗試刪除指定檔案；不存在或失敗皆吞掉例外（best-effort）。
+    /// </summary>
+    /// <param name="filePath">
+    /// 要刪除的檔案路徑。
+    /// </param>
     private static void TryDeleteFileBestEffort(string filePath)
     {
         try
@@ -325,8 +365,12 @@ public static class MpvWindowsRuntimeInstaller
     /// <summary>
     /// 在 libmpv 載入前套用先前暫存的 libmpv 更新。
     /// </summary>
-    /// <param name="runtimeDirectory">要放置 libmpv-2.dll 的執行階段資料夾。</param>
-    /// <param name="stagedLibraryPath">先前暫存的 libmpv-2.dll 路徑。</param>
+    /// <param name="runtimeDirectory">
+    /// 要放置 libmpv-2.dll 的執行階段資料夾。
+    /// </param>
+    /// <param name="stagedLibraryPath">
+    /// 先前暫存的 libmpv-2.dll 路徑。
+    /// </param>
     public static void ApplyStagedLibMpvUpdate(string runtimeDirectory, string stagedLibraryPath)
     {
         if (MpvLibraryLoader.IsLoaded)
@@ -351,10 +395,18 @@ public static class MpvWindowsRuntimeInstaller
     /// <summary>
     /// 安裝或更新 Windows 執行階段資料夾中的 libmpv、yt-dlp、Deno 與 FFmpeg。
     /// </summary>
-    /// <param name="runtimeDirectory">要建立或更新的執行階段資料夾。</param>
-    /// <param name="options">Windows 執行階段下載選項；未指定時使用預設選項。</param>
-    /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
-    /// <returns>表示 Windows 執行階段安裝或更新結果的工作。</returns>
+    /// <param name="runtimeDirectory">
+    /// 要建立或更新的執行階段資料夾。
+    /// </param>
+    /// <param name="options">
+    /// Windows 執行階段下載選項；未指定時使用預設選項。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 可取消非同步作業的語彙基元。
+    /// </param>
+    /// <returns>
+    /// 表示 Windows 執行階段安裝或更新結果的工作。
+    /// </returns>
     public static async Task<MpvWindowsRuntimeDownloadResult> InstallOrUpdateAsync(
         string runtimeDirectory,
         MpvWindowsRuntimeDownloadOptions? options = null,
@@ -440,8 +492,12 @@ public static class MpvWindowsRuntimeInstaller
     /// <summary>
     /// 建立指向指定執行階段資料夾的播放器選項。
     /// </summary>
-    /// <param name="runtimeDirectory">包含 libmpv-2.dll 與外部工具的執行階段資料夾。</param>
-    /// <returns>可用於 <see cref="MpvPlayer"/> 的播放器選項。</returns>
+    /// <param name="runtimeDirectory">
+    /// 包含 libmpv-2.dll 與外部工具的執行階段資料夾。
+    /// </param>
+    /// <returns>
+    /// 可用於 <see cref="MpvPlayer"/> 的播放器選項。
+    /// </returns>
     public static MpvPlayerOptions CreatePlayerOptions(string runtimeDirectory)
     {
         if (string.IsNullOrWhiteSpace(runtimeDirectory))
@@ -461,9 +517,15 @@ public static class MpvWindowsRuntimeInstaller
     /// <summary>
     /// 建立指向指定執行階段資料夾的播放器選項，並可選擇載入同一資料夾中的 mpv 設定。
     /// </summary>
-    /// <param name="runtimeDirectory">包含 libmpv-2.dll、外部工具與 mpv 設定檔的執行階段資料夾。</param>
-    /// <param name="loadRuntimeConfiguration">是否將執行階段資料夾設為 mpv 設定資料夾。</param>
-    /// <returns>可用於 <see cref="MpvPlayer"/> 的播放器選項。</returns>
+    /// <param name="runtimeDirectory">
+    /// 包含 libmpv-2.dll、外部工具與 mpv 設定檔的執行階段資料夾。
+    /// </param>
+    /// <param name="loadRuntimeConfiguration">
+    /// 是否將執行階段資料夾設為 mpv 設定資料夾。
+    /// </param>
+    /// <returns>
+    /// 可用於 <see cref="MpvPlayer"/> 的播放器選項。
+    /// </returns>
     public static MpvPlayerOptions CreatePlayerOptions(string runtimeDirectory, bool loadRuntimeConfiguration)
     {
         MpvPlayerOptions options = CreatePlayerOptions(runtimeDirectory);

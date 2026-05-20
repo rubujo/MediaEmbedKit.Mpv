@@ -31,8 +31,12 @@ internal static class Program
     /// <summary>
     /// 測試執行進入點。
     /// </summary>
-    /// <param name="args">命令列引數；目前未使用。</param>
-    /// <returns>所有測試通過時傳回 0，否則傳回 1。</returns>
+    /// <param name="args">
+    /// 命令列引數；目前未使用。
+    /// </param>
+    /// <returns>
+    /// 所有測試通過時傳回 0，否則傳回 1。
+    /// </returns>
     private static async Task<int> Main(string[] args)
     {
         _ = args;
@@ -99,7 +103,9 @@ internal static class Program
     /// <c>docs/CONSUMING_PACKAGES.md</c>。若有人手動改 props 沒同步文件就會被擋下，
     /// 提醒去跑 <c>tools/Bump-Version.ps1</c>。
     /// </summary>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static Task VerifyPackageVersionInConsumingDoc()
     {
         string? repoRoot = FindRepoRoot();
@@ -128,7 +134,9 @@ internal static class Program
     /// <summary>
     /// 從測試輸出目錄回溯找含 <c>Directory.Build.props</c> 的目錄當作 repo 根。
     /// </summary>
-    /// <returns>找到時為 repo 根目錄絕對路徑，否則為 <see langword="null"/>。</returns>
+    /// <returns>
+    /// 找到時為 repo 根目錄絕對路徑，否則為 <see langword="null"/>。
+    /// </returns>
     private static string? FindRepoRoot()
     {
         DirectoryInfo? dir = new DirectoryInfo(AppContext.BaseDirectory);
@@ -149,7 +157,9 @@ internal static class Program
     /// 驗證 <see cref="MpvRenderParamType.AmbientLight"/> 已標 <see cref="ObsoleteAttribute"/>，
     /// 對齊 libmpv 0.40 deprecation。
     /// </summary>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static Task VerifyAmbientLightObsolete()
     {
 #pragma warning disable CS0618 // 測試本身需要透過 nameof 引用已 deprecated 的列舉成員。
@@ -166,7 +176,9 @@ internal static class Program
     /// <summary>
     /// 驗證 <see cref="MpvPlayer"/> 提供 <c>TryGetProperty*</c> 系列方法，作為非例外的屬性讀取入口。
     /// </summary>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static Task VerifyTryGetPropertySurface()
     {
         Type playerType = typeof(MpvPlayer);
@@ -192,10 +204,18 @@ internal static class Program
     /// <summary>
     /// 判斷型別是否含指定的執行個體方法。
     /// </summary>
-    /// <param name="type">要查詢的型別。</param>
-    /// <param name="name">方法名稱。</param>
-    /// <param name="parameterTypes">方法參數型別（依宣告順序）。</param>
-    /// <returns>找到符合簽名的方法時為 <see langword="true"/>。</returns>
+    /// <param name="type">
+    /// 要查詢的型別。
+    /// </param>
+    /// <param name="name">
+    /// 方法名稱。
+    /// </param>
+    /// <param name="parameterTypes">
+    /// 方法參數型別（依宣告順序）。
+    /// </param>
+    /// <returns>
+    /// 找到符合簽名的方法時為 <see langword="true"/>。
+    /// </returns>
     private static bool HasInstanceMethod(Type type, string name, params Type[] parameterTypes)
     {
         MethodInfo? method = type.GetMethod(
@@ -212,7 +232,9 @@ internal static class Program
     /// 以 <see cref="LibraryImportAttribute"/> 產生，<c>netstandard2.0</c> / <c>.NET Framework</c> 仍走
     /// <see cref="DllImportAttribute"/>。
     /// </summary>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static Task VerifyMpvNativeUsesLibraryImport()
     {
         string[] candidates = new[]
@@ -264,7 +286,9 @@ internal static class Program
     /// 並在 <c>net7.0</c> 以上同樣由 P/Invoke source generator 以 <see cref="LibraryImportAttribute"/> 包裝；
     /// 同時上層 internal helper（沿用原 native 名稱）仍提供既有委派／陣列簽名給呼叫端，呼叫端 0 變更。
     /// </summary>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static Task VerifyMpvNativeHelperUsesLibraryImport()
     {
         string[] nativeEntries = new[]
@@ -329,7 +353,9 @@ internal static class Program
     /// 含 Shinchiro 作為兜底 —— 一同確認對 release 後使用者「預設拿 LGPL libmpv」
     /// 的期望成立。
     /// </summary>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static Task VerifyProviderFallbackOrderDefaults()
     {
         MpvWindowsBuildDownloadOptions options = new MpvWindowsBuildDownloadOptions();
@@ -349,7 +375,9 @@ internal static class Program
     /// 拷貝成獨立 list（修改原物件 list 不影響複本）。這是 PR G 內 UpdateLibMpvAsync /
     /// InstallOrUpdateLibMpvAsync 避免 mutate caller options 的基礎。
     /// </summary>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static Task VerifyMpvWindowsBuildDownloadOptionsClone()
     {
         MpvWindowsBuildDownloadOptions original = new MpvWindowsBuildDownloadOptions
@@ -401,7 +429,9 @@ internal static class Program
     /// 一致；缺漏 marker 檔回傳 null；schema 版本不匹配回傳 null（防護未來 schema 演進
     /// 時舊 marker 不被誤判為當前格式）。
     /// </summary>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static Task VerifyLibMpvVersionMarkerRoundTrip()
     {
         string tempRoot = Path.Combine(Path.GetTempPath(), "MediaEmbedKit.Mpv.Tests.MarkerRoundTrip", Guid.NewGuid().ToString("N"));
@@ -452,7 +482,9 @@ internal static class Program
     /// 一般檔案不 throw、不存在檔案不 throw、且 helper 提供的訊息含足夠 context。
     /// 真實 symlink 拒絕情境由 integration test 在實機驗證（需 dev mode 或 admin）。
     /// </summary>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static Task VerifyArchiveSafetyRejectsReparsePoint()
     {
         string tempRoot = Path.Combine(Path.GetTempPath(), "MediaEmbedKit.Mpv.Tests.ArchiveSafety", Guid.NewGuid().ToString("N"));
@@ -494,7 +526,9 @@ internal static class Program
     /// 會被擋住、釋放第一個鎖後第二個能順利取得。覆蓋 cross-process file lock 在同
     /// process 內的行為（FileShare.None 的語意即跨 process / 跨 thread 都互斥）。
     /// </summary>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static async Task VerifyRuntimeDirectoryLockMutualExclusion()
     {
         string tempRoot = Path.Combine(Path.GetTempPath(), "MediaEmbedKit.Mpv.Tests.RuntimeLock", Guid.NewGuid().ToString("N"));
@@ -537,7 +571,9 @@ internal static class Program
     /// <summary>
     /// 驗證 <see cref="MpvLicenseAuditor"/> 對常見 mpv 與 FFmpeg 設定字串的分類結果。
     /// </summary>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static Task VerifyMpvLicenseAuditorClassification()
     {
         AssertEx.Equal(
@@ -586,7 +622,9 @@ internal static class Program
     /// <summary>
     /// 驗證 <see cref="MpvMediaItem"/> fluent helper 會正確套用設定並回傳目前實例。
     /// </summary>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static Task VerifyMpvMediaItemFluentHelpers()
     {
         MpvMediaItem item = new MpvMediaItem("https://example.com/stream")
@@ -625,10 +663,14 @@ internal static class Program
     /// <summary>
     /// 驗證 <see cref="MpvEncodingOptions"/> 在兩階段（two-pass）clone 流程中
     /// 會把內部累積的 <c>WithMuxerOption</c> / <c>WithVideoCodecOption</c> /
-    /// <c>WithAudioCodecOption</c> / <c>WithMetadataTag</c> / <c>WithoutMetadataTag</c>
+    /// <c>
+    /// WithAudioCodecOption</c> / <c>WithMetadataTag</c> / <c>WithoutMetadataTag
+    /// </c>
     /// 清單全部複製到 clone，避免兩階段遺失 codec 參數。
     /// </summary>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static Task VerifyEncodingOptionsTwoPassClone()
     {
         MpvEncodingOptions source = new MpvEncodingOptions("out.mp4")
@@ -702,7 +744,9 @@ internal static class Program
     /// 驗證 <see cref="MpvRuntimeHealthReport.IsHealthy"/> / <see cref="MpvRuntimeHealthReport.IsComplete"/>
     /// 與 <see cref="MpvRuntimeHealthReport.IsHealthyFor"/> 的語意。
     /// </summary>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static Task VerifyMpvRuntimeHealthReportSemantics()
     {
         // 透過反射叫 internal 建構式建立 fixture report。
@@ -763,7 +807,9 @@ internal static class Program
     /// 驗證 <see cref="MpvRelayCommand"/> 的核心行為：建構檢查、CanExecute 預設、
     /// 委派執行、CanExecuteChanged 觸發以及參數型別委派。
     /// </summary>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static Task VerifyMpvRelayCommand()
     {
         AssertEx.Throws<ArgumentNullException>(
@@ -811,7 +857,9 @@ internal static class Program
     /// <summary>
     /// 驗證 <see cref="MpvPlayerOptions.CopyTo"/> 會把純值與集合欄位全部複製到目標。
     /// </summary>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static Task VerifyMpvPlayerOptionsCopyTo()
     {
         MpvPlayerOptions source = new MpvPlayerOptions
@@ -857,7 +905,9 @@ internal static class Program
     /// 驗證 <see cref="MpvServiceCollectionExtensions.AddMpvPlayerFactory"/> 會把對應的工廠服務
     /// 登錄到容器，並對 null 參數做出明確的拒絕。
     /// </summary>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static Task VerifyDependencyInjectionExtensions()
     {
         ServiceCollection services = new ServiceCollection();
@@ -894,7 +944,9 @@ internal static class Program
     /// <summary>
     /// 驗證 <see cref="MpvRuntimeHealthCheck.AnalyzeAsync"/> 在缺檔資料夾會列出對應錯誤。
     /// </summary>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static async Task VerifyMpvRuntimeHealthCheckMissingFiles()
     {
         string tempDirectory = Path.Combine(Path.GetTempPath(), "mediaembedkit-health-" + Guid.NewGuid().ToString("N"));
@@ -917,7 +969,9 @@ internal static class Program
     /// <summary>
     /// 驗證 <see cref="MpvLibraryUpdateScheduler"/> 的路徑公開與暫存列舉。
     /// </summary>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static Task VerifyMpvLibraryUpdateSchedulerLayout()
     {
         string tempDirectory = Path.Combine(Path.GetTempPath(), "mediaembedkit-scheduler-" + Guid.NewGuid().ToString("N"));
@@ -956,7 +1010,9 @@ internal static class Program
     /// <summary>
     /// 驗證 <see cref="MpvMediaItem.BuildFileOptions"/> 會正確產生 mpv per-file options 字典。
     /// </summary>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static Task VerifyMpvMediaItemBuildFileOptions()
     {
         MpvMediaItem empty = new MpvMediaItem("https://example.com/stream");
@@ -1001,7 +1057,9 @@ internal static class Program
     /// <summary>
     /// 驗證 <see cref="MpvCapabilities"/> POCO 的查詢方法與防呆行為。
     /// </summary>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static Task VerifyMpvCapabilities()
     {
         MpvCapabilities capabilities = new MpvCapabilities(
@@ -1029,7 +1087,9 @@ internal static class Program
     /// <summary>
     /// 驗證常用 yt-dlp 格式預設值會轉換成固定 selector。
     /// </summary>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static Task VerifyYtdlpFormatPresets()
     {
         AssertEx.Equal("ytdl", MpvYtdlpFormatSelector.FromPreset(MpvYtdlpFormatPreset.Default), "Default selector");
@@ -1043,7 +1103,9 @@ internal static class Program
     /// <summary>
     /// 驗證 yt-dlp 格式 selector helper 的輸入檢查。
     /// </summary>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static Task VerifyYtdlpFormatValidation()
     {
         AssertEx.Throws<ArgumentOutOfRangeException>(
@@ -1066,7 +1128,9 @@ internal static class Program
     /// <summary>
     /// 驗證 mpv encoding mode 高階選項會轉換成固定 mpv 選項。
     /// </summary>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static Task VerifyEncodingOptions()
     {
         MpvEncodingOptions encodingOptions = new MpvEncodingOptions("output file.mp4")
@@ -1146,7 +1210,9 @@ internal static class Program
     /// <summary>
     /// 驗證播放器選項 fluent helper 會維持原選項物件並設定預期值。
     /// </summary>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static Task VerifyPlayerOptionFluentHelpers()
     {
         MpvEncodingOptions encodingOptions = MpvEncodingOptions.ToFile("encoded.mp4").AsMp4();
@@ -1196,7 +1262,9 @@ internal static class Program
     /// <summary>
     /// 驗證外部工具命令列引數格式化會處理空白、空字串與引號。
     /// </summary>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static Task VerifyExternalToolArgumentFormatting()
     {
         string formatted = ExternalToolProcessRunner.FormatArguments(new[] { "--flag", "hello world", string.Empty, "a\"b" });
@@ -1207,7 +1275,9 @@ internal static class Program
     /// <summary>
     /// 驗證強制 GitHub digest 策略會拒絕缺漏或不相符的 SHA-256 值。
     /// </summary>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static Task VerifyNativeAssetDigestValidation()
     {
         string tempFile = Path.GetTempFileName();
@@ -1260,7 +1330,9 @@ internal static class Program
     /// <summary>
     /// 驗證釘選 SHA-256 策略會要求呼叫端提供預期值並比對下載內容。
     /// </summary>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static Task VerifyNativeAssetPinnedSha256Validation()
     {
         string tempFile = Path.GetTempFileName();
@@ -1300,7 +1372,9 @@ internal static class Program
     /// <summary>
     /// 驗證 GNU 風格 checksum 檔案解析支援 yt-dlp、Deno 與 FFmpeg 常見格式。
     /// </summary>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static Task VerifyNativeAssetChecksumParsing()
     {
         string expected = new string('a', 64);
@@ -1332,7 +1406,9 @@ internal static class Program
     /// <summary>
     /// 驗證 FFmpeg fast path 在重用既有工具時仍會清理壓縮檔。
     /// </summary>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static async Task VerifyFFmpegFastPathPrunesArchivesAsync()
     {
         string tempDirectory = CreateTempDirectory("ffmpeg-prune");
@@ -1381,7 +1457,9 @@ internal static class Program
     /// <summary>
     /// 驗證 FFmpeg retained archive fast path 會執行 provider checksum 驗證。
     /// </summary>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static async Task VerifyFFmpegRetainedArchiveVerificationAsync()
     {
         string tempDirectory = CreateTempDirectory("ffmpeg-retain");
@@ -1440,7 +1518,9 @@ internal static class Program
     /// <summary>
     /// 驗證 retained archive 摘要不符時不會靜默改走下載路徑。
     /// </summary>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static async Task VerifyFFmpegRetainedArchiveDigestFailureAsync()
     {
         string tempDirectory = CreateTempDirectory("ffmpeg-bad-digest");
@@ -1495,7 +1575,9 @@ internal static class Program
     /// <summary>
     /// 驗證 Deno zip 只會將 deno.exe 放入 runtime root。
     /// </summary>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static async Task VerifyDenoExtractionUsesWorkspaceAsync()
     {
         string tempDirectory = CreateTempDirectory("deno-workspace");
@@ -1547,7 +1629,9 @@ internal static class Program
     /// <summary>
     /// 驗證下載失敗時會清掉 <c>.tmp</c> 暫存檔。
     /// </summary>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static async Task VerifyDownloadFailureCleansTempFileAsync()
     {
         string tempDirectory = CreateTempDirectory("download-temp");
@@ -1590,8 +1674,12 @@ internal static class Program
     /// <summary>
     /// 建立暫存測試資料夾。
     /// </summary>
-    /// <param name="prefix">資料夾名稱前綴。</param>
-    /// <returns>已建立的暫存資料夾路徑。</returns>
+    /// <param name="prefix">
+    /// 資料夾名稱前綴。
+    /// </param>
+    /// <returns>
+    /// 已建立的暫存資料夾路徑。
+    /// </returns>
     private static string CreateTempDirectory(string prefix)
     {
         string directory = Path.Combine(Path.GetTempPath(), "MediaEmbedKit.Mpv.Tests", prefix + "-" + Guid.NewGuid().ToString("N"));
@@ -1602,7 +1690,9 @@ internal static class Program
     /// <summary>
     /// 嘗試刪除測試資料夾。
     /// </summary>
-    /// <param name="directoryPath">要刪除的資料夾。</param>
+    /// <param name="directoryPath">
+    /// 要刪除的資料夾。
+    /// </param>
     private static void TryDeleteDirectory(string directoryPath)
     {
         try
@@ -1623,8 +1713,12 @@ internal static class Program
     /// <summary>
     /// 計算位元組內容的 SHA-256 小寫十六進位字串。
     /// </summary>
-    /// <param name="content">要計算的內容。</param>
-    /// <returns>SHA-256 小寫十六進位字串。</returns>
+    /// <param name="content">
+    /// 要計算的內容。
+    /// </param>
+    /// <returns>
+    /// SHA-256 小寫十六進位字串。
+    /// </returns>
     private static string ComputeSha256Hex(byte[] content)
     {
         byte[] hash = SHA256.HashData(content);
@@ -1634,9 +1728,15 @@ internal static class Program
     /// <summary>
     /// 建立測試用 GitHub release JSON。
     /// </summary>
-    /// <param name="tagName">發行標籤。</param>
-    /// <param name="assets">發行資產。</param>
-    /// <returns>GitHub release JSON 文字。</returns>
+    /// <param name="tagName">
+    /// 發行標籤。
+    /// </param>
+    /// <param name="assets">
+    /// 發行資產。
+    /// </param>
+    /// <returns>
+    /// GitHub release JSON 文字。
+    /// </returns>
     private static string BuildReleaseJson(string tagName, IReadOnlyList<FakeReleaseAsset> assets)
     {
         StringBuilder builder = new StringBuilder();
@@ -1673,8 +1773,12 @@ internal static class Program
     /// <summary>
     /// 建立 ZIP 檔內容。
     /// </summary>
-    /// <param name="entries">ZIP entry 名稱與文字內容。</param>
-    /// <returns>ZIP 位元組內容。</returns>
+    /// <param name="entries">
+    /// ZIP entry 名稱與文字內容。
+    /// </param>
+    /// <returns>
+    /// ZIP 位元組內容。
+    /// </returns>
     private static byte[] CreateZipArchive(IReadOnlyDictionary<string, string> entries)
     {
         using (MemoryStream stream = new MemoryStream())
@@ -1698,8 +1802,12 @@ internal static class Program
     /// <summary>
     /// 逸出 JSON 字串值。
     /// </summary>
-    /// <param name="value">原始值。</param>
-    /// <returns>已逸出的字串。</returns>
+    /// <param name="value">
+    /// 原始值。
+    /// </param>
+    /// <returns>
+    /// 已逸出的字串。
+    /// </returns>
     private static string JsonEscape(string value)
     {
         return value.Replace("\\", "\\\\").Replace("\"", "\\\"");
@@ -1713,9 +1821,15 @@ internal static class Program
         /// <summary>
         /// 初始化 <see cref="FakeReleaseAsset"/> 類別的新執行個體。
         /// </summary>
-        /// <param name="name">資產名稱。</param>
-        /// <param name="downloadUrl">下載 URL。</param>
-        /// <param name="digest">資產摘要。</param>
+        /// <param name="name">
+        /// 資產名稱。
+        /// </param>
+        /// <param name="downloadUrl">
+        /// 下載 URL。
+        /// </param>
+        /// <param name="digest">
+        /// 資產摘要。
+        /// </param>
         public FakeReleaseAsset(string name, string downloadUrl, string? digest)
         {
             Name = name;
@@ -1726,26 +1840,34 @@ internal static class Program
         /// <summary>
         /// 取得資產名稱。
         /// </summary>
-        /// <value>資產名稱。</value>
+        /// <value>
+        /// 資產名稱。
+        /// </value>
         public string Name { get; private set; }
 
         /// <summary>
         /// 取得下載 URL。
         /// </summary>
-        /// <value>下載 URL。</value>
+        /// <value>
+        /// 下載 URL。
+        /// </value>
         public string DownloadUrl { get; private set; }
 
         /// <summary>
         /// 取得資產摘要。
         /// </summary>
-        /// <value>資產摘要。</value>
+        /// <value>
+        /// 資產摘要。
+        /// </value>
         public string? Digest { get; private set; }
     }
 
     /// <summary>
     /// 驗證來源鎖定會接受預設 GitHub 來源並拒絕非預期來源。
     /// </summary>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static Task VerifyNativeAssetSourceLockValidation()
     {
         Uri expectedApiUri = new Uri("https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest");
@@ -1789,7 +1911,9 @@ internal static class Program
     /// <summary>
     /// 驗證 runtime 下載選項的驗證策略預設值要求 GitHub 發行資產摘要。
     /// </summary>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static Task VerifyRuntimeVerificationOptionDefaults()
     {
         YtDlpDownloadOptions ytDlp = new YtDlpDownloadOptions();
@@ -1811,7 +1935,9 @@ internal static class Program
     /// <summary>
     /// 驗證下載 helper 使用的預設瀏覽器標頭與 Chrome Stable 版本一致。
     /// </summary>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static Task VerifyBrowserRequestHeaders()
     {
         using (HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, "https://example.invalid/"))
@@ -1845,7 +1971,9 @@ internal static class Program
     /// build，預設拉進 runtime 會讓使用者背負未必知情的 GPL 散發義務），且可由呼叫
     /// 端明確啟用。
     /// </summary>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static Task VerifyWindowsRuntimeFFmpegOptionDefaults()
     {
         MpvWindowsRuntimeDownloadOptions options = new MpvWindowsRuntimeDownloadOptions();
@@ -1858,7 +1986,9 @@ internal static class Program
     /// <summary>
     /// 驗證播放器選項的預設值維持穩定。
     /// </summary>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static Task VerifyPlayerOptionDefaults()
     {
         MpvPlayerOptions options = new MpvPlayerOptions();
@@ -1878,7 +2008,9 @@ internal static class Program
     /// <summary>
     /// 驗證 catalog 宣告 Windows x64 與 ARM64 來源，並維持兩種 provider（shinchiro / zhongfly）。
     /// </summary>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static Task VerifyRuntimeCatalogs()
     {
         IReadOnlyList<MpvNativeRuntimeSource> windowsSources = MpvNativeRuntimeCatalog.GetSources(MpvNativeRuntimePlatform.Windows);
@@ -1938,7 +2070,9 @@ internal static class Program
     /// <summary>
     /// 驗證 ARM64 架構在三個 Architecture enum 與 FFmpeg helper 中對應到正確的資產 token / 檔名。
     /// </summary>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static Task VerifyWindowsArm64AssetMapping()
     {
         // libmpv：shinchiro / zhongfly 命名格式為 mpv-dev-{token}-*.7z
@@ -1987,7 +2121,9 @@ internal static class Program
     /// <summary>
     /// 驗證未知平台安裝流程只回傳不支援結果，不建立下載資料夾。
     /// </summary>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static async Task VerifyUnknownPlatformInstallAsync()
     {
         string runtimeDirectory = Path.Combine(Path.GetTempPath(), "MediaEmbedKit.Mpv.Tests", Guid.NewGuid().ToString("N"));
@@ -2006,7 +2142,9 @@ internal static class Program
     /// <summary>
     /// 驗證 Windows 執行階段資料夾會產生正確播放器選項。
     /// </summary>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static Task VerifyWindowsRuntimePlayerOptions()
     {
         string runtimeDirectory = Path.Combine(Path.GetTempPath(), "MediaEmbedKit.Mpv.Runtime");
@@ -2070,14 +2208,20 @@ internal sealed class LoopbackHttpServer : IDisposable
     /// <summary>
     /// 取得伺服器基底 URI。
     /// </summary>
-    /// <value>伺服器基底 URI。</value>
+    /// <value>
+    /// 伺服器基底 URI。
+    /// </value>
     public Uri BaseUri { get; private set; }
 
     /// <summary>
     /// 建立指定路徑的完整 URI。
     /// </summary>
-    /// <param name="path">要求路徑。</param>
-    /// <returns>完整 URI。</returns>
+    /// <param name="path">
+    /// 要求路徑。
+    /// </param>
+    /// <returns>
+    /// 完整 URI。
+    /// </returns>
     public Uri BuildUri(string path)
     {
         string normalizedPath = path.StartsWith("/", StringComparison.Ordinal) ? path.Substring(1) : path;
@@ -2087,9 +2231,15 @@ internal sealed class LoopbackHttpServer : IDisposable
     /// <summary>
     /// 加入文字回應。
     /// </summary>
-    /// <param name="path">要求路徑。</param>
-    /// <param name="content">文字內容。</param>
-    /// <param name="contentType">內容類型。</param>
+    /// <param name="path">
+    /// 要求路徑。
+    /// </param>
+    /// <param name="content">
+    /// 文字內容。
+    /// </param>
+    /// <param name="contentType">
+    /// 內容類型。
+    /// </param>
     public void AddText(string path, string content, string contentType)
     {
         AddBytes(path, Encoding.UTF8.GetBytes(content), contentType);
@@ -2098,10 +2248,18 @@ internal sealed class LoopbackHttpServer : IDisposable
     /// <summary>
     /// 加入位元組回應。
     /// </summary>
-    /// <param name="path">要求路徑。</param>
-    /// <param name="content">位元組內容。</param>
-    /// <param name="contentType">內容類型。</param>
-    /// <param name="declaredContentLength">宣告的 Content-Length；未指定時使用內容長度。</param>
+    /// <param name="path">
+    /// 要求路徑。
+    /// </param>
+    /// <param name="content">
+    /// 位元組內容。
+    /// </param>
+    /// <param name="contentType">
+    /// 內容類型。
+    /// </param>
+    /// <param name="declaredContentLength">
+    /// 宣告的 Content-Length；未指定時使用內容長度。
+    /// </param>
     public void AddBytes(string path, byte[] content, string contentType, int? declaredContentLength = null)
     {
         string normalizedPath = NormalizePath(path);
@@ -2114,8 +2272,12 @@ internal sealed class LoopbackHttpServer : IDisposable
     /// <summary>
     /// 取得指定路徑的要求次數。
     /// </summary>
-    /// <param name="path">要求路徑。</param>
-    /// <returns>要求次數。</returns>
+    /// <param name="path">
+    /// 要求路徑。
+    /// </param>
+    /// <returns>
+    /// 要求次數。
+    /// </returns>
     public int GetRequestCount(string path)
     {
         string normalizedPath = NormalizePath(path);
@@ -2149,7 +2311,9 @@ internal sealed class LoopbackHttpServer : IDisposable
     /// <summary>
     /// 接受連線直到伺服器停止。
     /// </summary>
-    /// <returns>代表背景流程的工作。</returns>
+    /// <returns>
+    /// 代表背景流程的工作。
+    /// </returns>
     private async Task AcceptLoopAsync()
     {
         while (!_cancellation.IsCancellationRequested)
@@ -2183,8 +2347,12 @@ internal sealed class LoopbackHttpServer : IDisposable
     /// <summary>
     /// 處理單一 HTTP 用戶端連線。
     /// </summary>
-    /// <param name="client">TCP 用戶端。</param>
-    /// <returns>代表處理流程的工作。</returns>
+    /// <param name="client">
+    /// TCP 用戶端。
+    /// </param>
+    /// <returns>
+    /// 代表處理流程的工作。
+    /// </returns>
     private async Task HandleClientAsync(TcpClient client)
     {
         using (client)
@@ -2226,8 +2394,12 @@ internal sealed class LoopbackHttpServer : IDisposable
     /// <summary>
     /// 取得指定路徑的回應。
     /// </summary>
-    /// <param name="path">要求路徑。</param>
-    /// <returns>HTTP 回應。</returns>
+    /// <param name="path">
+    /// 要求路徑。
+    /// </param>
+    /// <returns>
+    /// HTTP 回應。
+    /// </returns>
     private LoopbackHttpResponse GetResponse(string path)
     {
         string normalizedPath = NormalizePath(path);
@@ -2247,8 +2419,12 @@ internal sealed class LoopbackHttpServer : IDisposable
     /// <summary>
     /// 從 HTTP request line 取出路徑。
     /// </summary>
-    /// <param name="requestLine">HTTP request line。</param>
-    /// <returns>要求路徑。</returns>
+    /// <param name="requestLine">
+    /// HTTP request line。
+    /// </param>
+    /// <returns>
+    /// 要求路徑。
+    /// </returns>
     private static string ExtractPath(string requestLine)
     {
         string[] parts = requestLine.Split(' ');
@@ -2258,8 +2434,12 @@ internal sealed class LoopbackHttpServer : IDisposable
     /// <summary>
     /// 正規化要求路徑。
     /// </summary>
-    /// <param name="path">原始路徑。</param>
-    /// <returns>以斜線開頭的路徑。</returns>
+    /// <param name="path">
+    /// 原始路徑。
+    /// </param>
+    /// <returns>
+    /// 以斜線開頭的路徑。
+    /// </returns>
     private static string NormalizePath(string path)
     {
         return path.StartsWith("/", StringComparison.Ordinal) ? path : "/" + path;
@@ -2274,10 +2454,18 @@ internal sealed class LoopbackHttpResponse
     /// <summary>
     /// 初始化 <see cref="LoopbackHttpResponse"/> 類別的新執行個體。
     /// </summary>
-    /// <param name="content">回應內容。</param>
-    /// <param name="contentType">內容類型。</param>
-    /// <param name="declaredContentLength">宣告的內容長度。</param>
-    /// <param name="statusCode">HTTP 狀態碼。</param>
+    /// <param name="content">
+    /// 回應內容。
+    /// </param>
+    /// <param name="contentType">
+    /// 內容類型。
+    /// </param>
+    /// <param name="declaredContentLength">
+    /// 宣告的內容長度。
+    /// </param>
+    /// <param name="statusCode">
+    /// HTTP 狀態碼。
+    /// </param>
     public LoopbackHttpResponse(byte[] content, string contentType, int? declaredContentLength, int statusCode = 200)
     {
         Content = content;
@@ -2289,25 +2477,33 @@ internal sealed class LoopbackHttpResponse
     /// <summary>
     /// 取得回應內容。
     /// </summary>
-    /// <value>回應內容。</value>
+    /// <value>
+    /// 回應內容。
+    /// </value>
     public byte[] Content { get; private set; }
 
     /// <summary>
     /// 取得內容類型。
     /// </summary>
-    /// <value>內容類型。</value>
+    /// <value>
+    /// 內容類型。
+    /// </value>
     public string ContentType { get; private set; }
 
     /// <summary>
     /// 取得宣告的內容長度。
     /// </summary>
-    /// <value>宣告的內容長度。</value>
+    /// <value>
+    /// 宣告的內容長度。
+    /// </value>
     public int? DeclaredContentLength { get; private set; }
 
     /// <summary>
     /// 取得 HTTP 狀態碼。
     /// </summary>
-    /// <value>HTTP 狀態碼。</value>
+    /// <value>
+    /// HTTP 狀態碼。
+    /// </value>
     public int StatusCode { get; private set; }
 }
 
@@ -2324,14 +2520,20 @@ internal sealed class TestRunner
     /// <summary>
     /// 取得失敗測試數量。
     /// </summary>
-    /// <value>失敗測試數量。</value>
+    /// <value>
+    /// 失敗測試數量。
+    /// </value>
     public int FailedCount { get; private set; }
 
     /// <summary>
     /// 加入測試案例。
     /// </summary>
-    /// <param name="name">測試名稱。</param>
-    /// <param name="body">測試主體。</param>
+    /// <param name="name">
+    /// 測試名稱。
+    /// </param>
+    /// <param name="body">
+    /// 測試主體。
+    /// </param>
     public void Add(string name, Func<Task> body)
     {
         _tests.Add(new TestCase(name, body));
@@ -2340,7 +2542,9 @@ internal sealed class TestRunner
     /// <summary>
     /// 依序執行所有測試案例。
     /// </summary>
-    /// <returns>代表測試執行流程的工作。</returns>
+    /// <returns>
+    /// 代表測試執行流程的工作。
+    /// </returns>
     public async Task RunAsync()
     {
         foreach (TestCase test in _tests)
@@ -2369,8 +2573,12 @@ internal sealed class TestCase
     /// <summary>
     /// 初始化 <see cref="TestCase"/> 類別的新執行個體。
     /// </summary>
-    /// <param name="name">測試名稱。</param>
-    /// <param name="body">測試主體。</param>
+    /// <param name="name">
+    /// 測試名稱。
+    /// </param>
+    /// <param name="body">
+    /// 測試主體。
+    /// </param>
     public TestCase(string name, Func<Task> body)
     {
         Name = name;
@@ -2380,13 +2588,17 @@ internal sealed class TestCase
     /// <summary>
     /// 取得測試名稱。
     /// </summary>
-    /// <value>測試名稱。</value>
+    /// <value>
+    /// 測試名稱。
+    /// </value>
     public string Name { get; private set; }
 
     /// <summary>
     /// 取得測試主體。
     /// </summary>
-    /// <value>測試主體。</value>
+    /// <value>
+    /// 測試主體。
+    /// </value>
     public Func<Task> Body { get; private set; }
 }
 
@@ -2398,10 +2610,18 @@ internal static class AssertEx
     /// <summary>
     /// 驗證兩個值相等。
     /// </summary>
-    /// <typeparam name="T">要比較的值型別。</typeparam>
-    /// <param name="expected">預期值。</param>
-    /// <param name="actual">實際值。</param>
-    /// <param name="message">失敗時顯示的訊息。</param>
+    /// <typeparam name="T">
+    /// 要比較的值型別。
+    /// </typeparam>
+    /// <param name="expected">
+    /// 預期值。
+    /// </param>
+    /// <param name="actual">
+    /// 實際值。
+    /// </param>
+    /// <param name="message">
+    /// 失敗時顯示的訊息。
+    /// </param>
     public static void Equal<T>(T expected, T actual, string message)
     {
         if (!EqualityComparer<T>.Default.Equals(expected, actual))
@@ -2413,8 +2633,12 @@ internal static class AssertEx
     /// <summary>
     /// 驗證條件為真。
     /// </summary>
-    /// <param name="condition">要驗證的條件。</param>
-    /// <param name="message">失敗時顯示的訊息。</param>
+    /// <param name="condition">
+    /// 要驗證的條件。
+    /// </param>
+    /// <param name="message">
+    /// 失敗時顯示的訊息。
+    /// </param>
     public static void True(bool condition, string message)
     {
         if (!condition)
@@ -2426,8 +2650,12 @@ internal static class AssertEx
     /// <summary>
     /// 驗證條件為假。
     /// </summary>
-    /// <param name="condition">要驗證的條件。</param>
-    /// <param name="message">失敗時顯示的訊息。</param>
+    /// <param name="condition">
+    /// 要驗證的條件。
+    /// </param>
+    /// <param name="message">
+    /// 失敗時顯示的訊息。
+    /// </param>
     public static void False(bool condition, string message)
     {
         if (condition)
@@ -2439,9 +2667,15 @@ internal static class AssertEx
     /// <summary>
     /// 驗證指定動作會擲回指定例外狀況。
     /// </summary>
-    /// <typeparam name="TException">預期的例外狀況型別。</typeparam>
-    /// <param name="action">要執行的動作。</param>
-    /// <param name="message">失敗時顯示的訊息。</param>
+    /// <typeparam name="TException">
+    /// 預期的例外狀況型別。
+    /// </typeparam>
+    /// <param name="action">
+    /// 要執行的動作。
+    /// </param>
+    /// <param name="message">
+    /// 失敗時顯示的訊息。
+    /// </param>
     public static void Throws<TException>(Action action, string message)
         where TException : Exception
     {

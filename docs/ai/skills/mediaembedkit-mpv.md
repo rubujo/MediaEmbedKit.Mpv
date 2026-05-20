@@ -31,7 +31,7 @@
 - 新 consumer 程式碼建議入口為 `MpvAppBuilder.BuildAsync` 搭配 `await using MpvPlayer`、`MpvMediaItem`、`WatchProperty<T>`；舊式 `new MpvPlayer(options) + Initialize()` 仍保留但不再是首選範例。
 - runtime asset 更新走 `MpvLibraryUpdateScheduler.StageAsync` + `ApplyStagedOnStartup`；不要直接覆蓋已載入處理序的 `libmpv-2.dll`。
 - runtime 啟動前的健檢呼叫 `MpvRuntimeHealthCheck.AnalyzeAsync`；散發授權判定呼叫 `MpvLicenseAuditor.AnalyzeAsync`。
-- C# XML 註解只能使用正體中文，且不得共用註解。
+- C# XML 註解只能使用正體中文，且不得共用註解；具有內容的 XML 文件註解標籤不得使用一行式排版，必須將開始標籤、內容與結束標籤分行。
 - 區域變數、`using` 陳述式與 `foreach` 迴圈變數使用明確型別；只有必要時才使用 `var`。
 - Markdown 文件使用正式、精煉的正體中文。
 - 提交訊息遵循慣例式提交，必須包含主旨與正文。

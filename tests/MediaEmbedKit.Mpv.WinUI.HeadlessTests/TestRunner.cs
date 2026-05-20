@@ -66,8 +66,12 @@ internal static class TestRunner
     /// 執行單一測試並於 stdout 印出結果；失敗時加入 <see cref="Failures"/>，
     /// 不擲例外避免擋住後續測試。
     /// </summary>
-    /// <param name="name">測試名稱。</param>
-    /// <param name="action">測試動作。</param>
+    /// <param name="name">
+    /// 測試名稱。
+    /// </param>
+    /// <param name="action">
+    /// 測試動作。
+    /// </param>
     private static void Run(string name, Action action)
     {
         try
@@ -259,8 +263,12 @@ internal static class TestRunner
     /// <summary>
     /// 條件斷言；失敗時擲出含訊息的例外。
     /// </summary>
-    /// <param name="condition">應為 true 的條件。</param>
-    /// <param name="message">失敗訊息。</param>
+    /// <param name="condition">
+    /// 應為 true 的條件。
+    /// </param>
+    /// <param name="message">
+    /// 失敗訊息。
+    /// </param>
     private static void Assert(bool condition, string message)
     {
         if (!condition)

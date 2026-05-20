@@ -16,12 +16,24 @@ public static class MpvAppBuilderRuntimeExtensions
     /// <summary>
     /// 安裝或更新 Windows x64 / ARM64 runtime 後再用其結果建立播放器選項。
     /// </summary>
-    /// <param name="builder">要設定的 <see cref="MpvAppBuilder"/>。</param>
-    /// <param name="runtimeDirectory">要建立或更新的執行階段資料夾。</param>
-    /// <param name="configure">可進一步調整 <see cref="MpvRuntimeInstallOptions"/> 的委派。</param>
-    /// <returns>傳入的 builder（fluent 風格）。</returns>
-    /// <exception cref="ArgumentNullException"><paramref name="builder"/> 為 <c>null</c>。</exception>
-    /// <exception cref="ArgumentException"><paramref name="runtimeDirectory"/> 為 <c>null</c> 或空白。</exception>
+    /// <param name="builder">
+    /// 要設定的 <see cref="MpvAppBuilder"/>。
+    /// </param>
+    /// <param name="runtimeDirectory">
+    /// 要建立或更新的執行階段資料夾。
+    /// </param>
+    /// <param name="configure">
+    /// 可進一步調整 <see cref="MpvRuntimeInstallOptions"/> 的委派。
+    /// </param>
+    /// <returns>
+    /// 傳入的 builder（fluent 風格）。
+    /// </returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="builder"/> 為 <c>null</c>。
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="runtimeDirectory"/> 為 <c>null</c> 或空白。
+    /// </exception>
     public static MpvAppBuilder UseWindowsRuntimeAutoInstall(
         this MpvAppBuilder builder,
         string runtimeDirectory,

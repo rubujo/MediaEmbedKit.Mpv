@@ -12,7 +12,9 @@ internal sealed class Utf8String : IDisposable
     /// <summary>
     /// 使用指定字串初始化 <see cref="Utf8String"/> 類別的新執行個體。
     /// </summary>
-    /// <param name="value">要轉換為 UTF-8 原生字串的受控字串。</param>
+    /// <param name="value">
+    /// 要轉換為 UTF-8 原生字串的受控字串。
+    /// </param>
     public Utf8String(string? value)
     {
         if (value == null)
@@ -30,7 +32,9 @@ internal sealed class Utf8String : IDisposable
     /// <summary>
     /// 取得 UTF-8 原生字串緩衝區指標。
     /// </summary>
-    /// <value>UTF-8 原生字串緩衝區指標。</value>
+    /// <value>
+    /// UTF-8 原生字串緩衝區指標。
+    /// </value>
     public IntPtr Pointer { get; private set; }
 
     /// <summary>
@@ -59,7 +63,9 @@ internal sealed class Utf8StringArray : IDisposable
     /// <summary>
     /// 使用指定字串陣列初始化 <see cref="Utf8StringArray"/> 類別的新執行個體。
     /// </summary>
-    /// <param name="values">要轉換為 UTF-8 原生字串陣列的受控字串陣列。</param>
+    /// <param name="values">
+    /// 要轉換為 UTF-8 原生字串陣列的受控字串陣列。
+    /// </param>
     public Utf8StringArray(string[] values)
     {
         _strings = new Utf8String[values.Length];
@@ -77,7 +83,9 @@ internal sealed class Utf8StringArray : IDisposable
     /// <summary>
     /// 取得 UTF-8 字串指標陣列的原生指標。
     /// </summary>
-    /// <value>以零結尾的 UTF-8 字串指標陣列。</value>
+    /// <value>
+    /// 以零結尾的 UTF-8 字串指標陣列。
+    /// </value>
     public IntPtr Pointer { get; private set; }
 
     /// <summary>
@@ -109,8 +117,12 @@ internal static class Utf8StringMarshaller
     /// <summary>
     /// 將零結尾 UTF-8 原生字串轉換為受控字串。
     /// </summary>
-    /// <param name="pointer">零結尾 UTF-8 原生字串指標。</param>
-    /// <returns>轉換後的受控字串；指標為零時為 <see langword="null"/>。</returns>
+    /// <param name="pointer">
+    /// 零結尾 UTF-8 原生字串指標。
+    /// </param>
+    /// <returns>
+    /// 轉換後的受控字串；指標為零時為 <see langword="null"/>。
+    /// </returns>
     public static string? PtrToString(IntPtr pointer)
     {
         if (pointer == IntPtr.Zero)

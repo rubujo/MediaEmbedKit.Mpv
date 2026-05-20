@@ -32,8 +32,12 @@ public static class FFmpegDownloader
     /// <summary>
     /// 取得指定 Windows 架構對應的 FFmpeg-Builds 發行資產檔名。
     /// </summary>
-    /// <param name="architecture">FFmpeg-Builds 目標架構。</param>
-    /// <returns>對應的 FFmpeg-Builds 發行資產檔名。</returns>
+    /// <param name="architecture">
+    /// FFmpeg-Builds 目標架構。
+    /// </param>
+    /// <returns>
+    /// 對應的 FFmpeg-Builds 發行資產檔名。
+    /// </returns>
     public static string GetWindowsAssetName(MpvWindowsArchitecture architecture)
     {
         switch (architecture)
@@ -50,10 +54,18 @@ public static class FFmpegDownloader
     /// <summary>
     /// 下載並解壓縮最新 yt-dlp FFmpeg-Builds Windows 發行檔（x64 或 ARM64，依 <see cref="FFmpegDownloadOptions.Architecture"/>）。
     /// </summary>
-    /// <param name="installDirectory">FFmpeg 與 FFprobe 要安裝到的資料夾。</param>
-    /// <param name="options">FFmpeg 下載選項；未指定時使用預設選項。</param>
-    /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
-    /// <returns>表示 FFmpeg 下載與解壓縮結果的工作。</returns>
+    /// <param name="installDirectory">
+    /// FFmpeg 與 FFprobe 要安裝到的資料夾。
+    /// </param>
+    /// <param name="options">
+    /// FFmpeg 下載選項；未指定時使用預設選項。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 可取消非同步作業的語彙基元。
+    /// </param>
+    /// <returns>
+    /// 表示 FFmpeg 下載與解壓縮結果的工作。
+    /// </returns>
     public static async Task<FFmpegDownloadResult> DownloadAndExtractLatestAsync(
         string installDirectory,
         FFmpegDownloadOptions? options = null,
@@ -193,7 +205,9 @@ public static class FFmpegDownloader
     /// <summary>
     /// 嘗試刪除下載壓縮檔；刪除失敗不擲例外（檔案無關功能、留下也不會壞）。
     /// </summary>
-    /// <param name="archivePath">要刪除的壓縮檔路徑。</param>
+    /// <param name="archivePath">
+    /// 要刪除的壓縮檔路徑。
+    /// </param>
     private static void TryDeleteArchive(string archivePath)
     {
         try
@@ -214,12 +228,24 @@ public static class FFmpegDownloader
     /// <summary>
     /// 驗證既有 FFmpeg-Builds 壓縮檔。
     /// </summary>
-    /// <param name="release">GitHub 發行資料。</param>
-    /// <param name="asset">發行資產。</param>
-    /// <param name="archivePath">既有壓縮檔路徑。</param>
-    /// <param name="options">下載選項。</param>
-    /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
-    /// <returns>表示驗證流程的工作。</returns>
+    /// <param name="release">
+    /// GitHub 發行資料。
+    /// </param>
+    /// <param name="asset">
+    /// 發行資產。
+    /// </param>
+    /// <param name="archivePath">
+    /// 既有壓縮檔路徑。
+    /// </param>
+    /// <param name="options">
+    /// 下載選項。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 可取消非同步作業的語彙基元。
+    /// </param>
+    /// <returns>
+    /// 表示驗證流程的工作。
+    /// </returns>
     private static async Task VerifyExistingArchiveAsync(
         GitHubRelease release,
         GitHubReleaseAsset asset,
@@ -240,8 +266,12 @@ public static class FFmpegDownloader
     /// <summary>
     /// 清理 runtime 資料夾中的 FFmpeg-Builds 壓縮檔。
     /// </summary>
-    /// <param name="installDirectory">FFmpeg 安裝資料夾。</param>
-    /// <param name="keepArchiveName">要保留的壓縮檔名稱；為 <see langword="null"/> 時全部刪除。</param>
+    /// <param name="installDirectory">
+    /// FFmpeg 安裝資料夾。
+    /// </param>
+    /// <param name="keepArchiveName">
+    /// 要保留的壓縮檔名稱；為 <see langword="null"/> 時全部刪除。
+    /// </param>
     private static void TryPruneFFmpegArchives(string installDirectory, string? keepArchiveName)
     {
         try
@@ -276,7 +306,9 @@ public static class FFmpegDownloader
     /// 殘留的 <c>{guid}/</c> 子資料夾。每次解壓用新 <c>Guid.NewGuid()</c>，不會清到
     /// 並發運行中的解壓 workspace；只清過往斷電 / 防毒鎖 / 強制中止留下的孤兒。
     /// </summary>
-    /// <param name="installDirectory">FFmpeg 安裝資料夾。</param>
+    /// <param name="installDirectory">
+    /// FFmpeg 安裝資料夾。
+    /// </param>
     private static void TryPruneFFmpegExtractWorkspace(string installDirectory)
     {
         string extractParent = Path.Combine(installDirectory, ".ffmpeg-extract");
@@ -312,8 +344,12 @@ public static class FFmpegDownloader
     /// <summary>
     /// 讀取已安裝 FFmpeg 可執行檔的版本。
     /// </summary>
-    /// <param name="executablePath">FFmpeg 可執行檔路徑。</param>
-    /// <returns>FFmpeg 版本字串；無法讀取時為 <see langword="null"/>。</returns>
+    /// <param name="executablePath">
+    /// FFmpeg 可執行檔路徑。
+    /// </param>
+    /// <returns>
+    /// FFmpeg 版本字串；無法讀取時為 <see langword="null"/>。
+    /// </returns>
     public static string? GetInstalledVersion(string executablePath)
     {
         if (string.IsNullOrWhiteSpace(executablePath) || !File.Exists(executablePath))
@@ -327,10 +363,18 @@ public static class FFmpegDownloader
     /// <summary>
     /// 判斷既有 FFmpeg 與 FFprobe 是否可直接重用。
     /// </summary>
-    /// <param name="ffmpegPath">FFmpeg 可執行檔路徑。</param>
-    /// <param name="ffprobePath">FFprobe 可執行檔路徑。</param>
-    /// <param name="options">FFmpeg 下載選項。</param>
-    /// <returns>可重用既有工具時為 <see langword="true"/>。</returns>
+    /// <param name="ffmpegPath">
+    /// FFmpeg 可執行檔路徑。
+    /// </param>
+    /// <param name="ffprobePath">
+    /// FFprobe 可執行檔路徑。
+    /// </param>
+    /// <param name="options">
+    /// FFmpeg 下載選項。
+    /// </param>
+    /// <returns>
+    /// 可重用既有工具時為 <see langword="true"/>。
+    /// </returns>
     private static bool CanUseExistingTools(string ffmpegPath, string ffprobePath, FFmpegDownloadOptions options)
     {
         // Idempotency skip：ffmpeg.exe + ffprobe.exe 已存在、呼叫端未要求覆寫或釘版 SHA
@@ -346,11 +390,21 @@ public static class FFmpegDownloader
     /// <summary>
     /// 判斷既有壓縮檔是否可用於嚴格驗證路徑。
     /// </summary>
-    /// <param name="ffmpegPath">FFmpeg 可執行檔路徑。</param>
-    /// <param name="ffprobePath">FFprobe 可執行檔路徑。</param>
-    /// <param name="archivePath">FFmpeg-Builds 壓縮檔路徑。</param>
-    /// <param name="options">FFmpeg 下載選項。</param>
-    /// <returns>可嘗試驗證既有壓縮檔時為 <see langword="true"/>。</returns>
+    /// <param name="ffmpegPath">
+    /// FFmpeg 可執行檔路徑。
+    /// </param>
+    /// <param name="ffprobePath">
+    /// FFprobe 可執行檔路徑。
+    /// </param>
+    /// <param name="archivePath">
+    /// FFmpeg-Builds 壓縮檔路徑。
+    /// </param>
+    /// <param name="options">
+    /// FFmpeg 下載選項。
+    /// </param>
+    /// <returns>
+    /// 可嘗試驗證既有壓縮檔時為 <see langword="true"/>。
+    /// </returns>
     private static bool CanVerifyExistingArchive(string ffmpegPath, string ffprobePath, string archivePath, FFmpegDownloadOptions options)
     {
         return File.Exists(ffmpegPath) &&
@@ -362,9 +416,15 @@ public static class FFmpegDownloader
     /// <summary>
     /// 從 GitHub 發行資料選取 FFmpeg 指定 Windows 架構的發行資產。
     /// </summary>
-    /// <param name="release">GitHub 發行資料。</param>
-    /// <param name="architecture">要選取的 Windows 架構。</param>
-    /// <returns>符合指定 Windows 架構的 GitHub 發行資產。</returns>
+    /// <param name="release">
+    /// GitHub 發行資料。
+    /// </param>
+    /// <param name="architecture">
+    /// 要選取的 Windows 架構。
+    /// </param>
+    /// <returns>
+    /// 符合指定 Windows 架構的 GitHub 發行資產。
+    /// </returns>
     private static GitHubReleaseAsset SelectAsset(GitHubRelease release, MpvWindowsArchitecture architecture)
     {
         string expectedName = GetWindowsAssetName(architecture);
@@ -380,12 +440,24 @@ public static class FFmpegDownloader
     /// <summary>
     /// 在策略要求時使用 FFmpeg-Builds 發行的 checksum 檔案驗證下載檔案。
     /// </summary>
-    /// <param name="release">GitHub 發行資料。</param>
-    /// <param name="asset">已下載的 FFmpeg 發行資產。</param>
-    /// <param name="filePath">已下載壓縮檔路徑。</param>
-    /// <param name="options">FFmpeg 下載選項。</param>
-    /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
-    /// <returns>表示驗證流程的工作。</returns>
+    /// <param name="release">
+    /// GitHub 發行資料。
+    /// </param>
+    /// <param name="asset">
+    /// 已下載的 FFmpeg 發行資產。
+    /// </param>
+    /// <param name="filePath">
+    /// 已下載壓縮檔路徑。
+    /// </param>
+    /// <param name="options">
+    /// FFmpeg 下載選項。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 可取消非同步作業的語彙基元。
+    /// </param>
+    /// <returns>
+    /// 表示驗證流程的工作。
+    /// </returns>
     private static async Task VerifyProviderChecksumIfRequiredAsync(
         GitHubRelease release,
         GitHubReleaseAsset asset,
@@ -413,8 +485,12 @@ public static class FFmpegDownloader
     /// <summary>
     /// 從 GitHub 發行資料選取 FFmpeg-Builds checksum 資產。
     /// </summary>
-    /// <param name="release">GitHub 發行資料。</param>
-    /// <returns>checksum 發行資產。</returns>
+    /// <param name="release">
+    /// GitHub 發行資料。
+    /// </param>
+    /// <returns>
+    /// checksum 發行資產。
+    /// </returns>
     private static GitHubReleaseAsset SelectChecksumAsset(GitHubRelease release)
     {
         GitHubReleaseAsset? asset = release.Assets.FirstOrDefault(item => string.Equals(item.Name, ChecksumAssetName, StringComparison.OrdinalIgnoreCase));
@@ -429,9 +505,15 @@ public static class FFmpegDownloader
     /// <summary>
     /// 從解壓縮資料夾尋找指定可執行檔。
     /// </summary>
-    /// <param name="extractDirectory">解壓縮資料夾。</param>
-    /// <param name="executableName">要尋找的可執行檔名稱。</param>
-    /// <returns>找到的可執行檔完整路徑。</returns>
+    /// <param name="extractDirectory">
+    /// 解壓縮資料夾。
+    /// </param>
+    /// <param name="executableName">
+    /// 要尋找的可執行檔名稱。
+    /// </param>
+    /// <returns>
+    /// 找到的可執行檔完整路徑。
+    /// </returns>
     private static string FindExtractedExecutable(string extractDirectory, string executableName)
     {
         string? executablePath = Directory.GetFiles(extractDirectory, executableName, SearchOption.AllDirectories).FirstOrDefault();

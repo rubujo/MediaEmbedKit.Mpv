@@ -15,10 +15,18 @@ public static class YtDlpDownloader
     /// <summary>
     /// 下載最新 yt-dlp Windows 可執行檔到指定資料夾。
     /// </summary>
-    /// <param name="downloadDirectory">yt-dlp 可執行檔要下載到的資料夾。</param>
-    /// <param name="options">yt-dlp 下載選項；未指定時使用預設選項。</param>
-    /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
-    /// <returns>表示 yt-dlp 下載結果的工作。</returns>
+    /// <param name="downloadDirectory">
+    /// yt-dlp 可執行檔要下載到的資料夾。
+    /// </param>
+    /// <param name="options">
+    /// yt-dlp 下載選項；未指定時使用預設選項。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 可取消非同步作業的語彙基元。
+    /// </param>
+    /// <returns>
+    /// 表示 yt-dlp 下載結果的工作。
+    /// </returns>
     public static async Task<YtDlpDownloadResult> DownloadLatestExecutableAsync(
         string downloadDirectory,
         YtDlpDownloadOptions? options = null,
@@ -73,10 +81,18 @@ public static class YtDlpDownloader
     /// <summary>
     /// 安裝或更新指定路徑的 yt-dlp Windows 可執行檔。
     /// </summary>
-    /// <param name="executablePath">yt-dlp 可執行檔目標路徑。</param>
-    /// <param name="options">yt-dlp 下載選項；未指定時使用預設選項。</param>
-    /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
-    /// <returns>表示 yt-dlp 安裝或更新結果的工作。</returns>
+    /// <param name="executablePath">
+    /// yt-dlp 可執行檔目標路徑。
+    /// </param>
+    /// <param name="options">
+    /// yt-dlp 下載選項；未指定時使用預設選項。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 可取消非同步作業的語彙基元。
+    /// </param>
+    /// <returns>
+    /// 表示 yt-dlp 安裝或更新結果的工作。
+    /// </returns>
     public static async Task<YtDlpDownloadResult> InstallOrUpdateLatestExecutableAsync(
         string executablePath,
         YtDlpDownloadOptions? options = null,
@@ -158,8 +174,12 @@ public static class YtDlpDownloader
     /// <summary>
     /// 讀取已安裝 yt-dlp 可執行檔的版本。
     /// </summary>
-    /// <param name="executablePath">yt-dlp 可執行檔路徑。</param>
-    /// <returns>yt-dlp 版本字串；無法讀取時為 <see langword="null"/>。</returns>
+    /// <param name="executablePath">
+    /// yt-dlp 可執行檔路徑。
+    /// </param>
+    /// <returns>
+    /// yt-dlp 版本字串；無法讀取時為 <see langword="null"/>。
+    /// </returns>
     public static string? GetInstalledVersion(string executablePath)
     {
         if (string.IsNullOrWhiteSpace(executablePath) || !File.Exists(executablePath))
@@ -173,11 +193,21 @@ public static class YtDlpDownloader
     /// <summary>
     /// 執行 yt-dlp 內建的自我更新命令。
     /// </summary>
-    /// <param name="executablePath">yt-dlp 可執行檔路徑。</param>
-    /// <param name="updateTo">yt-dlp 更新目標；未指定時更新到通道預設版本。</param>
-    /// <param name="timeout">等待更新命令完成的逾時時間。</param>
-    /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
-    /// <returns>表示 yt-dlp 自我更新命令結果的工作。</returns>
+    /// <param name="executablePath">
+    /// yt-dlp 可執行檔路徑。
+    /// </param>
+    /// <param name="updateTo">
+    /// yt-dlp 更新目標；未指定時更新到通道預設版本。
+    /// </param>
+    /// <param name="timeout">
+    /// 等待更新命令完成的逾時時間。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 可取消非同步作業的語彙基元。
+    /// </param>
+    /// <returns>
+    /// 表示 yt-dlp 自我更新命令結果的工作。
+    /// </returns>
     public static Task<ToolUpdateResult> RunSelfUpdateAsync(
         string executablePath,
         string? updateTo = null,
@@ -203,8 +233,12 @@ public static class YtDlpDownloader
     /// <summary>
     /// 將命令列引數值加上引號並逸出內含引號。
     /// </summary>
-    /// <param name="value">要加入命令列的原始值。</param>
-    /// <returns>可放入命令列的引號字串。</returns>
+    /// <param name="value">
+    /// 要加入命令列的原始值。
+    /// </param>
+    /// <returns>
+    /// 可放入命令列的引號字串。
+    /// </returns>
     private static string Quote(string value)
     {
         return "\"" + value.Replace("\"", "\\\"") + "\"";
@@ -213,8 +247,12 @@ public static class YtDlpDownloader
     /// <summary>
     /// 取得指定 yt-dlp 發行通道的 GitHub 最新發行 API URI。
     /// </summary>
-    /// <param name="channel">要查詢的 yt-dlp 發行通道。</param>
-    /// <returns>對應通道的 GitHub 最新發行 API URI。</returns>
+    /// <param name="channel">
+    /// 要查詢的 yt-dlp 發行通道。
+    /// </param>
+    /// <returns>
+    /// 對應通道的 GitHub 最新發行 API URI。
+    /// </returns>
     /// <remarks>
     /// 三個 yt-dlp repo（主 / master-builds / nightly-builds）均為「單軌 release」結構：
     /// tag 為日期版本（如 <c>2026.05.16</c> 或 <c>2026.05.16.203101</c>），無另外的
@@ -239,8 +277,12 @@ public static class YtDlpDownloader
     /// <summary>
     /// 取得指定 yt-dlp 發行通道對應的 GitHub repository 名稱。
     /// </summary>
-    /// <param name="channel">要查詢的 yt-dlp 發行通道。</param>
-    /// <returns>對應通道的 GitHub repository 名稱。</returns>
+    /// <param name="channel">
+    /// 要查詢的 yt-dlp 發行通道。
+    /// </param>
+    /// <returns>
+    /// 對應通道的 GitHub repository 名稱。
+    /// </returns>
     private static string GetRepositoryName(YtDlpReleaseChannel channel)
     {
         switch (channel)
@@ -257,9 +299,15 @@ public static class YtDlpDownloader
     /// <summary>
     /// 從 GitHub 發行資料選取符合架構的 yt-dlp 發行資產。
     /// </summary>
-    /// <param name="release">GitHub 發行資料。</param>
-    /// <param name="architecture">要選取的 yt-dlp Windows 架構。</param>
-    /// <returns>符合架構的 GitHub 發行資產。</returns>
+    /// <param name="release">
+    /// GitHub 發行資料。
+    /// </param>
+    /// <param name="architecture">
+    /// 要選取的 yt-dlp Windows 架構。
+    /// </param>
+    /// <returns>
+    /// 符合架構的 GitHub 發行資產。
+    /// </returns>
     private static GitHubReleaseAsset SelectAsset(GitHubRelease release, YtDlpWindowsArchitecture architecture)
     {
         string assetName = architecture.ToAssetName();
@@ -275,12 +323,24 @@ public static class YtDlpDownloader
     /// <summary>
     /// 在策略要求時使用 yt-dlp 發行的 SHA2-256SUMS 驗證下載檔案。
     /// </summary>
-    /// <param name="release">GitHub 發行資料。</param>
-    /// <param name="asset">已下載的 yt-dlp 發行資產。</param>
-    /// <param name="filePath">已下載檔案路徑。</param>
-    /// <param name="options">yt-dlp 下載選項。</param>
-    /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
-    /// <returns>表示驗證流程的工作。</returns>
+    /// <param name="release">
+    /// GitHub 發行資料。
+    /// </param>
+    /// <param name="asset">
+    /// 已下載的 yt-dlp 發行資產。
+    /// </param>
+    /// <param name="filePath">
+    /// 已下載檔案路徑。
+    /// </param>
+    /// <param name="options">
+    /// yt-dlp 下載選項。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 可取消非同步作業的語彙基元。
+    /// </param>
+    /// <returns>
+    /// 表示驗證流程的工作。
+    /// </returns>
     private static async Task VerifyProviderChecksumIfRequiredAsync(
         GitHubRelease release,
         GitHubReleaseAsset asset,
@@ -308,9 +368,15 @@ public static class YtDlpDownloader
     /// <summary>
     /// 從 GitHub 發行資料選取指定名稱的 checksum 資產。
     /// </summary>
-    /// <param name="release">GitHub 發行資料。</param>
-    /// <param name="assetName">要選取的 checksum 資產名稱。</param>
-    /// <returns>符合名稱的 GitHub 發行資產。</returns>
+    /// <param name="release">
+    /// GitHub 發行資料。
+    /// </param>
+    /// <param name="assetName">
+    /// 要選取的 checksum 資產名稱。
+    /// </param>
+    /// <returns>
+    /// 符合名稱的 GitHub 發行資產。
+    /// </returns>
     private static GitHubReleaseAsset SelectChecksumAsset(GitHubRelease release, string assetName)
     {
         GitHubReleaseAsset? asset = release.Assets.FirstOrDefault(item => string.Equals(item.Name, assetName, StringComparison.OrdinalIgnoreCase));

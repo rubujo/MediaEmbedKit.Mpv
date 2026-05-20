@@ -20,7 +20,9 @@ internal static class SampleEncodingHelper
     /// 在使用者 Videos 資料夾建立並回傳一個帶時間戳記的 MP4 輸出路徑；
     /// Videos 資料夾不可用時退至 <see cref="Path.GetTempPath"/>。
     /// </summary>
-    /// <returns>新輸出檔路徑。</returns>
+    /// <returns>
+    /// 新輸出檔路徑。
+    /// </returns>
     public static string BuildTimestampedOutputPath()
     {
         string folder = Environment.GetFolderPath(Environment.SpecialFolder.MyVideos);
@@ -37,10 +39,18 @@ internal static class SampleEncodingHelper
     /// <summary>
     /// 把指定來源前 5 秒轉碼成 H.264 + AAC mp4 寫入使用者 Videos 資料夾，並把進度透過 callback 送回。
     /// </summary>
-    /// <param name="source">媒體檔案路徑或網址。</param>
-    /// <param name="basePlayerOptions">基準播放器選項（將被複製，不會被修改）。</param>
-    /// <param name="appendLine">將文字訊息送回 UI 的委派。</param>
-    /// <returns>編碼結果。</returns>
+    /// <param name="source">
+    /// 媒體檔案路徑或網址。
+    /// </param>
+    /// <param name="basePlayerOptions">
+    /// 基準播放器選項（將被複製，不會被修改）。
+    /// </param>
+    /// <param name="appendLine">
+    /// 將文字訊息送回 UI 的委派。
+    /// </param>
+    /// <returns>
+    /// 編碼結果。
+    /// </returns>
     public static async Task<MpvEncodingResult> EncodeFirstFiveSecondsToMp4Async(
         string source,
         MpvPlayerOptions basePlayerOptions,

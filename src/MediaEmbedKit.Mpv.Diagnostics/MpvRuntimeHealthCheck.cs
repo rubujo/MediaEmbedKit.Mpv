@@ -41,10 +41,18 @@ public static class MpvRuntimeHealthCheck
     /// <summary>
     /// 分析指定執行階段資料夾的健康狀態。
     /// </summary>
-    /// <param name="runtimeDirectory">要分析的執行階段資料夾。</param>
-    /// <param name="probeLibMpv">是否實際嘗試載入 libmpv 與建立 mpv handle。</param>
-    /// <param name="cancellationToken">取消分析的 token。</param>
-    /// <returns>分析結果。</returns>
+    /// <param name="runtimeDirectory">
+    /// 要分析的執行階段資料夾。
+    /// </param>
+    /// <param name="probeLibMpv">
+    /// 是否實際嘗試載入 libmpv 與建立 mpv handle。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 取消分析的 token。
+    /// </param>
+    /// <returns>
+    /// 分析結果。
+    /// </returns>
     public static Task<MpvRuntimeHealthReport> AnalyzeAsync(
         string runtimeDirectory,
         bool probeLibMpv = false,
@@ -68,9 +76,15 @@ public static class MpvRuntimeHealthCheck
     /// <summary>
     /// 在當前執行緒同步分析指定執行階段資料夾的健康狀態。
     /// </summary>
-    /// <param name="runtimeDirectory">已格式化為完整路徑的執行階段資料夾。</param>
-    /// <param name="probeLibMpv">是否實際嘗試載入 libmpv 與建立 mpv handle。</param>
-    /// <returns>分析結果。</returns>
+    /// <param name="runtimeDirectory">
+    /// 已格式化為完整路徑的執行階段資料夾。
+    /// </param>
+    /// <param name="probeLibMpv">
+    /// 是否實際嘗試載入 libmpv 與建立 mpv handle。
+    /// </param>
+    /// <returns>
+    /// 分析結果。
+    /// </returns>
     private static MpvRuntimeHealthReport Analyze(string runtimeDirectory, bool probeLibMpv)
     {
         List<string> errors = new List<string>();
@@ -143,8 +157,12 @@ public static class MpvRuntimeHealthCheck
     /// <summary>
     /// 將 client API 版本整數轉成 major.minor 文字。
     /// </summary>
-    /// <param name="rawVersion">由 libmpv 回傳的 client API 版本整數。</param>
-    /// <returns>major.minor 文字。</returns>
+    /// <param name="rawVersion">
+    /// 由 libmpv 回傳的 client API 版本整數。
+    /// </param>
+    /// <returns>
+    /// major.minor 文字。
+    /// </returns>
     private static string ToVersionString(uint rawVersion)
     {
         int major = (int)((rawVersion >> 16) & 0xFFFF);
@@ -161,16 +179,36 @@ public sealed class MpvRuntimeHealthReport
     /// <summary>
     /// 初始化 <see cref="MpvRuntimeHealthReport"/> 類別的新執行個體。
     /// </summary>
-    /// <param name="runtimeDirectory">被檢查的執行階段資料夾。</param>
-    /// <param name="isLibMpvPresent">libmpv-2.dll 是否存在。</param>
-    /// <param name="canLoadLibMpv">libmpv 是否可被當前處理序載入。</param>
-    /// <param name="canInitializePlayer">是否能建立並初始化 mpv player。</param>
-    /// <param name="clientApiVersion">已建立的 mpv player 回報的 client API 版本字串。</param>
-    /// <param name="isYtdlpPresent">yt-dlp.exe 是否存在。</param>
-    /// <param name="isDenoPresent">deno.exe 是否存在。</param>
-    /// <param name="isFFmpegPresent">ffmpeg.exe 是否存在。</param>
-    /// <param name="isFFprobePresent">ffprobe.exe 是否存在。</param>
-    /// <param name="errors">分析過程蒐集到的錯誤訊息。</param>
+    /// <param name="runtimeDirectory">
+    /// 被檢查的執行階段資料夾。
+    /// </param>
+    /// <param name="isLibMpvPresent">
+    /// libmpv-2.dll 是否存在。
+    /// </param>
+    /// <param name="canLoadLibMpv">
+    /// libmpv 是否可被當前處理序載入。
+    /// </param>
+    /// <param name="canInitializePlayer">
+    /// 是否能建立並初始化 mpv player。
+    /// </param>
+    /// <param name="clientApiVersion">
+    /// 已建立的 mpv player 回報的 client API 版本字串。
+    /// </param>
+    /// <param name="isYtdlpPresent">
+    /// yt-dlp.exe 是否存在。
+    /// </param>
+    /// <param name="isDenoPresent">
+    /// deno.exe 是否存在。
+    /// </param>
+    /// <param name="isFFmpegPresent">
+    /// ffmpeg.exe 是否存在。
+    /// </param>
+    /// <param name="isFFprobePresent">
+    /// ffprobe.exe 是否存在。
+    /// </param>
+    /// <param name="errors">
+    /// 分析過程蒐集到的錯誤訊息。
+    /// </param>
     internal MpvRuntimeHealthReport(
         string runtimeDirectory,
         bool isLibMpvPresent,
@@ -198,67 +236,89 @@ public sealed class MpvRuntimeHealthReport
     /// <summary>
     /// 取得被檢查的執行階段資料夾。
     /// </summary>
-    /// <value>執行階段資料夾完整路徑。</value>
+    /// <value>
+    /// 執行階段資料夾完整路徑。
+    /// </value>
     public string RuntimeDirectory { get; }
 
     /// <summary>
     /// 取得 libmpv-2.dll 是否存在。
     /// </summary>
-    /// <value>存在時為 <see langword="true"/>。</value>
+    /// <value>
+    /// 存在時為 <see langword="true"/>。
+    /// </value>
     public bool IsLibMpvPresent { get; }
 
     /// <summary>
     /// 取得 libmpv 是否可被當前處理序載入。
     /// </summary>
-    /// <value>可載入時為 <see langword="true"/>。</value>
+    /// <value>
+    /// 可載入時為 <see langword="true"/>。
+    /// </value>
     public bool CanLoadLibMpv { get; }
 
     /// <summary>
     /// 取得是否能建立並初始化 mpv player。
     /// </summary>
-    /// <value>可成功初始化時為 <see langword="true"/>。</value>
+    /// <value>
+    /// 可成功初始化時為 <see langword="true"/>。
+    /// </value>
     public bool CanInitializePlayer { get; }
 
     /// <summary>
     /// 取得已建立的 mpv player 回報的 client API 版本字串。
     /// </summary>
-    /// <value>例如 <c>2.5</c>；未測試或失敗時為 <see langword="null"/>。</value>
+    /// <value>
+    /// 例如 <c>2.5</c>；未測試或失敗時為 <see langword="null"/>。
+    /// </value>
     public string? ClientApiVersion { get; }
 
     /// <summary>
     /// 取得 yt-dlp.exe 是否存在。
     /// </summary>
-    /// <value>存在時為 <see langword="true"/>。</value>
+    /// <value>
+    /// 存在時為 <see langword="true"/>。
+    /// </value>
     public bool IsYtdlpPresent { get; }
 
     /// <summary>
     /// 取得 deno.exe 是否存在。
     /// </summary>
-    /// <value>存在時為 <see langword="true"/>。</value>
+    /// <value>
+    /// 存在時為 <see langword="true"/>。
+    /// </value>
     public bool IsDenoPresent { get; }
 
     /// <summary>
     /// 取得 ffmpeg.exe 是否存在。
     /// </summary>
-    /// <value>存在時為 <see langword="true"/>。</value>
+    /// <value>
+    /// 存在時為 <see langword="true"/>。
+    /// </value>
     public bool IsFFmpegPresent { get; }
 
     /// <summary>
     /// 取得 ffprobe.exe 是否存在。
     /// </summary>
-    /// <value>存在時為 <see langword="true"/>。</value>
+    /// <value>
+    /// 存在時為 <see langword="true"/>。
+    /// </value>
     public bool IsFFprobePresent { get; }
 
     /// <summary>
     /// 取得分析過程蒐集到的錯誤訊息。
     /// </summary>
-    /// <value>錯誤訊息集合；通過時為空集合。</value>
+    /// <value>
+    /// 錯誤訊息集合；通過時為空集合。
+    /// </value>
     public IReadOnlyList<string> Errors { get; }
 
     /// <summary>
     /// 取得整體執行階段是否處於可用狀態（核心 libmpv 可用）。
     /// </summary>
-    /// <value>libmpv 存在且未發現錯誤時為 <see langword="true"/>。</value>
+    /// <value>
+    /// libmpv 存在且未發現錯誤時為 <see langword="true"/>。
+    /// </value>
     /// <remarks>
     /// 「Healthy」表示「能播媒體」的最小條件；要判斷「完整 runtime 已就緒」
     /// （含後處理工具）請改用 <see cref="IsComplete"/> 或 <see cref="IsHealthyFor"/>。
@@ -272,7 +332,9 @@ public sealed class MpvRuntimeHealthReport
     /// 取得整體執行階段是否為「完整 runtime」，亦即除核心 libmpv 外，
     /// yt-dlp / deno / ffmpeg / ffprobe 等附帶工具也都齊備。
     /// </summary>
-    /// <value>核心 libmpv 與全部附帶工具皆就緒時為 <see langword="true"/>。</value>
+    /// <value>
+    /// 核心 libmpv 與全部附帶工具皆就緒時為 <see langword="true"/>。
+    /// </value>
     /// <remarks>
     /// 適合用來判斷「能下載 URL + 後處理」的場景。若應用程式僅需播放本機檔，
     /// 用 <see cref="IsHealthy"/> 即可；若需自訂必備工具子集，請用 <see cref="IsHealthyFor"/>。
@@ -294,8 +356,12 @@ public sealed class MpvRuntimeHealthReport
     /// 任何指定工具缺少即回傳 <see langword="false"/>；核心 libmpv 永遠必備，
     /// 無需在 <paramref name="requiredTools"/> 中重複列出。
     /// </summary>
-    /// <param name="requiredTools">必備附帶工具集合。</param>
-    /// <returns>所有指定工具皆存在且核心 libmpv 健康時為 <see langword="true"/>。</returns>
+    /// <param name="requiredTools">
+    /// 必備附帶工具集合。
+    /// </param>
+    /// <returns>
+    /// 所有指定工具皆存在且核心 libmpv 健康時為 <see langword="true"/>。
+    /// </returns>
     public bool IsHealthyFor(MpvRuntimeTools requiredTools)
     {
         if (!IsHealthy)

@@ -11,7 +11,9 @@ public static class MauiProgram
     /// <summary>
     /// 建立 MAUI 範例應用程式。
     /// </summary>
-    /// <returns>已設定 MediaEmbedKit.Mpv handler 的 MAUI 應用程式。</returns>
+    /// <returns>
+    /// 已設定 MediaEmbedKit.Mpv handler 的 MAUI 應用程式。
+    /// </returns>
     public static MauiApp CreateMauiApp()
     {
         return MauiApp.CreateBuilder()

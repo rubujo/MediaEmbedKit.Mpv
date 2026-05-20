@@ -27,7 +27,9 @@ public static class MpvWindowsArchitectureExtensions
     /// <summary>
     /// 取得目前處理序適用的 Windows libmpv 建置架構。
     /// </summary>
-    /// <returns>目前處理序適用的 Windows libmpv 架構。</returns>
+    /// <returns>
+    /// 目前處理序適用的 Windows libmpv 架構。
+    /// </returns>
     /// <remarks>
     /// 以 <see cref="RuntimeInformation.ProcessArchitecture"/> 為準。Windows on ARM 上若處理序為
     /// x64（透過 x64 emulation 執行），會回傳 <see cref="MpvWindowsArchitecture.X64"/>；
@@ -59,8 +61,12 @@ public static class MpvWindowsArchitectureExtensions
     /// <summary>
     /// 將 Windows libmpv 架構轉換為發行資產名稱中的架構片段。
     /// </summary>
-    /// <param name="architecture">要轉換的 Windows libmpv 架構。</param>
-    /// <returns>發行資產名稱使用的架構片段。</returns>
+    /// <param name="architecture">
+    /// 要轉換的 Windows libmpv 架構。
+    /// </param>
+    /// <returns>
+    /// 發行資產名稱使用的架構片段。
+    /// </returns>
     /// <remarks>
     /// shinchiro 與 zhongfly 的 libmpv 發行檔均採用相同 token 命名規範：
     /// <c>mpv-dev-{token}-{date}-git-{commit}.7z</c>，其中 x64 為

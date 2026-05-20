@@ -28,14 +28,30 @@ public static class MpvEncoder
     /// <summary>
     /// 以非同步方式編碼單一輸入並寫出到 <see cref="MpvEncodingOptions.OutputPath"/>。
     /// </summary>
-    /// <param name="inputPathOrUrl">輸入媒體的檔案路徑或網址。</param>
-    /// <param name="encodingOptions">已配置好的 encoding mode 選項。</param>
-    /// <param name="playerOptions">建立 <see cref="MpvPlayer"/> 時使用的選項；<see langword="null"/> 表示採用預設值。</param>
-    /// <param name="progress">進度回報；<see langword="null"/> 表示不回報。</param>
-    /// <param name="cancellationToken">取消編碼的權杖；觸發取消時會對 player 呼叫 <see cref="MpvPlayer.Stop()"/>。</param>
-    /// <returns>編碼結果。</returns>
-    /// <exception cref="ArgumentException"><paramref name="inputPathOrUrl"/> 為空白時擲出。</exception>
-    /// <exception cref="ArgumentNullException"><paramref name="encodingOptions"/> 為 <see langword="null"/> 時擲出。</exception>
+    /// <param name="inputPathOrUrl">
+    /// 輸入媒體的檔案路徑或網址。
+    /// </param>
+    /// <param name="encodingOptions">
+    /// 已配置好的 encoding mode 選項。
+    /// </param>
+    /// <param name="playerOptions">
+    /// 建立 <see cref="MpvPlayer"/> 時使用的選項；<see langword="null"/> 表示採用預設值。
+    /// </param>
+    /// <param name="progress">
+    /// 進度回報；<see langword="null"/> 表示不回報。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 取消編碼的權杖；觸發取消時會對 player 呼叫 <see cref="MpvPlayer.Stop()"/>。
+    /// </param>
+    /// <returns>
+    /// 編碼結果。
+    /// </returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="inputPathOrUrl"/> 為空白時擲出。
+    /// </exception>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="encodingOptions"/> 為 <see langword="null"/> 時擲出。
+    /// </exception>
     public static Task<MpvEncodingResult> EncodeAsync(
         string inputPathOrUrl,
         MpvEncodingOptions encodingOptions,
@@ -59,12 +75,24 @@ public static class MpvEncoder
     /// <summary>
     /// 以 stream-copy 模式重新封裝媒體（不重新編碼視訊與音訊）。
     /// </summary>
-    /// <param name="inputPathOrUrl">輸入媒體的檔案路徑或網址。</param>
-    /// <param name="outputPath">輸出檔案路徑；副檔名決定容器格式。</param>
-    /// <param name="playerOptions">建立 <see cref="MpvPlayer"/> 時使用的選項。</param>
-    /// <param name="progress">進度回報。</param>
-    /// <param name="cancellationToken">取消編碼的權杖。</param>
-    /// <returns>編碼結果。</returns>
+    /// <param name="inputPathOrUrl">
+    /// 輸入媒體的檔案路徑或網址。
+    /// </param>
+    /// <param name="outputPath">
+    /// 輸出檔案路徑；副檔名決定容器格式。
+    /// </param>
+    /// <param name="playerOptions">
+    /// 建立 <see cref="MpvPlayer"/> 時使用的選項。
+    /// </param>
+    /// <param name="progress">
+    /// 進度回報。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 取消編碼的權杖。
+    /// </param>
+    /// <returns>
+    /// 編碼結果。
+    /// </returns>
     public static Task<MpvEncodingResult> RemuxAsync(
         string inputPathOrUrl,
         string outputPath,
@@ -86,13 +114,27 @@ public static class MpvEncoder
     /// <summary>
     /// 抽取輸入媒體的音訊軌並以指定編碼器輸出。
     /// </summary>
-    /// <param name="inputPathOrUrl">輸入媒體的檔案路徑或網址。</param>
-    /// <param name="outputPath">輸出檔案路徑。</param>
-    /// <param name="audioCodec">輸出音訊編碼器；可用 <see cref="MpvAudioCodecPreset.Copy"/> 直接 stream-copy。</param>
-    /// <param name="playerOptions">建立 <see cref="MpvPlayer"/> 時使用的選項。</param>
-    /// <param name="progress">進度回報。</param>
-    /// <param name="cancellationToken">取消編碼的權杖。</param>
-    /// <returns>編碼結果。</returns>
+    /// <param name="inputPathOrUrl">
+    /// 輸入媒體的檔案路徑或網址。
+    /// </param>
+    /// <param name="outputPath">
+    /// 輸出檔案路徑。
+    /// </param>
+    /// <param name="audioCodec">
+    /// 輸出音訊編碼器；可用 <see cref="MpvAudioCodecPreset.Copy"/> 直接 stream-copy。
+    /// </param>
+    /// <param name="playerOptions">
+    /// 建立 <see cref="MpvPlayer"/> 時使用的選項。
+    /// </param>
+    /// <param name="progress">
+    /// 進度回報。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 取消編碼的權杖。
+    /// </param>
+    /// <returns>
+    /// 編碼結果。
+    /// </returns>
     public static Task<MpvEncodingResult> ExtractAudioAsync(
         string inputPathOrUrl,
         string outputPath,
@@ -115,13 +157,27 @@ public static class MpvEncoder
     /// <summary>
     /// 抽取輸入媒體的視訊軌並以指定編碼器輸出（無音訊）。
     /// </summary>
-    /// <param name="inputPathOrUrl">輸入媒體的檔案路徑或網址。</param>
-    /// <param name="outputPath">輸出檔案路徑。</param>
-    /// <param name="videoCodec">輸出視訊編碼器；可用 <see cref="MpvVideoCodecPreset.Copy"/> 直接 stream-copy。</param>
-    /// <param name="playerOptions">建立 <see cref="MpvPlayer"/> 時使用的選項。</param>
-    /// <param name="progress">進度回報。</param>
-    /// <param name="cancellationToken">取消編碼的權杖。</param>
-    /// <returns>編碼結果。</returns>
+    /// <param name="inputPathOrUrl">
+    /// 輸入媒體的檔案路徑或網址。
+    /// </param>
+    /// <param name="outputPath">
+    /// 輸出檔案路徑。
+    /// </param>
+    /// <param name="videoCodec">
+    /// 輸出視訊編碼器；可用 <see cref="MpvVideoCodecPreset.Copy"/> 直接 stream-copy。
+    /// </param>
+    /// <param name="playerOptions">
+    /// 建立 <see cref="MpvPlayer"/> 時使用的選項。
+    /// </param>
+    /// <param name="progress">
+    /// 進度回報。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 取消編碼的權杖。
+    /// </param>
+    /// <returns>
+    /// 編碼結果。
+    /// </returns>
     public static Task<MpvEncodingResult> ExtractVideoAsync(
         string inputPathOrUrl,
         string outputPath,
@@ -144,12 +200,24 @@ public static class MpvEncoder
     /// <summary>
     /// 在指定時間點抽取單一影格並輸出為圖片。
     /// </summary>
-    /// <param name="inputPathOrUrl">輸入媒體的檔案路徑或網址。</param>
-    /// <param name="at">要抽取的時間點。</param>
-    /// <param name="outputPath">輸出影格檔案路徑；副檔名決定影像格式（png / jpg / webp 等由 mpv 推斷）。</param>
-    /// <param name="playerOptions">建立 <see cref="MpvPlayer"/> 時使用的選項。</param>
-    /// <param name="cancellationToken">取消編碼的權杖。</param>
-    /// <returns>編碼結果；<see cref="MpvEncodingResult.OutputBytes"/> 對應產生的影像位元組數。</returns>
+    /// <param name="inputPathOrUrl">
+    /// 輸入媒體的檔案路徑或網址。
+    /// </param>
+    /// <param name="at">
+    /// 要抽取的時間點。
+    /// </param>
+    /// <param name="outputPath">
+    /// 輸出影格檔案路徑；副檔名決定影像格式（png / jpg / webp 等由 mpv 推斷）。
+    /// </param>
+    /// <param name="playerOptions">
+    /// 建立 <see cref="MpvPlayer"/> 時使用的選項。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 取消編碼的權杖。
+    /// </param>
+    /// <returns>
+    /// 編碼結果；<see cref="MpvEncodingResult.OutputBytes"/> 對應產生的影像位元組數。
+    /// </returns>
     public static Task<MpvEncodingResult> ExtractFrameAsync(
         string inputPathOrUrl,
         TimeSpan at,
@@ -178,11 +246,21 @@ public static class MpvEncoder
     /// <summary>
     /// 在多個時間點分別抽取影格並輸出為圖片。
     /// </summary>
-    /// <param name="inputPathOrUrl">輸入媒體的檔案路徑或網址。</param>
-    /// <param name="frames">時間點與對應輸出路徑序列。</param>
-    /// <param name="playerOptions">建立 <see cref="MpvPlayer"/> 時使用的選項。</param>
-    /// <param name="cancellationToken">取消編碼的權杖。</param>
-    /// <returns>依輸入順序對應的結果清單。</returns>
+    /// <param name="inputPathOrUrl">
+    /// 輸入媒體的檔案路徑或網址。
+    /// </param>
+    /// <param name="frames">
+    /// 時間點與對應輸出路徑序列。
+    /// </param>
+    /// <param name="playerOptions">
+    /// 建立 <see cref="MpvPlayer"/> 時使用的選項。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 取消編碼的權杖。
+    /// </param>
+    /// <returns>
+    /// 依輸入順序對應的結果清單。
+    /// </returns>
     public static async Task<IReadOnlyList<MpvEncodingResult>> ExtractFramesAsync(
         string inputPathOrUrl,
         IEnumerable<KeyValuePair<TimeSpan, string>> frames,
@@ -213,12 +291,24 @@ public static class MpvEncoder
     /// <summary>
     /// 透過 mpv EDL demuxer 把多個輸入串接成一個輸出檔（會重新編碼）。
     /// </summary>
-    /// <param name="inputPaths">輸入媒體路徑序列（依序串接）。</param>
-    /// <param name="encodingOptions">已配置好的 encoding mode 選項。</param>
-    /// <param name="playerOptions">建立 <see cref="MpvPlayer"/> 時使用的選項。</param>
-    /// <param name="progress">進度回報。</param>
-    /// <param name="cancellationToken">取消編碼的權杖。</param>
-    /// <returns>編碼結果。</returns>
+    /// <param name="inputPaths">
+    /// 輸入媒體路徑序列（依序串接）。
+    /// </param>
+    /// <param name="encodingOptions">
+    /// 已配置好的 encoding mode 選項。
+    /// </param>
+    /// <param name="playerOptions">
+    /// 建立 <see cref="MpvPlayer"/> 時使用的選項。
+    /// </param>
+    /// <param name="progress">
+    /// 進度回報。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 取消編碼的權杖。
+    /// </param>
+    /// <returns>
+    /// 編碼結果。
+    /// </returns>
     public static async Task<MpvEncodingResult> ConcatenateAsync(
         IEnumerable<string> inputPaths,
         MpvEncodingOptions encodingOptions,
@@ -271,13 +361,27 @@ public static class MpvEncoder
     /// <summary>
     /// 把單一輸入依時間段切割成多個輸出檔。
     /// </summary>
-    /// <param name="inputPathOrUrl">輸入媒體的檔案路徑或網址。</param>
-    /// <param name="segments">時間段序列（每段包含起點、終點與輸出路徑）。</param>
-    /// <param name="configureBase">套用至每個段的共同 encoding 設定（codec / metadata 等），不含 <c>start</c> / <c>end</c>。</param>
-    /// <param name="playerOptions">建立 <see cref="MpvPlayer"/> 時使用的選項。</param>
-    /// <param name="progress">進度回報；報告值為 (目前段索引, 總段數, 目前段內進度)。</param>
-    /// <param name="cancellationToken">取消編碼的權杖。</param>
-    /// <returns>依輸入順序對應的結果清單。</returns>
+    /// <param name="inputPathOrUrl">
+    /// 輸入媒體的檔案路徑或網址。
+    /// </param>
+    /// <param name="segments">
+    /// 時間段序列（每段包含起點、終點與輸出路徑）。
+    /// </param>
+    /// <param name="configureBase">
+    /// 套用至每個段的共同 encoding 設定（codec / metadata 等），不含 <c>start</c> / <c>end</c>。
+    /// </param>
+    /// <param name="playerOptions">
+    /// 建立 <see cref="MpvPlayer"/> 時使用的選項。
+    /// </param>
+    /// <param name="progress">
+    /// 進度回報；報告值為 (目前段索引, 總段數, 目前段內進度)。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 取消編碼的權杖。
+    /// </param>
+    /// <returns>
+    /// 依輸入順序對應的結果清單。
+    /// </returns>
     public static async Task<IReadOnlyList<MpvEncodingResult>> SplitAsync(
         string inputPathOrUrl,
         IEnumerable<MpvEncodingSegment> segments,
@@ -357,9 +461,15 @@ public static class MpvEncoder
         /// <summary>
         /// 初始化轉送器。
         /// </summary>
-        /// <param name="target">上游 progress channel。</param>
-        /// <param name="index">目前段索引。</param>
-        /// <param name="total">總段數。</param>
+        /// <param name="target">
+        /// 上游 progress channel。
+        /// </param>
+        /// <param name="index">
+        /// 目前段索引。
+        /// </param>
+        /// <param name="total">
+        /// 總段數。
+        /// </param>
         public ProgressForwarder(IProgress<MpvSplitProgress> target, int index, int total)
         {
             _target = target;
@@ -370,7 +480,9 @@ public static class MpvEncoder
         /// <summary>
         /// 將單一編碼進度快照轉換為切割流程進度並轉送到上游通道。
         /// </summary>
-        /// <param name="value">目前段落的編碼進度快照。</param>
+        /// <param name="value">
+        /// 目前段落的編碼進度快照。
+        /// </param>
         public void Report(MpvEncodingProgress value)
         {
             _target.Report(new MpvSplitProgress(_index, _total, value));
@@ -380,8 +492,12 @@ public static class MpvEncoder
     /// <summary>
     /// 寫入 mpv EDL v0 playlist 檔。
     /// </summary>
-    /// <param name="path">EDL 檔輸出路徑。</param>
-    /// <param name="inputs">輸入媒體路徑序列。</param>
+    /// <param name="path">
+    /// EDL 檔輸出路徑。
+    /// </param>
+    /// <param name="inputs">
+    /// 輸入媒體路徑序列。
+    /// </param>
     private static void WriteEdlPlaylist(string path, IReadOnlyList<string> inputs)
     {
         using (StreamWriter writer = new StreamWriter(path, false, new System.Text.UTF8Encoding(false)))
@@ -404,8 +520,12 @@ public static class MpvEncoder
     /// <summary>
     /// 將檔名以 mpv EDL <c>%bytecount%filename</c> 格式編碼以避開逗號 / 引號 / 空白等 escape 問題。
     /// </summary>
-    /// <param name="filename">原始檔名或路徑。</param>
-    /// <returns>EDL 安全的單行表示。</returns>
+    /// <param name="filename">
+    /// 原始檔名或路徑。
+    /// </param>
+    /// <returns>
+    /// EDL 安全的單行表示。
+    /// </returns>
     private static string EncodeEdlFilename(string filename)
     {
         int byteCount = System.Text.Encoding.UTF8.GetByteCount(filename);
@@ -417,14 +537,30 @@ public static class MpvEncoder
     /// 對 <c>libx264</c> / <c>libx265</c> / <c>libvpx-vp9</c> 等使用 <c>flags=+pass1</c> / <c>flags=+pass2</c>
     /// 加 <c>passlogfile</c>；對 <c>libsvtav1</c> 改用其原生 <c>pass=1</c> / <c>pass=2</c> 慣例。
     /// </summary>
-    /// <param name="inputPathOrUrl">輸入媒體的檔案路徑或網址。</param>
-    /// <param name="encodingOptions">已配置好的 encoding mode 選項；其 <see cref="MpvEncodingOptions.VideoCodec"/> 必須非空白。</param>
-    /// <param name="playerOptions">建立 <see cref="MpvPlayer"/> 時使用的選項。</param>
-    /// <param name="progress">進度回報；兩階段共用同一個通道。</param>
-    /// <param name="cancellationToken">取消編碼的權杖。</param>
-    /// <returns>兩階段整體結果。</returns>
-    /// <exception cref="ArgumentException">輸入為空白或視訊編碼器未設定時擲出。</exception>
-    /// <exception cref="ArgumentNullException"><paramref name="encodingOptions"/> 為 <see langword="null"/> 時擲出。</exception>
+    /// <param name="inputPathOrUrl">
+    /// 輸入媒體的檔案路徑或網址。
+    /// </param>
+    /// <param name="encodingOptions">
+    /// 已配置好的 encoding mode 選項；其 <see cref="MpvEncodingOptions.VideoCodec"/> 必須非空白。
+    /// </param>
+    /// <param name="playerOptions">
+    /// 建立 <see cref="MpvPlayer"/> 時使用的選項。
+    /// </param>
+    /// <param name="progress">
+    /// 進度回報；兩階段共用同一個通道。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 取消編碼的權杖。
+    /// </param>
+    /// <returns>
+    /// 兩階段整體結果。
+    /// </returns>
+    /// <exception cref="ArgumentException">
+    /// 輸入為空白或視訊編碼器未設定時擲出。
+    /// </exception>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="encodingOptions"/> 為 <see langword="null"/> 時擲出。
+    /// </exception>
     public static Task<MpvTwoPassEncodingResult> EncodeTwoPassAsync(
         string inputPathOrUrl,
         MpvEncodingOptions encodingOptions,
@@ -453,12 +589,24 @@ public static class MpvEncoder
     /// <summary>
     /// 執行 <see cref="EncodeTwoPassAsync"/> 的核心流程。
     /// </summary>
-    /// <param name="inputPathOrUrl">輸入媒體的檔案路徑或網址。</param>
-    /// <param name="encodingOptions">已配置好的 encoding mode 選項。</param>
-    /// <param name="playerOptions">建立 <see cref="MpvPlayer"/> 時使用的選項。</param>
-    /// <param name="progress">進度回報通道。</param>
-    /// <param name="cancellationToken">取消編碼的權杖。</param>
-    /// <returns>兩階段整體結果。</returns>
+    /// <param name="inputPathOrUrl">
+    /// 輸入媒體的檔案路徑或網址。
+    /// </param>
+    /// <param name="encodingOptions">
+    /// 已配置好的 encoding mode 選項。
+    /// </param>
+    /// <param name="playerOptions">
+    /// 建立 <see cref="MpvPlayer"/> 時使用的選項。
+    /// </param>
+    /// <param name="progress">
+    /// 進度回報通道。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 取消編碼的權杖。
+    /// </param>
+    /// <returns>
+    /// 兩階段整體結果。
+    /// </returns>
     private static async Task<MpvTwoPassEncodingResult> EncodeTwoPassAsyncCore(
         string inputPathOrUrl,
         MpvEncodingOptions encodingOptions,
@@ -496,12 +644,24 @@ public static class MpvEncoder
     /// <summary>
     /// 為單一階段建立 <see cref="MpvEncodingOptions"/> 副本並注入 pass 相關旗標。
     /// </summary>
-    /// <param name="source">原始選項。</param>
-    /// <param name="outputPath">本階段的輸出路徑。</param>
-    /// <param name="passNumber">階段編號（1 或 2）。</param>
-    /// <param name="passlogPrefix">FFmpeg passlogfile 前綴。</param>
-    /// <param name="isSvtAv1">是否為 SVT-AV1 編碼器。</param>
-    /// <returns>已注入 pass 設定的選項副本。</returns>
+    /// <param name="source">
+    /// 原始選項。
+    /// </param>
+    /// <param name="outputPath">
+    /// 本階段的輸出路徑。
+    /// </param>
+    /// <param name="passNumber">
+    /// 階段編號（1 或 2）。
+    /// </param>
+    /// <param name="passlogPrefix">
+    /// FFmpeg passlogfile 前綴。
+    /// </param>
+    /// <param name="isSvtAv1">
+    /// 是否為 SVT-AV1 編碼器。
+    /// </param>
+    /// <returns>
+    /// 已注入 pass 設定的選項副本。
+    /// </returns>
     private static MpvEncodingOptions ClonePassOptions(
         MpvEncodingOptions source,
         string outputPath,
@@ -554,7 +714,9 @@ public static class MpvEncoder
     /// <summary>
     /// 嘗試刪除暫存 passlogfile 資料夾；無法刪除時忽略例外狀況。
     /// </summary>
-    /// <param name="directory">要刪除的資料夾路徑。</param>
+    /// <param name="directory">
+    /// 要刪除的資料夾路徑。
+    /// </param>
     private static void TryDeleteDirectory(string directory)
     {
         try
@@ -575,12 +737,24 @@ public static class MpvEncoder
     /// <summary>
     /// 執行 <see cref="EncodeAsync"/> 的核心流程。
     /// </summary>
-    /// <param name="inputPathOrUrl">輸入媒體的檔案路徑或網址。</param>
-    /// <param name="encodingOptions">已配置好的 encoding mode 選項。</param>
-    /// <param name="playerOptions">建立 <see cref="MpvPlayer"/> 時使用的選項。</param>
-    /// <param name="progress">進度回報。</param>
-    /// <param name="cancellationToken">取消編碼的權杖。</param>
-    /// <returns>編碼結果。</returns>
+    /// <param name="inputPathOrUrl">
+    /// 輸入媒體的檔案路徑或網址。
+    /// </param>
+    /// <param name="encodingOptions">
+    /// 已配置好的 encoding mode 選項。
+    /// </param>
+    /// <param name="playerOptions">
+    /// 建立 <see cref="MpvPlayer"/> 時使用的選項。
+    /// </param>
+    /// <param name="progress">
+    /// 進度回報。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 取消編碼的權杖。
+    /// </param>
+    /// <returns>
+    /// 編碼結果。
+    /// </returns>
     private static async Task<MpvEncodingResult> EncodeAsyncCore(
         string inputPathOrUrl,
         MpvEncodingOptions encodingOptions,
@@ -668,9 +842,15 @@ public static class MpvEncoder
     /// 最多再等 <see cref="CancellationGracePeriod"/> 讓 libmpv 自行收尾。
     /// 逾時則回傳 <see langword="null"/>，呼叫端據此產生取消結果。
     /// </summary>
-    /// <param name="completion">由 <c>EndFile</c> handler 完成的 TCS。</param>
-    /// <param name="cancellationToken">使用者傳入的取消權杖。</param>
-    /// <returns>收到的 <see cref="MpvEndFileEventArgs"/>；逾時取消時為 <see langword="null"/>。</returns>
+    /// <param name="completion">
+    /// 由 <c>EndFile</c> handler 完成的 TCS。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 使用者傳入的取消權杖。
+    /// </param>
+    /// <returns>
+    /// 收到的 <see cref="MpvEndFileEventArgs"/>；逾時取消時為 <see langword="null"/>。
+    /// </returns>
     private static async Task<MpvEndFileEventArgs?> WaitForEndFileAsync(
         TaskCompletionSource<MpvEndFileEventArgs> completion,
         CancellationToken cancellationToken)
@@ -705,10 +885,18 @@ public static class MpvEncoder
     /// <summary>
     /// 為取消（或寬限期逾時）情境建立 <see cref="MpvEncodingResult"/>。
     /// </summary>
-    /// <param name="outputPath">輸出檔案路徑。</param>
-    /// <param name="elapsed">取消當下的耗時。</param>
-    /// <param name="graceExpired">是否因 grace period 逾時而非 mpv 主動結束。</param>
-    /// <returns>對應取消的結果。</returns>
+    /// <param name="outputPath">
+    /// 輸出檔案路徑。
+    /// </param>
+    /// <param name="elapsed">
+    /// 取消當下的耗時。
+    /// </param>
+    /// <param name="graceExpired">
+    /// 是否因 grace period 逾時而非 mpv 主動結束。
+    /// </param>
+    /// <returns>
+    /// 對應取消的結果。
+    /// </returns>
     private static MpvEncodingResult BuildCancelledResult(string outputPath, TimeSpan elapsed, bool graceExpired)
     {
         MpvErrorCode errorCode = graceExpired ? MpvErrorCode.Generic : MpvErrorCode.Success;
@@ -719,7 +907,9 @@ public static class MpvEncoder
     /// <summary>
     /// 安全呼叫 <see cref="MpvPlayer.Stop()"/>；player 已釋放時忽略例外狀況。
     /// </summary>
-    /// <param name="player">要停止的播放器。</param>
+    /// <param name="player">
+    /// 要停止的播放器。
+    /// </param>
     private static void SafeStop(MpvPlayer player)
     {
         try
@@ -737,12 +927,24 @@ public static class MpvEncoder
     /// <summary>
     /// 依固定取樣間隔讀取 player 屬性並回報 <see cref="MpvEncodingProgress"/>。
     /// </summary>
-    /// <param name="player">編碼中的 player。</param>
-    /// <param name="outputPath">輸出檔案路徑。</param>
-    /// <param name="stopwatch">記錄實際經過時間的計時器。</param>
-    /// <param name="progress">進度回報通道。</param>
-    /// <param name="cancellationToken">取消權杖；於 <c>EndFile</c> 後由呼叫端觸發。</param>
-    /// <returns>代表進度迴圈的工作。</returns>
+    /// <param name="player">
+    /// 編碼中的 player。
+    /// </param>
+    /// <param name="outputPath">
+    /// 輸出檔案路徑。
+    /// </param>
+    /// <param name="stopwatch">
+    /// 記錄實際經過時間的計時器。
+    /// </param>
+    /// <param name="progress">
+    /// 進度回報通道。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 取消權杖；於 <c>EndFile</c> 後由呼叫端觸發。
+    /// </param>
+    /// <returns>
+    /// 代表進度迴圈的工作。
+    /// </returns>
     private static async Task RunProgressLoopAsync(
         MpvPlayer player,
         string outputPath,
@@ -769,10 +971,18 @@ public static class MpvEncoder
     /// <summary>
     /// 從目前 player 與輸出檔讀取進度快照。
     /// </summary>
-    /// <param name="player">編碼中的 player。</param>
-    /// <param name="outputPath">輸出檔案路徑。</param>
-    /// <param name="elapsed">自編碼開始以來實際經過的時間。</param>
-    /// <returns>進度快照。</returns>
+    /// <param name="player">
+    /// 編碼中的 player。
+    /// </param>
+    /// <param name="outputPath">
+    /// 輸出檔案路徑。
+    /// </param>
+    /// <param name="elapsed">
+    /// 自編碼開始以來實際經過的時間。
+    /// </param>
+    /// <returns>
+    /// 進度快照。
+    /// </returns>
     private static MpvEncodingProgress CapturePlayerSnapshot(MpvPlayer player, string outputPath, TimeSpan elapsed)
     {
         TimeSpan position = TryReadTimeSpanSeconds(player, "time-pos");
@@ -786,9 +996,15 @@ public static class MpvEncoder
     /// <summary>
     /// 嘗試讀取以秒為單位的雙精度屬性，並轉成 <see cref="TimeSpan"/>。
     /// </summary>
-    /// <param name="player">編碼中的 player。</param>
-    /// <param name="propertyName">mpv 屬性名稱。</param>
-    /// <returns>對應的 <see cref="TimeSpan"/>；屬性不可用時為 <see cref="TimeSpan.Zero"/>。</returns>
+    /// <param name="player">
+    /// 編碼中的 player。
+    /// </param>
+    /// <param name="propertyName">
+    /// mpv 屬性名稱。
+    /// </param>
+    /// <returns>
+    /// 對應的 <see cref="TimeSpan"/>；屬性不可用時為 <see cref="TimeSpan.Zero"/>。
+    /// </returns>
     private static TimeSpan TryReadTimeSpanSeconds(MpvPlayer player, string propertyName)
     {
         try
@@ -810,9 +1026,15 @@ public static class MpvEncoder
     /// <summary>
     /// 嘗試讀取雙精度屬性。
     /// </summary>
-    /// <param name="player">編碼中的 player。</param>
-    /// <param name="propertyName">mpv 屬性名稱。</param>
-    /// <returns>雙精度屬性值；不可用時為 <see langword="null"/>。</returns>
+    /// <param name="player">
+    /// 編碼中的 player。
+    /// </param>
+    /// <param name="propertyName">
+    /// mpv 屬性名稱。
+    /// </param>
+    /// <returns>
+    /// 雙精度屬性值；不可用時為 <see langword="null"/>。
+    /// </returns>
     private static double? TryReadDouble(MpvPlayer player, string propertyName)
     {
         try
@@ -834,10 +1056,18 @@ public static class MpvEncoder
     /// <summary>
     /// 依目前進度推估剩餘時間。
     /// </summary>
-    /// <param name="position">目前已處理到的來源時間。</param>
-    /// <param name="duration">來源總時長。</param>
-    /// <param name="elapsed">實際經過的時間。</param>
-    /// <returns>推估剩餘時間；資料不足時為 <see langword="null"/>。</returns>
+    /// <param name="position">
+    /// 目前已處理到的來源時間。
+    /// </param>
+    /// <param name="duration">
+    /// 來源總時長。
+    /// </param>
+    /// <param name="elapsed">
+    /// 實際經過的時間。
+    /// </param>
+    /// <returns>
+    /// 推估剩餘時間；資料不足時為 <see langword="null"/>。
+    /// </returns>
     private static TimeSpan? EstimateRemaining(TimeSpan position, TimeSpan duration, TimeSpan elapsed)
     {
         if (duration <= TimeSpan.Zero || position <= TimeSpan.Zero || elapsed <= TimeSpan.Zero || position >= duration)
@@ -863,8 +1093,12 @@ public static class MpvEncoder
     /// <summary>
     /// 嘗試讀取輸出檔案位元組大小。
     /// </summary>
-    /// <param name="outputPath">輸出檔案路徑。</param>
-    /// <returns>位元組大小；檔案不存在或無法讀取時為 0。</returns>
+    /// <param name="outputPath">
+    /// 輸出檔案路徑。
+    /// </param>
+    /// <returns>
+    /// 位元組大小；檔案不存在或無法讀取時為 0。
+    /// </returns>
     private static long TryReadOutputBytes(string outputPath)
     {
         try
@@ -885,10 +1119,18 @@ public static class MpvEncoder
     /// <summary>
     /// 由 <c>EndFile</c> 事件與輸出檔組成最終結果。
     /// </summary>
-    /// <param name="endEvent"><c>EndFile</c> 事件資料。</param>
-    /// <param name="outputPath">輸出檔案路徑。</param>
-    /// <param name="elapsed">實際經過的時間。</param>
-    /// <returns>編碼結果。</returns>
+    /// <param name="endEvent">
+    /// <c>EndFile</c> 事件資料。
+    /// </param>
+    /// <param name="outputPath">
+    /// 輸出檔案路徑。
+    /// </param>
+    /// <param name="elapsed">
+    /// 實際經過的時間。
+    /// </param>
+    /// <returns>
+    /// 編碼結果。
+    /// </returns>
     private static MpvEncodingResult BuildResult(MpvEndFileEventArgs endEvent, string outputPath, TimeSpan elapsed)
     {
         MpvErrorCode errorCode = (MpvErrorCode)endEvent.MpvErrorCode;

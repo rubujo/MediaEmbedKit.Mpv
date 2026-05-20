@@ -26,9 +26,15 @@ internal static class ArchiveSafety
     /// 拒絕指定檔案路徑為 symlink / NTFS reparse point。若是 → 立刻刪除並擲
     /// <see cref="InvalidOperationException"/>。
     /// </summary>
-    /// <param name="filePath">要檢查的檔案路徑。</param>
-    /// <param name="contextDescription">擲例外時要包含的 context 描述（給 caller / log 用）。</param>
-    /// <exception cref="InvalidOperationException">檔案是 reparse point。</exception>
+    /// <param name="filePath">
+    /// 要檢查的檔案路徑。
+    /// </param>
+    /// <param name="contextDescription">
+    /// 擲例外時要包含的 context 描述（給 caller / log 用）。
+    /// </param>
+    /// <exception cref="InvalidOperationException">
+    /// 檔案是 reparse point。
+    /// </exception>
     public static void RejectIfReparsePoint(string filePath, string contextDescription)
     {
         if (!File.Exists(filePath))
@@ -70,6 +76,9 @@ internal static class ArchiveSafety
     /// <summary>
     /// 嘗試刪除檔案；失敗吞掉（呼叫端要 throw 給上層，刪不掉只是清理失敗、不影響擲例外）。
     /// </summary>
+    /// <param name="filePath">
+    /// 要刪除的檔案路徑。
+    /// </param>
     private static void TryDeleteFile(string filePath)
     {
         try

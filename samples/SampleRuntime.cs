@@ -142,7 +142,9 @@ internal static class SampleRuntime
     /// <summary>
     /// 取得範例應用程式目前使用的播放器選項。
     /// </summary>
-    /// <value>已安裝執行階段後產生的播放器選項。</value>
+    /// <value>
+    /// 已安裝執行階段後產生的播放器選項。
+    /// </value>
     internal static MpvPlayerOptions PlayerOptions
     {
         get { return _playerOptions; }
@@ -151,7 +153,9 @@ internal static class SampleRuntime
     /// <summary>
     /// 取得範例執行階段資料夾。
     /// </summary>
-    /// <value>包含 libmpv、yt-dlp、Deno、FFmpeg 與範例輔助檔案的資料夾。</value>
+    /// <value>
+    /// 包含 libmpv、yt-dlp、Deno、FFmpeg 與範例輔助檔案的資料夾。
+    /// </value>
     internal static string RuntimeDirectory
     {
         get
@@ -174,7 +178,9 @@ internal static class SampleRuntime
     /// <summary>
     /// 取得範例使用的 yt-dlp 可執行檔路徑。
     /// </summary>
-    /// <value>yt-dlp 可執行檔完整路徑。</value>
+    /// <value>
+    /// yt-dlp 可執行檔完整路徑。
+    /// </value>
     internal static string YtDlpPath
     {
         get { return Path.Combine(RuntimeDirectory, "yt-dlp.exe"); }
@@ -183,7 +189,9 @@ internal static class SampleRuntime
     /// <summary>
     /// 取得範例使用的 Deno 可執行檔路徑。
     /// </summary>
-    /// <value>Deno 可執行檔完整路徑。</value>
+    /// <value>
+    /// Deno 可執行檔完整路徑。
+    /// </value>
     internal static string DenoPath
     {
         get { return Path.Combine(RuntimeDirectory, "deno.exe"); }
@@ -192,7 +200,9 @@ internal static class SampleRuntime
     /// <summary>
     /// 取得範例使用的 FFmpeg 可執行檔路徑。
     /// </summary>
-    /// <value>FFmpeg 可執行檔完整路徑。</value>
+    /// <value>
+    /// FFmpeg 可執行檔完整路徑。
+    /// </value>
     internal static string FFmpegPath
     {
         get { return Path.Combine(RuntimeDirectory, "ffmpeg.exe"); }
@@ -201,7 +211,9 @@ internal static class SampleRuntime
     /// <summary>
     /// 取得範例使用的 FFprobe 可執行檔路徑。
     /// </summary>
-    /// <value>FFprobe 可執行檔完整路徑。</value>
+    /// <value>
+    /// FFprobe 可執行檔完整路徑。
+    /// </value>
     internal static string FFprobePath
     {
         get { return Path.Combine(RuntimeDirectory, "ffprobe.exe"); }
@@ -210,7 +222,9 @@ internal static class SampleRuntime
     /// <summary>
     /// 取得範例 mpv 設定檔路徑。
     /// </summary>
-    /// <value>範例 mpv 設定檔完整路徑。</value>
+    /// <value>
+    /// 範例 mpv 設定檔完整路徑。
+    /// </value>
     internal static string SampleConfigFilePath
     {
         get { return Path.Combine(RuntimeDirectory, SampleConfigFileName); }
@@ -219,7 +233,9 @@ internal static class SampleRuntime
     /// <summary>
     /// 取得範例 Lua 指令碼路徑。
     /// </summary>
-    /// <value>範例 Lua 指令碼完整路徑。</value>
+    /// <value>
+    /// 範例 Lua 指令碼完整路徑。
+    /// </value>
     internal static string SampleLuaScriptPath
     {
         get { return Path.Combine(RuntimeDirectory, SampleLuaScriptFileName); }
@@ -228,7 +244,9 @@ internal static class SampleRuntime
     /// <summary>
     /// 取得範例字幕檔路徑。
     /// </summary>
-    /// <value>範例字幕檔完整路徑。</value>
+    /// <value>
+    /// 範例字幕檔完整路徑。
+    /// </value>
     internal static string SampleSubtitlePath
     {
         get { return Path.Combine(RuntimeDirectory, SampleSubtitleFileName); }
@@ -237,7 +255,9 @@ internal static class SampleRuntime
     /// <summary>
     /// 取得範例截圖輸出資料夾。
     /// </summary>
-    /// <value>截圖輸出資料夾完整路徑。</value>
+    /// <value>
+    /// 截圖輸出資料夾完整路徑。
+    /// </value>
     internal static string ScreenshotDirectory
     {
         get { return Path.Combine(AppContext.BaseDirectory, "screenshots"); }
@@ -246,7 +266,9 @@ internal static class SampleRuntime
     /// <summary>
     /// 取得目前是否啟用範例播放冒煙測試。
     /// </summary>
-    /// <value>環境變數設定為 <c>1</c> 時為 <see langword="true"/>。</value>
+    /// <value>
+    /// 環境變數設定為 <c>1</c> 時為 <see langword="true"/>。
+    /// </value>
     internal static bool IsSmokeTestEnabled
     {
         get
@@ -262,7 +284,9 @@ internal static class SampleRuntime
     /// <summary>
     /// 取得目前是否啟用範例功能冒煙測試。
     /// </summary>
-    /// <value>環境變數設定為 <c>1</c> 時為 <see langword="true"/>。</value>
+    /// <value>
+    /// 環境變數設定為 <c>1</c> 時為 <see langword="true"/>。
+    /// </value>
     internal static bool IsFeatureSmokeTestEnabled
     {
         get
@@ -277,8 +301,12 @@ internal static class SampleRuntime
     /// <summary>
     /// 安裝或更新範例需要的原生執行階段與外部工具。
     /// </summary>
-    /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
-    /// <returns>代表安裝或更新流程的工作。</returns>
+    /// <param name="cancellationToken">
+    /// 可取消非同步作業的語彙基元。
+    /// </param>
+    /// <returns>
+    /// 代表安裝或更新流程的工作。
+    /// </returns>
     internal static async Task InstallOrUpdateAsync(CancellationToken cancellationToken = default(CancellationToken))
     {
         string runtimeDirectory = await PrepareCoreRuntimeAsync(cancellationToken).ConfigureAwait(false);
@@ -289,8 +317,12 @@ internal static class SampleRuntime
     /// <summary>
     /// 準備核心播放器範例需要的 Windows runtime（依目前處理序架構選擇 x64 或 ARM64 資產）。
     /// </summary>
-    /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
-    /// <returns>可提供給播放器選項的 runtime 資料夾完整路徑。</returns>
+    /// <param name="cancellationToken">
+    /// 可取消非同步作業的語彙基元。
+    /// </param>
+    /// <returns>
+    /// 可提供給播放器選項的 runtime 資料夾完整路徑。
+    /// </returns>
     internal static async Task<string> PrepareCoreRuntimeAsync(CancellationToken cancellationToken = default(CancellationToken))
     {
         string runtimeDirectory = RuntimeDirectory;
@@ -328,8 +360,12 @@ internal static class SampleRuntime
     /// <summary>
     /// 判斷指定資料夾是否已包含範例播放需要的 Windows 執行階段檔案。
     /// </summary>
-    /// <param name="runtimeDirectory">要檢查的執行階段資料夾。</param>
-    /// <returns>資料夾包含 libmpv、yt-dlp、Deno、FFmpeg 與 FFprobe 時為 <see langword="true"/>。</returns>
+    /// <param name="runtimeDirectory">
+    /// 要檢查的執行階段資料夾。
+    /// </param>
+    /// <returns>
+    /// 資料夾包含 libmpv、yt-dlp、Deno、FFmpeg 與 FFprobe 時為 <see langword="true"/>。
+    /// </returns>
     private static bool HasCompleteRuntime(string runtimeDirectory)
     {
         return File.Exists(Path.Combine(runtimeDirectory, "libmpv-2.dll"))
@@ -342,7 +378,9 @@ internal static class SampleRuntime
     /// <summary>
     /// 從建置輸出往上尋找儲存庫共用的範例執行階段資料夾。
     /// </summary>
-    /// <returns>找到完整共用執行階段資料夾時傳回其完整路徑；否則傳回 <see langword="null"/>。</returns>
+    /// <returns>
+    /// 找到完整共用執行階段資料夾時傳回其完整路徑；否則傳回 <see langword="null"/>。
+    /// </returns>
     private static string? FindRepositoryRuntimeDirectory()
     {
         DirectoryInfo? directory = new DirectoryInfo(AppContext.BaseDirectory);
@@ -363,7 +401,9 @@ internal static class SampleRuntime
     /// <summary>
     /// 依指定的執行階段資料夾建立範例播放器選項。
     /// </summary>
-    /// <param name="runtimeDirectory">包含原生執行階段與外部工具的資料夾。</param>
+    /// <param name="runtimeDirectory">
+    /// 包含原生執行階段與外部工具的資料夾。
+    /// </param>
     private static void ConfigurePlayerOptions(string runtimeDirectory)
     {
         _playerOptions = MpvRuntimeInstaller.CreatePlayerOptions(runtimeDirectory);
@@ -389,8 +429,12 @@ internal static class SampleRuntime
     /// <summary>
     /// 將來源播放器選項複製到目標播放器選項。
     /// </summary>
-    /// <param name="source">要複製的播放器選項。</param>
-    /// <param name="target">要套用設定的播放器選項。</param>
+    /// <param name="source">
+    /// 要複製的播放器選項。
+    /// </param>
+    /// <param name="target">
+    /// 要套用設定的播放器選項。
+    /// </param>
     internal static void CopyTo(MpvPlayerOptions source, MpvPlayerOptions target)
     {
         if (source == null)
@@ -404,7 +448,9 @@ internal static class SampleRuntime
     /// <summary>
     /// 建立範例 mpv 設定檔內容。
     /// </summary>
-    /// <returns>可寫入 mpv 設定檔的文字。</returns>
+    /// <returns>
+    /// 可寫入 mpv 設定檔的文字。
+    /// </returns>
     private static string CreateSampleConfigText()
     {
         return "osd-duration=2000" + Environment.NewLine
@@ -415,7 +461,9 @@ internal static class SampleRuntime
     /// <summary>
     /// 建立範例 Lua 指令碼內容。
     /// </summary>
-    /// <returns>可寫入 Lua 指令碼的文字。</returns>
+    /// <returns>
+    /// 可寫入 Lua 指令碼的文字。
+    /// </returns>
     private static string CreateSampleLuaScriptText()
     {
         return "local mp = require 'mp'" + Environment.NewLine
@@ -428,7 +476,9 @@ internal static class SampleRuntime
     /// <summary>
     /// 建立範例字幕檔內容。
     /// </summary>
-    /// <returns>可寫入 SRT 字幕檔的文字。</returns>
+    /// <returns>
+    /// 可寫入 SRT 字幕檔的文字。
+    /// </returns>
     private static string CreateSampleSubtitleText()
     {
         return "1" + Environment.NewLine
@@ -443,10 +493,18 @@ internal static class SampleRuntime
     /// <summary>
     /// 等待播放器實際開始播放，完成後關閉範例應用程式。
     /// </summary>
-    /// <param name="sampleName">正在測試的範例名稱。</param>
-    /// <param name="getPlayer">取得目前播放器執行個體的委派。</param>
-    /// <param name="closeApplication">關閉範例應用程式的委派。</param>
-    /// <returns>代表冒煙測試流程的工作。</returns>
+    /// <param name="sampleName">
+    /// 正在測試的範例名稱。
+    /// </param>
+    /// <param name="getPlayer">
+    /// 取得目前播放器執行個體的委派。
+    /// </param>
+    /// <param name="closeApplication">
+    /// 關閉範例應用程式的委派。
+    /// </param>
+    /// <returns>
+    /// 代表冒煙測試流程的工作。
+    /// </returns>
     internal static async Task RunSmokeUntilPlaybackAsync(
         string sampleName,
         Func<MpvPlayer?> getPlayer,
@@ -473,9 +531,15 @@ internal static class SampleRuntime
     /// <summary>
     /// 等待播放器播放時間開始前進。
     /// </summary>
-    /// <param name="sampleName">正在測試的範例名稱。</param>
-    /// <param name="getPlayer">取得目前播放器執行個體的委派。</param>
-    /// <returns>代表等待播放狀態的工作。</returns>
+    /// <param name="sampleName">
+    /// 正在測試的範例名稱。
+    /// </param>
+    /// <param name="getPlayer">
+    /// 取得目前播放器執行個體的委派。
+    /// </param>
+    /// <returns>
+    /// 代表等待播放狀態的工作。
+    /// </returns>
     internal static async Task WaitForPlaybackAsync(string sampleName, Func<MpvPlayer?> getPlayer)
     {
         DateTimeOffset deadline = DateTimeOffset.UtcNow.AddSeconds(SmokeTimeoutSeconds);
@@ -525,7 +589,9 @@ internal static class SampleRuntime
     /// <summary>
     /// 取得冒煙測試需要等待的最少播放秒數。
     /// </summary>
-    /// <returns>播放器時間必須達到的秒數。</returns>
+    /// <returns>
+    /// 播放器時間必須達到的秒數。
+    /// </returns>
     private static double GetMinimumPlaybackSeconds()
     {
         string? environmentValue = Environment.GetEnvironmentVariable(SmokeTestMinimumSecondsEnvironmentVariable);
@@ -550,9 +616,15 @@ internal static class SampleRuntime
     /// <summary>
     /// 嘗試將文字轉換為正數秒數。
     /// </summary>
-    /// <param name="value">要轉換的秒數文字。</param>
-    /// <param name="seconds">接收轉換後秒數的變數。</param>
-    /// <returns>文字包含有效正數秒數時為 <see langword="true"/>。</returns>
+    /// <param name="value">
+    /// 要轉換的秒數文字。
+    /// </param>
+    /// <param name="seconds">
+    /// 接收轉換後秒數的變數。
+    /// </param>
+    /// <returns>
+    /// 文字包含有效正數秒數時為 <see langword="true"/>。
+    /// </returns>
     private static bool TryParsePositiveSeconds(string? value, out double seconds)
     {
         if (double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out seconds) && seconds > 0)
@@ -567,8 +639,12 @@ internal static class SampleRuntime
     /// <summary>
     /// 判斷指定的 libmpv 例外狀況是否屬於播放載入期間可重試的狀態。
     /// </summary>
-    /// <param name="exception">libmpv 擲回的例外狀況。</param>
-    /// <returns>例外狀況可於等待播放期間重試時為 <see langword="true"/>。</returns>
+    /// <param name="exception">
+    /// libmpv 擲回的例外狀況。
+    /// </param>
+    /// <returns>
+    /// 例外狀況可於等待播放期間重試時為 <see langword="true"/>。
+    /// </returns>
     private static bool IsTransientPlaybackException(MpvException exception)
     {
         return exception.ErrorCode == (int)MpvErrorCode.PropertyUnavailable
@@ -579,8 +655,12 @@ internal static class SampleRuntime
     /// <summary>
     /// 將範例冒煙測試訊息寫入標準輸出。
     /// </summary>
-    /// <param name="sampleName">正在測試的範例名稱。</param>
-    /// <param name="message">要輸出的測試訊息。</param>
+    /// <param name="sampleName">
+    /// 正在測試的範例名稱。
+    /// </param>
+    /// <param name="message">
+    /// 要輸出的測試訊息。
+    /// </param>
     internal static void WriteSmokeLine(string sampleName, string message)
     {
         string line = "[sample-smoke] " + sampleName + " " + message;

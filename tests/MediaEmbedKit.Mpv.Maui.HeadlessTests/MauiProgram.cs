@@ -12,7 +12,9 @@ public static class MauiProgram
     /// <summary>
     /// 建立 headless 測試的 MAUI 應用程式。
     /// </summary>
-    /// <returns>已設定的 MAUI 應用程式。</returns>
+    /// <returns>
+    /// 已設定的 MAUI 應用程式。
+    /// </returns>
     public static MauiApp CreateMauiApp()
     {
         return MauiApp.CreateBuilder()

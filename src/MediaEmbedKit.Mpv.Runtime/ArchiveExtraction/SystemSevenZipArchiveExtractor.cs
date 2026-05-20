@@ -19,32 +19,50 @@ namespace MediaEmbedKit.Mpv.Runtime.ArchiveExtraction;
 /// </remarks>
 internal sealed class SystemSevenZipArchiveExtractor : IArchiveExtractor
 {
-    /// <summary>7-Zip 解壓的預設逾時時間。</summary>
+    /// <summary>
+    /// 7-Zip 解壓的預設逾時時間。
+    /// </summary>
     private static readonly TimeSpan DefaultTimeout = TimeSpan.FromMinutes(3);
 
-    /// <summary>使用者明確指定的執行檔路徑；<see langword="null"/> 表示走自動偵測。</summary>
+    /// <summary>
+    /// 使用者明確指定的執行檔路徑；<see langword="null"/> 表示走自動偵測。
+    /// </summary>
     private readonly string? _explicitPath;
 
-    /// <summary>顯示名稱（用於 fallback chain 的失敗訊息）。</summary>
+    /// <summary>
+    /// 顯示名稱（用於 fallback chain 的失敗訊息）。
+    /// </summary>
     private readonly string _displayName;
 
     /// <summary>
     /// 初始化 <see cref="SystemSevenZipArchiveExtractor"/> 類別的新執行個體。
     /// </summary>
-    /// <param name="explicitPath">明確指定的 7z.exe 相容路徑；<see langword="null"/> 走自動偵測。</param>
-    /// <param name="displayName">在 fallback 失敗訊息中使用的顯示名稱。</param>
+    /// <param name="explicitPath">
+    /// 明確指定的 7z.exe 相容路徑；<see langword="null"/> 走自動偵測。
+    /// </param>
+    /// <param name="displayName">
+    /// 在 fallback 失敗訊息中使用的顯示名稱。
+    /// </param>
     public SystemSevenZipArchiveExtractor(string? explicitPath = null, string? displayName = null)
     {
         _explicitPath = explicitPath;
         _displayName = displayName ?? (string.IsNullOrWhiteSpace(explicitPath) ? "System 7-Zip" : "Explicit 7z-compatible tool");
     }
 
-    /// <summary>顯示名稱（建構時提供，預設「System 7-Zip」或「Explicit 7z-compatible tool」）。</summary>
+    /// <summary>
+    /// 顯示名稱（建構時提供，預設「System 7-Zip」或「Explicit 7z-compatible tool」）。
+    /// </summary>
     public string Name => _displayName;
 
-    /// <summary>檢查明確指定路徑或 Program Files / PATH 內是否存在 7z.exe。</summary>
-    /// <param name="cancellationToken">未使用（路徑檢查為同步操作）。</param>
-    /// <returns>找到 7z 相容工具時為 <see langword="true"/>。</returns>
+    /// <summary>
+    /// 檢查明確指定路徑或 Program Files / PATH 內是否存在 7z.exe。
+    /// </summary>
+    /// <param name="cancellationToken">
+    /// 未使用（路徑檢查為同步操作）。
+    /// </param>
+    /// <returns>
+    /// 找到 7z 相容工具時為 <see langword="true"/>。
+    /// </returns>
     public Task<bool> IsAvailableAsync(CancellationToken cancellationToken)
     {
         return Task.FromResult(ResolveExecutablePath() != null);
@@ -54,11 +72,24 @@ internal sealed class SystemSevenZipArchiveExtractor : IArchiveExtractor
     /// 用 <c>7z x -y -o{dir} {archive} [pattern...] -r</c> 解壓 .7z。選擇性解壓需要
     /// <c>-r</c> recursive 旗標以匹配任意深度的檔名。
     /// </summary>
-    /// <param name="archivePath">.7z 壓縮檔路徑。</param>
-    /// <param name="targetDirectory">解壓縮目標資料夾。</param>
-    /// <param name="includePatterns">要解出的檔名清單；<see langword="null"/> 解整個 archive。</param>
-    /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
-    /// <exception cref="InvalidOperationException">7z.exe 不存在或解壓失敗（exit code 非 0）。</exception>
+    /// <param name="archivePath">
+    /// .7z 壓縮檔路徑。
+    /// </param>
+    /// <param name="targetDirectory">
+    /// 解壓縮目標資料夾。
+    /// </param>
+    /// <param name="includePatterns">
+    /// 要解出的檔名清單；<see langword="null"/> 解整個 archive。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 可取消非同步作業的語彙基元。
+    /// </param>
+    /// <returns>
+    /// 表示解壓縮流程的工作。
+    /// </returns>
+    /// <exception cref="InvalidOperationException">
+    /// 7z.exe 不存在或解壓失敗（exit code 非 0）。
+    /// </exception>
     public async Task ExtractAsync(
         string archivePath,
         string targetDirectory,
@@ -108,7 +139,9 @@ internal sealed class SystemSevenZipArchiveExtractor : IArchiveExtractor
     /// <summary>
     /// 依優先序解析 7z 相容工具的路徑。
     /// </summary>
-    /// <returns>找到時為絕對路徑；否則為 <see langword="null"/>。</returns>
+    /// <returns>
+    /// 找到時為絕對路徑；否則為 <see langword="null"/>。
+    /// </returns>
     private string? ResolveExecutablePath()
     {
         if (!string.IsNullOrWhiteSpace(_explicitPath))

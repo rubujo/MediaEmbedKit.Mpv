@@ -47,8 +47,12 @@ internal static class Program
     /// <summary>
     /// 壓力測試進入點。
     /// </summary>
-    /// <param name="args">命令列引數；目前未使用。</param>
-    /// <returns>全部測試通過時傳回 0。</returns>
+    /// <param name="args">
+    /// 命令列引數；目前未使用。
+    /// </param>
+    /// <returns>
+    /// 全部測試通過時傳回 0。
+    /// </returns>
     private static async Task<int> Main(string[] args)
     {
         _ = args;
@@ -100,8 +104,12 @@ internal static class Program
     /// 對同一 player 同屬性同時開多個訂閱／取消執行緒，驗證 WatchProperty 內部
     /// 觀察者註冊機制在並發場景下不擲未處理例外、不卡死。
     /// </summary>
-    /// <param name="runtimeDirectory">包含 libmpv 的執行階段資料夾。</param>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <param name="runtimeDirectory">
+    /// 包含 libmpv 的執行階段資料夾。
+    /// </param>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static async Task VerifyWatchPropertyConcurrentAsync(string runtimeDirectory)
     {
         using (MpvPlayer player = CreatePlayer(runtimeDirectory))
@@ -148,8 +156,12 @@ internal static class Program
     /// 超過 <see cref="LongRunLeakRelativeGrowthLimit"/> 且絕對成長大於
     /// <see cref="LongRunLeakAbsoluteGrowthFloorBytes"/>（避免把 GC 噪音當 leak）。
     /// </summary>
-    /// <param name="runtimeDirectory">包含 libmpv 的執行階段資料夾。</param>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <param name="runtimeDirectory">
+    /// 包含 libmpv 的執行階段資料夾。
+    /// </param>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static Task VerifyLongRunMemoryLeakAsync(string runtimeDirectory)
     {
         // Warm-up：先跑 3 次建立／釋放讓 JIT、libmpv 內部 cache 等到達穩態。
@@ -230,8 +242,12 @@ internal static class Program
     /// <summary>
     /// 驗證播放器可重複建立、初始化與釋放。
     /// </summary>
-    /// <param name="runtimeDirectory">包含 libmpv 的執行階段資料夾。</param>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <param name="runtimeDirectory">
+    /// 包含 libmpv 的執行階段資料夾。
+    /// </param>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static Task VerifyRepeatedCreateDisposeAsync(string runtimeDirectory)
     {
         for (int iteration = 0; iteration < PlayerLifecycleIterations; iteration++)
@@ -251,8 +267,12 @@ internal static class Program
     /// <summary>
     /// 驗證額外 client 與 shutdown 可重複建立和釋放。
     /// </summary>
-    /// <param name="runtimeDirectory">包含 libmpv 的執行階段資料夾。</param>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <param name="runtimeDirectory">
+    /// 包含 libmpv 的執行階段資料夾。
+    /// </param>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static async Task VerifyRepeatedClientLifecycleAsync(string runtimeDirectory)
     {
         for (int iteration = 0; iteration < PlayerLifecycleIterations; iteration++)
@@ -292,8 +312,12 @@ internal static class Program
     /// <summary>
     /// 驗證自訂 stream callback 可重複載入並正常結束。
     /// </summary>
-    /// <param name="runtimeDirectory">包含 libmpv 的執行階段資料夾。</param>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <param name="runtimeDirectory">
+    /// 包含 libmpv 的執行階段資料夾。
+    /// </param>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static async Task VerifyRepeatedStreamPlaybackAsync(string runtimeDirectory)
     {
         byte[] mediaBytes = WaveGenerator.CreateSineWave(TimeSpan.FromMilliseconds(300));
@@ -324,8 +348,12 @@ internal static class Program
     /// <summary>
     /// 驗證 stream callback 取消通知可重複解除阻塞讀取。
     /// </summary>
-    /// <param name="runtimeDirectory">包含 libmpv 的執行階段資料夾。</param>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <param name="runtimeDirectory">
+    /// 包含 libmpv 的執行階段資料夾。
+    /// </param>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static async Task VerifyRepeatedStreamCancellationAsync(string runtimeDirectory)
     {
         for (int iteration = 0; iteration < StreamCancellationIterations; iteration++)
@@ -353,7 +381,9 @@ internal static class Program
     /// <summary>
     /// 驗證外部工具 runner 可接收大量輸出並能處理逾時。
     /// </summary>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static async Task VerifyExternalToolOutputAndTimeoutAsync()
     {
         string powershellPath = ResolvePowerShellPath();
@@ -396,7 +426,9 @@ internal static class Program
     /// <summary>
     /// 驗證 runtime helper 的不支援平台與已載入更新路徑。
     /// </summary>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     private static async Task VerifyRuntimeHelperFailurePathsAsync()
     {
         string runtimeDirectory = Path.Combine(Path.GetTempPath(), "MediaEmbedKit.Mpv.StressTests", "runtime-helper", Guid.NewGuid().ToString("N"));
@@ -421,8 +453,12 @@ internal static class Program
     /// <summary>
     /// 建立壓力測試用播放器。
     /// </summary>
-    /// <param name="runtimeDirectory">包含 libmpv 的執行階段資料夾。</param>
-    /// <returns>測試用播放器。</returns>
+    /// <param name="runtimeDirectory">
+    /// 包含 libmpv 的執行階段資料夾。
+    /// </param>
+    /// <returns>
+    /// 測試用播放器。
+    /// </returns>
     private static MpvPlayer CreatePlayer(string runtimeDirectory)
     {
         MpvPlayerOptions options = MpvRuntimeInstaller.CreatePlayerOptions(runtimeDirectory);
@@ -442,8 +478,12 @@ internal static class Program
     /// <summary>
     /// 建立測試暫存資料夾。
     /// </summary>
-    /// <param name="name">資料夾名稱片段。</param>
-    /// <returns>建立完成的暫存資料夾。</returns>
+    /// <param name="name">
+    /// 資料夾名稱片段。
+    /// </param>
+    /// <returns>
+    /// 建立完成的暫存資料夾。
+    /// </returns>
     private static string CreateTemporaryDirectory(string name)
     {
         string directory = Path.Combine(Path.GetTempPath(), "MediaEmbedKit.Mpv.StressTests", name, Guid.NewGuid().ToString("N"));
@@ -454,7 +494,9 @@ internal static class Program
     /// <summary>
     /// 解析 Windows PowerShell 執行檔路徑。
     /// </summary>
-    /// <returns>PowerShell 執行檔路徑。</returns>
+    /// <returns>
+    /// PowerShell 執行檔路徑。
+    /// </returns>
     private static string ResolvePowerShellPath()
     {
         string systemDirectory = Environment.GetFolderPath(Environment.SpecialFolder.System);
@@ -465,10 +507,18 @@ internal static class Program
     /// <summary>
     /// 等待指定串流建立後執行串流工作。
     /// </summary>
-    /// <typeparam name="TStream">串流型別。</typeparam>
-    /// <param name="streamAccessor">取得串流的委派。</param>
-    /// <param name="taskFactory">建立等待工作的委派。</param>
-    /// <returns>代表等待流程的工作。</returns>
+    /// <typeparam name="TStream">
+    /// 串流型別。
+    /// </typeparam>
+    /// <param name="streamAccessor">
+    /// 取得串流的委派。
+    /// </param>
+    /// <param name="taskFactory">
+    /// 建立等待工作的委派。
+    /// </param>
+    /// <returns>
+    /// 代表等待流程的工作。
+    /// </returns>
     private static async Task WaitForStreamAsync<TStream>(Func<TStream?> streamAccessor, Func<TStream, Task> taskFactory)
         where TStream : class
     {
@@ -511,7 +561,9 @@ internal static class RuntimeResolver
     /// <c>AppContext.BaseDirectory/runtime</c>。兩種情境下若資料夾缺少 libmpv-2.dll
     /// 都會自動下載一份，符合 CI 第一次跑（cache miss）的需求。
     /// </remarks>
-    /// <returns>包含 libmpv-2.dll 的執行階段資料夾。</returns>
+    /// <returns>
+    /// 包含 libmpv-2.dll 的執行階段資料夾。
+    /// </returns>
     public static async Task<string> ResolveAsync()
     {
         string? configured = Environment.GetEnvironmentVariable(RuntimeDirectoryEnvironmentVariable);
@@ -542,7 +594,9 @@ internal static class RuntimeResolver
     /// <summary>
     /// 確認指定資料夾包含 libmpv-2.dll。
     /// </summary>
-    /// <param name="runtimeDirectory">要檢查的執行階段資料夾。</param>
+    /// <param name="runtimeDirectory">
+    /// 要檢查的執行階段資料夾。
+    /// </param>
     private static void EnsureLibMpvExists(string runtimeDirectory)
     {
         string libraryPath = Path.Combine(runtimeDirectory, MpvLibraryLoader.GetDefaultLibraryFileName());
@@ -571,7 +625,9 @@ internal sealed class PlaybackProbe
     /// <summary>
     /// 初始化 <see cref="PlaybackProbe"/> 類別的新執行個體。
     /// </summary>
-    /// <param name="player">要觀察的播放器。</param>
+    /// <param name="player">
+    /// 要觀察的播放器。
+    /// </param>
     public PlaybackProbe(MpvPlayer player)
     {
         _fileLoaded = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -589,7 +645,9 @@ internal sealed class PlaybackProbe
     /// <summary>
     /// 等待檔案載入。
     /// </summary>
-    /// <returns>代表等待流程的工作。</returns>
+    /// <returns>
+    /// 代表等待流程的工作。
+    /// </returns>
     public Task WaitForFileLoadedAsync()
     {
         return StressAssert.WaitAsync(_fileLoaded.Task, "等待 FileLoaded 事件逾時。");
@@ -598,7 +656,9 @@ internal sealed class PlaybackProbe
     /// <summary>
     /// 等待播放結束。
     /// </summary>
-    /// <returns>播放結束事件資料。</returns>
+    /// <returns>
+    /// 播放結束事件資料。
+    /// </returns>
     public Task<MpvEndFileEventArgs> WaitForEndFileAsync()
     {
         return StressAssert.WaitAsync(_endFile.Task, "等待 EndFile 事件逾時。");
@@ -643,7 +703,9 @@ internal sealed class CancellableBlockingStream : Stream, IMpvStreamCancellation
     /// <summary>
     /// 取得串流是否支援讀取。
     /// </summary>
-    /// <value>一律為 <see langword="true"/>。</value>
+    /// <value>
+    /// 一律為 <see langword="true"/>。
+    /// </value>
     public override bool CanRead
     {
         get { return true; }
@@ -652,7 +714,9 @@ internal sealed class CancellableBlockingStream : Stream, IMpvStreamCancellation
     /// <summary>
     /// 取得串流是否支援搜尋。
     /// </summary>
-    /// <value>一律為 <see langword="false"/>。</value>
+    /// <value>
+    /// 一律為 <see langword="false"/>。
+    /// </value>
     public override bool CanSeek
     {
         get { return false; }
@@ -661,7 +725,9 @@ internal sealed class CancellableBlockingStream : Stream, IMpvStreamCancellation
     /// <summary>
     /// 取得串流是否支援寫入。
     /// </summary>
-    /// <value>一律為 <see langword="false"/>。</value>
+    /// <value>
+    /// 一律為 <see langword="false"/>。
+    /// </value>
     public override bool CanWrite
     {
         get { return false; }
@@ -670,7 +736,9 @@ internal sealed class CancellableBlockingStream : Stream, IMpvStreamCancellation
     /// <summary>
     /// 取得串流長度。
     /// </summary>
-    /// <value>此測試串流不支援長度查詢。</value>
+    /// <value>
+    /// 此測試串流不支援長度查詢。
+    /// </value>
     public override long Length
     {
         get { throw new NotSupportedException("測試串流不支援長度查詢。"); }
@@ -679,7 +747,9 @@ internal sealed class CancellableBlockingStream : Stream, IMpvStreamCancellation
     /// <summary>
     /// 取得或設定目前位置。
     /// </summary>
-    /// <value>此測試串流不支援位置查詢或設定。</value>
+    /// <value>
+    /// 此測試串流不支援位置查詢或設定。
+    /// </value>
     public override long Position
     {
         get { throw new NotSupportedException("測試串流不支援位置查詢。"); }
@@ -689,7 +759,9 @@ internal sealed class CancellableBlockingStream : Stream, IMpvStreamCancellation
     /// <summary>
     /// 等待讀取作業進入阻塞狀態。
     /// </summary>
-    /// <returns>代表等待流程的工作。</returns>
+    /// <returns>
+    /// 代表等待流程的工作。
+    /// </returns>
     public Task WaitForReadStartedAsync()
     {
         return _readStarted.Task;
@@ -698,7 +770,9 @@ internal sealed class CancellableBlockingStream : Stream, IMpvStreamCancellation
     /// <summary>
     /// 等待取消通知送達串流。
     /// </summary>
-    /// <returns>代表等待流程的工作。</returns>
+    /// <returns>
+    /// 代表等待流程的工作。
+    /// </returns>
     public Task WaitForCancelledAsync()
     {
         return _cancelled.Task;
@@ -723,10 +797,18 @@ internal sealed class CancellableBlockingStream : Stream, IMpvStreamCancellation
     /// <summary>
     /// 從串流讀取資料並等候取消通知。
     /// </summary>
-    /// <param name="buffer">接收資料的緩衝區。</param>
-    /// <param name="offset">緩衝區中的起始位置。</param>
-    /// <param name="count">最多要讀取的位元組數。</param>
-    /// <returns>取消後傳回零，表示串流結束。</returns>
+    /// <param name="buffer">
+    /// 接收資料的緩衝區。
+    /// </param>
+    /// <param name="offset">
+    /// 緩衝區中的起始位置。
+    /// </param>
+    /// <param name="count">
+    /// 最多要讀取的位元組數。
+    /// </param>
+    /// <returns>
+    /// 取消後傳回零，表示串流結束。
+    /// </returns>
     public override int Read(byte[] buffer, int offset, int count)
     {
         _ = buffer;
@@ -740,9 +822,15 @@ internal sealed class CancellableBlockingStream : Stream, IMpvStreamCancellation
     /// <summary>
     /// 設定串流位置。
     /// </summary>
-    /// <param name="offset">相對位移。</param>
-    /// <param name="origin">位移起算位置。</param>
-    /// <returns>此方法不會正常傳回。</returns>
+    /// <param name="offset">
+    /// 相對位移。
+    /// </param>
+    /// <param name="origin">
+    /// 位移起算位置。
+    /// </param>
+    /// <returns>
+    /// 此方法不會正常傳回。
+    /// </returns>
     public override long Seek(long offset, SeekOrigin origin)
     {
         _ = offset;
@@ -753,7 +841,9 @@ internal sealed class CancellableBlockingStream : Stream, IMpvStreamCancellation
     /// <summary>
     /// 設定串流長度。
     /// </summary>
-    /// <param name="value">新的串流長度。</param>
+    /// <param name="value">
+    /// 新的串流長度。
+    /// </param>
     public override void SetLength(long value)
     {
         _ = value;
@@ -763,9 +853,15 @@ internal sealed class CancellableBlockingStream : Stream, IMpvStreamCancellation
     /// <summary>
     /// 將資料寫入串流。
     /// </summary>
-    /// <param name="buffer">來源資料緩衝區。</param>
-    /// <param name="offset">緩衝區中的起始位置。</param>
-    /// <param name="count">要寫入的位元組數。</param>
+    /// <param name="buffer">
+    /// 來源資料緩衝區。
+    /// </param>
+    /// <param name="offset">
+    /// 緩衝區中的起始位置。
+    /// </param>
+    /// <param name="count">
+    /// 要寫入的位元組數。
+    /// </param>
     public override void Write(byte[] buffer, int offset, int count)
     {
         _ = buffer;
@@ -777,7 +873,9 @@ internal sealed class CancellableBlockingStream : Stream, IMpvStreamCancellation
     /// <summary>
     /// 釋放測試串流持有的資源。
     /// </summary>
-    /// <param name="disposing">是否由受控釋放流程呼叫。</param>
+    /// <param name="disposing">
+    /// 是否由受控釋放流程呼叫。
+    /// </param>
     protected override void Dispose(bool disposing)
     {
         if (!_disposed)
@@ -798,13 +896,17 @@ internal sealed class CancellableBlockingStream : Stream, IMpvStreamCancellation
 /// <summary>
 /// 不做任何事的 <see cref="IObserver{T}"/>；用於只需「訂閱／取消」生命週期、不關心值的測試。
 /// </summary>
-/// <typeparam name="T">屬性值型別。</typeparam>
+/// <typeparam name="T">
+/// 屬性值型別。
+/// </typeparam>
 internal sealed class NoopObserver<T> : IObserver<T>
 {
     /// <summary>
     /// 接收新的屬性值；此測試觀察者會忽略該值。
     /// </summary>
-    /// <param name="value">觀察到的屬性值。</param>
+    /// <param name="value">
+    /// 觀察到的屬性值。
+    /// </param>
     public void OnNext(T value)
     {
         _ = value;
@@ -820,7 +922,9 @@ internal sealed class NoopObserver<T> : IObserver<T>
     /// <summary>
     /// 接收觀察序列錯誤通知；此測試觀察者會忽略該例外狀況。
     /// </summary>
-    /// <param name="error">觀察序列回報的錯誤。</param>
+    /// <param name="error">
+    /// 觀察序列回報的錯誤。
+    /// </param>
     public void OnError(Exception error)
     {
         _ = error;
@@ -837,8 +941,12 @@ internal static class WaveGenerator
     /// <summary>
     /// 建立指定長度的正弦波 WAV 檔案內容。
     /// </summary>
-    /// <param name="duration">音訊長度。</param>
-    /// <returns>WAV 檔案位元組。</returns>
+    /// <param name="duration">
+    /// 音訊長度。
+    /// </param>
+    /// <returns>
+    /// WAV 檔案位元組。
+    /// </returns>
     public static byte[] CreateSineWave(TimeSpan duration)
     {
         int sampleCount = Math.Max(1, (int)(duration.TotalSeconds * SampleRate));
@@ -890,14 +998,20 @@ internal sealed class StressTestRunner
     /// <summary>
     /// 取得失敗測試數量。
     /// </summary>
-    /// <value>失敗測試數量。</value>
+    /// <value>
+    /// 失敗測試數量。
+    /// </value>
     public int FailedCount { get; private set; }
 
     /// <summary>
     /// 加入測試案例。
     /// </summary>
-    /// <param name="name">測試名稱。</param>
-    /// <param name="body">測試主體。</param>
+    /// <param name="name">
+    /// 測試名稱。
+    /// </param>
+    /// <param name="body">
+    /// 測試主體。
+    /// </param>
     public void Add(string name, Func<Task> body)
     {
         _tests.Add(new StressTestCase(name, body));
@@ -906,7 +1020,9 @@ internal sealed class StressTestRunner
     /// <summary>
     /// 執行所有測試案例。
     /// </summary>
-    /// <returns>代表測試流程的工作。</returns>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
     public async Task RunAsync()
     {
         foreach (StressTestCase test in _tests)
@@ -935,8 +1051,12 @@ internal sealed class StressTestCase
     /// <summary>
     /// 初始化 <see cref="StressTestCase"/> 類別的新執行個體。
     /// </summary>
-    /// <param name="name">測試名稱。</param>
-    /// <param name="body">測試主體。</param>
+    /// <param name="name">
+    /// 測試名稱。
+    /// </param>
+    /// <param name="body">
+    /// 測試主體。
+    /// </param>
     public StressTestCase(string name, Func<Task> body)
     {
         Name = name;
@@ -946,13 +1066,17 @@ internal sealed class StressTestCase
     /// <summary>
     /// 取得測試名稱。
     /// </summary>
-    /// <value>測試名稱。</value>
+    /// <value>
+    /// 測試名稱。
+    /// </value>
     public string Name { get; private set; }
 
     /// <summary>
     /// 取得測試主體。
     /// </summary>
-    /// <value>測試主體。</value>
+    /// <value>
+    /// 測試主體。
+    /// </value>
     public Func<Task> Body { get; private set; }
 }
 
@@ -964,10 +1088,18 @@ internal static class StressAssert
     /// <summary>
     /// 驗證兩個值相等。
     /// </summary>
-    /// <typeparam name="T">要比較的值型別。</typeparam>
-    /// <param name="expected">預期值。</param>
-    /// <param name="actual">實際值。</param>
-    /// <param name="message">失敗時顯示的訊息。</param>
+    /// <typeparam name="T">
+    /// 要比較的值型別。
+    /// </typeparam>
+    /// <param name="expected">
+    /// 預期值。
+    /// </param>
+    /// <param name="actual">
+    /// 實際值。
+    /// </param>
+    /// <param name="message">
+    /// 失敗時顯示的訊息。
+    /// </param>
     public static void Equal<T>(T expected, T actual, string message)
     {
         if (!EqualityComparer<T>.Default.Equals(expected, actual))
@@ -979,8 +1111,12 @@ internal static class StressAssert
     /// <summary>
     /// 驗證條件為真。
     /// </summary>
-    /// <param name="condition">要驗證的條件。</param>
-    /// <param name="message">失敗時顯示的訊息。</param>
+    /// <param name="condition">
+    /// 要驗證的條件。
+    /// </param>
+    /// <param name="message">
+    /// 失敗時顯示的訊息。
+    /// </param>
     public static void True(bool condition, string message)
     {
         if (!condition)
@@ -992,10 +1128,18 @@ internal static class StressAssert
     /// <summary>
     /// 驗證指定動作會擲回指定例外狀況。
     /// </summary>
-    /// <typeparam name="TException">預期的例外狀況型別。</typeparam>
-    /// <param name="action">要執行的動作。</param>
-    /// <param name="message">失敗時顯示的訊息。</param>
-    /// <returns>擲回的例外狀況。</returns>
+    /// <typeparam name="TException">
+    /// 預期的例外狀況型別。
+    /// </typeparam>
+    /// <param name="action">
+    /// 要執行的動作。
+    /// </param>
+    /// <param name="message">
+    /// 失敗時顯示的訊息。
+    /// </param>
+    /// <returns>
+    /// 擲回的例外狀況。
+    /// </returns>
     public static TException Throws<TException>(Action action, string message)
         where TException : Exception
     {
@@ -1014,10 +1158,18 @@ internal static class StressAssert
     /// <summary>
     /// 驗證指定非同步動作會擲回指定例外狀況。
     /// </summary>
-    /// <typeparam name="TException">預期的例外狀況型別。</typeparam>
-    /// <param name="action">要執行的非同步動作。</param>
-    /// <param name="message">失敗時顯示的訊息。</param>
-    /// <returns>擲回的例外狀況。</returns>
+    /// <typeparam name="TException">
+    /// 預期的例外狀況型別。
+    /// </typeparam>
+    /// <param name="action">
+    /// 要執行的非同步動作。
+    /// </param>
+    /// <param name="message">
+    /// 失敗時顯示的訊息。
+    /// </param>
+    /// <returns>
+    /// 擲回的例外狀況。
+    /// </returns>
     public static async Task<TException> ThrowsAsync<TException>(Func<Task> action, string message)
         where TException : Exception
     {
@@ -1036,9 +1188,15 @@ internal static class StressAssert
     /// <summary>
     /// 等待指定工作完成並套用逾時。
     /// </summary>
-    /// <param name="task">要等待的工作。</param>
-    /// <param name="timeoutMessage">逾時時使用的訊息。</param>
-    /// <returns>代表等待流程的工作。</returns>
+    /// <param name="task">
+    /// 要等待的工作。
+    /// </param>
+    /// <param name="timeoutMessage">
+    /// 逾時時使用的訊息。
+    /// </param>
+    /// <returns>
+    /// 代表等待流程的工作。
+    /// </returns>
     public static async Task WaitAsync(Task task, string timeoutMessage)
     {
         Task completed = await Task.WhenAny(task, Task.Delay(TimeSpan.FromSeconds(30))).ConfigureAwait(false);
@@ -1053,10 +1211,18 @@ internal static class StressAssert
     /// <summary>
     /// 等待指定工作完成並套用逾時。
     /// </summary>
-    /// <typeparam name="T">工作結果型別。</typeparam>
-    /// <param name="task">要等待的工作。</param>
-    /// <param name="timeoutMessage">逾時時使用的訊息。</param>
-    /// <returns>工作結果。</returns>
+    /// <typeparam name="T">
+    /// 工作結果型別。
+    /// </typeparam>
+    /// <param name="task">
+    /// 要等待的工作。
+    /// </param>
+    /// <param name="timeoutMessage">
+    /// 逾時時使用的訊息。
+    /// </param>
+    /// <returns>
+    /// 工作結果。
+    /// </returns>
     public static async Task<T> WaitAsync<T>(Task<T> task, string timeoutMessage)
     {
         Task completed = await Task.WhenAny(task, Task.Delay(TimeSpan.FromSeconds(30))).ConfigureAwait(false);

@@ -50,13 +50,19 @@ public static class MpvLicenseAuditor
     /// <paramref name="probeLibMpv"/> = <see langword="true"/>。
     /// </para>
     /// </remarks>
-    /// <param name="runtimeDirectory">要分析的執行階段資料夾。</param>
+    /// <param name="runtimeDirectory">
+    /// 要分析的執行階段資料夾。
+    /// </param>
     /// <param name="probeLibMpv">
     /// 是否實際載入 libmpv 並讀取 <c>mpv-configuration</c> 屬性。<strong>啟用即不可逆
     /// 載入 libmpv 至當前處理序</strong>，見上方 remarks。
     /// </param>
-    /// <param name="cancellationToken">取消分析的 token。</param>
-    /// <returns>稽核報告。</returns>
+    /// <param name="cancellationToken">
+    /// 取消分析的 token。
+    /// </param>
+    /// <returns>
+    /// 稽核報告。
+    /// </returns>
     public static async Task<MpvLicenseAuditReport> AnalyzeAsync(
         string runtimeDirectory,
         bool probeLibMpv = false,
@@ -144,8 +150,12 @@ public static class MpvLicenseAuditor
     /// <summary>
     /// 依 mpv-configuration 字串分類 libmpv 建置授權狀態。
     /// </summary>
-    /// <param name="configuration">mpv-configuration 屬性內容。</param>
-    /// <returns>分類後的授權狀態。</returns>
+    /// <param name="configuration">
+    /// mpv-configuration 屬性內容。
+    /// </param>
+    /// <returns>
+    /// 分類後的授權狀態。
+    /// </returns>
     internal static MpvBuildLicense ClassifyMpvLicense(string configuration)
     {
         return ClassifyByConfigurationText(configuration);
@@ -154,8 +164,12 @@ public static class MpvLicenseAuditor
     /// <summary>
     /// 依 <c>ffmpeg -version</c> 輸出分類 FFmpeg 建置授權狀態。
     /// </summary>
-    /// <param name="versionText">ffmpeg -version 標準輸出。</param>
-    /// <returns>分類後的授權狀態。</returns>
+    /// <param name="versionText">
+    /// ffmpeg -version 標準輸出。
+    /// </param>
+    /// <returns>
+    /// 分類後的授權狀態。
+    /// </returns>
     internal static MpvBuildLicense ClassifyFFmpegLicense(string versionText)
     {
         return ClassifyByConfigurationText(versionText);
@@ -166,8 +180,12 @@ public static class MpvLicenseAuditor
     /// libmpv 與 FFmpeg 採用相同的 GNU autoconf 風格 <c>--enable-*</c> 旗標慣例，
     /// 兩者的判定邏輯可共用單一 helper。
     /// </summary>
-    /// <param name="configurationText">mpv-configuration 屬性或 <c>ffmpeg -version</c> 輸出。</param>
-    /// <returns>分類後的授權狀態。</returns>
+    /// <param name="configurationText">
+    /// mpv-configuration 屬性或 <c>ffmpeg -version</c> 輸出。
+    /// </param>
+    /// <returns>
+    /// 分類後的授權狀態。
+    /// </returns>
     private static MpvBuildLicense ClassifyByConfigurationText(string configurationText)
     {
         if (string.IsNullOrWhiteSpace(configurationText))
@@ -197,9 +215,15 @@ public static class MpvLicenseAuditor
     /// <summary>
     /// 合併 libmpv 與 FFmpeg 的授權狀態為整體判定。
     /// </summary>
-    /// <param name="libMpv">libmpv 授權狀態。</param>
-    /// <param name="ffmpeg">FFmpeg 授權狀態。</param>
-    /// <returns>整體授權狀態；以最嚴格者為準。</returns>
+    /// <param name="libMpv">
+    /// libmpv 授權狀態。
+    /// </param>
+    /// <param name="ffmpeg">
+    /// FFmpeg 授權狀態。
+    /// </param>
+    /// <returns>
+    /// 整體授權狀態；以最嚴格者為準。
+    /// </returns>
     internal static MpvBuildLicense CombineLicenses(MpvBuildLicense libMpv, MpvBuildLicense ffmpeg)
     {
         if (libMpv == MpvBuildLicense.NonFree || ffmpeg == MpvBuildLicense.NonFree)
@@ -257,13 +281,27 @@ public sealed class MpvLicenseAuditReport
     /// <summary>
     /// 初始化 <see cref="MpvLicenseAuditReport"/> 類別的新執行個體。
     /// </summary>
-    /// <param name="runtimeDirectory">被分析的執行階段資料夾。</param>
-    /// <param name="libMpvLicense">libmpv 建置授權狀態。</param>
-    /// <param name="ffmpegLicense">FFmpeg 建置授權狀態。</param>
-    /// <param name="overallLicense">整體判定授權狀態。</param>
-    /// <param name="mpvConfiguration">解析 libmpv 時使用的 mpv-configuration 字串。</param>
-    /// <param name="ffmpegVersionText">解析 FFmpeg 時使用的版本輸出。</param>
-    /// <param name="warnings">分析過程中蒐集的警告。</param>
+    /// <param name="runtimeDirectory">
+    /// 被分析的執行階段資料夾。
+    /// </param>
+    /// <param name="libMpvLicense">
+    /// libmpv 建置授權狀態。
+    /// </param>
+    /// <param name="ffmpegLicense">
+    /// FFmpeg 建置授權狀態。
+    /// </param>
+    /// <param name="overallLicense">
+    /// 整體判定授權狀態。
+    /// </param>
+    /// <param name="mpvConfiguration">
+    /// 解析 libmpv 時使用的 mpv-configuration 字串。
+    /// </param>
+    /// <param name="ffmpegVersionText">
+    /// 解析 FFmpeg 時使用的版本輸出。
+    /// </param>
+    /// <param name="warnings">
+    /// 分析過程中蒐集的警告。
+    /// </param>
     internal MpvLicenseAuditReport(
         string runtimeDirectory,
         MpvBuildLicense libMpvLicense,
@@ -285,42 +323,56 @@ public sealed class MpvLicenseAuditReport
     /// <summary>
     /// 取得被分析的執行階段資料夾。
     /// </summary>
-    /// <value>執行階段資料夾完整路徑。</value>
+    /// <value>
+    /// 執行階段資料夾完整路徑。
+    /// </value>
     public string RuntimeDirectory { get; }
 
     /// <summary>
     /// 取得 libmpv 建置授權狀態。
     /// </summary>
-    /// <value>分類後的 libmpv 授權狀態。</value>
+    /// <value>
+    /// 分類後的 libmpv 授權狀態。
+    /// </value>
     public MpvBuildLicense LibMpvLicense { get; }
 
     /// <summary>
     /// 取得 FFmpeg 建置授權狀態。
     /// </summary>
-    /// <value>分類後的 FFmpeg 授權狀態。</value>
+    /// <value>
+    /// 分類後的 FFmpeg 授權狀態。
+    /// </value>
     public MpvBuildLicense FFmpegLicense { get; }
 
     /// <summary>
     /// 取得整體判定授權狀態。
     /// </summary>
-    /// <value>以兩個來源中較嚴格者為準的整體狀態。</value>
+    /// <value>
+    /// 以兩個來源中較嚴格者為準的整體狀態。
+    /// </value>
     public MpvBuildLicense OverallLicense { get; }
 
     /// <summary>
     /// 取得分析 libmpv 時使用的 mpv-configuration 字串。
     /// </summary>
-    /// <value>mpv-configuration 屬性內容；未取得時為空字串。</value>
+    /// <value>
+    /// mpv-configuration 屬性內容；未取得時為空字串。
+    /// </value>
     public string MpvConfiguration { get; }
 
     /// <summary>
     /// 取得分析 FFmpeg 時使用的版本輸出。
     /// </summary>
-    /// <value><c>ffmpeg -version</c> 的標準輸出；未取得時為空字串。</value>
+    /// <value>
+    /// <c>ffmpeg -version</c> 的標準輸出；未取得時為空字串。
+    /// </value>
     public string FFmpegVersionText { get; }
 
     /// <summary>
     /// 取得分析過程中蒐集的警告。
     /// </summary>
-    /// <value>警告訊息集合；分析完全成功時為空。</value>
+    /// <value>
+    /// 警告訊息集合；分析完全成功時為空。
+    /// </value>
     public IReadOnlyList<string> Warnings { get; }
 }

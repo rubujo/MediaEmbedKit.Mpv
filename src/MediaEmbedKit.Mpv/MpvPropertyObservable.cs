@@ -19,7 +19,9 @@ internal interface IMpvPropertyObservableCompletion
 /// 同一 <see cref="MpvPlayer"/> 內針對相同 (屬性名稱, 格式) 共用單一 libmpv 觀察識別碼，
 /// 多個 subscriber 透過 refcount 共享。
 /// </summary>
-/// <typeparam name="T">要觀察的屬性值型別。</typeparam>
+/// <typeparam name="T">
+/// 要觀察的屬性值型別。
+/// </typeparam>
 internal sealed class MpvPropertyObservable<T> : IObservable<T>, IMpvPropertyObservableCompletion
 {
     /// <summary>
@@ -58,9 +60,15 @@ internal sealed class MpvPropertyObservable<T> : IObservable<T>, IMpvPropertyObs
     /// <summary>
     /// 初始化 <see cref="MpvPropertyObservable{T}"/> 類別的新執行個體。
     /// </summary>
-    /// <param name="player">要觀察的播放器。</param>
-    /// <param name="propertyName">要觀察的屬性名稱。</param>
-    /// <param name="format">要觀察的屬性格式。</param>
+    /// <param name="player">
+    /// 要觀察的播放器。
+    /// </param>
+    /// <param name="propertyName">
+    /// 要觀察的屬性名稱。
+    /// </param>
+    /// <param name="format">
+    /// 要觀察的屬性格式。
+    /// </param>
     internal MpvPropertyObservable(MpvPlayer player, string propertyName, MpvFormat format)
     {
         _player = player ?? throw new ArgumentNullException(nameof(player));
@@ -75,8 +83,12 @@ internal sealed class MpvPropertyObservable<T> : IObservable<T>, IMpvPropertyObs
     /// <summary>
     /// 訂閱屬性變更通知。
     /// </summary>
-    /// <param name="observer">接收屬性變更值的觀察者。</param>
-    /// <returns>取消訂閱用的 <see cref="IDisposable"/>。</returns>
+    /// <param name="observer">
+    /// 接收屬性變更值的觀察者。
+    /// </param>
+    /// <returns>
+    /// 取消訂閱用的 <see cref="IDisposable"/>。
+    /// </returns>
     public IDisposable Subscribe(IObserver<T> observer)
     {
         if (observer == null)
@@ -172,7 +184,9 @@ internal sealed class MpvPropertyObservable<T> : IObservable<T>, IMpvPropertyObs
     /// <summary>
     /// 將指定觀察者從目前清單中移除。
     /// </summary>
-    /// <param name="observer">要移除的觀察者。</param>
+    /// <param name="observer">
+    /// 要移除的觀察者。
+    /// </param>
     private void RemoveObserver(IObserver<T> observer)
     {
         bool needsUnregister = false;
@@ -254,8 +268,12 @@ internal sealed class MpvPropertyObservable<T> : IObservable<T>, IMpvPropertyObs
     /// <summary>
     /// 處理 <see cref="MpvPlayer.PropertyChanged"/> 事件並轉發給訂閱者。
     /// </summary>
-    /// <param name="sender">事件來源。</param>
-    /// <param name="e">屬性變更事件資料。</param>
+    /// <param name="sender">
+    /// 事件來源。
+    /// </param>
+    /// <param name="e">
+    /// 屬性變更事件資料。
+    /// </param>
     private void OnPropertyChanged(object? sender, MpvPropertyChangedEventArgs e)
     {
         if (!string.Equals(e.Name, _propertyName, StringComparison.Ordinal))
@@ -290,9 +308,15 @@ internal sealed class MpvPropertyObservable<T> : IObservable<T>, IMpvPropertyObs
     /// <summary>
     /// 將事件值轉換成觀察者型別 <typeparamref name="T"/>。
     /// </summary>
-    /// <param name="raw">事件回傳的原始值。</param>
-    /// <param name="value">轉換後的值。</param>
-    /// <returns>成功轉換時為 <see langword="true"/>。</returns>
+    /// <param name="raw">
+    /// 事件回傳的原始值。
+    /// </param>
+    /// <param name="value">
+    /// 轉換後的值。
+    /// </param>
+    /// <returns>
+    /// 成功轉換時為 <see langword="true"/>。
+    /// </returns>
     private static bool TryConvertValue(object? raw, out T value)
     {
         if (raw is T direct)
@@ -336,8 +360,12 @@ internal sealed class MpvPropertyObservable<T> : IObservable<T>, IMpvPropertyObs
         /// <summary>
         /// 初始化 <see cref="Subscription"/> 類別的新執行個體。
         /// </summary>
-        /// <param name="owner">擁有此訂閱的觀察物件。</param>
-        /// <param name="observer">對應的觀察者。</param>
+        /// <param name="owner">
+        /// 擁有此訂閱的觀察物件。
+        /// </param>
+        /// <param name="observer">
+        /// 對應的觀察者。
+        /// </param>
         internal Subscription(MpvPropertyObservable<T> owner, IObserver<T> observer)
         {
             _owner = owner;
@@ -369,8 +397,12 @@ internal static class MpvPropertyFormatResolver
     /// <summary>
     /// 依泛型型別 <typeparamref name="T"/> 推算對應的 libmpv 屬性格式。
     /// </summary>
-    /// <typeparam name="T">要對應的型別。</typeparam>
-    /// <returns>對應的 <see cref="MpvFormat"/>。</returns>
+    /// <typeparam name="T">
+    /// 要對應的型別。
+    /// </typeparam>
+    /// <returns>
+    /// 對應的 <see cref="MpvFormat"/>。
+    /// </returns>
     internal static MpvFormat Resolve<T>()
     {
         Type type = typeof(T);

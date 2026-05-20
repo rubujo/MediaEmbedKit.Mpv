@@ -30,7 +30,9 @@ public sealed class ExternalToolProcessRunner
     /// <summary>
     /// 初始化 <see cref="ExternalToolProcessRunner"/> 類別的新執行個體。
     /// </summary>
-    /// <param name="executablePath">外部工具可執行檔路徑。</param>
+    /// <param name="executablePath">
+    /// 外部工具可執行檔路徑。
+    /// </param>
     public ExternalToolProcessRunner(string executablePath)
     {
         if (string.IsNullOrWhiteSpace(executablePath))
@@ -54,26 +56,36 @@ public sealed class ExternalToolProcessRunner
     /// <summary>
     /// 取得外部工具可執行檔路徑。
     /// </summary>
-    /// <value>外部工具可執行檔路徑。</value>
+    /// <value>
+    /// 外部工具可執行檔路徑。
+    /// </value>
     public string ExecutablePath { get; private set; }
 
     /// <summary>
     /// 取得或設定外部工具工作目錄。
     /// </summary>
-    /// <value>外部工具工作目錄；未指定時使用目前處理序工作目錄。</value>
+    /// <value>
+    /// 外部工具工作目錄；未指定時使用目前處理序工作目錄。
+    /// </value>
     public string? WorkingDirectory { get; set; }
 
     /// <summary>
     /// 取得或設定預設等待外部工具完成的時間。
     /// </summary>
-    /// <value>預設等待外部工具完成的時間。</value>
+    /// <value>
+    /// 預設等待外部工具完成的時間。
+    /// </value>
     public TimeSpan DefaultTimeout { get; set; }
 
     /// <summary>
     /// 設定外部工具處理序的環境變數。
     /// </summary>
-    /// <param name="name">環境變數名稱。</param>
-    /// <param name="value">環境變數值。</param>
+    /// <param name="name">
+    /// 環境變數名稱。
+    /// </param>
+    /// <param name="value">
+    /// 環境變數值。
+    /// </param>
     public void SetEnvironmentVariable(string name, string value)
     {
         if (string.IsNullOrWhiteSpace(name))
@@ -87,8 +99,12 @@ public sealed class ExternalToolProcessRunner
     /// <summary>
     /// 移除外部工具處理序的環境變數覆寫。
     /// </summary>
-    /// <param name="name">環境變數名稱。</param>
-    /// <returns>有移除既有覆寫時為 <see langword="true"/>。</returns>
+    /// <param name="name">
+    /// 環境變數名稱。
+    /// </param>
+    /// <returns>
+    /// 有移除既有覆寫時為 <see langword="true"/>。
+    /// </returns>
     public bool RemoveEnvironmentVariable(string name)
     {
         if (string.IsNullOrWhiteSpace(name))
@@ -102,10 +118,18 @@ public sealed class ExternalToolProcessRunner
     /// <summary>
     /// 非同步執行外部工具。
     /// </summary>
-    /// <param name="arguments">要傳給外部工具的引數集合。</param>
-    /// <param name="timeout">等待工具完成的時間；未指定時使用 <see cref="DefaultTimeout"/>。</param>
-    /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
-    /// <returns>表示外部工具執行結果的工作。</returns>
+    /// <param name="arguments">
+    /// 要傳給外部工具的引數集合。
+    /// </param>
+    /// <param name="timeout">
+    /// 等待工具完成的時間；未指定時使用 <see cref="DefaultTimeout"/>。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 可取消非同步作業的語彙基元。
+    /// </param>
+    /// <returns>
+    /// 表示外部工具執行結果的工作。
+    /// </returns>
     public async Task<ExternalToolProcessResult> RunAsync(
         IEnumerable<string> arguments,
         TimeSpan? timeout = null,
@@ -200,9 +224,15 @@ public sealed class ExternalToolProcessRunner
     /// <summary>
     /// 以 <see cref="IAsyncEnumerable{T}"/> 串流外部工具的標準輸出與標準錯誤輸出。
     /// </summary>
-    /// <param name="arguments">要傳給外部工具的引數集合。</param>
-    /// <param name="cancellationToken">取消列舉的 token；取消時會嘗試終止處理序。</param>
-    /// <returns>逐行回傳的輸出事件。</returns>
+    /// <param name="arguments">
+    /// 要傳給外部工具的引數集合。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 取消列舉的 token；取消時會嘗試終止處理序。
+    /// </param>
+    /// <returns>
+    /// 逐行回傳的輸出事件。
+    /// </returns>
     public async IAsyncEnumerable<ExternalToolOutputEventArgs> StreamAsync(
         IEnumerable<string> arguments,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
@@ -292,10 +322,18 @@ public sealed class ExternalToolProcessRunner
     /// <summary>
     /// 將處理序輸出回呼資料寫入串流緩衝。
     /// </summary>
-    /// <param name="buffer">輸出緩衝。</param>
-    /// <param name="stream">輸出資料流。</param>
-    /// <param name="line">回呼接收到的單列文字；資料流結束時為 <see langword="null"/>。</param>
-    /// <param name="pendingStreams">尚未結束的資料流數。</param>
+    /// <param name="buffer">
+    /// 輸出緩衝。
+    /// </param>
+    /// <param name="stream">
+    /// 輸出資料流。
+    /// </param>
+    /// <param name="line">
+    /// 回呼接收到的單列文字；資料流結束時為 <see langword="null"/>。
+    /// </param>
+    /// <param name="pendingStreams">
+    /// 尚未結束的資料流數。
+    /// </param>
     private static void EnqueueStreamLine(
         BlockingCollection<ExternalToolOutputEventArgs> buffer,
         ExternalToolOutputStream stream,
@@ -324,8 +362,12 @@ public sealed class ExternalToolProcessRunner
     /// <summary>
     /// 將引數清單轉換為命令列文字。
     /// </summary>
-    /// <param name="arguments">要格式化的引數清單。</param>
-    /// <returns>命令列引數文字。</returns>
+    /// <param name="arguments">
+    /// 要格式化的引數清單。
+    /// </param>
+    /// <returns>
+    /// 命令列引數文字。
+    /// </returns>
     public static string FormatArguments(IEnumerable<string> arguments)
     {
         if (arguments == null)
@@ -352,11 +394,21 @@ public sealed class ExternalToolProcessRunner
     /// <summary>
     /// 處理外部工具輸出的一列文字。
     /// </summary>
-    /// <param name="stream">輸出的資料流。</param>
-    /// <param name="line">輸出的單列文字；資料流結束時為 <see langword="null"/>。</param>
-    /// <param name="builder">累積輸出的字串建構器。</param>
-    /// <param name="outputGate">同步輸出累積的物件。</param>
-    /// <param name="closed">資料流結束工作。</param>
+    /// <param name="stream">
+    /// 輸出的資料流。
+    /// </param>
+    /// <param name="line">
+    /// 輸出的單列文字；資料流結束時為 <see langword="null"/>。
+    /// </param>
+    /// <param name="builder">
+    /// 累積輸出的字串建構器。
+    /// </param>
+    /// <param name="outputGate">
+    /// 同步輸出累積的物件。
+    /// </param>
+    /// <param name="closed">
+    /// 資料流結束工作。
+    /// </param>
     private void HandleOutputLine(
         ExternalToolOutputStream stream,
         string? line,
@@ -381,10 +433,18 @@ public sealed class ExternalToolProcessRunner
     /// <summary>
     /// 非同步等待處理序結束並套用逾時限制。
     /// </summary>
-    /// <param name="process">要等待的處理序。</param>
-    /// <param name="timeout">等待處理序完成的逾時時間。</param>
-    /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
-    /// <returns>處理序在逾時前結束時為 <see langword="true"/>。</returns>
+    /// <param name="process">
+    /// 要等待的處理序。
+    /// </param>
+    /// <param name="timeout">
+    /// 等待處理序完成的逾時時間。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 可取消非同步作業的語彙基元。
+    /// </param>
+    /// <returns>
+    /// 處理序在逾時前結束時為 <see langword="true"/>。
+    /// </returns>
     private static async Task<bool> WaitForExitAsync(Process process, TimeSpan timeout, CancellationToken cancellationToken)
     {
         DateTimeOffset deadline = DateTimeOffset.UtcNow.Add(timeout);
@@ -405,10 +465,18 @@ public sealed class ExternalToolProcessRunner
     /// <summary>
     /// 等待標準輸出與標準錯誤資料流完成關閉。
     /// </summary>
-    /// <param name="outputClosed">標準輸出完成關閉的工作。</param>
-    /// <param name="errorClosed">標準錯誤完成關閉的工作。</param>
-    /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
-    /// <returns>代表等待輸出資料流關閉流程的工作。</returns>
+    /// <param name="outputClosed">
+    /// 標準輸出完成關閉的工作。
+    /// </param>
+    /// <param name="errorClosed">
+    /// 標準錯誤完成關閉的工作。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 可取消非同步作業的語彙基元。
+    /// </param>
+    /// <returns>
+    /// 代表等待輸出資料流關閉流程的工作。
+    /// </returns>
     private static async Task WaitForOutputStreamsClosedAsync(
         Task outputClosed,
         Task errorClosed,
@@ -430,7 +498,9 @@ public sealed class ExternalToolProcessRunner
     /// 嘗試終止處理序；委派到 <see cref="DownloadUtility.TryKillProcess"/>，後者會吞各種
     /// platform 例外、.NET 5+ 路徑同時 kill 整個子處理序樹。
     /// </summary>
-    /// <param name="process">要終止的處理序。</param>
+    /// <param name="process">
+    /// 要終止的處理序。
+    /// </param>
     private static void KillProcess(Process process)
     {
         DownloadUtility.TryKillProcess(process);
@@ -439,8 +509,12 @@ public sealed class ExternalToolProcessRunner
     /// <summary>
     /// 將單一引數轉換為可放入命令列的文字。
     /// </summary>
-    /// <param name="argument">要格式化的引數。</param>
-    /// <returns>已加上必要引號與逸出的引數文字。</returns>
+    /// <param name="argument">
+    /// 要格式化的引數。
+    /// </param>
+    /// <returns>
+    /// 已加上必要引號與逸出的引數文字。
+    /// </returns>
     private static string QuoteArgument(string argument)
     {
         if (argument.Length == 0)

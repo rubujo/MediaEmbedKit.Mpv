@@ -143,58 +143,202 @@ public sealed partial class MainPage : ContentPage, IDisposable
         AppendEventLine(CreateLifecycleLine("PageCreated", "MAUI 頁面已建立，等待 runtime 初始化。"));
     }
 
-    /// <summary>OSD 按鈕點選事件。</summary>
+    /// <summary>
+    /// OSD 按鈕點選事件。
+    /// </summary>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private void OsdClicked(object? sender, EventArgs e) => RunFeature(() => _features.ShowOsd());
 
-    /// <summary>後退 10 秒按鈕點選事件。</summary>
+    /// <summary>
+    /// 後退 10 秒按鈕點選事件。
+    /// </summary>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private void SeekBackwardClicked(object? sender, EventArgs e) => RunFeature(() => _features.SeekRelative(-10));
 
-    /// <summary>前進 10 秒按鈕點選事件。</summary>
+    /// <summary>
+    /// 前進 10 秒按鈕點選事件。
+    /// </summary>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private void SeekForwardClicked(object? sender, EventArgs e) => RunFeature(() => _features.SeekRelative(10));
 
-    /// <summary>音量下降按鈕點選事件。</summary>
+    /// <summary>
+    /// 音量下降按鈕點選事件。
+    /// </summary>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private void VolumeDownClicked(object? sender, EventArgs e) => RunFeature(() => _features.ChangeVolume(-5));
 
-    /// <summary>音量上升按鈕點選事件。</summary>
+    /// <summary>
+    /// 音量上升按鈕點選事件。
+    /// </summary>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private void VolumeUpClicked(object? sender, EventArgs e) => RunFeature(() => _features.ChangeVolume(5));
 
-    /// <summary>靜音按鈕點選事件。</summary>
+    /// <summary>
+    /// 靜音按鈕點選事件。
+    /// </summary>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private void MuteClicked(object? sender, EventArgs e) => RunFeature(() => _features.ToggleMute());
 
-    /// <summary>播放速度切換按鈕點選事件。</summary>
+    /// <summary>
+    /// 播放速度切換按鈕點選事件。
+    /// </summary>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private void SpeedClicked(object? sender, EventArgs e) => RunFeature(() => _features.CycleSpeed());
 
-    /// <summary>字幕載入按鈕點選事件。</summary>
+    /// <summary>
+    /// 字幕載入按鈕點選事件。
+    /// </summary>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private void SubtitleClicked(object? sender, EventArgs e) => RunFeature(() => _features.AddSampleSubtitle());
 
-    /// <summary>軌道輸出按鈕點選事件。</summary>
+    /// <summary>
+    /// 軌道輸出按鈕點選事件。
+    /// </summary>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private void TracksClicked(object? sender, EventArgs e) => RunFeature(() => _features.DumpTracks());
 
-    /// <summary>截圖按鈕點選事件。</summary>
+    /// <summary>
+    /// 截圖按鈕點選事件。
+    /// </summary>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private void ScreenshotClicked(object? sender, EventArgs e) => RunFeature(() => _features.TakeScreenshot());
 
-    /// <summary>設定載入按鈕點選事件。</summary>
+    /// <summary>
+    /// 設定載入按鈕點選事件。
+    /// </summary>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private void ConfigClicked(object? sender, EventArgs e) => RunFeature(() => _features.LoadSampleConfig());
 
-    /// <summary>Lua script 載入按鈕點選事件。</summary>
+    /// <summary>
+    /// Lua script 載入按鈕點選事件。
+    /// </summary>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private async void LuaClicked(object? sender, EventArgs e) => await RunFeatureAsync(() => _features.LoadSampleLuaScriptAsync()).ConfigureAwait(true);
 
-    /// <summary>yt-dlp 診斷按鈕點選事件。</summary>
+    /// <summary>
+    /// yt-dlp 診斷按鈕點選事件。
+    /// </summary>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private async void YtdlpClicked(object? sender, EventArgs e) => await RunFeatureAsync(() => _features.RunYtdlpDiagnosticsAsync(_sourceEntry.Text ?? string.Empty)).ConfigureAwait(true);
 
-    /// <summary>Deno 診斷按鈕點選事件。</summary>
+    /// <summary>
+    /// Deno 診斷按鈕點選事件。
+    /// </summary>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private async void DenoClicked(object? sender, EventArgs e) => await RunFeatureAsync(() => _features.RunDenoDiagnosticsAsync()).ConfigureAwait(true);
 
-    /// <summary>FFmpeg 診斷按鈕點選事件。</summary>
+    /// <summary>
+    /// FFmpeg 診斷按鈕點選事件。
+    /// </summary>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private async void FFmpegClicked(object? sender, EventArgs e) => await RunFeatureAsync(() => _features.RunFFmpegDiagnosticsAsync()).ConfigureAwait(true);
 
-    /// <summary>Save MP4 按鈕點選事件。</summary>
+    /// <summary>
+    /// Save MP4 按鈕點選事件。
+    /// </summary>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private async void SaveMp4Clicked(object? sender, EventArgs e) => await RunFeatureAsync(() => EncodeCurrentSourceToMp4Async()).ConfigureAwait(true);
 
-    /// <summary>yt-dlp 自我更新按鈕點選事件。</summary>
+    /// <summary>
+    /// yt-dlp 自我更新按鈕點選事件。
+    /// </summary>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private async void YtdlpUpdateClicked(object? sender, EventArgs e) => await RunFeatureAsync(() => _features.RunYtdlpSelfUpdateAsync()).ConfigureAwait(true);
 
-    /// <summary>Deno 自我升級按鈕點選事件。</summary>
+    /// <summary>
+    /// Deno 自我升級按鈕點選事件。
+    /// </summary>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private async void DenoUpdateClicked(object? sender, EventArgs e) => await RunFeatureAsync(() => _features.RunDenoSelfUpgradeAsync()).ConfigureAwait(true);
 
     /// <summary>
@@ -281,7 +425,9 @@ public sealed partial class MainPage : ContentPage, IDisposable
     /// <summary>
     /// 非同步初始化範例 runtime 與 MAUI 播放檢視。
     /// </summary>
-    /// <returns>初始化成功時為 <see langword="true"/>。</returns>
+    /// <returns>
+    /// 初始化成功時為 <see langword="true"/>。
+    /// </returns>
     private async Task<bool> InitializeRuntimeAsync()
     {
         SetStatusText("正在準備 runtime...");
@@ -340,7 +486,9 @@ public sealed partial class MainPage : ContentPage, IDisposable
     /// <summary>
     /// 執行 MAUI Windows 範例播放冒煙測試。
     /// </summary>
-    /// <returns>代表冒煙測試流程的工作。</returns>
+    /// <returns>
+    /// 代表冒煙測試流程的工作。
+    /// </returns>
     private Task RunSmokeAsync()
     {
         return SampleRuntime.RunSmokeUntilPlaybackAsync("MauiSample", () => _player?.Player, CloseApplication);
@@ -349,8 +497,12 @@ public sealed partial class MainPage : ContentPage, IDisposable
     /// <summary>
     /// 處理播放器建立事件並開始輸出 libmpv 事件。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private void PlayerCreated(object? sender, EventArgs e)
     {
         if (_player?.Player != null)
@@ -362,8 +514,12 @@ public sealed partial class MainPage : ContentPage, IDisposable
     /// <summary>
     /// 處理載入按鈕點選事件並載入輸入的媒體來源。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private void LoadButtonClicked(object? sender, EventArgs e)
     {
         LoadCurrentSource();
@@ -372,8 +528,12 @@ public sealed partial class MainPage : ContentPage, IDisposable
     /// <summary>
     /// 切換目前播放器的暫停狀態。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private void PauseButtonClicked(object? sender, EventArgs e)
     {
         if (!EnsureRuntimeReady() || _player == null)
@@ -388,8 +548,12 @@ public sealed partial class MainPage : ContentPage, IDisposable
     /// <summary>
     /// 停止目前播放項目。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private void StopButtonClicked(object? sender, EventArgs e)
     {
         if (!EnsureRuntimeReady() || _player == null)
@@ -404,7 +568,9 @@ public sealed partial class MainPage : ContentPage, IDisposable
     /// <summary>
     /// 以共用 <see cref="SampleEncodingHelper"/> 把當前 URL 來源前 5 秒轉碼成 mp4。
     /// </summary>
-    /// <returns>代表編碼流程的工作。</returns>
+    /// <returns>
+    /// 代表編碼流程的工作。
+    /// </returns>
     private async Task EncodeCurrentSourceToMp4Async()
     {
         if (!EnsureRuntimeReady())
@@ -439,8 +605,12 @@ public sealed partial class MainPage : ContentPage, IDisposable
     /// <summary>
     /// 在格式選項變更時套用 yt-dlp 格式。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private void FormatPickerSelectedIndexChanged(object? sender, EventArgs e)
     {
         Picker? picker = sender as Picker;
@@ -495,7 +665,9 @@ public sealed partial class MainPage : ContentPage, IDisposable
     /// <summary>
     /// 建立 MAUI handler 可轉換到平台控制項的安全覆蓋層檢視。
     /// </summary>
-    /// <returns>可交給 `MpvView.OverlayView` 顯示的 MAUI 覆蓋層檢視。</returns>
+    /// <returns>
+    /// 可交給 `MpvView.OverlayView` 顯示的 MAUI 覆蓋層檢視。
+    /// </returns>
     private static View CreateMauiOverlayView()
     {
         return new Label
@@ -519,7 +691,9 @@ public sealed partial class MainPage : ContentPage, IDisposable
     /// <summary>
     /// 將播放器事件橋接到 UI 事件清單。
     /// </summary>
-    /// <param name="player">要觀察的播放器。</param>
+    /// <param name="player">
+    /// 要觀察的播放器。
+    /// </param>
     private void AttachPlayerEvents(MpvPlayer player)
     {
         _eventBridge?.Dispose();
@@ -531,7 +705,9 @@ public sealed partial class MainPage : ContentPage, IDisposable
     /// <summary>
     /// 執行同步範例功能並處理錯誤。
     /// </summary>
-    /// <param name="action">要執行的功能。</param>
+    /// <param name="action">
+    /// 要執行的功能。
+    /// </param>
     private void RunFeature(Action action)
     {
         if (!EnsureRuntimeReady())
@@ -553,8 +729,12 @@ public sealed partial class MainPage : ContentPage, IDisposable
     /// <summary>
     /// 執行非同步範例功能並處理錯誤。
     /// </summary>
-    /// <param name="action">要執行的非同步功能。</param>
-    /// <returns>代表功能執行流程的工作。</returns>
+    /// <param name="action">
+    /// 要執行的非同步功能。
+    /// </param>
+    /// <returns>
+    /// 代表功能執行流程的工作。
+    /// </returns>
     private async Task RunFeatureAsync(Func<Task> action)
     {
         if (!EnsureRuntimeReady())
@@ -591,7 +771,9 @@ public sealed partial class MainPage : ContentPage, IDisposable
     /// <summary>
     /// 設定非同步功能進行中需暫時禁用的按鈕是否可操作。
     /// </summary>
-    /// <param name="enabled">按鈕可操作時為 <see langword="true"/>。</param>
+    /// <param name="enabled">
+    /// 按鈕可操作時為 <see langword="true"/>。
+    /// </param>
     private void SetFeatureButtonsEnabled(bool enabled)
     {
         foreach (Button button in _featureButtons)
@@ -603,7 +785,9 @@ public sealed partial class MainPage : ContentPage, IDisposable
     /// <summary>
     /// 確認 runtime 已完成初始化。
     /// </summary>
-    /// <returns>runtime 已就緒時為 <see langword="true"/>。</returns>
+    /// <returns>
+    /// runtime 已就緒時為 <see langword="true"/>。
+    /// </returns>
     private bool EnsureRuntimeReady()
     {
         if (_runtimeReady)
@@ -618,7 +802,9 @@ public sealed partial class MainPage : ContentPage, IDisposable
     /// <summary>
     /// 設定 runtime 相關控制項是否可操作。
     /// </summary>
-    /// <param name="enabled">控制項可操作時為 <see langword="true"/>。</param>
+    /// <param name="enabled">
+    /// 控制項可操作時為 <see langword="true"/>。
+    /// </param>
     private void SetRuntimeControlsEnabled(bool enabled)
     {
         foreach (VisualElement control in _runtimeControls)
@@ -630,7 +816,9 @@ public sealed partial class MainPage : ContentPage, IDisposable
     /// <summary>
     /// 將目前選擇的 yt-dlp 格式套用到指定播放器選項。
     /// </summary>
-    /// <param name="options">要套用格式的播放器選項。</param>
+    /// <param name="options">
+    /// 要套用格式的播放器選項。
+    /// </param>
     private void ApplySelectedYtdlpFormatToPlayerOptions(MpvPlayerOptions options)
     {
         int selectedIndex = _formatPicker.SelectedIndex;
@@ -643,7 +831,9 @@ public sealed partial class MainPage : ContentPage, IDisposable
     /// <summary>
     /// 將事件文字加入 UI 清單。
     /// </summary>
-    /// <param name="line">要加入事件清單的文字列。</param>
+    /// <param name="line">
+    /// 要加入事件清單的文字列。
+    /// </param>
     private void AppendEventLine(string line)
     {
         _eventLogDispatcher.Enqueue(line);
@@ -652,7 +842,9 @@ public sealed partial class MainPage : ContentPage, IDisposable
     /// <summary>
     /// 批次加入事件文字列到 UI 清單。
     /// </summary>
-    /// <param name="lines">要加入事件清單的文字列集合。</param>
+    /// <param name="lines">
+    /// 要加入事件清單的文字列集合。
+    /// </param>
     private void AppendEventLines(IReadOnlyList<string> lines)
     {
         foreach (string line in lines)
@@ -674,8 +866,12 @@ public sealed partial class MainPage : ContentPage, IDisposable
     /// <summary>
     /// 將事件清單更新排入 MAUI UI 執行緒。
     /// </summary>
-    /// <param name="action">要在 UI 執行緒執行的更新。</param>
-    /// <returns>成功排入 UI 執行緒時為 <see langword="true"/>。</returns>
+    /// <param name="action">
+    /// 要在 UI 執行緒執行的更新。
+    /// </param>
+    /// <returns>
+    /// 成功排入 UI 執行緒時為 <see langword="true"/>。
+    /// </returns>
     private static bool ScheduleEventLogFlush(Action action)
     {
         return ScheduleUiUpdate(action);
@@ -684,8 +880,12 @@ public sealed partial class MainPage : ContentPage, IDisposable
     /// <summary>
     /// 將指定動作排入 MAUI UI 執行緒。
     /// </summary>
-    /// <param name="action">要在 UI 執行緒執行的動作。</param>
-    /// <returns>成功排入 UI 執行緒時為 <see langword="true"/>。</returns>
+    /// <param name="action">
+    /// 要在 UI 執行緒執行的動作。
+    /// </param>
+    /// <returns>
+    /// 成功排入 UI 執行緒時為 <see langword="true"/>。
+    /// </returns>
     private static bool ScheduleUiUpdate(Action action)
     {
         try
@@ -706,7 +906,9 @@ public sealed partial class MainPage : ContentPage, IDisposable
     /// <summary>
     /// 套用背景輪詢取得的狀態列文字。
     /// </summary>
-    /// <param name="text">要顯示的狀態列文字。</param>
+    /// <param name="text">
+    /// 要顯示的狀態列文字。
+    /// </param>
     private void SetStatusText(string text)
     {
         _statusLabel.Text = text;
@@ -715,9 +917,15 @@ public sealed partial class MainPage : ContentPage, IDisposable
     /// <summary>
     /// 建立範例生命週期文字列。
     /// </summary>
-    /// <param name="stage">生命週期階段名稱。</param>
-    /// <param name="detail">階段補充內容。</param>
-    /// <returns>可顯示在事件清單中的生命週期文字列。</returns>
+    /// <param name="stage">
+    /// 生命週期階段名稱。
+    /// </param>
+    /// <param name="detail">
+    /// 階段補充內容。
+    /// </param>
+    /// <returns>
+    /// 可顯示在事件清單中的生命週期文字列。
+    /// </returns>
     private static string CreateLifecycleLine(string stage, string detail)
     {
         return DateTimeOffset.Now.ToString("HH:mm:ss.fff", CultureInfo.InvariantCulture) + " [lifecycle] " + stage + " | " + detail;
@@ -746,7 +954,9 @@ public sealed partial class MainPage : ContentPage, IDisposable
     /// <summary>
     /// 建立事件清單項目範本。
     /// </summary>
-    /// <returns>用來顯示單列事件文字的資料範本。</returns>
+    /// <returns>
+    /// 用來顯示單列事件文字的資料範本。
+    /// </returns>
     private static DataTemplate CreateEventTemplate()
     {
         return new DataTemplate(() =>
@@ -765,8 +975,12 @@ public sealed partial class MainPage : ContentPage, IDisposable
     /// <summary>
     /// 將 <see cref="SampleTheme"/> 的 ARGB 整數轉成 MAUI 顏色。
     /// </summary>
-    /// <param name="argb">要轉換的 ARGB 整數。</param>
-    /// <returns>對應的 MAUI 顏色。</returns>
+    /// <param name="argb">
+    /// 要轉換的 ARGB 整數。
+    /// </param>
+    /// <returns>
+    /// 對應的 MAUI 顏色。
+    /// </returns>
     private static Color ThemeColor(int argb)
     {
         return Color.FromRgba(SampleTheme.RedOf(argb), SampleTheme.GreenOf(argb), SampleTheme.BlueOf(argb), SampleTheme.AlphaOf(argb));

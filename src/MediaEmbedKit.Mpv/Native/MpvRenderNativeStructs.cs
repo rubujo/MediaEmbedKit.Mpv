@@ -7,16 +7,24 @@ namespace MediaEmbedKit.Mpv.Native;
 /// <summary>
 /// 表示 libmpv OpenGL 函式位址解析回呼。
 /// </summary>
-/// <param name="context">呼叫端提供的回呼內容指標。</param>
-/// <param name="name">要解析的 OpenGL 函式名稱指標。</param>
-/// <returns>OpenGL 函式位址；無法解析時為 <see cref="IntPtr.Zero"/>。</returns>
+/// <param name="context">
+/// 呼叫端提供的回呼內容指標。
+/// </param>
+/// <param name="name">
+/// 要解析的 OpenGL 函式名稱指標。
+/// </param>
+/// <returns>
+/// OpenGL 函式位址；無法解析時為 <see cref="IntPtr.Zero"/>。
+/// </returns>
 [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 internal delegate IntPtr MpvOpenGlGetProcAddress(IntPtr context, IntPtr name);
 
 /// <summary>
 /// 表示 libmpv render API 更新通知回呼。
 /// </summary>
-/// <param name="context">呼叫端提供的回呼內容指標。</param>
+/// <param name="context">
+/// 呼叫端提供的回呼內容指標。
+/// </param>
 [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 internal delegate void MpvRenderUpdateCallback(IntPtr context);
 
@@ -29,8 +37,12 @@ internal struct MpvRenderParam
     /// <summary>
     /// 初始化 <see cref="MpvRenderParam"/> 結構的新執行個體。
     /// </summary>
-    /// <param name="type">render API 參數型別。</param>
-    /// <param name="data">render API 參數資料指標。</param>
+    /// <param name="type">
+    /// render API 參數型別。
+    /// </param>
+    /// <param name="data">
+    /// render API 參數資料指標。
+    /// </param>
     public MpvRenderParam(MpvRenderParamType type, IntPtr data)
     {
         Type = type;
@@ -80,10 +92,18 @@ internal struct MpvOpenGlFbo
     /// <summary>
     /// 初始化 <see cref="MpvOpenGlFbo"/> 結構的新執行個體。
     /// </summary>
-    /// <param name="fbo">OpenGL framebuffer 物件識別碼。</param>
-    /// <param name="width">framebuffer 寬度。</param>
-    /// <param name="height">framebuffer 高度。</param>
-    /// <param name="internalFormat">framebuffer 內部格式。</param>
+    /// <param name="fbo">
+    /// OpenGL framebuffer 物件識別碼。
+    /// </param>
+    /// <param name="width">
+    /// framebuffer 寬度。
+    /// </param>
+    /// <param name="height">
+    /// framebuffer 高度。
+    /// </param>
+    /// <param name="internalFormat">
+    /// framebuffer 內部格式。
+    /// </param>
     public MpvOpenGlFbo(int fbo, int width, int height, int internalFormat)
     {
         Fbo = fbo;

@@ -31,8 +31,12 @@ internal sealed class MpvAirspacePopup : IDisposable
     /// <summary>
     /// 初始化 <see cref="MpvAirspacePopup"/> 類別的新執行個體。
     /// </summary>
-    /// <param name="target">Popup 要覆蓋並對齊的 WPF 元素。</param>
-    /// <param name="child">要顯示在 Popup 中的 WPF 內容。</param>
+    /// <param name="target">
+    /// Popup 要覆蓋並對齊的 WPF 元素。
+    /// </param>
+    /// <param name="child">
+    /// 要顯示在 Popup 中的 WPF 內容。
+    /// </param>
     public MpvAirspacePopup(FrameworkElement target, UIElement child)
     {
         if (target == null)
@@ -62,13 +66,17 @@ internal sealed class MpvAirspacePopup : IDisposable
     /// <summary>
     /// 取得實際用來顯示覆蓋內容的 WPF Popup。
     /// </summary>
-    /// <value>對齊目標元素的 Popup 執行個體。</value>
+    /// <value>
+    /// 對齊目標元素的 Popup 執行個體。
+    /// </value>
     public Popup Popup { get; private set; }
 
     /// <summary>
     /// 取得或設定 Popup 是否開啟。
     /// </summary>
-    /// <value>Popup 目前開啟時為 <see langword="true"/>。</value>
+    /// <value>
+    /// Popup 目前開啟時為 <see langword="true"/>。
+    /// </value>
     public bool IsOpen
     {
         get { return Popup.IsOpen; }
@@ -140,8 +148,12 @@ internal sealed class MpvAirspacePopup : IDisposable
     /// <summary>
     /// 在目標元素載入時重新附加所屬視窗並更新邊界。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private void TargetLoaded(object sender, RoutedEventArgs e)
     {
         AttachWindow(Window.GetWindow(_target));
@@ -151,8 +163,12 @@ internal sealed class MpvAirspacePopup : IDisposable
     /// <summary>
     /// 在目標元素卸載時關閉 Popup。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private void TargetUnloaded(object sender, RoutedEventArgs e)
     {
         Popup.IsOpen = false;
@@ -161,8 +177,12 @@ internal sealed class MpvAirspacePopup : IDisposable
     /// <summary>
     /// 在目標元素大小變更時更新 Popup 邊界。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">大小變更事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 大小變更事件資料。
+    /// </param>
     private void TargetChanged(object sender, SizeChangedEventArgs e)
     {
         RequestUpdateBounds();
@@ -171,8 +191,12 @@ internal sealed class MpvAirspacePopup : IDisposable
     /// <summary>
     /// 在目標元素可見度變更時同步 Popup 開啟狀態。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">相依性屬性變更事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 相依性屬性變更事件資料。
+    /// </param>
     private void TargetIsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
     {
         if (!_target.IsVisible)
@@ -184,7 +208,9 @@ internal sealed class MpvAirspacePopup : IDisposable
     /// <summary>
     /// 附加或切換 Popup 追蹤的 WPF 視窗。
     /// </summary>
-    /// <param name="window">要附加的 WPF 視窗；傳入 <see langword="null"/> 會解除目前視窗。</param>
+    /// <param name="window">
+    /// 要附加的 WPF 視窗；傳入 <see langword="null"/> 會解除目前視窗。
+    /// </param>
     private void AttachWindow(Window? window)
     {
         if (_window != null)
@@ -209,8 +235,12 @@ internal sealed class MpvAirspacePopup : IDisposable
     /// <summary>
     /// 在所屬視窗位置或大小變更時更新 Popup 邊界。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private void WindowChanged(object? sender, EventArgs e)
     {
         RequestUpdateBounds();
@@ -219,8 +249,12 @@ internal sealed class MpvAirspacePopup : IDisposable
     /// <summary>
     /// 在所屬視窗 DPI 變更時更新 Popup 邊界，確保跨螢幕拖曳後仍正確對齊。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">DPI 變更事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// DPI 變更事件資料。
+    /// </param>
     private void WindowDpiChanged(object? sender, DpiChangedEventArgs e)
     {
         RequestUpdateBounds();

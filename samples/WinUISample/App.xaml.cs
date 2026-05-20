@@ -22,7 +22,9 @@ public partial class App : Application
     /// <summary>
     /// 在應用程式啟動時建立並顯示主要視窗。
     /// </summary>
-    /// <param name="args">WinUI 啟動事件資料。</param>
+    /// <param name="args">
+    /// WinUI 啟動事件資料。
+    /// </param>
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
         LaunchMainWindow();

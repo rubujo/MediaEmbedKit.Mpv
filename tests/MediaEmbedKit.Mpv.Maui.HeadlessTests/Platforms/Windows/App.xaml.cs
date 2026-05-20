@@ -11,7 +11,9 @@ public partial class App : MauiWinUIApplication
     /// <summary>
     /// 建立 MAUI 應用程式以承載 headless 測試。
     /// </summary>
-    /// <returns>已設定的 MAUI 應用程式。</returns>
+    /// <returns>
+    /// 已設定的 MAUI 應用程式。
+    /// </returns>
     protected override MauiApp CreateMauiApp()
     {
         return MauiProgram.CreateMauiApp();

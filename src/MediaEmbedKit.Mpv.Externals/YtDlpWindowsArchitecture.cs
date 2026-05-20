@@ -27,7 +27,9 @@ public static class YtDlpWindowsArchitectureExtensions
     /// <summary>
     /// 取得目前處理序適用的 yt-dlp Windows 發行檔架構。
     /// </summary>
-    /// <returns>目前處理序適用的 yt-dlp Windows 架構。</returns>
+    /// <returns>
+    /// 目前處理序適用的 yt-dlp Windows 架構。
+    /// </returns>
     /// <remarks>
     /// 以 <see cref="RuntimeInformation.ProcessArchitecture"/> 為準。Windows on ARM 處理序在
     /// x64 emulation 下會被視為 x64；原生 ARM64 處理序回傳 <see cref="YtDlpWindowsArchitecture.Arm64"/>。
@@ -57,8 +59,12 @@ public static class YtDlpWindowsArchitectureExtensions
     /// <summary>
     /// 將 yt-dlp Windows 架構轉換為 GitHub 發行資產名稱。
     /// </summary>
-    /// <param name="architecture">要轉換的 yt-dlp Windows 架構。</param>
-    /// <returns>對應的 yt-dlp 發行資產名稱。</returns>
+    /// <param name="architecture">
+    /// 要轉換的 yt-dlp Windows 架構。
+    /// </param>
+    /// <returns>
+    /// 對應的 yt-dlp 發行資產名稱。
+    /// </returns>
     /// <remarks>
     /// yt-dlp 官方 release 自 2026 起對 ARM64 提供 <c>yt-dlp_arm64.exe</c>。
     /// </remarks>

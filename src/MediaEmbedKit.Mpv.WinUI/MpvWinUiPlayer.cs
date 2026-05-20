@@ -205,7 +205,9 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// <summary>
     /// 取得讓播放器開始或續播的指令。
     /// </summary>
-    /// <value>對應 mpv <c>pause=no</c>。</value>
+    /// <value>
+    /// 對應 mpv <c>pause=no</c>。
+    /// </value>
     [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public ICommand PlayCommand
     {
@@ -215,7 +217,9 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// <summary>
     /// 取得暫停播放的指令。
     /// </summary>
-    /// <value>對應 mpv <c>pause=yes</c>。</value>
+    /// <value>
+    /// 對應 mpv <c>pause=yes</c>。
+    /// </value>
     [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public ICommand PauseCommand
     {
@@ -225,7 +229,9 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// <summary>
     /// 取得停止播放的指令。
     /// </summary>
-    /// <value>對應 mpv <c>stop</c>。</value>
+    /// <value>
+    /// 對應 mpv <c>stop</c>。
+    /// </value>
     [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public ICommand StopCommand
     {
@@ -235,7 +241,9 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// <summary>
     /// 取得切換暫停狀態的指令。
     /// </summary>
-    /// <value>切換 mpv <c>pause</c>。</value>
+    /// <value>
+    /// 切換 mpv <c>pause</c>。
+    /// </value>
     [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public ICommand TogglePauseCommand
     {
@@ -245,7 +253,9 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// <summary>
     /// 取得切換靜音狀態的指令。
     /// </summary>
-    /// <value>切換 mpv <c>mute</c>。</value>
+    /// <value>
+    /// 切換 mpv <c>mute</c>。
+    /// </value>
     [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public ICommand ToggleMuteCommand
     {
@@ -255,7 +265,9 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// <summary>
     /// 判斷指令目前是否有可用播放器。
     /// </summary>
-    /// <returns>已綁定播放器時為 <see langword="true"/>。</returns>
+    /// <returns>
+    /// 已綁定播放器時為 <see langword="true"/>。
+    /// </returns>
     private bool CanExecutePlayerCommand()
     {
         return _boundPlayer != null;
@@ -346,14 +358,18 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// <summary>
     /// 取得控制項建立播放器時使用的選項。
     /// </summary>
-    /// <value>播放器建立選項。</value>
+    /// <value>
+    /// 播放器建立選項。
+    /// </value>
     [System.ComponentModel.Browsable(false)]
     public MpvPlayerOptions PlayerOptions { get; private set; }
 
     /// <summary>
     /// 取得控制項目前建立的播放器。
     /// </summary>
-    /// <value>目前播放器；尚未建立時為 <see langword="null"/>。</value>
+    /// <value>
+    /// 目前播放器；尚未建立時為 <see langword="null"/>。
+    /// </value>
     [System.ComponentModel.Browsable(false)]
     public MpvPlayer? Player
     {
@@ -363,7 +379,9 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// <summary>
     /// 取得控制項目前記錄的 WinUI 視窗。
     /// </summary>
-    /// <value>最近一次附加的 WinUI 視窗；尚未附加時為 <see langword="null"/>。</value>
+    /// <value>
+    /// 最近一次附加的 WinUI 視窗；尚未附加時為 <see langword="null"/>。
+    /// </value>
     [System.ComponentModel.Browsable(false)]
     public Window? HostWindow
     {
@@ -373,7 +391,9 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// <summary>
     /// 取得此控制項是否已建立原生子視窗。
     /// </summary>
-    /// <value>HWND 後端已建立原生子視窗時為 <see langword="true"/>。</value>
+    /// <value>
+    /// HWND 後端已建立原生子視窗時為 <see langword="true"/>。
+    /// </value>
     [System.ComponentModel.Browsable(false)]
     public bool IsNativeHostCreated
     {
@@ -383,7 +403,9 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// <summary>
     /// 取得控制項是否已取得可用的父視窗控制代碼。
     /// </summary>
-    /// <value>父視窗控制代碼已設定時為 <see langword="true"/>。</value>
+    /// <value>
+    /// 父視窗控制代碼已設定時為 <see langword="true"/>。
+    /// </value>
     [System.ComponentModel.Browsable(false)]
     public bool IsAttached
     {
@@ -393,14 +415,18 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// <summary>
     /// 取得最近一次建立 HWND 後端時發生的錯誤。
     /// </summary>
-    /// <value>最近一次錯誤；未發生錯誤時為 <see langword="null"/>。</value>
+    /// <value>
+    /// 最近一次錯誤；未發生錯誤時為 <see langword="null"/>。
+    /// </value>
     [System.ComponentModel.Browsable(false)]
     public Exception? LastBackendError { get; private set; }
 
     /// <summary>
     /// 取得或設定要由控制項自行放入 AirSpace 覆蓋層的 WinUI 內容。
     /// </summary>
-    /// <value>顯示在影片上方的 WinUI 元素；未設定時為 <see langword="null"/>。</value>
+    /// <value>
+    /// 顯示在影片上方的 WinUI 元素；未設定時為 <see langword="null"/>。
+    /// </value>
     [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public UIElement? OverlayContent
     {
@@ -411,7 +437,9 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// <summary>
     /// 取得或設定控制項管理的 AirSpace 覆蓋層是否開啟。
     /// </summary>
-    /// <value>覆蓋層應保持開啟時為 <see langword="true"/>。</value>
+    /// <value>
+    /// 覆蓋層應保持開啟時為 <see langword="true"/>。
+    /// </value>
     [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public bool IsOverlayOpen
     {
@@ -422,7 +450,9 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// <summary>
     /// 取得或設定要載入並播放的媒體來源。
     /// </summary>
-    /// <value>檔案路徑或媒體網址；變更會自動載入新媒體。</value>
+    /// <value>
+    /// 檔案路徑或媒體網址；變更會自動載入新媒體。
+    /// </value>
     [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public string? Source
     {
@@ -433,7 +463,9 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// <summary>
     /// 取得或設定目前播放位置。
     /// </summary>
-    /// <value>對應 mpv <c>time-pos</c>；雙向繫結時設值會觸發 seek。</value>
+    /// <value>
+    /// 對應 mpv <c>time-pos</c>；雙向繫結時設值會觸發 seek。
+    /// </value>
     [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public TimeSpan Position
     {
@@ -444,7 +476,9 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// <summary>
     /// 取得目前媒體總時長。
     /// </summary>
-    /// <value>對應 mpv <c>duration</c>。</value>
+    /// <value>
+    /// 對應 mpv <c>duration</c>。
+    /// </value>
     /// <remarks>
     /// 對外語意為唯讀；WinUI 3 沒有 <c>RegisterReadOnly</c>，因此使用一般 <see cref="DependencyProperty"/>，
     /// 但 <see cref="DurationProperty"/> 的 callback 會在偵測到非播放器來源的寫入時自動回退。請勿透過
@@ -459,7 +493,9 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// <summary>
     /// 取得或設定音量。
     /// </summary>
-    /// <value>對應 mpv <c>volume</c>，範圍 0–130；預設 100。</value>
+    /// <value>
+    /// 對應 mpv <c>volume</c>，範圍 0–130；預設 100。
+    /// </value>
     [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public double Volume
     {
@@ -470,7 +506,9 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// <summary>
     /// 取得或設定是否暫停。
     /// </summary>
-    /// <value>對應 mpv <c>pause</c>。</value>
+    /// <value>
+    /// 對應 mpv <c>pause</c>。
+    /// </value>
     [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public bool IsPaused
     {
@@ -481,7 +519,9 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// <summary>
     /// 取得或設定是否靜音。
     /// </summary>
-    /// <value>對應 mpv <c>mute</c>。</value>
+    /// <value>
+    /// 對應 mpv <c>mute</c>。
+    /// </value>
     [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public bool IsMuted
     {
@@ -492,7 +532,9 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// <summary>
     /// 取得目前由 libmpv 事件聚合而成的播放狀態。
     /// </summary>
-    /// <value>對應 <see cref="MpvPlayer.State"/>。</value>
+    /// <value>
+    /// 對應 <see cref="MpvPlayer.State"/>。
+    /// </value>
     /// <remarks>
     /// 對外語意為唯讀；WinUI 3 沒有 <c>RegisterReadOnly</c>，因此使用一般 <see cref="DependencyProperty"/>，
     /// 但 <see cref="PlaybackStateProperty"/> 的 callback 會在偵測到非播放器來源的寫入時自動回退。請勿透過
@@ -507,7 +549,9 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// <summary>
     /// 取得或設定目前播放清單索引。
     /// </summary>
-    /// <value>對應 mpv <c>playlist-pos</c>；以 0 起始。</value>
+    /// <value>
+    /// 對應 mpv <c>playlist-pos</c>；以 0 起始。
+    /// </value>
     [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public int PlaylistIndex
     {
@@ -518,7 +562,9 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// <summary>
     /// 取得或設定目前章節索引。
     /// </summary>
-    /// <value>對應 mpv <c>chapter</c>；以 0 起始，<see langword="null"/> 代表無章節或尚未載入。</value>
+    /// <value>
+    /// 對應 mpv <c>chapter</c>；以 0 起始，<see langword="null"/> 代表無章節或尚未載入。
+    /// </value>
     [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public int? Chapter
     {
@@ -529,7 +575,9 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// <summary>
     /// 附加 WinUI 視窗，讓控制項可以建立 HWND 後端。
     /// </summary>
-    /// <param name="hostWindow">控制項所在的 WinUI 視窗。</param>
+    /// <param name="hostWindow">
+    /// 控制項所在的 WinUI 視窗。
+    /// </param>
     public void Attach(Window hostWindow)
     {
         if (hostWindow == null)
@@ -546,7 +594,9 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// <summary>
     /// 附加父視窗控制代碼，讓控制項可以建立 HWND 後端。
     /// </summary>
-    /// <param name="parentHwnd">可容納原生子視窗的父視窗控制代碼。</param>
+    /// <param name="parentHwnd">
+    /// 可容納原生子視窗的父視窗控制代碼。
+    /// </param>
     public void Attach(IntPtr parentHwnd)
     {
         EnsureNotDisposed();
@@ -570,8 +620,12 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// <summary>
     /// 載入檔案或網址作為播放項目。
     /// </summary>
-    /// <param name="pathOrUrl">要載入的檔案路徑或媒體網址。</param>
-    /// <param name="mode">播放項目加入播放清單的方式。</param>
+    /// <param name="pathOrUrl">
+    /// 要載入的檔案路徑或媒體網址。
+    /// </param>
+    /// <param name="mode">
+    /// 播放項目加入播放清單的方式。
+    /// </param>
     public void LoadFile(string pathOrUrl, MpvLoadFileMode mode = MpvLoadFileMode.Replace)
     {
         if (string.IsNullOrWhiteSpace(pathOrUrl))
@@ -609,8 +663,12 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// <summary>
     /// 在控制項載入後建立 HWND 播放後端。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         if (MpvWinUiDesignMode.IsEnabled)
@@ -624,8 +682,12 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// <summary>
     /// 在覆蓋層內容變更時同步目前後端。
     /// </summary>
-    /// <param name="dependencyObject">相依性屬性所屬物件。</param>
-    /// <param name="e">相依性屬性變更資料。</param>
+    /// <param name="dependencyObject">
+    /// 相依性屬性所屬物件。
+    /// </param>
+    /// <param name="e">
+    /// 相依性屬性變更資料。
+    /// </param>
     private static void OverlayContentChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs e)
     {
         MpvWinUiPlayer player = (MpvWinUiPlayer)dependencyObject;
@@ -635,8 +697,12 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// <summary>
     /// 在覆蓋層開啟狀態變更時同步目前後端。
     /// </summary>
-    /// <param name="dependencyObject">相依性屬性所屬物件。</param>
-    /// <param name="e">相依性屬性變更資料。</param>
+    /// <param name="dependencyObject">
+    /// 相依性屬性所屬物件。
+    /// </param>
+    /// <param name="e">
+    /// 相依性屬性變更資料。
+    /// </param>
     private static void OverlayOpenChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs e)
     {
         MpvWinUiPlayer player = (MpvWinUiPlayer)dependencyObject;
@@ -646,7 +712,9 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// <summary>
     /// 確保 HWND 後端已建立。
     /// </summary>
-    /// <returns>成功建立或已存在 HWND 後端時為 <see langword="true"/>。</returns>
+    /// <returns>
+    /// 成功建立或已存在 HWND 後端時為 <see langword="true"/>。
+    /// </returns>
     private bool EnsureHwndBackend()
     {
         if (_disposed || MpvWinUiDesignMode.IsEnabled)
@@ -708,7 +776,9 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// <summary>
     /// 嘗試取得可建立 HWND 後端的父視窗控制代碼。
     /// </summary>
-    /// <returns>已取得父視窗控制代碼時為 <see langword="true"/>。</returns>
+    /// <returns>
+    /// 已取得父視窗控制代碼時為 <see langword="true"/>。
+    /// </returns>
     private bool TryResolveParentHwnd()
     {
         if (_parentHwnd != IntPtr.Zero)
@@ -735,8 +805,12 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// <summary>
     /// 處理內部後端建立播放器的事件。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private void BackendPlayerCreated(object? sender, EventArgs e)
     {
         MpvPlayer? player = _hwndPlayer == null ? null : _hwndPlayer.Player;
@@ -752,7 +826,9 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// <summary>
     /// 將控制項的 DP 與目前播放器雙向綁定。
     /// </summary>
-    /// <param name="player">已初始化的播放器。</param>
+    /// <param name="player">
+    /// 已初始化的播放器。
+    /// </param>
     private void AttachPlayerBindings(MpvPlayer player)
     {
         DetachPlayerBindings();
@@ -786,9 +862,15 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// <summary>
     /// 在 UI 執行緒以「來自 player」的標記更新 DP，避免回頭再寫 player 觸發迴圈。
     /// </summary>
-    /// <typeparam name="T">屬性值型別。</typeparam>
-    /// <param name="property">要更新的 DP。</param>
-    /// <param name="value">新值。</param>
+    /// <typeparam name="T">
+    /// 屬性值型別。
+    /// </typeparam>
+    /// <param name="property">
+    /// 要更新的 DP。
+    /// </param>
+    /// <param name="value">
+    /// 新值。
+    /// </param>
     private void UpdateFromPlayer<T>(DependencyProperty property, T value)
     {
         if (_dispatcherQueue == null)
@@ -818,8 +900,12 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// <summary>
     /// 處理 <see cref="MpvPlayer.StateChanged"/> 並把新狀態寫進 <see cref="PlaybackState"/>。
     /// </summary>
-    /// <param name="sender">引發事件的播放器。</param>
-    /// <param name="state">新的播放狀態。</param>
+    /// <param name="sender">
+    /// 引發事件的播放器。
+    /// </param>
+    /// <param name="state">
+    /// 新的播放狀態。
+    /// </param>
     private void OnPlayerStateChanged(object? sender, MpvPlaybackState state)
     {
         UpdateFromPlayer(PlaybackStateProperty, state);
@@ -828,8 +914,12 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// <summary>
     /// 處理 <see cref="SourceProperty"/> 變更：載入新媒體。
     /// </summary>
-    /// <param name="dependencyObject">屬性所屬的相依性物件。</param>
-    /// <param name="e">屬性變更資料。</param>
+    /// <param name="dependencyObject">
+    /// 屬性所屬的相依性物件。
+    /// </param>
+    /// <param name="e">
+    /// 屬性變更資料。
+    /// </param>
     private static void SourceChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs e)
     {
         MpvWinUiPlayer control = (MpvWinUiPlayer)dependencyObject;
@@ -859,8 +949,12 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// <summary>
     /// 處理 <see cref="PositionProperty"/> 變更：seek 到指定位置。
     /// </summary>
-    /// <param name="dependencyObject">屬性所屬的相依性物件。</param>
-    /// <param name="e">屬性變更資料。</param>
+    /// <param name="dependencyObject">
+    /// 屬性所屬的相依性物件。
+    /// </param>
+    /// <param name="e">
+    /// 屬性變更資料。
+    /// </param>
     private static void PositionChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs e)
     {
         MpvWinUiPlayer control = (MpvWinUiPlayer)dependencyObject;
@@ -881,8 +975,12 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// <summary>
     /// 處理 <see cref="VolumeProperty"/> 變更：寫入 player。
     /// </summary>
-    /// <param name="dependencyObject">屬性所屬的相依性物件。</param>
-    /// <param name="e">屬性變更資料。</param>
+    /// <param name="dependencyObject">
+    /// 屬性所屬的相依性物件。
+    /// </param>
+    /// <param name="e">
+    /// 屬性變更資料。
+    /// </param>
     private static void VolumeChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs e)
     {
         MpvWinUiPlayer control = (MpvWinUiPlayer)dependencyObject;
@@ -903,8 +1001,12 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// <summary>
     /// 處理 <see cref="IsPausedProperty"/> 變更：寫入 player。
     /// </summary>
-    /// <param name="dependencyObject">屬性所屬的相依性物件。</param>
-    /// <param name="e">屬性變更資料。</param>
+    /// <param name="dependencyObject">
+    /// 屬性所屬的相依性物件。
+    /// </param>
+    /// <param name="e">
+    /// 屬性變更資料。
+    /// </param>
     private static void IsPausedChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs e)
     {
         MpvWinUiPlayer control = (MpvWinUiPlayer)dependencyObject;
@@ -925,8 +1027,12 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// <summary>
     /// 處理 <see cref="IsMutedProperty"/> 變更：寫入 player。
     /// </summary>
-    /// <param name="dependencyObject">屬性所屬的相依性物件。</param>
-    /// <param name="e">屬性變更資料。</param>
+    /// <param name="dependencyObject">
+    /// 屬性所屬的相依性物件。
+    /// </param>
+    /// <param name="e">
+    /// 屬性變更資料。
+    /// </param>
     private static void IsMutedChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs e)
     {
         MpvWinUiPlayer control = (MpvWinUiPlayer)dependencyObject;
@@ -947,8 +1053,12 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// <summary>
     /// 處理 <see cref="PlaylistIndexProperty"/> 變更：寫入 player；負數忽略。
     /// </summary>
-    /// <param name="dependencyObject">屬性所屬的相依性物件。</param>
-    /// <param name="e">屬性變更資料。</param>
+    /// <param name="dependencyObject">
+    /// 屬性所屬的相依性物件。
+    /// </param>
+    /// <param name="e">
+    /// 屬性變更資料。
+    /// </param>
     private static void PlaylistIndexChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs e)
     {
         MpvWinUiPlayer control = (MpvWinUiPlayer)dependencyObject;
@@ -975,8 +1085,12 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// <summary>
     /// 處理 <see cref="ChapterProperty"/> 變更：寫入 player；null 或負數忽略。
     /// </summary>
-    /// <param name="dependencyObject">屬性所屬的相依性物件。</param>
-    /// <param name="e">屬性變更資料。</param>
+    /// <param name="dependencyObject">
+    /// 屬性所屬的相依性物件。
+    /// </param>
+    /// <param name="e">
+    /// 屬性變更資料。
+    /// </param>
     private static void ChapterChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs e)
     {
         MpvWinUiPlayer control = (MpvWinUiPlayer)dependencyObject;
@@ -1006,8 +1120,12 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// <summary>
     /// 處理 <see cref="DurationProperty"/> 變更：偵測到外部寫入時回退舊值，模擬唯讀語意。
     /// </summary>
-    /// <param name="dependencyObject">屬性所屬的相依性物件。</param>
-    /// <param name="e">屬性變更資料。</param>
+    /// <param name="dependencyObject">
+    /// 屬性所屬的相依性物件。
+    /// </param>
+    /// <param name="e">
+    /// 屬性變更資料。
+    /// </param>
     private static void OnDurationChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs e)
     {
         MpvWinUiPlayer control = (MpvWinUiPlayer)dependencyObject;
@@ -1036,8 +1154,12 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// <summary>
     /// 處理 <see cref="PlaybackStateProperty"/> 變更：偵測到外部寫入時回退舊值，模擬唯讀語意。
     /// </summary>
-    /// <param name="dependencyObject">屬性所屬的相依性物件。</param>
-    /// <param name="e">屬性變更資料。</param>
+    /// <param name="dependencyObject">
+    /// 屬性所屬的相依性物件。
+    /// </param>
+    /// <param name="e">
+    /// 屬性變更資料。
+    /// </param>
     private static void OnPlaybackStateChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs e)
     {
         MpvWinUiPlayer control = (MpvWinUiPlayer)dependencyObject;
@@ -1066,7 +1188,9 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// <summary>
     /// 提供將 <see cref="IObservable{T}"/> 訂閱包裝成委派的最小 observer。
     /// </summary>
-    /// <typeparam name="T">屬性值型別。</typeparam>
+    /// <typeparam name="T">
+    /// 屬性值型別。
+    /// </typeparam>
     private sealed class MpvDpObserver<T> : IObserver<T>
     {
         /// <summary>
@@ -1077,7 +1201,9 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
         /// <summary>
         /// 初始化 <see cref="MpvDpObserver{T}"/> 類別的新執行個體。
         /// </summary>
-        /// <param name="onNext">收到新值時要執行的委派。</param>
+        /// <param name="onNext">
+        /// 收到新值時要執行的委派。
+        /// </param>
         public MpvDpObserver(Action<T> onNext)
         {
             _onNext = onNext;
@@ -1093,7 +1219,9 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
         /// <summary>
         /// 在訂閱收到例外狀況時通知；目前不做事。
         /// </summary>
-        /// <param name="error">例外狀況。</param>
+        /// <param name="error">
+        /// 例外狀況。
+        /// </param>
         public void OnError(Exception error)
         {
         }
@@ -1101,7 +1229,9 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
         /// <summary>
         /// 收到新值並轉發。
         /// </summary>
-        /// <param name="value">新值。</param>
+        /// <param name="value">
+        /// 新值。
+        /// </param>
         public void OnNext(T value)
         {
             _onNext(value);
@@ -1142,8 +1272,12 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// <summary>
     /// 在附加的 WinUI 視窗關閉時釋放控制項資源。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="args">視窗關閉事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="args">
+    /// 視窗關閉事件資料。
+    /// </param>
     private void HostWindowClosed(object sender, WindowEventArgs args)
     {
         Dispose();

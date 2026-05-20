@@ -62,7 +62,9 @@ public sealed class MpvWindowsBuildDownloadOptions
     /// <summary>
     /// 取得或設定要下載的 Windows libmpv 架構。
     /// </summary>
-    /// <value>Windows libmpv 建置架構。</value>
+    /// <value>
+    /// Windows libmpv 建置架構。
+    /// </value>
     public MpvWindowsArchitecture Architecture { get; set; }
 
     /// <summary>
@@ -81,49 +83,65 @@ public sealed class MpvWindowsBuildDownloadOptions
     /// <summary>
     /// 取得或設定是否覆寫已存在的下載檔案。
     /// </summary>
-    /// <value>覆寫已存在檔案時為 <see langword="true"/>。</value>
+    /// <value>
+    /// 覆寫已存在檔案時為 <see langword="true"/>。
+    /// </value>
     public bool OverwriteExisting { get; set; }
 
     /// <summary>
     /// 取得或設定下載資產的完整性驗證策略。
     /// </summary>
-    /// <value>下載 libmpv 壓縮檔時採用的驗證策略。</value>
+    /// <value>
+    /// 下載 libmpv 壓縮檔時採用的驗證策略。
+    /// </value>
     public MpvNativeAssetVerificationPolicy VerificationPolicy { get; set; }
 
     /// <summary>
     /// 取得或設定預期的 libmpv 壓縮檔 SHA-256 值。
     /// </summary>
-    /// <value>呼叫端釘選的 SHA-256 十六進位文字；未指定時不進行釘選驗證。</value>
+    /// <value>
+    /// 呼叫端釘選的 SHA-256 十六進位文字；未指定時不進行釘選驗證。
+    /// </value>
     public string? ExpectedSha256 { get; set; }
 
     /// <summary>
     /// 取得或設定是否驗證 GitHub 發行資產提供的雜湊值。
     /// </summary>
-    /// <value>驗證可用的 SHA-256 摘要時為 <see langword="true"/>。</value>
+    /// <value>
+    /// 驗證可用的 SHA-256 摘要時為 <see langword="true"/>。
+    /// </value>
     public bool VerifyDigest { get; set; } = true;
 
     /// <summary>
     /// 取得或設定下載要求使用的使用者代理字串。
     /// </summary>
-    /// <value>HTTP 使用者代理字串；未指定時使用專案預設的 Chrome 穩定版設定。</value>
+    /// <value>
+    /// HTTP 使用者代理字串；未指定時使用專案預設的 Chrome 穩定版設定。
+    /// </value>
     public string? UserAgent { get; set; }
 
     /// <summary>
     /// 取得或設定 7-Zip 可執行檔路徑。
     /// </summary>
-    /// <value>7z.exe 路徑；未指定時由 helper 自動搜尋。</value>
+    /// <value>
+    /// 7z.exe 路徑；未指定時由 helper 自動搜尋。
+    /// </value>
     public string? SevenZipPath { get; set; }
 
     /// <summary>
     /// 取得或設定 libmpv 壓縮檔的解壓縮資料夾。
     /// </summary>
-    /// <value>解壓縮目標資料夾；未指定時使用下載資料夾下的預設資料夾。</value>
+    /// <value>
+    /// 解壓縮目標資料夾；未指定時使用下載資料夾下的預設資料夾。
+    /// </value>
     public string? ExtractDirectory { get; set; }
 
     /// <summary>
     /// 取得或設定取代預設 GitHub 最新發行 API 的 URI。
     /// </summary>
-    /// <value>自訂 GitHub 發行 API URI；未指定時依提供者使用預設 API。</value>
+    /// <value>
+    /// 自訂 GitHub 發行 API URI；未指定時依提供者使用預設 API。
+    /// </value>
     public Uri? ReleaseApiUriOverride { get; set; }
 
     /// <summary>
@@ -142,7 +160,9 @@ public sealed class MpvWindowsBuildDownloadOptions
     /// （例如 <see cref="MpvWindowsRuntimeInstaller.UpdateLibMpvAsync"/> 強制
     /// <see cref="OverwriteExisting"/> = <see langword="true"/> 但不希望寫回 caller）。
     /// </summary>
-    /// <returns>複本。</returns>
+    /// <returns>
+    /// 複本。
+    /// </returns>
     internal MpvWindowsBuildDownloadOptions Clone()
     {
         MpvWindowsBuildDownloadOptions copy = new MpvWindowsBuildDownloadOptions

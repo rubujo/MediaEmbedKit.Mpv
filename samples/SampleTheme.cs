@@ -30,8 +30,12 @@ internal static class SampleTheme
     /// <summary>
     /// 取得 ARGB 整數的 alpha 分量。
     /// </summary>
-    /// <param name="argb">要拆解的 ARGB 整數。</param>
-    /// <returns>alpha 分量。</returns>
+    /// <param name="argb">
+    /// 要拆解的 ARGB 整數。
+    /// </param>
+    /// <returns>
+    /// alpha 分量。
+    /// </returns>
     public static byte AlphaOf(int argb)
     {
         return (byte)((argb >> 24) & 0xFF);
@@ -40,8 +44,12 @@ internal static class SampleTheme
     /// <summary>
     /// 取得 ARGB 整數的 red 分量。
     /// </summary>
-    /// <param name="argb">要拆解的 ARGB 整數。</param>
-    /// <returns>red 分量。</returns>
+    /// <param name="argb">
+    /// 要拆解的 ARGB 整數。
+    /// </param>
+    /// <returns>
+    /// red 分量。
+    /// </returns>
     public static byte RedOf(int argb)
     {
         return (byte)((argb >> 16) & 0xFF);
@@ -50,8 +58,12 @@ internal static class SampleTheme
     /// <summary>
     /// 取得 ARGB 整數的 green 分量。
     /// </summary>
-    /// <param name="argb">要拆解的 ARGB 整數。</param>
-    /// <returns>green 分量。</returns>
+    /// <param name="argb">
+    /// 要拆解的 ARGB 整數。
+    /// </param>
+    /// <returns>
+    /// green 分量。
+    /// </returns>
     public static byte GreenOf(int argb)
     {
         return (byte)((argb >> 8) & 0xFF);
@@ -60,8 +72,12 @@ internal static class SampleTheme
     /// <summary>
     /// 取得 ARGB 整數的 blue 分量。
     /// </summary>
-    /// <param name="argb">要拆解的 ARGB 整數。</param>
-    /// <returns>blue 分量。</returns>
+    /// <param name="argb">
+    /// 要拆解的 ARGB 整數。
+    /// </param>
+    /// <returns>
+    /// blue 分量。
+    /// </returns>
     public static byte BlueOf(int argb)
     {
         return (byte)(argb & 0xFF);

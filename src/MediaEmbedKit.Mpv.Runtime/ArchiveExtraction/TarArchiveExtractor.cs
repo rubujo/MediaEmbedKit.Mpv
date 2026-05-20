@@ -21,15 +21,25 @@ namespace MediaEmbedKit.Mpv.Runtime.ArchiveExtraction;
 /// </remarks>
 internal sealed class TarArchiveExtractor : IArchiveExtractor
 {
-    /// <summary>Tar 解壓的預設逾時時間。</summary>
+    /// <summary>
+    /// Tar 解壓的預設逾時時間。
+    /// </summary>
     private static readonly TimeSpan DefaultTimeout = TimeSpan.FromMinutes(3);
 
-    /// <summary>顯示名稱「Windows tar.exe (bsdtar)」。</summary>
+    /// <summary>
+    /// 顯示名稱「Windows tar.exe (bsdtar)」。
+    /// </summary>
     public string Name => "Windows tar.exe (bsdtar)";
 
-    /// <summary>檢查 <c>%SystemRoot%\System32\tar.exe</c> 或 PATH 內是否存在 <c>tar.exe</c>。</summary>
-    /// <param name="cancellationToken">未使用（路徑檢查為同步操作）。</param>
-    /// <returns>找到 tar.exe 時為 <see langword="true"/>。</returns>
+    /// <summary>
+    /// 檢查 <c>%SystemRoot%\System32\tar.exe</c> 或 PATH 內是否存在 <c>tar.exe</c>。
+    /// </summary>
+    /// <param name="cancellationToken">
+    /// 未使用（路徑檢查為同步操作）。
+    /// </param>
+    /// <returns>
+    /// 找到 tar.exe 時為 <see langword="true"/>。
+    /// </returns>
     public Task<bool> IsAvailableAsync(CancellationToken cancellationToken)
     {
         return Task.FromResult(ResolveTarPath() != null);
@@ -39,11 +49,24 @@ internal sealed class TarArchiveExtractor : IArchiveExtractor
     /// 用 <c>tar -xf {archive} -C {dir} [pattern...]</c> 解壓 .7z。bsdtar 對 .7z 的選擇性
     /// 解壓直接把檔名當位置引數，無需 <c>--wildcards</c> 或 <c>-r</c>。
     /// </summary>
-    /// <param name="archivePath">.7z 壓縮檔路徑。</param>
-    /// <param name="targetDirectory">解壓縮目標資料夾。</param>
-    /// <param name="includePatterns">要解出的檔名清單；<see langword="null"/> 解整個 archive。</param>
-    /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
-    /// <exception cref="InvalidOperationException">tar.exe 不存在或解壓失敗（exit code 非 0）。</exception>
+    /// <param name="archivePath">
+    /// .7z 壓縮檔路徑。
+    /// </param>
+    /// <param name="targetDirectory">
+    /// 解壓縮目標資料夾。
+    /// </param>
+    /// <param name="includePatterns">
+    /// 要解出的檔名清單；<see langword="null"/> 解整個 archive。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 可取消非同步作業的語彙基元。
+    /// </param>
+    /// <returns>
+    /// 表示解壓縮流程的工作。
+    /// </returns>
+    /// <exception cref="InvalidOperationException">
+    /// tar.exe 不存在或解壓失敗（exit code 非 0）。
+    /// </exception>
     public async Task ExtractAsync(
         string archivePath,
         string targetDirectory,
@@ -80,7 +103,9 @@ internal sealed class TarArchiveExtractor : IArchiveExtractor
     /// <summary>
     /// 解析 Windows 內建 tar.exe 路徑（先看 System32 再退到 PATH）。
     /// </summary>
-    /// <returns>找到時為絕對路徑；否則為 <see langword="null"/>。</returns>
+    /// <returns>
+    /// 找到時為絕對路徑；否則為 <see langword="null"/>。
+    /// </returns>
     private static string? ResolveTarPath()
     {
         try

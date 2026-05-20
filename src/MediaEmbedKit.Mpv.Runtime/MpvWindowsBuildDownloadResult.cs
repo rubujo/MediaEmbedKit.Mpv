@@ -12,14 +12,30 @@ public sealed class MpvWindowsBuildDownloadResult
     /// <summary>
     /// 初始化 <see cref="MpvWindowsBuildDownloadResult"/> 類別的新執行個體。
     /// </summary>
-    /// <param name="provider">Windows libmpv 建置提供者。</param>
-    /// <param name="releaseTag">GitHub 發行標籤。</param>
-    /// <param name="assetName">已下載的發行資產名稱。</param>
-    /// <param name="downloadUri">發行資產下載 URI。</param>
-    /// <param name="archivePath">下載後的壓縮檔路徑。</param>
-    /// <param name="digest">GitHub 發行資產提供的摘要值。</param>
-    /// <param name="extractDirectory">壓縮檔解壓縮資料夾。</param>
-    /// <param name="libraryPath">解壓縮後找到的 libmpv 檔案路徑。</param>
+    /// <param name="provider">
+    /// Windows libmpv 建置提供者。
+    /// </param>
+    /// <param name="releaseTag">
+    /// GitHub 發行標籤。
+    /// </param>
+    /// <param name="assetName">
+    /// 已下載的發行資產名稱。
+    /// </param>
+    /// <param name="downloadUri">
+    /// 發行資產下載 URI。
+    /// </param>
+    /// <param name="archivePath">
+    /// 下載後的壓縮檔路徑。
+    /// </param>
+    /// <param name="digest">
+    /// GitHub 發行資產提供的摘要值。
+    /// </param>
+    /// <param name="extractDirectory">
+    /// 壓縮檔解壓縮資料夾。
+    /// </param>
+    /// <param name="libraryPath">
+    /// 解壓縮後找到的 libmpv 檔案路徑。
+    /// </param>
     internal MpvWindowsBuildDownloadResult(
         MpvWindowsBuildProvider provider,
         string releaseTag,
@@ -43,25 +59,33 @@ public sealed class MpvWindowsBuildDownloadResult
     /// <summary>
     /// 取得 Windows libmpv 建置提供者。
     /// </summary>
-    /// <value>Windows libmpv 建置提供者。</value>
+    /// <value>
+    /// Windows libmpv 建置提供者。
+    /// </value>
     public MpvWindowsBuildProvider Provider { get; private set; }
 
     /// <summary>
     /// 取得 GitHub 發行標籤。
     /// </summary>
-    /// <value>libmpv 建置發行標籤。</value>
+    /// <value>
+    /// libmpv 建置發行標籤。
+    /// </value>
     public string ReleaseTag { get; private set; }
 
     /// <summary>
     /// 取得已下載的發行資產名稱。
     /// </summary>
-    /// <value>libmpv 發行資產名稱。</value>
+    /// <value>
+    /// libmpv 發行資產名稱。
+    /// </value>
     public string AssetName { get; private set; }
 
     /// <summary>
     /// 取得發行資產下載 URI。
     /// </summary>
-    /// <value>libmpv 發行資產下載 URI。</value>
+    /// <value>
+    /// libmpv 發行資產下載 URI。
+    /// </value>
     public Uri DownloadUri { get; private set; }
 
     /// <summary>
@@ -77,18 +101,24 @@ public sealed class MpvWindowsBuildDownloadResult
     /// <summary>
     /// 取得 GitHub 發行資產提供的摘要值。
     /// </summary>
-    /// <value>GitHub 發行資產摘要；未提供時為 <see langword="null"/>。</value>
+    /// <value>
+    /// GitHub 發行資產摘要；未提供時為 <see langword="null"/>。
+    /// </value>
     public string? Digest { get; private set; }
 
     /// <summary>
     /// 取得壓縮檔解壓縮資料夾。
     /// </summary>
-    /// <value>解壓縮資料夾；尚未解壓縮時為 <see langword="null"/>。</value>
+    /// <value>
+    /// 解壓縮資料夾；尚未解壓縮時為 <see langword="null"/>。
+    /// </value>
     public string? ExtractDirectory { get; private set; }
 
     /// <summary>
     /// 取得解壓縮後找到的 libmpv 檔案路徑。
     /// </summary>
-    /// <value>libmpv 檔案路徑；尚未解壓縮時為 <see langword="null"/>。</value>
+    /// <value>
+    /// libmpv 檔案路徑；尚未解壓縮時為 <see langword="null"/>。
+    /// </value>
     public string? LibraryPath { get; private set; }
 }

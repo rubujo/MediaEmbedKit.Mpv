@@ -12,9 +12,15 @@ public static class MpvServiceCollectionExtensions
     /// <summary>
     /// 註冊一個工廠，讓呼叫端可在執行階段非同步建立 <see cref="MpvPlayer"/>。
     /// </summary>
-    /// <param name="services">要登錄服務的服務集合。</param>
-    /// <param name="configure">用來設定 <see cref="MpvAppBuilder"/> 的委派。</param>
-    /// <returns>原始的 <see cref="IServiceCollection"/>，方便鏈式呼叫。</returns>
+    /// <param name="services">
+    /// 要登錄服務的服務集合。
+    /// </param>
+    /// <param name="configure">
+    /// 用來設定 <see cref="MpvAppBuilder"/> 的委派。
+    /// </param>
+    /// <returns>
+    /// 原始的 <see cref="IServiceCollection"/>，方便鏈式呼叫。
+    /// </returns>
     /// <remarks>
     /// 此擴充方法適合配合 <c>IHostedService</c> 啟動流程使用：取得
     /// <see cref="Func{TResult}"/>，於 <c>StartAsync</c> 中 <c>await</c> 建構，

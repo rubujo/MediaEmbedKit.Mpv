@@ -107,7 +107,9 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
     /// <summary>
     /// 取得讓播放器開始或續播的指令。
     /// </summary>
-    /// <value>對應 mpv <c>pause=no</c>。</value>
+    /// <value>
+    /// 對應 mpv <c>pause=no</c>。
+    /// </value>
     [Browsable(false)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public ICommand PlayCommand
@@ -118,7 +120,9 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
     /// <summary>
     /// 取得暫停播放的指令。
     /// </summary>
-    /// <value>對應 mpv <c>pause=yes</c>。</value>
+    /// <value>
+    /// 對應 mpv <c>pause=yes</c>。
+    /// </value>
     [Browsable(false)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public ICommand PauseCommand
@@ -129,7 +133,9 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
     /// <summary>
     /// 取得停止播放的指令。
     /// </summary>
-    /// <value>對應 mpv <c>stop</c>。</value>
+    /// <value>
+    /// 對應 mpv <c>stop</c>。
+    /// </value>
     [Browsable(false)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public ICommand StopCommand
@@ -140,7 +146,9 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
     /// <summary>
     /// 取得切換暫停狀態的指令。
     /// </summary>
-    /// <value>切換 mpv <c>pause</c>。</value>
+    /// <value>
+    /// 切換 mpv <c>pause</c>。
+    /// </value>
     [Browsable(false)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public ICommand TogglePauseCommand
@@ -151,7 +159,9 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
     /// <summary>
     /// 取得切換靜音狀態的指令。
     /// </summary>
-    /// <value>切換 mpv <c>mute</c>。</value>
+    /// <value>
+    /// 切換 mpv <c>mute</c>。
+    /// </value>
     [Browsable(false)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public ICommand ToggleMuteCommand
@@ -162,7 +172,9 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
     /// <summary>
     /// 判斷指令目前是否有可用播放器。
     /// </summary>
-    /// <returns>已綁定播放器時為 <see langword="true"/>。</returns>
+    /// <returns>
+    /// 已綁定播放器時為 <see langword="true"/>。
+    /// </returns>
     private bool CanExecutePlayerCommand()
     {
         return _player != null;
@@ -261,7 +273,9 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
     /// <summary>
     /// 取得或設定要載入並播放的媒體來源。
     /// </summary>
-    /// <value>檔案路徑或媒體網址；變更會自動載入新媒體。</value>
+    /// <value>
+    /// 檔案路徑或媒體網址；變更會自動載入新媒體。
+    /// </value>
     [Category("MediaEmbedKit.Mpv")]
     [DefaultValue(null)]
     [Description("要載入並播放的媒體檔案路徑或網址。")]
@@ -297,7 +311,9 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
     /// <summary>
     /// 取得或設定目前播放位置。
     /// </summary>
-    /// <value>對應 mpv <c>time-pos</c>；雙向繫結時設值會觸發 seek。</value>
+    /// <value>
+    /// 對應 mpv <c>time-pos</c>；雙向繫結時設值會觸發 seek。
+    /// </value>
     [Browsable(false)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public TimeSpan Position
@@ -331,7 +347,9 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
     /// <summary>
     /// 取得目前媒體總時長。
     /// </summary>
-    /// <value>對應 mpv <c>duration</c>。</value>
+    /// <value>
+    /// 對應 mpv <c>duration</c>。
+    /// </value>
     [Browsable(false)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public TimeSpan Duration
@@ -342,7 +360,9 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
     /// <summary>
     /// 取得或設定音量。
     /// </summary>
-    /// <value>對應 mpv <c>volume</c>，範圍 0–130；預設 100。</value>
+    /// <value>
+    /// 對應 mpv <c>volume</c>，範圍 0–130；預設 100。
+    /// </value>
     [Category("MediaEmbedKit.Mpv")]
     [DefaultValue(100.0)]
     [Description("音量，範圍 0–130；預設 100。")]
@@ -378,7 +398,9 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
     /// <summary>
     /// 取得或設定是否暫停。
     /// </summary>
-    /// <value>對應 mpv <c>pause</c>。</value>
+    /// <value>
+    /// 對應 mpv <c>pause</c>。
+    /// </value>
     [Category("MediaEmbedKit.Mpv")]
     [DefaultValue(false)]
     [Description("是否暫停。")]
@@ -414,7 +436,9 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
     /// <summary>
     /// 取得或設定是否靜音。
     /// </summary>
-    /// <value>對應 mpv <c>mute</c>。</value>
+    /// <value>
+    /// 對應 mpv <c>mute</c>。
+    /// </value>
     [Category("MediaEmbedKit.Mpv")]
     [DefaultValue(false)]
     [Description("是否靜音。")]
@@ -450,7 +474,9 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
     /// <summary>
     /// 取得目前由 libmpv 事件聚合而成的播放狀態。
     /// </summary>
-    /// <value>對應 <see cref="MpvPlayer.State"/>。</value>
+    /// <value>
+    /// 對應 <see cref="MpvPlayer.State"/>。
+    /// </value>
     [Browsable(false)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public MpvPlaybackState PlaybackState
@@ -461,7 +487,9 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
     /// <summary>
     /// 取得或設定目前播放清單索引。
     /// </summary>
-    /// <value>對應 mpv <c>playlist-pos</c>；以 0 起始，設值會跳到指定播放清單項目。</value>
+    /// <value>
+    /// 對應 mpv <c>playlist-pos</c>；以 0 起始，設值會跳到指定播放清單項目。
+    /// </value>
     [Browsable(false)]
     [Bindable(true)]
     [DefaultValue(0)]
@@ -497,7 +525,9 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
     /// <summary>
     /// 取得或設定目前章節索引。
     /// </summary>
-    /// <value>對應 mpv <c>chapter</c>；以 0 起始，<see langword="null"/> 代表無章節或尚未載入。</value>
+    /// <value>
+    /// 對應 mpv <c>chapter</c>；以 0 起始，<see langword="null"/> 代表無章節或尚未載入。
+    /// </value>
     [Browsable(false)]
     [Bindable(true)]
     [DefaultValue(null)]
@@ -536,7 +566,9 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
     /// <summary>
     /// 取得控制項建立播放器時使用的選項。
     /// </summary>
-    /// <value>播放器建立選項。</value>
+    /// <value>
+    /// 播放器建立選項。
+    /// </value>
     [Browsable(false)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public MpvPlayerOptions PlayerOptions { get; private set; }
@@ -544,7 +576,9 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
     /// <summary>
     /// 取得或設定控制項是否在 WinForms Handle 建立後自動初始化播放器。
     /// </summary>
-    /// <value>自動初始化播放器時為 <see langword="true"/>。</value>
+    /// <value>
+    /// 自動初始化播放器時為 <see langword="true"/>。
+    /// </value>
     [Category("MediaEmbedKit.Mpv")]
     [DefaultValue(true)]
     [Description("在 WinForms Handle 建立後是否自動初始化 mpv 播放器。")]
@@ -553,7 +587,9 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
     /// <summary>
     /// 取得控制項目前建立的播放器。
     /// </summary>
-    /// <value>目前播放器；尚未建立時為 <see langword="null"/>。</value>
+    /// <value>
+    /// 目前播放器；尚未建立時為 <see langword="null"/>。
+    /// </value>
     [Browsable(false)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public MpvPlayer? Player
@@ -577,8 +613,12 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
     /// <summary>
     /// 載入檔案或網址作為播放項目。
     /// </summary>
-    /// <param name="pathOrUrl">要載入的檔案路徑或媒體網址。</param>
-    /// <param name="mode">播放項目加入播放清單的方式。</param>
+    /// <param name="pathOrUrl">
+    /// 要載入的檔案路徑或媒體網址。
+    /// </param>
+    /// <param name="mode">
+    /// 播放項目加入播放清單的方式。
+    /// </param>
     public void LoadFile(string pathOrUrl, MpvLoadFileMode mode = MpvLoadFileMode.Replace)
     {
         if (IsInDesignMode())
@@ -599,7 +639,9 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
     /// <summary>
     /// 在 WinForms 控制項 Handle 建立後初始化播放器。
     /// </summary>
-    /// <param name="e">事件資料。</param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     protected override void OnHandleCreated(EventArgs e)
     {
         base.OnHandleCreated(e);
@@ -612,7 +654,9 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
     /// <summary>
     /// 在 WinForms 控制項 Handle 銷毀時釋放播放器。
     /// </summary>
-    /// <param name="e">事件資料。</param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     protected override void OnHandleDestroyed(EventArgs e)
     {
         DisposePlayer();
@@ -623,7 +667,9 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
     /// <summary>
     /// 在 WinForms 設計工具中繪製替代預覽內容。
     /// </summary>
-    /// <param name="e">繪製事件資料。</param>
+    /// <param name="e">
+    /// 繪製事件資料。
+    /// </param>
     protected override void OnPaint(PaintEventArgs e)
     {
         base.OnPaint(e);
@@ -649,7 +695,9 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
     /// <summary>
     /// 釋放控制項使用的受控資源。
     /// </summary>
-    /// <param name="disposing">由受控程式碼釋放時為 <see langword="true"/>。</param>
+    /// <param name="disposing">
+    /// 由受控程式碼釋放時為 <see langword="true"/>。
+    /// </param>
     protected override void Dispose(bool disposing)
     {
         if (disposing)
@@ -707,7 +755,9 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
     /// <summary>
     /// 將控制項的屬性與目前播放器雙向綁定。
     /// </summary>
-    /// <param name="player">已初始化的播放器。</param>
+    /// <param name="player">
+    /// 已初始化的播放器。
+    /// </param>
     private void AttachPlayerBindings(MpvPlayer player)
     {
         _propertyWatchers.Add(player.WatchProperty<bool>("pause").Subscribe(new MpvDpObserver<bool>(value => UpdateFromPlayer(nameof(IsPaused), ref _isPaused, value))));
@@ -738,10 +788,18 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
     /// <summary>
     /// 在 UI 執行緒以「來自 player」的標記更新後援欄位並通知 INPC，避免回頭再寫 player 觸發迴圈。
     /// </summary>
-    /// <typeparam name="T">屬性值型別。</typeparam>
-    /// <param name="propertyName">屬性名稱。</param>
-    /// <param name="storage">後援欄位。</param>
-    /// <param name="value">新值。</param>
+    /// <typeparam name="T">
+    /// 屬性值型別。
+    /// </typeparam>
+    /// <param name="propertyName">
+    /// 屬性名稱。
+    /// </param>
+    /// <param name="storage">
+    /// 後援欄位。
+    /// </param>
+    /// <param name="value">
+    /// 新值。
+    /// </param>
     private void UpdateFromPlayer<T>(string propertyName, ref T storage, T value)
     {
         if (EqualityComparer<T>.Default.Equals(storage, value))
@@ -776,8 +834,12 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
     /// <summary>
     /// 處理 <see cref="MpvPlayer.StateChanged"/> 並把新狀態寫進 <see cref="PlaybackState"/>。
     /// </summary>
-    /// <param name="sender">引發事件的播放器。</param>
-    /// <param name="state">新的播放狀態。</param>
+    /// <param name="sender">
+    /// 引發事件的播放器。
+    /// </param>
+    /// <param name="state">
+    /// 新的播放狀態。
+    /// </param>
     private void OnPlayerStateChanged(object? sender, MpvPlaybackState state)
     {
         UpdateFromPlayer(nameof(PlaybackState), ref _playbackState, state);
@@ -786,7 +848,9 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
     /// <summary>
     /// 觸發 <see cref="PropertyChanged"/>。
     /// </summary>
-    /// <param name="propertyName">變更的屬性名稱，由編譯器自動填入。</param>
+    /// <param name="propertyName">
+    /// 變更的屬性名稱，由編譯器自動填入。
+    /// </param>
     protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
@@ -795,7 +859,9 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
     /// <summary>
     /// 提供將 <see cref="IObservable{T}"/> 訂閱包裝成委派的最小 observer。
     /// </summary>
-    /// <typeparam name="T">屬性值型別。</typeparam>
+    /// <typeparam name="T">
+    /// 屬性值型別。
+    /// </typeparam>
     private sealed class MpvDpObserver<T> : IObserver<T>
     {
         /// <summary>
@@ -806,7 +872,9 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
         /// <summary>
         /// 初始化 <see cref="MpvDpObserver{T}"/> 類別的新執行個體。
         /// </summary>
-        /// <param name="onNext">收到新值時要執行的委派。</param>
+        /// <param name="onNext">
+        /// 收到新值時要執行的委派。
+        /// </param>
         public MpvDpObserver(Action<T> onNext)
         {
             _onNext = onNext;
@@ -822,7 +890,9 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
         /// <summary>
         /// 在訂閱收到例外狀況時通知；目前不做事。
         /// </summary>
-        /// <param name="error">例外狀況。</param>
+        /// <param name="error">
+        /// 例外狀況。
+        /// </param>
         public void OnError(Exception error)
         {
         }
@@ -830,7 +900,9 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
         /// <summary>
         /// 收到新值並轉發。
         /// </summary>
-        /// <param name="value">新值。</param>
+        /// <param name="value">
+        /// 新值。
+        /// </param>
         public void OnNext(T value)
         {
             _onNext(value);
@@ -869,7 +941,9 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
     /// <summary>
     /// 判斷控制項目前是否在設計工具中執行。
     /// </summary>
-    /// <returns>控制項位於設計階段時為 <see langword="true"/>。</returns>
+    /// <returns>
+    /// 控制項位於設計階段時為 <see langword="true"/>。
+    /// </returns>
     private bool IsInDesignMode()
     {
         return DesignMode || LicenseManager.UsageMode == LicenseUsageMode.Designtime;

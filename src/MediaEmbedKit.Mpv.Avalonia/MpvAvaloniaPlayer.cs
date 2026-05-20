@@ -164,7 +164,9 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// <summary>
     /// 取得讓播放器開始或續播的指令。
     /// </summary>
-    /// <value>對應 mpv <c>pause=no</c>。</value>
+    /// <value>
+    /// 對應 mpv <c>pause=no</c>。
+    /// </value>
     [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public ICommand PlayCommand
     {
@@ -174,7 +176,9 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// <summary>
     /// 取得暫停播放的指令。
     /// </summary>
-    /// <value>對應 mpv <c>pause=yes</c>。</value>
+    /// <value>
+    /// 對應 mpv <c>pause=yes</c>。
+    /// </value>
     [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public ICommand PauseCommand
     {
@@ -184,7 +188,9 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// <summary>
     /// 取得停止播放的指令。
     /// </summary>
-    /// <value>對應 mpv <c>stop</c>。</value>
+    /// <value>
+    /// 對應 mpv <c>stop</c>。
+    /// </value>
     [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public ICommand StopCommand
     {
@@ -194,7 +200,9 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// <summary>
     /// 取得切換暫停狀態的指令。
     /// </summary>
-    /// <value>切換 mpv <c>pause</c>。</value>
+    /// <value>
+    /// 切換 mpv <c>pause</c>。
+    /// </value>
     [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public ICommand TogglePauseCommand
     {
@@ -204,7 +212,9 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// <summary>
     /// 取得切換靜音狀態的指令。
     /// </summary>
-    /// <value>切換 mpv <c>mute</c>。</value>
+    /// <value>
+    /// 切換 mpv <c>mute</c>。
+    /// </value>
     [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public ICommand ToggleMuteCommand
     {
@@ -214,7 +224,9 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// <summary>
     /// 判斷指令目前是否有可用播放器。
     /// </summary>
-    /// <returns>已綁定播放器時為 <see langword="true"/>。</returns>
+    /// <returns>
+    /// 已綁定播放器時為 <see langword="true"/>。
+    /// </returns>
     private bool CanExecutePlayerCommand()
     {
         return _player != null;
@@ -300,7 +312,9 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// <summary>
     /// 取得或設定要載入並播放的媒體來源。
     /// </summary>
-    /// <value>檔案路徑或媒體網址；變更會自動載入新媒體。</value>
+    /// <value>
+    /// 檔案路徑或媒體網址；變更會自動載入新媒體。
+    /// </value>
     [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public string? Source
     {
@@ -311,7 +325,9 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// <summary>
     /// 取得或設定目前播放位置。
     /// </summary>
-    /// <value>對應 mpv <c>time-pos</c>；雙向繫結時設值會觸發 seek。</value>
+    /// <value>
+    /// 對應 mpv <c>time-pos</c>；雙向繫結時設值會觸發 seek。
+    /// </value>
     [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public TimeSpan Position
     {
@@ -322,7 +338,9 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// <summary>
     /// 取得目前媒體總時長。
     /// </summary>
-    /// <value>對應 mpv <c>duration</c>。</value>
+    /// <value>
+    /// 對應 mpv <c>duration</c>。
+    /// </value>
     [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public TimeSpan Duration
     {
@@ -333,7 +351,9 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// <summary>
     /// 取得或設定音量。
     /// </summary>
-    /// <value>對應 mpv <c>volume</c>，範圍 0–130；預設 100。</value>
+    /// <value>
+    /// 對應 mpv <c>volume</c>，範圍 0–130；預設 100。
+    /// </value>
     [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public double Volume
     {
@@ -344,7 +364,9 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// <summary>
     /// 取得或設定是否暫停。
     /// </summary>
-    /// <value>對應 mpv <c>pause</c>。</value>
+    /// <value>
+    /// 對應 mpv <c>pause</c>。
+    /// </value>
     [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public bool IsPaused
     {
@@ -355,7 +377,9 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// <summary>
     /// 取得或設定是否靜音。
     /// </summary>
-    /// <value>對應 mpv <c>mute</c>。</value>
+    /// <value>
+    /// 對應 mpv <c>mute</c>。
+    /// </value>
     [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public bool IsMuted
     {
@@ -366,7 +390,9 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// <summary>
     /// 取得目前由 libmpv 事件聚合而成的播放狀態。
     /// </summary>
-    /// <value>對應 <see cref="MpvPlayer.State"/>。</value>
+    /// <value>
+    /// 對應 <see cref="MpvPlayer.State"/>。
+    /// </value>
     [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public MpvPlaybackState PlaybackState
     {
@@ -377,7 +403,9 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// <summary>
     /// 取得或設定目前播放清單索引。
     /// </summary>
-    /// <value>對應 mpv <c>playlist-pos</c>；以 0 起始。</value>
+    /// <value>
+    /// 對應 mpv <c>playlist-pos</c>；以 0 起始。
+    /// </value>
     [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public int PlaylistIndex
     {
@@ -388,7 +416,9 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// <summary>
     /// 取得或設定目前章節索引。
     /// </summary>
-    /// <value>對應 mpv <c>chapter</c>；以 0 起始，<see langword="null"/> 代表無章節或尚未載入。</value>
+    /// <value>
+    /// 對應 mpv <c>chapter</c>；以 0 起始，<see langword="null"/> 代表無章節或尚未載入。
+    /// </value>
     [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public int? Chapter
     {
@@ -404,14 +434,18 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// <summary>
     /// 取得控制項建立播放器時使用的選項。
     /// </summary>
-    /// <value>播放器建立選項。</value>
+    /// <value>
+    /// 播放器建立選項。
+    /// </value>
     [System.ComponentModel.Browsable(false)]
     public MpvPlayerOptions PlayerOptions { get; private set; }
 
     /// <summary>
     /// 取得控制項目前建立的播放器。
     /// </summary>
-    /// <value>目前播放器；尚未建立時為 <see langword="null"/>。</value>
+    /// <value>
+    /// 目前播放器；尚未建立時為 <see langword="null"/>。
+    /// </value>
     [System.ComponentModel.Browsable(false)]
     public MpvPlayer? Player
     {
@@ -421,7 +455,9 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// <summary>
     /// 取得目前是否已建立 libmpv OpenGL render API 內容。
     /// </summary>
-    /// <value>OpenGL render API 內容已建立時為 <see langword="true"/>。</value>
+    /// <value>
+    /// OpenGL render API 內容已建立時為 <see langword="true"/>。
+    /// </value>
     public bool IsRenderContextCreated
     {
         get { return _renderContext != null; }
@@ -430,7 +466,9 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// <summary>
     /// 取得等待載入的媒體來源。
     /// </summary>
-    /// <value>等待載入的檔案路徑或媒體網址；沒有待載入項目時為 <see langword="null"/>。</value>
+    /// <value>
+    /// 等待載入的檔案路徑或媒體網址；沒有待載入項目時為 <see langword="null"/>。
+    /// </value>
     [System.ComponentModel.Browsable(false)]
     public string? PendingSource
     {
@@ -440,8 +478,12 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// <summary>
     /// 載入檔案或網址作為播放項目。
     /// </summary>
-    /// <param name="pathOrUrl">要載入的檔案路徑或媒體網址。</param>
-    /// <param name="mode">播放項目加入播放清單的方式。</param>
+    /// <param name="pathOrUrl">
+    /// 要載入的檔案路徑或媒體網址。
+    /// </param>
+    /// <param name="mode">
+    /// 播放項目加入播放清單的方式。
+    /// </param>
     public void LoadFile(string pathOrUrl, MpvLoadFileMode mode = MpvLoadFileMode.Replace)
     {
         if (string.IsNullOrWhiteSpace(pathOrUrl))
@@ -481,7 +523,9 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// <summary>
     /// 在 Avalonia 建立 OpenGL 內容時建立 libmpv render API 內容。
     /// </summary>
-    /// <param name="gl">Avalonia 提供的 OpenGL 函式介面。</param>
+    /// <param name="gl">
+    /// Avalonia 提供的 OpenGL 函式介面。
+    /// </param>
     protected override void OnOpenGlInit(GlInterface gl)
     {
         if (Design.IsDesignMode)
@@ -496,7 +540,9 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// <summary>
     /// 在 Avalonia 銷毀 OpenGL 內容時釋放 libmpv render API 內容。
     /// </summary>
-    /// <param name="gl">Avalonia 提供的 OpenGL 函式介面。</param>
+    /// <param name="gl">
+    /// Avalonia 提供的 OpenGL 函式介面。
+    /// </param>
     protected override void OnOpenGlDeinit(GlInterface gl)
     {
         DisposeRenderContext();
@@ -515,8 +561,12 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// <summary>
     /// 將 libmpv 目前影格轉譯到 Avalonia 提供的 OpenGL framebuffer。
     /// </summary>
-    /// <param name="gl">Avalonia 提供的 OpenGL 函式介面。</param>
-    /// <param name="fb">Avalonia 提供的 OpenGL framebuffer 物件識別碼。</param>
+    /// <param name="gl">
+    /// Avalonia 提供的 OpenGL 函式介面。
+    /// </param>
+    /// <param name="fb">
+    /// Avalonia 提供的 OpenGL framebuffer 物件識別碼。
+    /// </param>
     /// <remarks>
     /// 透過抓取 <see cref="_renderContext"/> 到 local 變數後使用，避免在
     /// libmpv 執行緒觸發 dispose 與 UI 執行緒同時繪製時，
@@ -553,7 +603,9 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// <summary>
     /// 取得目前視覺根節點使用的實體像素縮放倍率。
     /// </summary>
-    /// <returns>實體像素相對於邏輯像素的縮放倍率。</returns>
+    /// <returns>
+    /// 實體像素相對於邏輯像素的縮放倍率。
+    /// </returns>
     private double GetRenderScaling()
     {
         TopLevel? topLevel = TopLevel.GetTopLevel(this);
@@ -563,7 +615,9 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// <summary>
     /// 確保播放器與 OpenGL render API 內容已建立。
     /// </summary>
-    /// <param name="gl">Avalonia 提供的 OpenGL 函式介面。</param>
+    /// <param name="gl">
+    /// Avalonia 提供的 OpenGL 函式介面。
+    /// </param>
     private void EnsurePlayerAndRenderContext(GlInterface gl)
     {
         if (Design.IsDesignMode || _renderContext != null)
@@ -616,7 +670,9 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// <summary>
     /// 將控制項的繫結屬性與目前播放器雙向綁定。
     /// </summary>
-    /// <param name="player">已初始化的播放器。</param>
+    /// <param name="player">
+    /// 已初始化的播放器。
+    /// </param>
     private void AttachPlayerBindings(MpvPlayer player)
     {
         _propertyWatchers.Add(player.WatchProperty<bool>("pause").Subscribe(new MpvDpObserver<bool>(value => UpdateFromPlayer(IsPausedProperty, value))));
@@ -659,9 +715,15 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// <summary>
     /// 在 UI 執行緒以「來自 player」的標記更新可讀寫 StyledProperty，避免回頭再寫 player 觸發迴圈。
     /// </summary>
-    /// <typeparam name="T">屬性值型別。</typeparam>
-    /// <param name="property">要更新的 StyledProperty。</param>
-    /// <param name="value">新值。</param>
+    /// <typeparam name="T">
+    /// 屬性值型別。
+    /// </typeparam>
+    /// <param name="property">
+    /// 要更新的 StyledProperty。
+    /// </param>
+    /// <param name="value">
+    /// 新值。
+    /// </param>
     private void UpdateFromPlayer<T>(StyledProperty<T> property, T value)
     {
         Dispatcher.UIThread.Post(() =>
@@ -686,7 +748,9 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// <summary>
     /// 在 UI 執行緒更新 <see cref="DurationProperty"/>。
     /// </summary>
-    /// <param name="value">新值。</param>
+    /// <param name="value">
+    /// 新值。
+    /// </param>
     private void UpdateDurationFromPlayer(TimeSpan value)
     {
         Dispatcher.UIThread.Post(() =>
@@ -703,7 +767,9 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// <summary>
     /// 在 UI 執行緒更新 <see cref="PlaybackStateProperty"/>。
     /// </summary>
-    /// <param name="value">新值。</param>
+    /// <param name="value">
+    /// 新值。
+    /// </param>
     private void UpdatePlaybackStateFromPlayer(MpvPlaybackState value)
     {
         Dispatcher.UIThread.Post(() =>
@@ -720,8 +786,12 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// <summary>
     /// 處理 <see cref="MpvPlayer.StateChanged"/> 並把新狀態寫進 <see cref="PlaybackState"/>。
     /// </summary>
-    /// <param name="sender">引發事件的播放器。</param>
-    /// <param name="state">新的播放狀態。</param>
+    /// <param name="sender">
+    /// 引發事件的播放器。
+    /// </param>
+    /// <param name="state">
+    /// 新的播放狀態。
+    /// </param>
     private void OnPlayerStateChanged(object? sender, MpvPlaybackState state)
     {
         UpdatePlaybackStateFromPlayer(state);
@@ -730,7 +800,9 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// <summary>
     /// 處理 <see cref="SourceProperty"/> 變更：載入新媒體。
     /// </summary>
-    /// <param name="args">屬性變更資料。</param>
+    /// <param name="args">
+    /// 屬性變更資料。
+    /// </param>
     private void OnSourceChanged(AvaloniaPropertyChangedEventArgs args)
     {
         if (_suppressPlayerWrite)
@@ -758,7 +830,9 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// <summary>
     /// 處理 <see cref="PositionProperty"/> 變更：seek 到指定位置。
     /// </summary>
-    /// <param name="args">屬性變更資料。</param>
+    /// <param name="args">
+    /// 屬性變更資料。
+    /// </param>
     private void OnPositionChanged(AvaloniaPropertyChangedEventArgs args)
     {
         if (_suppressPlayerWrite || _player == null)
@@ -778,7 +852,9 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// <summary>
     /// 處理 <see cref="VolumeProperty"/> 變更：寫入 player。
     /// </summary>
-    /// <param name="args">屬性變更資料。</param>
+    /// <param name="args">
+    /// 屬性變更資料。
+    /// </param>
     private void OnVolumeChanged(AvaloniaPropertyChangedEventArgs args)
     {
         if (_suppressPlayerWrite || _player == null)
@@ -798,7 +874,9 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// <summary>
     /// 處理 <see cref="IsPausedProperty"/> 變更：寫入 player。
     /// </summary>
-    /// <param name="args">屬性變更資料。</param>
+    /// <param name="args">
+    /// 屬性變更資料。
+    /// </param>
     private void OnIsPausedChanged(AvaloniaPropertyChangedEventArgs args)
     {
         if (_suppressPlayerWrite || _player == null)
@@ -818,7 +896,9 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// <summary>
     /// 處理 <see cref="IsMutedProperty"/> 變更：寫入 player。
     /// </summary>
-    /// <param name="args">屬性變更資料。</param>
+    /// <param name="args">
+    /// 屬性變更資料。
+    /// </param>
     private void OnIsMutedChanged(AvaloniaPropertyChangedEventArgs args)
     {
         if (_suppressPlayerWrite || _player == null)
@@ -838,7 +918,9 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// <summary>
     /// 處理 <see cref="PlaylistIndexProperty"/> 變更：寫入 player；負數忽略。
     /// </summary>
-    /// <param name="args">屬性變更資料。</param>
+    /// <param name="args">
+    /// 屬性變更資料。
+    /// </param>
     private void OnPlaylistIndexChanged(AvaloniaPropertyChangedEventArgs args)
     {
         if (_suppressPlayerWrite || _player == null)
@@ -864,7 +946,9 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// <summary>
     /// 處理 <see cref="ChapterProperty"/> 變更：寫入 player；null 或負數忽略。
     /// </summary>
-    /// <param name="args">屬性變更資料。</param>
+    /// <param name="args">
+    /// 屬性變更資料。
+    /// </param>
     private void OnChapterChanged(AvaloniaPropertyChangedEventArgs args)
     {
         if (_suppressPlayerWrite || _player == null)
@@ -893,7 +977,9 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// <summary>
     /// 提供將 <see cref="IObservable{T}"/> 訂閱包裝成委派的最小 observer。
     /// </summary>
-    /// <typeparam name="T">屬性值型別。</typeparam>
+    /// <typeparam name="T">
+    /// 屬性值型別。
+    /// </typeparam>
     private sealed class MpvDpObserver<T> : IObserver<T>
     {
         /// <summary>
@@ -904,7 +990,9 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
         /// <summary>
         /// 初始化 <see cref="MpvDpObserver{T}"/> 類別的新執行個體。
         /// </summary>
-        /// <param name="onNext">收到新值時要執行的委派。</param>
+        /// <param name="onNext">
+        /// 收到新值時要執行的委派。
+        /// </param>
         public MpvDpObserver(Action<T> onNext)
         {
             _onNext = onNext;
@@ -920,7 +1008,9 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
         /// <summary>
         /// 在訂閱收到例外狀況時通知；目前不做事。
         /// </summary>
-        /// <param name="error">例外狀況。</param>
+        /// <param name="error">
+        /// 例外狀況。
+        /// </param>
         public void OnError(Exception error)
         {
         }
@@ -928,7 +1018,9 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
         /// <summary>
         /// 收到新值並轉發。
         /// </summary>
-        /// <param name="value">新值。</param>
+        /// <param name="value">
+        /// 新值。
+        /// </param>
         public void OnNext(T value)
         {
             _onNext(value);
@@ -938,7 +1030,9 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// <summary>
     /// 建立 Avalonia 預覽器使用的替代預覽控制項。
     /// </summary>
-    /// <returns>可由 Avalonia 預覽器顯示的替代控制項。</returns>
+    /// <returns>
+    /// 可由 Avalonia 預覽器顯示的替代控制項。
+    /// </returns>
     private static Control CreateDesignPreview()
     {
         TextBlock textBlock = new TextBlock
@@ -962,8 +1056,12 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// <summary>
     /// 處理 libmpv render API 更新通知並要求 Avalonia 排入下一個影格。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     /// <remarks>
     /// 此回呼由 libmpv 內部執行緒觸發；只讀寫旗標並 post 到 UI 執行緒，
     /// 不直接存取 render context，避免在 dispose 後形成 race。

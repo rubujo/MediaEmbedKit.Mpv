@@ -21,7 +21,9 @@ public partial class App : Application
     /// <summary>
     /// 在 UI thread 跑完所有測試，並把結果寫入 <see cref="TestRunner.Failures"/>。
     /// </summary>
-    /// <param name="args">WinUI 啟動事件資料。</param>
+    /// <param name="args">
+    /// WinUI 啟動事件資料。
+    /// </param>
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
         DispatcherQueue queue = DispatcherQueue.GetForCurrentThread();

@@ -22,20 +22,30 @@ namespace MediaEmbedKit.Mpv.Runtime.ArchiveExtraction;
 /// </remarks>
 internal sealed class ArchiveExtractionPipeline
 {
-    /// <summary>7zr bootstrap 與 fallback 下載資料夾。</summary>
+    /// <summary>
+    /// 7zr bootstrap 與 fallback 下載資料夾。
+    /// </summary>
     private readonly string _downloadDirectory;
 
-    /// <summary>下載 7zr.exe 時使用的 User-Agent。</summary>
+    /// <summary>
+    /// 下載 7zr.exe 時使用的 User-Agent。
+    /// </summary>
     private readonly string? _userAgent;
 
-    /// <summary>使用者明確指定的 7z 相容工具路徑；<see langword="null"/> 表示走自動 fallback chain。</summary>
+    /// <summary>
+    /// 使用者明確指定的 7z 相容工具路徑；<see langword="null"/> 表示走自動 fallback chain。
+    /// </summary>
     private readonly string? _explicitExtractorPath;
 
     /// <summary>
     /// 初始化 <see cref="ArchiveExtractionPipeline"/> 類別的新執行個體。
     /// </summary>
-    /// <param name="downloadDirectory">7zr.exe bootstrap 下載資料夾。</param>
-    /// <param name="userAgent">下載要求使用的 User-Agent。</param>
+    /// <param name="downloadDirectory">
+    /// 7zr.exe bootstrap 下載資料夾。
+    /// </param>
+    /// <param name="userAgent">
+    /// 下載要求使用的 User-Agent。
+    /// </param>
     /// <param name="explicitExtractorPath">
     /// 呼叫端明確指定的 7z 相容工具路徑（對應
     /// <see cref="MpvWindowsBuildDownloadOptions.SevenZipPath"/>）；
@@ -56,12 +66,27 @@ internal sealed class ArchiveExtractionPipeline
     /// <summary>
     /// 依 fallback chain 嘗試解壓 <paramref name="archivePath"/> 到 <paramref name="targetDirectory"/>。
     /// </summary>
-    /// <param name="archivePath">.7z 壓縮檔路徑。</param>
-    /// <param name="targetDirectory">解壓縮目標資料夾。</param>
-    /// <param name="includePatterns">要解出的檔名清單；<see langword="null"/> 解整個 archive。</param>
-    /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
-    /// <exception cref="InvalidOperationException">所有 fallback 都失敗。</exception>
-    /// <exception cref="OperationCanceledException">作業被取消。</exception>
+    /// <param name="archivePath">
+    /// .7z 壓縮檔路徑。
+    /// </param>
+    /// <param name="targetDirectory">
+    /// 解壓縮目標資料夾。
+    /// </param>
+    /// <param name="includePatterns">
+    /// 要解出的檔名清單；<see langword="null"/> 解整個 archive。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 可取消非同步作業的語彙基元。
+    /// </param>
+    /// <returns>
+    /// 表示解壓縮流程的工作。
+    /// </returns>
+    /// <exception cref="InvalidOperationException">
+    /// 所有 fallback 都失敗。
+    /// </exception>
+    /// <exception cref="OperationCanceledException">
+    /// 作業被取消。
+    /// </exception>
     public async Task ExtractAsync(
         string archivePath,
         string targetDirectory,
@@ -116,7 +141,9 @@ internal sealed class ArchiveExtractionPipeline
     /// <summary>
     /// 建立 fallback chain 順序：使用者顯式工具 → tar.exe → 系統 7-Zip → WinRAR → 下載 7zr.exe。
     /// </summary>
-    /// <returns>依序嘗試的 extractor 清單。</returns>
+    /// <returns>
+    /// 依序嘗試的 extractor 清單。
+    /// </returns>
     private List<IArchiveExtractor> BuildExtractorOrder()
     {
         List<IArchiveExtractor> list = new List<IArchiveExtractor>();
@@ -137,9 +164,15 @@ internal sealed class ArchiveExtractionPipeline
     /// <summary>
     /// 建構 fallback chain 全失敗時的錯誤訊息，包含每層失敗細節與使用者可採取的解法。
     /// </summary>
-    /// <param name="archivePath">嘗試解壓的 archive 路徑。</param>
-    /// <param name="attempts">各層嘗試的結果摘要。</param>
-    /// <returns>給使用者看的多行錯誤訊息。</returns>
+    /// <param name="archivePath">
+    /// 嘗試解壓的 archive 路徑。
+    /// </param>
+    /// <param name="attempts">
+    /// 各層嘗試的結果摘要。
+    /// </param>
+    /// <returns>
+    /// 給使用者看的多行錯誤訊息。
+    /// </returns>
     private static string BuildFailureMessage(string archivePath, IReadOnlyList<string> attempts)
     {
         StringBuilder sb = new StringBuilder();

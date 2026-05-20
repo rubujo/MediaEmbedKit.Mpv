@@ -26,7 +26,9 @@ internal sealed class MpvNodeAllocation : IDisposable
     /// <summary>
     /// 初始化 <see cref="MpvNodeAllocation"/> 類別的新執行個體。
     /// </summary>
-    /// <param name="node">受控節點。</param>
+    /// <param name="node">
+    /// 受控節點。
+    /// </param>
     public MpvNodeAllocation(MpvNode node)
     {
         if (node == null)
@@ -40,7 +42,9 @@ internal sealed class MpvNodeAllocation : IDisposable
     /// <summary>
     /// 取得可傳給 libmpv 的原生節點。
     /// </summary>
-    /// <value>原生節點。</value>
+    /// <value>
+    /// 原生節點。
+    /// </value>
     public NativeMpvNode NativeNode { get; private set; }
 
     /// <summary>
@@ -71,8 +75,12 @@ internal sealed class MpvNodeAllocation : IDisposable
     /// <summary>
     /// 建立指定受控節點的原生表示。
     /// </summary>
-    /// <param name="node">要轉換的受控節點。</param>
-    /// <returns>原生節點。</returns>
+    /// <param name="node">
+    /// 要轉換的受控節點。
+    /// </param>
+    /// <returns>
+    /// 原生節點。
+    /// </returns>
     private NativeMpvNode BuildNode(MpvNode node)
     {
         NativeMpvNode native = new NativeMpvNode
@@ -113,8 +121,12 @@ internal sealed class MpvNodeAllocation : IDisposable
     /// <summary>
     /// 建立節點陣列的原生清單。
     /// </summary>
-    /// <param name="items">受控節點項目。</param>
-    /// <returns>原生節點清單指標。</returns>
+    /// <param name="items">
+    /// 受控節點項目。
+    /// </param>
+    /// <returns>
+    /// 原生節點清單指標。
+    /// </returns>
     private IntPtr BuildArray(IReadOnlyList<MpvNode> items)
     {
         IntPtr values = BuildValues(items);
@@ -130,8 +142,12 @@ internal sealed class MpvNodeAllocation : IDisposable
     /// <summary>
     /// 建立節點對應的原生清單。
     /// </summary>
-    /// <param name="items">受控節點對應。</param>
-    /// <returns>原生節點清單指標。</returns>
+    /// <param name="items">
+    /// 受控節點對應。
+    /// </param>
+    /// <returns>
+    /// 原生節點清單指標。
+    /// </returns>
     private IntPtr BuildMap(IReadOnlyDictionary<string, MpvNode> items)
     {
         List<string> keysSource = new List<string>(items.Count);
@@ -165,8 +181,12 @@ internal sealed class MpvNodeAllocation : IDisposable
     /// <summary>
     /// 建立節點值陣列。
     /// </summary>
-    /// <param name="items">受控節點項目。</param>
-    /// <returns>原生節點陣列指標。</returns>
+    /// <param name="items">
+    /// 受控節點項目。
+    /// </param>
+    /// <returns>
+    /// 原生節點陣列指標。
+    /// </returns>
     private IntPtr BuildValues(IReadOnlyList<MpvNode> items)
     {
         int size = Marshal.SizeOf<NativeMpvNode>();
@@ -186,8 +206,12 @@ internal sealed class MpvNodeAllocation : IDisposable
     /// <summary>
     /// 建立位元組陣列的原生表示。
     /// </summary>
-    /// <param name="bytes">受控位元組陣列。</param>
-    /// <returns>原生位元組陣列指標。</returns>
+    /// <param name="bytes">
+    /// 受控位元組陣列。
+    /// </param>
+    /// <returns>
+    /// 原生位元組陣列指標。
+    /// </returns>
     private IntPtr BuildByteArray(byte[] bytes)
     {
         IntPtr data = Marshal.AllocHGlobal(bytes.Length);
@@ -208,9 +232,15 @@ internal sealed class MpvNodeAllocation : IDisposable
     /// <summary>
     /// 配置原生記憶體並寫入指定結構。
     /// </summary>
-    /// <typeparam name="T">要寫入的結構型別。</typeparam>
-    /// <param name="value">要寫入的結構值。</param>
-    /// <returns>包含指定結構的原生記憶體指標。</returns>
+    /// <typeparam name="T">
+    /// 要寫入的結構型別。
+    /// </typeparam>
+    /// <param name="value">
+    /// 要寫入的結構值。
+    /// </param>
+    /// <returns>
+    /// 包含指定結構的原生記憶體指標。
+    /// </returns>
     private IntPtr AllocStruct<T>(T value) where T : struct
     {
         IntPtr pointer = Marshal.AllocHGlobal(Marshal.SizeOf<T>());

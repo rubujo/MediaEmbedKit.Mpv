@@ -18,24 +18,34 @@ namespace MediaEmbedKit.Mpv.Runtime.ArchiveExtraction;
 /// </remarks>
 internal sealed class SevenZrArchiveExtractor : IArchiveExtractor
 {
-    /// <summary>7zr.exe bootstrap 下載資料夾。</summary>
+    /// <summary>
+    /// 7zr.exe bootstrap 下載資料夾。
+    /// </summary>
     private readonly string _downloadDirectory;
 
-    /// <summary>下載要求使用的 User-Agent。</summary>
+    /// <summary>
+    /// 下載要求使用的 User-Agent。
+    /// </summary>
     private readonly string? _userAgent;
 
     /// <summary>
     /// 初始化 <see cref="SevenZrArchiveExtractor"/> 類別的新執行個體。
     /// </summary>
-    /// <param name="downloadDirectory">7zr.exe bootstrap 下載資料夾。</param>
-    /// <param name="userAgent">下載要求使用的 User-Agent；<see langword="null"/> 用 helper 預設。</param>
+    /// <param name="downloadDirectory">
+    /// 7zr.exe bootstrap 下載資料夾。
+    /// </param>
+    /// <param name="userAgent">
+    /// 下載要求使用的 User-Agent；<see langword="null"/> 用 helper 預設。
+    /// </param>
     public SevenZrArchiveExtractor(string downloadDirectory, string? userAgent)
     {
         _downloadDirectory = downloadDirectory;
         _userAgent = userAgent;
     }
 
-    /// <summary>顯示名稱「Downloaded 7zr.exe from ip7z/7zip」。</summary>
+    /// <summary>
+    /// 顯示名稱「Downloaded 7zr.exe from ip7z/7zip」。
+    /// </summary>
     public string Name => "Downloaded 7zr.exe from ip7z/7zip";
 
     /// <summary>
@@ -44,8 +54,12 @@ internal sealed class SevenZrArchiveExtractor : IArchiveExtractor
     /// release 結構等）會在 <see cref="ExtractAsync"/> 內 throw，由 fallback chain 視為
     /// 這層失敗（但已是最後一層，會直接 throw 給呼叫端）。
     /// </summary>
-    /// <param name="cancellationToken">未使用。</param>
-    /// <returns>恆為 <see langword="true"/>。</returns>
+    /// <param name="cancellationToken">
+    /// 未使用。
+    /// </param>
+    /// <returns>
+    /// 恆為 <see langword="true"/>。
+    /// </returns>
     public Task<bool> IsAvailableAsync(CancellationToken cancellationToken)
     {
         return Task.FromResult(true);
@@ -55,11 +69,24 @@ internal sealed class SevenZrArchiveExtractor : IArchiveExtractor
     /// 透過 <see cref="SevenZipBootstrapper"/> 取得 / 重用 7zr.exe，再委派給
     /// <see cref="SystemSevenZipArchiveExtractor"/> 執行實際解壓（CLI 完全相容）。
     /// </summary>
-    /// <param name="archivePath">.7z 壓縮檔路徑。</param>
-    /// <param name="targetDirectory">解壓縮目標資料夾。</param>
-    /// <param name="includePatterns">要解出的檔名清單；<see langword="null"/> 解整個 archive。</param>
-    /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
-    /// <exception cref="InvalidOperationException">7zr.exe 下載失敗或解壓失敗。</exception>
+    /// <param name="archivePath">
+    /// .7z 壓縮檔路徑。
+    /// </param>
+    /// <param name="targetDirectory">
+    /// 解壓縮目標資料夾。
+    /// </param>
+    /// <param name="includePatterns">
+    /// 要解出的檔名清單；<see langword="null"/> 解整個 archive。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 可取消非同步作業的語彙基元。
+    /// </param>
+    /// <returns>
+    /// 表示解壓縮流程的工作。
+    /// </returns>
+    /// <exception cref="InvalidOperationException">
+    /// 7zr.exe 下載失敗或解壓失敗。
+    /// </exception>
     public async Task ExtractAsync(
         string archivePath,
         string targetDirectory,

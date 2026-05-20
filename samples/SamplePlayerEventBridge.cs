@@ -59,8 +59,12 @@ internal sealed class SamplePlayerEventBridge : IDisposable
     /// <summary>
     /// 初始化 <see cref="SamplePlayerEventBridge"/> 類別的新執行個體。
     /// </summary>
-    /// <param name="player">要觀察的 mpv 播放器。</param>
-    /// <param name="appendLine">接收格式化事件文字列的委派。</param>
+    /// <param name="player">
+    /// 要觀察的 mpv 播放器。
+    /// </param>
+    /// <param name="appendLine">
+    /// 接收格式化事件文字列的委派。
+    /// </param>
     public SamplePlayerEventBridge(MpvPlayer player, Action<string> appendLine)
     {
         _player = player ?? throw new ArgumentNullException(nameof(player));
@@ -74,8 +78,12 @@ internal sealed class SamplePlayerEventBridge : IDisposable
     /// <summary>
     /// 將範例生命週期訊息寫入事件輸出。
     /// </summary>
-    /// <param name="stage">目前生命週期階段。</param>
-    /// <param name="detail">生命週期階段的補充內容。</param>
+    /// <param name="stage">
+    /// 目前生命週期階段。
+    /// </param>
+    /// <param name="detail">
+    /// 生命週期階段的補充內容。
+    /// </param>
     public void WriteLifecycle(string stage, string detail)
     {
         Append("lifecycle", stage + " | " + detail);
@@ -192,8 +200,12 @@ internal sealed class SamplePlayerEventBridge : IDisposable
     /// <summary>
     /// 處理 libmpv 原始事件。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private void PlayerEventReceived(object? sender, MpvEventArgs e)
     {
         if (SpecializedEvents.Contains(e.EventId))
@@ -207,8 +219,12 @@ internal sealed class SamplePlayerEventBridge : IDisposable
     /// <summary>
     /// 處理 libmpv 記錄訊息事件。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">記錄訊息事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 記錄訊息事件資料。
+    /// </param>
     private void PlayerLogMessageReceived(object? sender, MpvLogMessageEventArgs e)
     {
         Append("log", e.Level + " " + e.Prefix + " | " + e.Text.Trim());
@@ -217,8 +233,12 @@ internal sealed class SamplePlayerEventBridge : IDisposable
     /// <summary>
     /// 處理 libmpv 屬性變更事件。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">屬性變更事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 屬性變更事件資料。
+    /// </param>
     private void PlayerPropertyChanged(object? sender, MpvPropertyChangedEventArgs e)
     {
         Append("property", e.Name + " = " + FormatValue(e.Value) + " (" + e.Format + ")");
@@ -227,8 +247,12 @@ internal sealed class SamplePlayerEventBridge : IDisposable
     /// <summary>
     /// 處理播放項目開始載入事件。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">開始載入事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 開始載入事件資料。
+    /// </param>
     private void PlayerStartFile(object? sender, MpvStartFileEventArgs e)
     {
         Append("start-file", "playlist-entry-id=" + e.PlaylistEntryId.ToString(CultureInfo.InvariantCulture));
@@ -237,8 +261,12 @@ internal sealed class SamplePlayerEventBridge : IDisposable
     /// <summary>
     /// 處理播放項目已載入事件。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">一般事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 一般事件資料。
+    /// </param>
     private void PlayerFileLoaded(object? sender, MpvEventArgs e)
     {
         Append("file-loaded", "reply=" + e.ReplyUserData.ToString(CultureInfo.InvariantCulture));
@@ -251,8 +279,12 @@ internal sealed class SamplePlayerEventBridge : IDisposable
     /// <summary>
     /// 處理播放項目結束事件。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">播放項目結束事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 播放項目結束事件資料。
+    /// </param>
     private void PlayerEndFile(object? sender, MpvEndFileEventArgs e)
     {
         Append("end-file", "reason=" + e.Reason + " error=" + e.MpvErrorCode.ToString(CultureInfo.InvariantCulture));
@@ -261,8 +293,12 @@ internal sealed class SamplePlayerEventBridge : IDisposable
     /// <summary>
     /// 處理播放軌清單變更事件。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">播放軌清單變更事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 播放軌清單變更事件資料。
+    /// </param>
     private void PlayerTracksChanged(object? sender, MpvTracksChangedEventArgs e)
     {
         Append("tracks", "count=" + e.Tracks.Count.ToString(CultureInfo.InvariantCulture));
@@ -271,8 +307,12 @@ internal sealed class SamplePlayerEventBridge : IDisposable
     /// <summary>
     /// 處理視訊重新設定事件。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">一般事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 一般事件資料。
+    /// </param>
     private void PlayerVideoReconfigured(object? sender, MpvEventArgs e)
     {
         Append("video", "video-reconfig");
@@ -281,8 +321,12 @@ internal sealed class SamplePlayerEventBridge : IDisposable
     /// <summary>
     /// 處理音訊重新設定事件。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">一般事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 一般事件資料。
+    /// </param>
     private void PlayerAudioReconfigured(object? sender, MpvEventArgs e)
     {
         Append("audio", "audio-reconfig");
@@ -291,8 +335,12 @@ internal sealed class SamplePlayerEventBridge : IDisposable
     /// <summary>
     /// 處理播放重新開始事件。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">一般事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 一般事件資料。
+    /// </param>
     private void PlayerPlaybackRestarted(object? sender, MpvEventArgs e)
     {
         Append("playback", "playback-restart");
@@ -301,8 +349,12 @@ internal sealed class SamplePlayerEventBridge : IDisposable
     /// <summary>
     /// 處理 libmpv 關閉事件。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">一般事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 一般事件資料。
+    /// </param>
     private void PlayerShutdown(object? sender, MpvEventArgs e)
     {
         Append("shutdown", "libmpv shutdown");
@@ -311,8 +363,12 @@ internal sealed class SamplePlayerEventBridge : IDisposable
     /// <summary>
     /// 處理事件派送例外狀況。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">事件派送例外狀況資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件派送例外狀況資料。
+    /// </param>
     private void PlayerEventDispatchException(object? sender, MpvEventDispatchExceptionEventArgs e)
     {
         Append("dispatch-error", e.EventName + " | " + e.Exception.GetType().Name + ": " + e.Exception.Message);
@@ -356,8 +412,12 @@ internal sealed class SamplePlayerEventBridge : IDisposable
     /// <summary>
     /// 將 ytdl hook 輸出拆列並寫入事件清單。
     /// </summary>
-    /// <param name="category">事件分類。</param>
-    /// <param name="text">ytdl hook 輸出文字。</param>
+    /// <param name="category">
+    /// 事件分類。
+    /// </param>
+    /// <param name="text">
+    /// ytdl hook 輸出文字。
+    /// </param>
     private void AppendYtdlOutput(string category, string text)
     {
         if (string.IsNullOrWhiteSpace(text))
@@ -386,8 +446,12 @@ internal sealed class SamplePlayerEventBridge : IDisposable
     /// <summary>
     /// 將事件文字送往 UI。
     /// </summary>
-    /// <param name="category">事件分類。</param>
-    /// <param name="message">事件內容。</param>
+    /// <param name="category">
+    /// 事件分類。
+    /// </param>
+    /// <param name="message">
+    /// 事件內容。
+    /// </param>
     private void Append(string category, string message)
     {
         string line = DateTimeOffset.Now.ToString("HH:mm:ss.fff", CultureInfo.InvariantCulture) + " [" + category + "] " + message;
@@ -397,8 +461,12 @@ internal sealed class SamplePlayerEventBridge : IDisposable
     /// <summary>
     /// 將屬性值格式化為範例 UI 文字。
     /// </summary>
-    /// <param name="value">要格式化的屬性值。</param>
-    /// <returns>可顯示的屬性值文字。</returns>
+    /// <param name="value">
+    /// 要格式化的屬性值。
+    /// </param>
+    /// <returns>
+    /// 可顯示的屬性值文字。
+    /// </returns>
     private static string FormatValue(object? value)
     {
         if (value == null)
@@ -427,8 +495,12 @@ internal sealed class SamplePlayerEventBridge : IDisposable
         /// <summary>
         /// 初始化 <see cref="SampleObservedProperty"/> 結構的新執行個體。
         /// </summary>
-        /// <param name="name">libmpv 屬性名稱。</param>
-        /// <param name="format">屬性資料格式。</param>
+        /// <param name="name">
+        /// libmpv 屬性名稱。
+        /// </param>
+        /// <param name="format">
+        /// 屬性資料格式。
+        /// </param>
         public SampleObservedProperty(string name, MpvFormat format)
         {
             Name = name;
@@ -438,13 +510,17 @@ internal sealed class SamplePlayerEventBridge : IDisposable
         /// <summary>
         /// 取得 libmpv 屬性名稱。
         /// </summary>
-        /// <value>libmpv 屬性名稱。</value>
+        /// <value>
+        /// libmpv 屬性名稱。
+        /// </value>
         public string Name { get; }
 
         /// <summary>
         /// 取得屬性資料格式。
         /// </summary>
-        /// <value>屬性資料格式。</value>
+        /// <value>
+        /// 屬性資料格式。
+        /// </value>
         public MpvFormat Format { get; }
     }
 }

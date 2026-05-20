@@ -14,7 +14,9 @@ public static class MpvNativeRuntimeCatalog
     /// <summary>
     /// 取得 mpv 官方安裝頁面 URI。
     /// </summary>
-    /// <value>mpv 官方安裝頁面 URI。</value>
+    /// <value>
+    /// mpv 官方安裝頁面 URI。
+    /// </value>
     public static Uri OfficialInstallationPage
     {
         get { return new Uri("https://mpv.io/installation/"); }
@@ -23,7 +25,9 @@ public static class MpvNativeRuntimeCatalog
     /// <summary>
     /// 偵測目前執行環境對應的原生 libmpv 平台。
     /// </summary>
-    /// <returns>目前執行環境對應的平台列舉值。</returns>
+    /// <returns>
+    /// 目前執行環境對應的平台列舉值。
+    /// </returns>
     public static MpvNativeRuntimePlatform CurrentPlatform()
     {
 #if NET5_0_OR_GREATER || NETSTANDARD2_0
@@ -41,7 +45,9 @@ public static class MpvNativeRuntimeCatalog
     /// <summary>
     /// 取得目前平台的原生 libmpv 來源清單。
     /// </summary>
-    /// <returns>目前平台可參考的原生來源清單。</returns>
+    /// <returns>
+    /// 目前平台可參考的原生來源清單。
+    /// </returns>
     public static IReadOnlyList<MpvNativeRuntimeSource> GetSourcesForCurrentPlatform()
     {
         return GetSources(CurrentPlatform());
@@ -50,8 +56,12 @@ public static class MpvNativeRuntimeCatalog
     /// <summary>
     /// 取得指定平台的原生 libmpv 來源清單。
     /// </summary>
-    /// <param name="platform">要查詢的原生 libmpv 平台。</param>
-    /// <returns>指定平台可參考的原生來源清單。</returns>
+    /// <param name="platform">
+    /// 要查詢的原生 libmpv 平台。
+    /// </param>
+    /// <returns>
+    /// 指定平台可參考的原生來源清單。
+    /// </returns>
     public static IReadOnlyList<MpvNativeRuntimeSource> GetSources(MpvNativeRuntimePlatform platform)
     {
         switch (platform)
@@ -66,8 +76,12 @@ public static class MpvNativeRuntimeCatalog
     /// <summary>
     /// 取得此專案對指定平台的執行階段支援狀態。
     /// </summary>
-    /// <param name="platform">要查詢的原生 libmpv 平台。</param>
-    /// <returns>此專案對指定平台的執行階段支援狀態。</returns>
+    /// <param name="platform">
+    /// 要查詢的原生 libmpv 平台。
+    /// </param>
+    /// <returns>
+    /// 此專案對指定平台的執行階段支援狀態。
+    /// </returns>
     public static MpvNativeRuntimeSupportStatus GetProjectSupportStatus(MpvNativeRuntimePlatform platform)
     {
         switch (platform)

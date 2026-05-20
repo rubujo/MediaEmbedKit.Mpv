@@ -52,8 +52,12 @@ public sealed class MpvLibraryUpdateScheduler
     /// <summary>
     /// 初始化 <see cref="MpvLibraryUpdateScheduler"/> 類別的新執行個體。
     /// </summary>
-    /// <param name="runtimeDirectory">執行階段資料夾，必須是日後 libmpv-2.dll 載入位置的根目錄。</param>
-    /// <param name="options">下載 Windows libmpv 建置時的預設選項；未提供時使用預設值。</param>
+    /// <param name="runtimeDirectory">
+    /// 執行階段資料夾，必須是日後 libmpv-2.dll 載入位置的根目錄。
+    /// </param>
+    /// <param name="options">
+    /// 下載 Windows libmpv 建置時的預設選項；未提供時使用預設值。
+    /// </param>
     public MpvLibraryUpdateScheduler(string runtimeDirectory, MpvWindowsBuildDownloadOptions? options = null)
     {
         if (string.IsNullOrWhiteSpace(runtimeDirectory))
@@ -68,7 +72,9 @@ public sealed class MpvLibraryUpdateScheduler
     /// <summary>
     /// 取得執行階段資料夾完整路徑。
     /// </summary>
-    /// <value>執行階段資料夾完整路徑。</value>
+    /// <value>
+    /// 執行階段資料夾完整路徑。
+    /// </value>
     public string RuntimeDirectory
     {
         get { return _runtimeDirectory; }
@@ -77,7 +83,9 @@ public sealed class MpvLibraryUpdateScheduler
     /// <summary>
     /// 取得目前使用的 libmpv-2.dll 路徑。
     /// </summary>
-    /// <value>libmpv-2.dll 完整路徑。</value>
+    /// <value>
+    /// libmpv-2.dll 完整路徑。
+    /// </value>
     public string CurrentLibraryPath
     {
         get { return Path.Combine(_runtimeDirectory, LibMpvFileName); }
@@ -86,7 +94,9 @@ public sealed class MpvLibraryUpdateScheduler
     /// <summary>
     /// 取得前一版 libmpv-2.dll 備份路徑。
     /// </summary>
-    /// <value><c>.previous/libmpv-2.dll</c> 完整路徑。</value>
+    /// <value>
+    /// <c>.previous/libmpv-2.dll</c> 完整路徑。
+    /// </value>
     public string PreviousLibraryPath
     {
         get { return Path.Combine(_runtimeDirectory, PreviousDirectoryName, LibMpvFileName); }
@@ -95,7 +105,9 @@ public sealed class MpvLibraryUpdateScheduler
     /// <summary>
     /// 取得暫存資料夾完整路徑。
     /// </summary>
-    /// <value><c>.updates/</c> 完整路徑。</value>
+    /// <value>
+    /// <c>.updates/</c> 完整路徑。
+    /// </value>
     public string StagedRootDirectory
     {
         get { return Path.Combine(_runtimeDirectory, UpdatesDirectoryName); }
@@ -104,7 +116,9 @@ public sealed class MpvLibraryUpdateScheduler
     /// <summary>
     /// 列出目前已暫存的 libmpv 更新，依時間戳記由舊到新排序。
     /// </summary>
-    /// <returns>已暫存的更新集合；目前沒有暫存時集合為空。</returns>
+    /// <returns>
+    /// 已暫存的更新集合；目前沒有暫存時集合為空。
+    /// </returns>
     public IReadOnlyList<MpvLibraryStagedUpdate> ListStagedUpdates()
     {
         string root = StagedRootDirectory;
@@ -132,8 +146,12 @@ public sealed class MpvLibraryUpdateScheduler
     /// 下載最新 libmpv 建置並暫存到 <c>.updates/&lt;timestamp&gt;/</c>。
     /// 若 libmpv 尚未在當前處理序載入，會同時把暫存版本提升為使用版本。
     /// </summary>
-    /// <param name="cancellationToken">取消下載與暫存的 token。</param>
-    /// <returns>本次暫存的結果。</returns>
+    /// <param name="cancellationToken">
+    /// 取消下載與暫存的 token。
+    /// </param>
+    /// <returns>
+    /// 本次暫存的結果。
+    /// </returns>
     public Task<MpvLibraryStageResult> StageAsync(CancellationToken cancellationToken = default)
     {
         return StageAsync(_defaultOptions, cancellationToken);
@@ -142,9 +160,15 @@ public sealed class MpvLibraryUpdateScheduler
     /// <summary>
     /// 下載最新 libmpv 建置並暫存到 <c>.updates/&lt;timestamp&gt;/</c>。
     /// </summary>
-    /// <param name="options">本次下載要使用的選項；未提供時使用建構時提供的預設選項。</param>
-    /// <param name="cancellationToken">取消下載與暫存的 token。</param>
-    /// <returns>本次暫存的結果。</returns>
+    /// <param name="options">
+    /// 本次下載要使用的選項；未提供時使用建構時提供的預設選項。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 取消下載與暫存的 token。
+    /// </param>
+    /// <returns>
+    /// 本次暫存的結果。
+    /// </returns>
     public async Task<MpvLibraryStageResult> StageAsync(
         MpvWindowsBuildDownloadOptions? options,
         CancellationToken cancellationToken = default)
@@ -168,7 +192,9 @@ public sealed class MpvLibraryUpdateScheduler
     /// 在 libmpv 尚未載入時，把最近一次暫存的更新提升為使用版本，
     /// 並將先前的 libmpv-2.dll 備份到 <c>.previous/</c>。
     /// </summary>
-    /// <returns>套用結果；無暫存可套用時 <see cref="MpvLibraryApplyResult.Applied"/> 為 <see langword="false"/>。</returns>
+    /// <returns>
+    /// 套用結果；無暫存可套用時 <see cref="MpvLibraryApplyResult.Applied"/> 為 <see langword="false"/>。
+    /// </returns>
     public MpvLibraryApplyResult ApplyStagedOnStartup()
     {
         lock (_syncRoot)
@@ -224,7 +250,9 @@ public sealed class MpvLibraryUpdateScheduler
     /// 將 <c>.previous/libmpv-2.dll</c> 還原為使用版本。
     /// 此操作要求 libmpv 尚未在當前處理序載入。
     /// </summary>
-    /// <returns>還原結果；找不到 <c>.previous/</c> 時 <see cref="MpvLibraryRollbackResult.RolledBack"/> 為 <see langword="false"/>。</returns>
+    /// <returns>
+    /// 還原結果；找不到 <c>.previous/</c> 時 <see cref="MpvLibraryRollbackResult.RolledBack"/> 為 <see langword="false"/>。
+    /// </returns>
     public MpvLibraryRollbackResult Rollback()
     {
         lock (_syncRoot)
@@ -272,7 +300,9 @@ public sealed class MpvLibraryUpdateScheduler
     /// <summary>
     /// 清除 <c>.updates/</c> 內所有尚未套用的暫存。
     /// </summary>
-    /// <returns>已被清除的暫存集合。</returns>
+    /// <returns>
+    /// 已被清除的暫存集合。
+    /// </returns>
     public IReadOnlyList<MpvLibraryStagedUpdate> PruneStagedUpdates()
     {
         lock (_syncRoot)
@@ -305,9 +335,15 @@ public sealed class MpvLibraryStagedUpdate
     /// <summary>
     /// 初始化 <see cref="MpvLibraryStagedUpdate"/> 類別的新執行個體。
     /// </summary>
-    /// <param name="stagedDirectory">暫存資料夾完整路徑。</param>
-    /// <param name="libraryPath">暫存的 libmpv-2.dll 完整路徑。</param>
-    /// <param name="stagedAtUtc">暫存建立時間（UTC）。</param>
+    /// <param name="stagedDirectory">
+    /// 暫存資料夾完整路徑。
+    /// </param>
+    /// <param name="libraryPath">
+    /// 暫存的 libmpv-2.dll 完整路徑。
+    /// </param>
+    /// <param name="stagedAtUtc">
+    /// 暫存建立時間（UTC）。
+    /// </param>
     internal MpvLibraryStagedUpdate(string stagedDirectory, string libraryPath, DateTime stagedAtUtc)
     {
         StagedDirectory = stagedDirectory;
@@ -318,19 +354,25 @@ public sealed class MpvLibraryStagedUpdate
     /// <summary>
     /// 取得暫存資料夾完整路徑。
     /// </summary>
-    /// <value>暫存資料夾完整路徑。</value>
+    /// <value>
+    /// 暫存資料夾完整路徑。
+    /// </value>
     public string StagedDirectory { get; }
 
     /// <summary>
     /// 取得暫存的 libmpv-2.dll 完整路徑。
     /// </summary>
-    /// <value>暫存的 libmpv-2.dll 完整路徑。</value>
+    /// <value>
+    /// 暫存的 libmpv-2.dll 完整路徑。
+    /// </value>
     public string LibraryPath { get; }
 
     /// <summary>
     /// 取得暫存建立時間（UTC）。
     /// </summary>
-    /// <value>暫存建立時間。</value>
+    /// <value>
+    /// 暫存建立時間。
+    /// </value>
     public DateTime StagedAtUtc { get; }
 }
 
@@ -342,12 +384,24 @@ public sealed class MpvLibraryStageResult
     /// <summary>
     /// 初始化 <see cref="MpvLibraryStageResult"/> 類別的新執行個體。
     /// </summary>
-    /// <param name="runtimeDirectory">執行階段資料夾。</param>
-    /// <param name="stagedLibraryPath">暫存或已套用的 libmpv-2.dll 路徑。</param>
-    /// <param name="currentLibraryPath">執行階段資料夾中目前的 libmpv-2.dll 路徑。</param>
-    /// <param name="requiresProcessRestart">是否需要重新啟動處理序才能套用更新。</param>
-    /// <param name="libraryAlreadyLoaded">libmpv 是否已在當前處理序載入。</param>
-    /// <param name="build">本次下載的 build 結果，可用於審計。</param>
+    /// <param name="runtimeDirectory">
+    /// 執行階段資料夾。
+    /// </param>
+    /// <param name="stagedLibraryPath">
+    /// 暫存或已套用的 libmpv-2.dll 路徑。
+    /// </param>
+    /// <param name="currentLibraryPath">
+    /// 執行階段資料夾中目前的 libmpv-2.dll 路徑。
+    /// </param>
+    /// <param name="requiresProcessRestart">
+    /// 是否需要重新啟動處理序才能套用更新。
+    /// </param>
+    /// <param name="libraryAlreadyLoaded">
+    /// libmpv 是否已在當前處理序載入。
+    /// </param>
+    /// <param name="build">
+    /// 本次下載的 build 結果，可用於審計。
+    /// </param>
     internal MpvLibraryStageResult(
         string runtimeDirectory,
         string stagedLibraryPath,
@@ -367,37 +421,49 @@ public sealed class MpvLibraryStageResult
     /// <summary>
     /// 取得執行階段資料夾。
     /// </summary>
-    /// <value>執行階段資料夾完整路徑。</value>
+    /// <value>
+    /// 執行階段資料夾完整路徑。
+    /// </value>
     public string RuntimeDirectory { get; }
 
     /// <summary>
     /// 取得暫存或已套用的 libmpv-2.dll 路徑。
     /// </summary>
-    /// <value>libmpv-2.dll 完整路徑。</value>
+    /// <value>
+    /// libmpv-2.dll 完整路徑。
+    /// </value>
     public string StagedLibraryPath { get; }
 
     /// <summary>
     /// 取得執行階段資料夾中目前的 libmpv-2.dll 路徑。
     /// </summary>
-    /// <value>libmpv-2.dll 完整路徑。</value>
+    /// <value>
+    /// libmpv-2.dll 完整路徑。
+    /// </value>
     public string CurrentLibraryPath { get; }
 
     /// <summary>
     /// 取得是否需要重新啟動處理序才能套用更新。
     /// </summary>
-    /// <value>需要重新啟動時為 <see langword="true"/>。</value>
+    /// <value>
+    /// 需要重新啟動時為 <see langword="true"/>。
+    /// </value>
     public bool RequiresProcessRestart { get; }
 
     /// <summary>
     /// 取得 libmpv 是否已在當前處理序載入。
     /// </summary>
-    /// <value>已載入時為 <see langword="true"/>。</value>
+    /// <value>
+    /// 已載入時為 <see langword="true"/>。
+    /// </value>
     public bool LibraryAlreadyLoaded { get; }
 
     /// <summary>
     /// 取得本次下載的 build 結果。
     /// </summary>
-    /// <value>下載結果，可用於審計與紀錄。</value>
+    /// <value>
+    /// 下載結果，可用於審計與紀錄。
+    /// </value>
     public MpvWindowsBuildDownloadResult Build { get; }
 }
 
@@ -409,10 +475,18 @@ public sealed class MpvLibraryApplyResult
     /// <summary>
     /// 初始化 <see cref="MpvLibraryApplyResult"/> 類別的新執行個體。
     /// </summary>
-    /// <param name="applied">是否真的把暫存更新提升為使用版本。</param>
-    /// <param name="sourceLibraryPath">本次套用所使用的暫存 libmpv-2.dll 路徑。</param>
-    /// <param name="previousLibraryPath">本次套用前所備份的 libmpv-2.dll 路徑。</param>
-    /// <param name="message">套用結果的補充說明。</param>
+    /// <param name="applied">
+    /// 是否真的把暫存更新提升為使用版本。
+    /// </param>
+    /// <param name="sourceLibraryPath">
+    /// 本次套用所使用的暫存 libmpv-2.dll 路徑。
+    /// </param>
+    /// <param name="previousLibraryPath">
+    /// 本次套用前所備份的 libmpv-2.dll 路徑。
+    /// </param>
+    /// <param name="message">
+    /// 套用結果的補充說明。
+    /// </param>
     internal MpvLibraryApplyResult(bool applied, string? sourceLibraryPath, string? previousLibraryPath, string message)
     {
         Applied = applied;
@@ -424,25 +498,33 @@ public sealed class MpvLibraryApplyResult
     /// <summary>
     /// 取得是否真的把暫存更新提升為使用版本。
     /// </summary>
-    /// <value>有套用時為 <see langword="true"/>。</value>
+    /// <value>
+    /// 有套用時為 <see langword="true"/>。
+    /// </value>
     public bool Applied { get; }
 
     /// <summary>
     /// 取得本次套用所使用的暫存 libmpv-2.dll 路徑。
     /// </summary>
-    /// <value>暫存路徑；未套用時為 <see langword="null"/>。</value>
+    /// <value>
+    /// 暫存路徑；未套用時為 <see langword="null"/>。
+    /// </value>
     public string? SourceLibraryPath { get; }
 
     /// <summary>
     /// 取得本次套用前所備份的 libmpv-2.dll 路徑。
     /// </summary>
-    /// <value>備份路徑；未套用時為 <see langword="null"/>。</value>
+    /// <value>
+    /// 備份路徑；未套用時為 <see langword="null"/>。
+    /// </value>
     public string? PreviousLibraryPath { get; }
 
     /// <summary>
     /// 取得套用結果的補充說明。
     /// </summary>
-    /// <value>說明文字。</value>
+    /// <value>
+    /// 說明文字。
+    /// </value>
     public string Message { get; }
 }
 
@@ -454,9 +536,15 @@ public sealed class MpvLibraryRollbackResult
     /// <summary>
     /// 初始化 <see cref="MpvLibraryRollbackResult"/> 類別的新執行個體。
     /// </summary>
-    /// <param name="rolledBack">是否真的從 <c>.previous/</c> 還原為使用版本。</param>
-    /// <param name="restoredLibraryPath">本次還原後的 libmpv-2.dll 路徑。</param>
-    /// <param name="message">回滾結果的補充說明。</param>
+    /// <param name="rolledBack">
+    /// 是否真的從 <c>.previous/</c> 還原為使用版本。
+    /// </param>
+    /// <param name="restoredLibraryPath">
+    /// 本次還原後的 libmpv-2.dll 路徑。
+    /// </param>
+    /// <param name="message">
+    /// 回滾結果的補充說明。
+    /// </param>
     internal MpvLibraryRollbackResult(bool rolledBack, string? restoredLibraryPath, string message)
     {
         RolledBack = rolledBack;
@@ -467,18 +555,24 @@ public sealed class MpvLibraryRollbackResult
     /// <summary>
     /// 取得是否真的從 <c>.previous/</c> 還原為使用版本。
     /// </summary>
-    /// <value>有還原時為 <see langword="true"/>。</value>
+    /// <value>
+    /// 有還原時為 <see langword="true"/>。
+    /// </value>
     public bool RolledBack { get; }
 
     /// <summary>
     /// 取得本次還原後的 libmpv-2.dll 路徑。
     /// </summary>
-    /// <value>還原後的路徑；未還原時為 <see langword="null"/>。</value>
+    /// <value>
+    /// 還原後的路徑；未還原時為 <see langword="null"/>。
+    /// </value>
     public string? RestoredLibraryPath { get; }
 
     /// <summary>
     /// 取得回滾結果的補充說明。
     /// </summary>
-    /// <value>說明文字。</value>
+    /// <value>
+    /// 說明文字。
+    /// </value>
     public string Message { get; }
 }

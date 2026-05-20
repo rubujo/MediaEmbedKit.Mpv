@@ -30,7 +30,9 @@ public static class MpvLibraryLoader
     /// <summary>
     /// 取得目前處理序是否已載入 libmpv。
     /// </summary>
-    /// <value>已載入至少一個 libmpv 原生程式庫時為 <see langword="true"/>。</value>
+    /// <value>
+    /// 已載入至少一個 libmpv 原生程式庫時為 <see langword="true"/>。
+    /// </value>
     public static bool IsLoaded
     {
         get
@@ -45,7 +47,9 @@ public static class MpvLibraryLoader
     /// <summary>
     /// 載入指定或自動解析的 libmpv 原生程式庫。
     /// </summary>
-    /// <param name="libraryPath">libmpv 檔案路徑或包含 libmpv 的資料夾；未指定時使用預設搜尋邏輯。</param>
+    /// <param name="libraryPath">
+    /// libmpv 檔案路徑或包含 libmpv 的資料夾；未指定時使用預設搜尋邏輯。
+    /// </param>
     public static void Load(string? libraryPath = null)
     {
         string? resolved = ResolveLibraryPath(libraryPath);
@@ -70,7 +74,9 @@ public static class MpvLibraryLoader
     /// <summary>
     /// 從執行階段資料夾載入平台預設名稱的 libmpv 程式庫。
     /// </summary>
-    /// <param name="runtimeDirectory">包含 libmpv 原生程式庫的執行階段資料夾。</param>
+    /// <param name="runtimeDirectory">
+    /// 包含 libmpv 原生程式庫的執行階段資料夾。
+    /// </param>
     public static void LoadFromRuntimeDirectory(string runtimeDirectory)
     {
         if (string.IsNullOrWhiteSpace(runtimeDirectory))
@@ -84,7 +90,9 @@ public static class MpvLibraryLoader
     /// <summary>
     /// 取得目前平台預設的 libmpv 原生程式庫檔名。
     /// </summary>
-    /// <returns>目前平台預設的 libmpv 檔名。</returns>
+    /// <returns>
+    /// 目前平台預設的 libmpv 檔名。
+    /// </returns>
     public static string GetDefaultLibraryFileName()
     {
         return WindowsLibraryFileName;
@@ -93,7 +101,9 @@ public static class MpvLibraryLoader
     /// <summary>
     /// 取得目前處理序對應的 .NET 執行階段識別碼。
     /// </summary>
-    /// <returns>目前平台與處理器架構組成的執行階段識別碼。</returns>
+    /// <returns>
+    /// 目前平台與處理器架構組成的執行階段識別碼。
+    /// </returns>
     public static string GetDefaultRuntimeIdentifier()
     {
 #if NET5_0_OR_GREATER || NETSTANDARD2_0
@@ -121,8 +131,12 @@ public static class MpvLibraryLoader
     /// <summary>
     /// 解析使用者指定、環境變數或預設位置中的 libmpv 程式庫路徑。
     /// </summary>
-    /// <param name="libraryPath">使用者指定的 libmpv 檔案或資料夾路徑。</param>
-    /// <returns>可載入的 libmpv 檔案路徑；找不到時為 <see langword="null"/>。</returns>
+    /// <param name="libraryPath">
+    /// 使用者指定的 libmpv 檔案或資料夾路徑。
+    /// </param>
+    /// <returns>
+    /// 可載入的 libmpv 檔案路徑；找不到時為 <see langword="null"/>。
+    /// </returns>
     private static string? ResolveLibraryPath(string? libraryPath)
     {
         if (!string.IsNullOrWhiteSpace(libraryPath))
@@ -160,8 +174,12 @@ public static class MpvLibraryLoader
     /// <summary>
     /// 將檔案或資料夾路徑解析為 libmpv 檔案路徑。
     /// </summary>
-    /// <param name="path">使用者提供的檔案或資料夾路徑。</param>
-    /// <returns>解析後的 libmpv 檔案路徑。</returns>
+    /// <param name="path">
+    /// 使用者提供的檔案或資料夾路徑。
+    /// </param>
+    /// <returns>
+    /// 解析後的 libmpv 檔案路徑。
+    /// </returns>
     private static string ResolveFileOrDirectory(string path)
     {
         if (Directory.Exists(path))
@@ -175,8 +193,12 @@ public static class MpvLibraryLoader
     /// <summary>
     /// 使用目前目標框架可用的原生載入器載入 libmpv。
     /// </summary>
-    /// <param name="path">要載入的 libmpv 檔案路徑。</param>
-    /// <returns>原生程式庫控制代碼。</returns>
+    /// <param name="path">
+    /// 要載入的 libmpv 檔案路徑。
+    /// </param>
+    /// <returns>
+    /// 原生程式庫控制代碼。
+    /// </returns>
     private static IntPtr LoadNativeLibrary(string path)
     {
 #if NET5_0_OR_GREATER
@@ -194,8 +216,12 @@ public static class MpvLibraryLoader
         /// <summary>
         /// 載入指定的 Windows 原生程式庫。
         /// </summary>
-        /// <param name="lpFileName">要載入的原生程式庫檔案路徑。</param>
-        /// <returns>載入後的原生程式庫控制代碼。</returns>
+        /// <param name="lpFileName">
+        /// 要載入的原生程式庫檔案路徑。
+        /// </param>
+        /// <returns>
+        /// 載入後的原生程式庫控制代碼。
+        /// </returns>
         [DllImport("kernel32", CharSet = CharSet.Unicode, SetLastError = true)]
         internal static extern IntPtr LoadLibrary(string lpFileName);
     }

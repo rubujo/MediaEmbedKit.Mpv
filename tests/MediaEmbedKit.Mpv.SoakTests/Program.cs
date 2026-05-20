@@ -925,6 +925,15 @@ internal static class MannKendall
     /// Z = (S - sign(S)) / sqrt(Var(S))。|Z| &gt; 1.96 表示在 α=0.05 顯著趨勢。
     /// 正 Z 表示上升、負 Z 表示下降。樣本數 &lt; 10 時忽略連續性修正以免分母過小。
     /// </remarks>
+    /// <param name="samples">
+    /// 要檢定的取樣資料。
+    /// </param>
+    /// <param name="selector">
+    /// 從取樣資料取得檢定數值的委派。
+    /// </param>
+    /// <returns>
+    /// Mann-Kendall 趨勢檢定結果。
+    /// </returns>
     public static MannKendallResult Compute(IReadOnlyList<SoakSample> samples, Func<SoakSample, double> selector)
     {
         int n = samples.Count;

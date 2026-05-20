@@ -21,8 +21,12 @@ internal static class Program
     /// <summary>
     /// 測試執行進入點。
     /// </summary>
-    /// <param name="args">命令列引數。</param>
-    /// <returns>所有指定範例通過時傳回 0，否則傳回 1。</returns>
+    /// <param name="args">
+    /// 命令列引數。
+    /// </param>
+    /// <returns>
+    /// 所有指定範例通過時傳回 0，否則傳回 1。
+    /// </returns>
     private static async Task<int> Main(string[] args)
     {
         ConfigureConsoleEncoding();
@@ -68,10 +72,18 @@ internal static class Program
     /// <summary>
     /// 執行單一範例應用程式。
     /// </summary>
-    /// <param name="sample">要執行的範例。</param>
-    /// <param name="options">冒煙測試選項。</param>
-    /// <param name="iteration">目前重複執行次數。</param>
-    /// <returns>範例處理序結束代碼。</returns>
+    /// <param name="sample">
+    /// 要執行的範例。
+    /// </param>
+    /// <param name="options">
+    /// 冒煙測試選項。
+    /// </param>
+    /// <param name="iteration">
+    /// 目前重複執行次數。
+    /// </param>
+    /// <returns>
+    /// 範例處理序結束代碼。
+    /// </returns>
     private static async Task<int> RunSampleAsync(SmokeSample sample, SmokeOptions options, int iteration)
     {
         string projectPath = sample.ResolveProjectPath(options.SampleRoot);
@@ -139,9 +151,15 @@ internal static class Program
     /// <summary>
     /// 輸出範例處理序的一列文字。
     /// </summary>
-    /// <param name="sampleName">範例名稱。</param>
-    /// <param name="streamName">輸出資料流名稱。</param>
-    /// <param name="line">輸出文字。</param>
+    /// <param name="sampleName">
+    /// 範例名稱。
+    /// </param>
+    /// <param name="streamName">
+    /// 輸出資料流名稱。
+    /// </param>
+    /// <param name="line">
+    /// 輸出文字。
+    /// </param>
     private static void WriteProcessLine(string sampleName, string streamName, string? line)
     {
         if (line == null)
@@ -155,7 +173,9 @@ internal static class Program
     /// <summary>
     /// 嘗試終止處理序與其子處理序。
     /// </summary>
-    /// <param name="process">要終止的處理序。</param>
+    /// <param name="process">
+    /// 要終止的處理序。
+    /// </param>
     private static void TryKill(Process process)
     {
         try
@@ -184,8 +204,12 @@ internal static class RuntimeProvisioner
     /// <summary>
     /// 確認指定 runtime 資料夾包含播放需要的執行階段檔案。
     /// </summary>
-    /// <param name="runtimeDirectory">要檢查或建立的 runtime 資料夾。</param>
-    /// <returns>代表準備流程的工作。</returns>
+    /// <param name="runtimeDirectory">
+    /// 要檢查或建立的 runtime 資料夾。
+    /// </param>
+    /// <returns>
+    /// 代表準備流程的工作。
+    /// </returns>
     public static async Task EnsureAsync(string runtimeDirectory)
     {
         string fullPath = Path.GetFullPath(runtimeDirectory);
@@ -231,8 +255,12 @@ internal static class RuntimeProvisioner
     /// <summary>
     /// 判斷指定資料夾是否包含播放測試需要的檔案。
     /// </summary>
-    /// <param name="runtimeDirectory">要檢查的 runtime 資料夾。</param>
-    /// <returns>資料夾包含必要檔案時為 <see langword="true"/>。</returns>
+    /// <param name="runtimeDirectory">
+    /// 要檢查的 runtime 資料夾。
+    /// </param>
+    /// <returns>
+    /// 資料夾包含必要檔案時為 <see langword="true"/>。
+    /// </returns>
     private static bool HasCompleteRuntime(string runtimeDirectory)
     {
         return File.Exists(Path.Combine(runtimeDirectory, "libmpv-2.dll"))
@@ -264,62 +292,84 @@ internal sealed class SmokeOptions
     /// <summary>
     /// 取得或設定必須播放的最少秒數。
     /// </summary>
-    /// <value>必須播放的最少秒數。</value>
+    /// <value>
+    /// 必須播放的最少秒數。
+    /// </value>
     public double Seconds { get; set; }
 
     /// <summary>
     /// 取得或設定要執行的範例名稱。
     /// </summary>
-    /// <value>範例名稱或 <c>all</c>。</value>
+    /// <value>
+    /// 範例名稱或 <c>all</c>。
+    /// </value>
     public string SampleName { get; set; }
 
     /// <summary>
     /// 取得或設定範例專案路徑的根目錄。
     /// </summary>
-    /// <value>包含 `samples` 資料夾的根目錄。</value>
+    /// <value>
+    /// 包含 `samples` 資料夾的根目錄。
+    /// </value>
     public string SampleRoot { get; set; }
 
     /// <summary>
     /// 取得或設定建置組態。
     /// </summary>
-    /// <value>建置組態。</value>
+    /// <value>
+    /// 建置組態。
+    /// </value>
     public string Configuration { get; set; }
 
     /// <summary>
     /// 取得或設定是否略過建置。
     /// </summary>
-    /// <value>略過建置時為 <see langword="true"/>。</value>
+    /// <value>
+    /// 略過建置時為 <see langword="true"/>。
+    /// </value>
     public bool NoBuild { get; set; }
 
     /// <summary>
     /// 取得或設定範例處理序使用的共用 runtime 資料夾。
     /// </summary>
-    /// <value>共用 runtime 資料夾；未指定時由範例自行決定。</value>
+    /// <value>
+    /// 共用 runtime 資料夾；未指定時由範例自行決定。
+    /// </value>
     public string? RuntimeDirectory { get; set; }
 
     /// <summary>
     /// 取得或設定單一範例的等待逾時秒數。
     /// </summary>
-    /// <value>單一範例的等待逾時秒數。</value>
+    /// <value>
+    /// 單一範例的等待逾時秒數。
+    /// </value>
     public int TimeoutSeconds { get; set; }
 
     /// <summary>
     /// 取得或設定每個範例要重複執行的次數。
     /// </summary>
-    /// <value>每個範例的重複執行次數。</value>
+    /// <value>
+    /// 每個範例的重複執行次數。
+    /// </value>
     public int Iterations { get; set; }
 
     /// <summary>
     /// 取得或設定是否啟用範例功能冒煙測試。
     /// </summary>
-    /// <value>啟用範例功能冒煙測試時為 <see langword="true"/>。</value>
+    /// <value>
+    /// 啟用範例功能冒煙測試時為 <see langword="true"/>。
+    /// </value>
     public bool FeatureSmoke { get; set; }
 
     /// <summary>
     /// 解析命令列引數。
     /// </summary>
-    /// <param name="args">命令列引數。</param>
-    /// <returns>解析後的選項。</returns>
+    /// <param name="args">
+    /// 命令列引數。
+    /// </param>
+    /// <returns>
+    /// 解析後的選項。
+    /// </returns>
     public static SmokeOptions Parse(string[] args)
     {
         SmokeOptions options = new SmokeOptions();
@@ -386,10 +436,18 @@ internal sealed class SmokeOptions
     /// <summary>
     /// 讀取指定引數後方的值。
     /// </summary>
-    /// <param name="args">命令列引數。</param>
-    /// <param name="index">目前引數索引。</param>
-    /// <param name="name">引數名稱。</param>
-    /// <returns>引數值。</returns>
+    /// <param name="args">
+    /// 命令列引數。
+    /// </param>
+    /// <param name="index">
+    /// 目前引數索引。
+    /// </param>
+    /// <param name="name">
+    /// 引數名稱。
+    /// </param>
+    /// <returns>
+    /// 引數值。
+    /// </returns>
     private static string ReadValue(string[] args, ref int index, string name)
     {
         if (index + 1 >= args.Length)
@@ -404,9 +462,15 @@ internal sealed class SmokeOptions
     /// <summary>
     /// 將文字解析為浮點數。
     /// </summary>
-    /// <param name="value">要解析的文字。</param>
-    /// <param name="name">引數名稱。</param>
-    /// <returns>解析後的浮點數。</returns>
+    /// <param name="value">
+    /// 要解析的文字。
+    /// </param>
+    /// <param name="name">
+    /// 引數名稱。
+    /// </param>
+    /// <returns>
+    /// 解析後的浮點數。
+    /// </returns>
     private static double ParseDouble(string value, string name)
     {
         if (!double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out double result))
@@ -420,9 +484,15 @@ internal sealed class SmokeOptions
     /// <summary>
     /// 將文字解析為整數。
     /// </summary>
-    /// <param name="value">要解析的文字。</param>
-    /// <param name="name">引數名稱。</param>
-    /// <returns>解析後的整數。</returns>
+    /// <param name="value">
+    /// 要解析的文字。
+    /// </param>
+    /// <param name="name">
+    /// 引數名稱。
+    /// </param>
+    /// <returns>
+    /// 解析後的整數。
+    /// </returns>
     private static int ParseInt(string value, string name)
     {
         if (!int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out int result))
@@ -442,10 +512,18 @@ internal sealed class SmokeSample
     /// <summary>
     /// 初始化 <see cref="SmokeSample"/> 類別的新執行個體。
     /// </summary>
-    /// <param name="name">範例名稱。</param>
-    /// <param name="projectPath">範例專案路徑。</param>
-    /// <param name="framework">目標框架。</param>
-    /// <param name="runtimeIdentifier">執行階段識別項。</param>
+    /// <param name="name">
+    /// 範例名稱。
+    /// </param>
+    /// <param name="projectPath">
+    /// 範例專案路徑。
+    /// </param>
+    /// <param name="framework">
+    /// 目標框架。
+    /// </param>
+    /// <param name="runtimeIdentifier">
+    /// 執行階段識別項。
+    /// </param>
     public SmokeSample(string name, string projectPath, string framework, string? runtimeIdentifier)
     {
         Name = name;
@@ -457,33 +535,47 @@ internal sealed class SmokeSample
     /// <summary>
     /// 取得範例名稱。
     /// </summary>
-    /// <value>範例名稱。</value>
+    /// <value>
+    /// 範例名稱。
+    /// </value>
     public string Name { get; private set; }
 
     /// <summary>
     /// 取得範例專案路徑。
     /// </summary>
-    /// <value>範例專案路徑。</value>
+    /// <value>
+    /// 範例專案路徑。
+    /// </value>
     public string ProjectPath { get; private set; }
 
     /// <summary>
     /// 取得目標框架。
     /// </summary>
-    /// <value>目標框架。</value>
+    /// <value>
+    /// 目標框架。
+    /// </value>
     public string Framework { get; private set; }
 
     /// <summary>
     /// 取得執行階段識別項。
     /// </summary>
-    /// <value>執行階段識別項；不需要時為 <see langword="null"/>。</value>
+    /// <value>
+    /// 執行階段識別項；不需要時為 <see langword="null"/>。
+    /// </value>
     public string? RuntimeIdentifier { get; private set; }
 
     /// <summary>
     /// 加入 dotnet run 命令列引數。
     /// </summary>
-    /// <param name="arguments">要加入引數的集合。</param>
-    /// <param name="options">冒煙測試選項。</param>
-    /// <param name="projectPath">要執行的範例專案路徑。</param>
+    /// <param name="arguments">
+    /// 要加入引數的集合。
+    /// </param>
+    /// <param name="options">
+    /// 冒煙測試選項。
+    /// </param>
+    /// <param name="projectPath">
+    /// 要執行的範例專案路徑。
+    /// </param>
     public void AddRunArguments(ICollection<string> arguments, SmokeOptions options, string projectPath)
     {
         arguments.Add("run");
@@ -508,8 +600,12 @@ internal sealed class SmokeSample
     /// <summary>
     /// 依範例根目錄解析專案路徑。
     /// </summary>
-    /// <param name="sampleRoot">包含 `samples` 資料夾的根目錄。</param>
-    /// <returns>範例專案完整路徑。</returns>
+    /// <param name="sampleRoot">
+    /// 包含 `samples` 資料夾的根目錄。
+    /// </param>
+    /// <returns>
+    /// 範例專案完整路徑。
+    /// </returns>
     public string ResolveProjectPath(string sampleRoot)
     {
         if (Path.IsPathRooted(ProjectPath))
@@ -541,8 +637,12 @@ internal static class SmokeSampleCatalog
     /// <summary>
     /// 依指定名稱取得範例清單。
     /// </summary>
-    /// <param name="sampleName">範例名稱或 <c>all</c>。</param>
-    /// <returns>符合條件的範例清單。</returns>
+    /// <param name="sampleName">
+    /// 範例名稱或 <c>all</c>。
+    /// </param>
+    /// <returns>
+    /// 符合條件的範例清單。
+    /// </returns>
     public static IReadOnlyList<SmokeSample> GetSamples(string sampleName)
     {
         if (string.Equals(sampleName, "all", StringComparison.OrdinalIgnoreCase))

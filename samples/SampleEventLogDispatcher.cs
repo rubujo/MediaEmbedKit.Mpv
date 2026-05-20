@@ -60,8 +60,12 @@ internal sealed class SampleEventLogDispatcher : IDisposable
     /// <summary>
     /// 初始化 <see cref="SampleEventLogDispatcher"/> 類別的新執行個體。
     /// </summary>
-    /// <param name="appendLines">接收批次事件列並更新 UI 的委派。</param>
-    /// <param name="scheduleOnUiThread">將批次更新排入 UI 執行緒的委派。</param>
+    /// <param name="appendLines">
+    /// 接收批次事件列並更新 UI 的委派。
+    /// </param>
+    /// <param name="scheduleOnUiThread">
+    /// 將批次更新排入 UI 執行緒的委派。
+    /// </param>
     public SampleEventLogDispatcher(Action<IReadOnlyList<string>> appendLines, Func<Action, bool> scheduleOnUiThread)
     {
         _appendLines = appendLines ?? throw new ArgumentNullException(nameof(appendLines));
@@ -72,7 +76,9 @@ internal sealed class SampleEventLogDispatcher : IDisposable
     /// <summary>
     /// 將事件列放入背景佇列。
     /// </summary>
-    /// <param name="line">要顯示在事件清單的文字列。</param>
+    /// <param name="line">
+    /// 要顯示在事件清單的文字列。
+    /// </param>
     public void Enqueue(string line)
     {
         if (string.IsNullOrEmpty(line))
@@ -123,7 +129,9 @@ internal sealed class SampleEventLogDispatcher : IDisposable
     /// <summary>
     /// 從計時器觸發事件輸出。
     /// </summary>
-    /// <param name="state">計時器狀態；未使用。</param>
+    /// <param name="state">
+    /// 計時器狀態；未使用。
+    /// </param>
     private void FlushFromTimer(object? state)
     {
         Flush(false);
@@ -132,7 +140,9 @@ internal sealed class SampleEventLogDispatcher : IDisposable
     /// <summary>
     /// 將目前佇列中的事件列批次送往 UI 執行緒。
     /// </summary>
-    /// <param name="allowAfterDispose">已釋放時仍允許送出最後事件列。</param>
+    /// <param name="allowAfterDispose">
+    /// 已釋放時仍允許送出最後事件列。
+    /// </param>
     private void Flush(bool allowAfterDispose)
     {
         int droppedLineCount = 0;
@@ -205,9 +215,15 @@ internal sealed class SampleEventLogDispatcher : IDisposable
     /// <summary>
     /// 建立送往 UI 的事件列集合。
     /// </summary>
-    /// <param name="lines">實際事件文字列。</param>
-    /// <param name="droppedLineCount">先前因佇列滿載而略過的事件列數。</param>
-    /// <returns>包含摘要列與實際事件列的集合。</returns>
+    /// <param name="lines">
+    /// 實際事件文字列。
+    /// </param>
+    /// <param name="droppedLineCount">
+    /// 先前因佇列滿載而略過的事件列數。
+    /// </param>
+    /// <returns>
+    /// 包含摘要列與實際事件列的集合。
+    /// </returns>
     private static List<string> CreateDisplayLines(List<string> lines, int droppedLineCount)
     {
         if (droppedLineCount <= 0)
@@ -224,8 +240,12 @@ internal sealed class SampleEventLogDispatcher : IDisposable
     /// <summary>
     /// 在 UI 排程失敗時還原尚未送出的事件列。
     /// </summary>
-    /// <param name="lines">尚未送往 UI 的實際事件列。</param>
-    /// <param name="droppedLineCount">尚未送往 UI 的略過事件列摘要數。</param>
+    /// <param name="lines">
+    /// 尚未送往 UI 的實際事件列。
+    /// </param>
+    /// <param name="droppedLineCount">
+    /// 尚未送往 UI 的略過事件列摘要數。
+    /// </param>
     private void RestoreUnscheduledLines(IReadOnlyList<string> lines, int droppedLineCount)
     {
         lock (_syncRoot)

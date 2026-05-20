@@ -15,8 +15,12 @@ public sealed class MpvNode
     /// <summary>
     /// 初始化 <see cref="MpvNode"/> 類別的新執行個體。
     /// </summary>
-    /// <param name="format">節點資料格式。</param>
-    /// <param name="value">節點保存的受控值。</param>
+    /// <param name="format">
+    /// 節點資料格式。
+    /// </param>
+    /// <param name="value">
+    /// 節點保存的受控值。
+    /// </param>
     private MpvNode(MpvFormat format, object? value)
     {
         Format = format;
@@ -26,19 +30,25 @@ public sealed class MpvNode
     /// <summary>
     /// 取得節點資料格式。
     /// </summary>
-    /// <value>libmpv 節點資料格式。</value>
+    /// <value>
+    /// libmpv 節點資料格式。
+    /// </value>
     public MpvFormat Format { get; private set; }
 
     /// <summary>
     /// 取得節點保存的受控值。
     /// </summary>
-    /// <value>依 <see cref="Format"/> 決定型別的受控值。</value>
+    /// <value>
+    /// 依 <see cref="Format"/> 決定型別的受控值。
+    /// </value>
     public object? Value { get; private set; }
 
     /// <summary>
     /// 取得目前節點是否為空節點。
     /// </summary>
-    /// <value>節點格式為 <see cref="MpvFormat.None"/> 時為 <see langword="true"/>。</value>
+    /// <value>
+    /// 節點格式為 <see cref="MpvFormat.None"/> 時為 <see langword="true"/>。
+    /// </value>
     public bool IsNone
     {
         get { return Format == MpvFormat.None; }
@@ -47,7 +57,9 @@ public sealed class MpvNode
     /// <summary>
     /// 建立空節點。
     /// </summary>
-    /// <returns>空節點。</returns>
+    /// <returns>
+    /// 空節點。
+    /// </returns>
     public static MpvNode None()
     {
         return new MpvNode(MpvFormat.None, null);
@@ -56,8 +68,12 @@ public sealed class MpvNode
     /// <summary>
     /// 建立字串節點。
     /// </summary>
-    /// <param name="value">節點字串值。</param>
-    /// <returns>字串節點。</returns>
+    /// <param name="value">
+    /// 節點字串值。
+    /// </param>
+    /// <returns>
+    /// 字串節點。
+    /// </returns>
     public static MpvNode FromString(string value)
     {
         return new MpvNode(MpvFormat.String, value ?? throw new ArgumentNullException(nameof(value)));
@@ -66,8 +82,12 @@ public sealed class MpvNode
     /// <summary>
     /// 建立布林旗標節點。
     /// </summary>
-    /// <param name="value">節點布林值。</param>
-    /// <returns>布林旗標節點。</returns>
+    /// <param name="value">
+    /// 節點布林值。
+    /// </param>
+    /// <returns>
+    /// 布林旗標節點。
+    /// </returns>
     public static MpvNode FromFlag(bool value)
     {
         return new MpvNode(MpvFormat.Flag, value);
@@ -76,8 +96,12 @@ public sealed class MpvNode
     /// <summary>
     /// 建立 64 位元整數節點。
     /// </summary>
-    /// <param name="value">節點整數值。</param>
-    /// <returns>64 位元整數節點。</returns>
+    /// <param name="value">
+    /// 節點整數值。
+    /// </param>
+    /// <returns>
+    /// 64 位元整數節點。
+    /// </returns>
     public static MpvNode FromInt64(long value)
     {
         return new MpvNode(MpvFormat.Int64, value);
@@ -86,8 +110,12 @@ public sealed class MpvNode
     /// <summary>
     /// 建立雙精確度浮點數節點。
     /// </summary>
-    /// <param name="value">節點浮點數值。</param>
-    /// <returns>雙精確度浮點數節點。</returns>
+    /// <param name="value">
+    /// 節點浮點數值。
+    /// </param>
+    /// <returns>
+    /// 雙精確度浮點數節點。
+    /// </returns>
     public static MpvNode FromDouble(double value)
     {
         return new MpvNode(MpvFormat.Double, value);
@@ -96,8 +124,12 @@ public sealed class MpvNode
     /// <summary>
     /// 建立節點陣列。
     /// </summary>
-    /// <param name="items">陣列項目。</param>
-    /// <returns>節點陣列。</returns>
+    /// <param name="items">
+    /// 陣列項目。
+    /// </param>
+    /// <returns>
+    /// 節點陣列。
+    /// </returns>
     public static MpvNode FromArray(IEnumerable<MpvNode> items)
     {
         if (items == null)
@@ -111,8 +143,12 @@ public sealed class MpvNode
     /// <summary>
     /// 建立節點對應。
     /// </summary>
-    /// <param name="items">以字串索引鍵對應到節點值的集合。</param>
-    /// <returns>節點對應。</returns>
+    /// <param name="items">
+    /// 以字串索引鍵對應到節點值的集合。
+    /// </param>
+    /// <returns>
+    /// 節點對應。
+    /// </returns>
     public static MpvNode FromMap(IDictionary<string, MpvNode> items)
     {
         if (items == null)
@@ -126,8 +162,12 @@ public sealed class MpvNode
     /// <summary>
     /// 建立位元組陣列節點。
     /// </summary>
-    /// <param name="bytes">節點位元組資料。</param>
-    /// <returns>位元組陣列節點。</returns>
+    /// <param name="bytes">
+    /// 節點位元組資料。
+    /// </param>
+    /// <returns>
+    /// 位元組陣列節點。
+    /// </returns>
     public static MpvNode FromByteArray(byte[] bytes)
     {
         if (bytes == null)
@@ -141,7 +181,9 @@ public sealed class MpvNode
     /// <summary>
     /// 將節點值讀取為字串。
     /// </summary>
-    /// <returns>節點字串值；節點不是字串時會傳回 <see langword="null"/>。</returns>
+    /// <returns>
+    /// 節點字串值；節點不是字串時會傳回 <see langword="null"/>。
+    /// </returns>
     public string? AsString()
     {
         return Value as string;
@@ -150,7 +192,9 @@ public sealed class MpvNode
     /// <summary>
     /// 將節點值讀取為布林值。
     /// </summary>
-    /// <returns>節點布林值；節點不是布林值時會傳回 <see langword="false"/>。</returns>
+    /// <returns>
+    /// 節點布林值；節點不是布林值時會傳回 <see langword="false"/>。
+    /// </returns>
     public bool AsBoolean()
     {
         return Value is bool flag && flag;
@@ -159,7 +203,9 @@ public sealed class MpvNode
     /// <summary>
     /// 將節點值讀取為 64 位元整數。
     /// </summary>
-    /// <returns>節點整數值；節點不是整數時會傳回 0。</returns>
+    /// <returns>
+    /// 節點整數值；節點不是整數時會傳回 0。
+    /// </returns>
     public long AsInt64()
     {
         return Value is long integer ? integer : 0;
@@ -168,7 +214,9 @@ public sealed class MpvNode
     /// <summary>
     /// 將節點值讀取為雙精確度浮點數。
     /// </summary>
-    /// <returns>節點浮點數值；節點不是浮點數時會傳回 0。</returns>
+    /// <returns>
+    /// 節點浮點數值；節點不是浮點數時會傳回 0。
+    /// </returns>
     public double AsDouble()
     {
         return Value is double number ? number : 0;
@@ -177,7 +225,9 @@ public sealed class MpvNode
     /// <summary>
     /// 將節點值讀取為節點陣列。
     /// </summary>
-    /// <returns>節點陣列；節點不是陣列時會傳回空陣列。</returns>
+    /// <returns>
+    /// 節點陣列；節點不是陣列時會傳回空陣列。
+    /// </returns>
     public IReadOnlyList<MpvNode> AsArray()
     {
         return Value as IReadOnlyList<MpvNode> ?? Array.Empty<MpvNode>();
@@ -186,7 +236,9 @@ public sealed class MpvNode
     /// <summary>
     /// 將節點值讀取為節點對應。
     /// </summary>
-    /// <returns>節點對應；節點不是對應時會傳回空字典。</returns>
+    /// <returns>
+    /// 節點對應；節點不是對應時會傳回空字典。
+    /// </returns>
     public IReadOnlyDictionary<string, MpvNode> AsMap()
     {
         return Value as IReadOnlyDictionary<string, MpvNode> ?? new ReadOnlyDictionary<string, MpvNode>(new Dictionary<string, MpvNode>());
@@ -195,7 +247,9 @@ public sealed class MpvNode
     /// <summary>
     /// 將節點值讀取為位元組陣列。
     /// </summary>
-    /// <returns>節點位元組陣列；節點不是位元組陣列時會傳回空陣列。</returns>
+    /// <returns>
+    /// 節點位元組陣列；節點不是位元組陣列時會傳回空陣列。
+    /// </returns>
     public byte[] AsByteArray()
     {
         byte[]? bytes = Value as byte[];
@@ -205,9 +259,15 @@ public sealed class MpvNode
     /// <summary>
     /// 嘗試從節點對應取得指定索引鍵的值。
     /// </summary>
-    /// <param name="key">要查詢的節點索引鍵。</param>
-    /// <param name="value">找到時接收對應的節點值；找不到時接收空節點。</param>
-    /// <returns>找到指定索引鍵時為 <see langword="true"/>。</returns>
+    /// <param name="key">
+    /// 要查詢的節點索引鍵。
+    /// </param>
+    /// <param name="value">
+    /// 找到時接收對應的節點值；找不到時接收空節點。
+    /// </param>
+    /// <returns>
+    /// 找到指定索引鍵時為 <see langword="true"/>。
+    /// </returns>
     public bool TryGetValue(string key, out MpvNode value)
     {
         if (key == null)
@@ -230,8 +290,12 @@ public sealed class MpvNode
     /// <summary>
     /// 從節點對應取得指定索引鍵的值。
     /// </summary>
-    /// <param name="key">要查詢的節點索引鍵。</param>
-    /// <returns>找到時為對應的節點值；找不到時為空節點。</returns>
+    /// <param name="key">
+    /// 要查詢的節點索引鍵。
+    /// </param>
+    /// <returns>
+    /// 找到時為對應的節點值；找不到時為空節點。
+    /// </returns>
     public MpvNode GetValueOrNone(string key)
     {
         MpvNode value;
@@ -241,8 +305,12 @@ public sealed class MpvNode
     /// <summary>
     /// 從原生 libmpv 節點轉換為受控節點。
     /// </summary>
-    /// <param name="node">原生 libmpv 節點。</param>
-    /// <returns>轉換後的受控節點。</returns>
+    /// <param name="node">
+    /// 原生 libmpv 節點。
+    /// </param>
+    /// <returns>
+    /// 轉換後的受控節點。
+    /// </returns>
     internal static MpvNode FromNative(NativeMpvNode node)
     {
         switch (node.Format)
@@ -270,8 +338,12 @@ public sealed class MpvNode
     /// <summary>
     /// 將原生節點陣列轉換為受控清單。
     /// </summary>
-    /// <param name="listPointer">原生節點清單指標。</param>
-    /// <returns>受控節點清單。</returns>
+    /// <param name="listPointer">
+    /// 原生節點清單指標。
+    /// </param>
+    /// <returns>
+    /// 受控節點清單。
+    /// </returns>
     private static IReadOnlyList<MpvNode> DecodeArray(IntPtr listPointer)
     {
         if (listPointer == IntPtr.Zero)
@@ -294,8 +366,12 @@ public sealed class MpvNode
     /// <summary>
     /// 將原生節點對應轉換為受控字典。
     /// </summary>
-    /// <param name="listPointer">原生節點清單指標。</param>
-    /// <returns>受控節點字典。</returns>
+    /// <param name="listPointer">
+    /// 原生節點清單指標。
+    /// </param>
+    /// <returns>
+    /// 受控節點字典。
+    /// </returns>
     private static IDictionary<string, MpvNode> DecodeMap(IntPtr listPointer)
     {
         if (listPointer == IntPtr.Zero)
@@ -320,8 +396,12 @@ public sealed class MpvNode
     /// <summary>
     /// 將原生位元組陣列轉換為受控位元組陣列。
     /// </summary>
-    /// <param name="byteArrayPointer">原生位元組陣列指標。</param>
-    /// <returns>受控位元組陣列。</returns>
+    /// <param name="byteArrayPointer">
+    /// 原生位元組陣列指標。
+    /// </param>
+    /// <returns>
+    /// 受控位元組陣列。
+    /// </returns>
     private static byte[] DecodeByteArray(IntPtr byteArrayPointer)
     {
         if (byteArrayPointer == IntPtr.Zero)

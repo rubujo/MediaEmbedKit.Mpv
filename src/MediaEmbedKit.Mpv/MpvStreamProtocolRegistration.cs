@@ -63,7 +63,9 @@ internal sealed class MpvStreamProtocolRegistration : IDisposable
     /// <summary>
     /// 初始化 <see cref="MpvStreamProtocolRegistration"/> 類別的新執行個體。
     /// </summary>
-    /// <param name="openStream">開啟串流執行個體的受控委派。</param>
+    /// <param name="openStream">
+    /// 開啟串流執行個體的受控委派。
+    /// </param>
     private MpvStreamProtocolRegistration(Func<string, Stream?> openStream)
     {
         _openStream = openStream;
@@ -79,10 +81,18 @@ internal sealed class MpvStreamProtocolRegistration : IDisposable
     /// <summary>
     /// 建立並註冊 libmpv 自訂唯讀串流通訊協定。
     /// </summary>
-    /// <param name="player">要註冊通訊協定的 mpv 播放器。</param>
-    /// <param name="protocol">不含 <c>://</c> 的通訊協定前置詞。</param>
-    /// <param name="openStream">開啟串流執行個體的受控委派。</param>
-    /// <returns>保存註冊狀態的物件。</returns>
+    /// <param name="player">
+    /// 要註冊通訊協定的 mpv 播放器。
+    /// </param>
+    /// <param name="protocol">
+    /// 不含 <c>://</c> 的通訊協定前置詞。
+    /// </param>
+    /// <param name="openStream">
+    /// 開啟串流執行個體的受控委派。
+    /// </param>
+    /// <returns>
+    /// 保存註冊狀態的物件。
+    /// </returns>
     public static MpvStreamProtocolRegistration Register(MpvPlayer player, string protocol, Func<string, Stream?> openStream)
     {
         if (player == null)
@@ -150,10 +160,18 @@ internal sealed class MpvStreamProtocolRegistration : IDisposable
     /// <summary>
     /// 建立單一 libmpv 串流執行個體。
     /// </summary>
-    /// <param name="userData">註冊通訊協定時提供的使用者資料指標。</param>
-    /// <param name="uriPointer">libmpv 要開啟的 URI 指標。</param>
-    /// <param name="infoPointer">接收串流回呼資訊的結構指標。</param>
-    /// <returns>成功時為 0；拒絕開啟或發生錯誤時為負值。</returns>
+    /// <param name="userData">
+    /// 註冊通訊協定時提供的使用者資料指標。
+    /// </param>
+    /// <param name="uriPointer">
+    /// libmpv 要開啟的 URI 指標。
+    /// </param>
+    /// <param name="infoPointer">
+    /// 接收串流回呼資訊的結構指標。
+    /// </param>
+    /// <returns>
+    /// 成功時為 0；拒絕開啟或發生錯誤時為負值。
+    /// </returns>
     private int Open(IntPtr userData, IntPtr uriPointer, IntPtr infoPointer)
     {
         if (_disposed || infoPointer == IntPtr.Zero)
@@ -202,10 +220,18 @@ internal sealed class MpvStreamProtocolRegistration : IDisposable
     /// <summary>
     /// 從受控串流讀取資料到 libmpv 緩衝區。
     /// </summary>
-    /// <param name="cookie">串流執行個體的 GC 控制代碼指標。</param>
-    /// <param name="buffer">接收讀取資料的原生緩衝區。</param>
-    /// <param name="byteCount">要求讀取的最大位元組數。</param>
-    /// <returns>實際讀取的位元組數；發生錯誤時為負值。</returns>
+    /// <param name="cookie">
+    /// 串流執行個體的 GC 控制代碼指標。
+    /// </param>
+    /// <param name="buffer">
+    /// 接收讀取資料的原生緩衝區。
+    /// </param>
+    /// <param name="byteCount">
+    /// 要求讀取的最大位元組數。
+    /// </param>
+    /// <returns>
+    /// 實際讀取的位元組數；發生錯誤時為負值。
+    /// </returns>
     private static long Read(IntPtr cookie, IntPtr buffer, ulong byteCount)
     {
         if (buffer == IntPtr.Zero || byteCount == 0)
@@ -240,9 +266,15 @@ internal sealed class MpvStreamProtocolRegistration : IDisposable
     /// <summary>
     /// 將受控串流移動到指定位置。
     /// </summary>
-    /// <param name="cookie">串流執行個體的 GC 控制代碼指標。</param>
-    /// <param name="offset">要移動到的絕對位元組位置。</param>
-    /// <returns>搜尋後的絕對位元組位置；不支援搜尋或發生錯誤時為負值。</returns>
+    /// <param name="cookie">
+    /// 串流執行個體的 GC 控制代碼指標。
+    /// </param>
+    /// <param name="offset">
+    /// 要移動到的絕對位元組位置。
+    /// </param>
+    /// <returns>
+    /// 搜尋後的絕對位元組位置；不支援搜尋或發生錯誤時為負值。
+    /// </returns>
     private static long Seek(IntPtr cookie, long offset)
     {
         try
@@ -264,8 +296,12 @@ internal sealed class MpvStreamProtocolRegistration : IDisposable
     /// <summary>
     /// 取得受控串流的總長度。
     /// </summary>
-    /// <param name="cookie">串流執行個體的 GC 控制代碼指標。</param>
-    /// <returns>串流總位元組數；無法取得大小時為負值。</returns>
+    /// <param name="cookie">
+    /// 串流執行個體的 GC 控制代碼指標。
+    /// </param>
+    /// <returns>
+    /// 串流總位元組數；無法取得大小時為負值。
+    /// </returns>
     private static long Size(IntPtr cookie)
     {
         try
@@ -287,7 +323,9 @@ internal sealed class MpvStreamProtocolRegistration : IDisposable
     /// <summary>
     /// 關閉受控串流並釋放串流控制代碼。
     /// </summary>
-    /// <param name="cookie">串流執行個體的 GC 控制代碼指標。</param>
+    /// <param name="cookie">
+    /// 串流執行個體的 GC 控制代碼指標。
+    /// </param>
     private static void Close(IntPtr cookie)
     {
         if (cookie == IntPtr.Zero)
@@ -319,7 +357,9 @@ internal sealed class MpvStreamProtocolRegistration : IDisposable
     /// <summary>
     /// 處理 libmpv 串流取消要求。
     /// </summary>
-    /// <param name="cookie">串流執行個體的 GC 控制代碼指標。</param>
+    /// <param name="cookie">
+    /// 串流執行個體的 GC 控制代碼指標。
+    /// </param>
     private static void Cancel(IntPtr cookie)
     {
         try
@@ -338,8 +378,12 @@ internal sealed class MpvStreamProtocolRegistration : IDisposable
     /// <summary>
     /// 從原生 cookie 取回受控串流。
     /// </summary>
-    /// <param name="cookie">串流執行個體的 GC 控制代碼指標。</param>
-    /// <returns>受控串流；控制代碼無效時為 <see langword="null"/>。</returns>
+    /// <param name="cookie">
+    /// 串流執行個體的 GC 控制代碼指標。
+    /// </param>
+    /// <returns>
+    /// 受控串流；控制代碼無效時為 <see langword="null"/>。
+    /// </returns>
     private static Stream? GetStream(IntPtr cookie)
     {
         if (cookie == IntPtr.Zero)

@@ -14,7 +14,9 @@ internal static class MpvWinUiDesignMode
     /// <summary>
     /// 取得目前是否在 WinUI 設計工具中執行。
     /// </summary>
-    /// <value>控制項位於設計階段時為 <see langword="true"/>。</value>
+    /// <value>
+    /// 控制項位於設計階段時為 <see langword="true"/>。
+    /// </value>
     internal static bool IsEnabled
     {
         get { return DesignMode.DesignModeEnabled || DesignMode.DesignMode2Enabled; }
@@ -23,8 +25,12 @@ internal static class MpvWinUiDesignMode
     /// <summary>
     /// 建立設計階段替代預覽元素。
     /// </summary>
-    /// <param name="caption">要顯示在預覽元素中央的文字。</param>
-    /// <returns>可放入 WinUI 視覺樹的替代預覽元素。</returns>
+    /// <param name="caption">
+    /// 要顯示在預覽元素中央的文字。
+    /// </param>
+    /// <returns>
+    /// 可放入 WinUI 視覺樹的替代預覽元素。
+    /// </returns>
     internal static UIElement CreatePlaceholder(string caption)
     {
         TextBlock textBlock = new TextBlock

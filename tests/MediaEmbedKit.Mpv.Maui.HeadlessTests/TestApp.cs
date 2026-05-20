@@ -13,8 +13,12 @@ public sealed class TestApp : Application
     /// 建立一個含 <see cref="TestPage"/> 的 Window。<see cref="TestPage.OnAppearing"/>
     /// 會在 UI thread 跑完所有測試後寫入 exit code 並關閉應用程式。
     /// </summary>
-    /// <param name="activationState">平台提供的啟用狀態。</param>
-    /// <returns>含測試頁面的 Window。</returns>
+    /// <param name="activationState">
+    /// 平台提供的啟用狀態。
+    /// </param>
+    /// <returns>
+    /// 含測試頁面的 Window。
+    /// </returns>
     protected override Window CreateWindow(IActivationState? activationState)
     {
         return new Window(new TestPage())

@@ -22,8 +22,12 @@ public sealed class MpvClientHandle : IDisposable
     /// <summary>
     /// 初始化 <see cref="MpvClientHandle"/> 類別的新執行個體。
     /// </summary>
-    /// <param name="handle">要管理的 libmpv 用戶端控制代碼。</param>
-    /// <param name="terminateOnDispose">釋放時是否呼叫終止銷毀函式。</param>
+    /// <param name="handle">
+    /// 要管理的 libmpv 用戶端控制代碼。
+    /// </param>
+    /// <param name="terminateOnDispose">
+    /// 釋放時是否呼叫終止銷毀函式。
+    /// </param>
     internal MpvClientHandle(IntPtr handle, bool terminateOnDispose)
     {
         if (handle == IntPtr.Zero)
@@ -38,7 +42,9 @@ public sealed class MpvClientHandle : IDisposable
     /// <summary>
     /// 取得目前是否已釋放此用戶端控制代碼。
     /// </summary>
-    /// <value>已釋放時為 <see langword="true"/>。</value>
+    /// <value>
+    /// 已釋放時為 <see langword="true"/>。
+    /// </value>
     public bool IsDisposed
     {
         get { return _handle == IntPtr.Zero; }
@@ -47,7 +53,9 @@ public sealed class MpvClientHandle : IDisposable
     /// <summary>
     /// 取得額外 libmpv 用戶端的原生控制代碼。
     /// </summary>
-    /// <value>額外 libmpv 用戶端的原生控制代碼。</value>
+    /// <value>
+    /// 額外 libmpv 用戶端的原生控制代碼。
+    /// </value>
     public IntPtr DangerousHandle
     {
         get

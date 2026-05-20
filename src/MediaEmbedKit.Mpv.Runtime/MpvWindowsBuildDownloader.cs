@@ -24,10 +24,18 @@ public static class MpvWindowsBuildDownloader
     /// <summary>
     /// 下載最新 Windows libmpv 建置壓縮檔。
     /// </summary>
-    /// <param name="downloadDirectory">壓縮檔要下載到的資料夾。</param>
-    /// <param name="options">Windows libmpv 建置下載選項；未指定時使用預設選項。</param>
-    /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
-    /// <returns>表示 libmpv 壓縮檔下載結果的工作。</returns>
+    /// <param name="downloadDirectory">
+    /// 壓縮檔要下載到的資料夾。
+    /// </param>
+    /// <param name="options">
+    /// Windows libmpv 建置下載選項；未指定時使用預設選項。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 可取消非同步作業的語彙基元。
+    /// </param>
+    /// <returns>
+    /// 表示 libmpv 壓縮檔下載結果的工作。
+    /// </returns>
     public static async Task<MpvWindowsBuildDownloadResult> DownloadLatestLibMpvArchiveAsync(
         string downloadDirectory,
         MpvWindowsBuildDownloadOptions? options = null,
@@ -76,11 +84,21 @@ public static class MpvWindowsBuildDownloader
     /// <summary>
     /// 從指定 provider 下載最新 Windows libmpv 壓縮檔。
     /// </summary>
-    /// <param name="downloadDirectory">壓縮檔要下載到的資料夾。</param>
-    /// <param name="options">Windows libmpv 建置下載選項。</param>
-    /// <param name="provider">要嘗試的 provider。</param>
-    /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
-    /// <returns>下載結果。</returns>
+    /// <param name="downloadDirectory">
+    /// 壓縮檔要下載到的資料夾。
+    /// </param>
+    /// <param name="options">
+    /// Windows libmpv 建置下載選項。
+    /// </param>
+    /// <param name="provider">
+    /// 要嘗試的 provider。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 可取消非同步作業的語彙基元。
+    /// </param>
+    /// <returns>
+    /// 下載結果。
+    /// </returns>
     private static async Task<MpvWindowsBuildDownloadResult> DownloadLatestLibMpvArchiveForProviderAsync(
         string downloadDirectory,
         MpvWindowsBuildDownloadOptions options,
@@ -128,8 +146,12 @@ public static class MpvWindowsBuildDownloader
     /// <summary>
     /// 串接主 provider 與 fallback provider 為去重後的有序嘗試清單。
     /// </summary>
-    /// <param name="options">Windows libmpv 建置下載選項。</param>
-    /// <returns>去重後的 provider 嘗試清單。</returns>
+    /// <param name="options">
+    /// Windows libmpv 建置下載選項。
+    /// </param>
+    /// <returns>
+    /// 去重後的 provider 嘗試清單。
+    /// </returns>
     private static List<MpvWindowsBuildProvider> BuildProviderSequence(MpvWindowsBuildDownloadOptions options)
     {
         List<MpvWindowsBuildProvider> sequence = new List<MpvWindowsBuildProvider> { options.Provider };
@@ -147,10 +169,18 @@ public static class MpvWindowsBuildDownloader
     /// <summary>
     /// 下載並解壓縮最新 Windows libmpv 建置。
     /// </summary>
-    /// <param name="downloadDirectory">壓縮檔要下載到的資料夾。</param>
-    /// <param name="options">Windows libmpv 建置下載選項；未指定時使用預設選項。</param>
-    /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
-    /// <returns>表示 libmpv 下載與解壓縮結果的工作。</returns>
+    /// <param name="downloadDirectory">
+    /// 壓縮檔要下載到的資料夾。
+    /// </param>
+    /// <param name="options">
+    /// Windows libmpv 建置下載選項；未指定時使用預設選項。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 可取消非同步作業的語彙基元。
+    /// </param>
+    /// <returns>
+    /// 表示 libmpv 下載與解壓縮結果的工作。
+    /// </returns>
     public static async Task<MpvWindowsBuildDownloadResult> DownloadAndExtractLatestLibMpvAsync(
         string downloadDirectory,
         MpvWindowsBuildDownloadOptions? options = null,
@@ -262,12 +292,24 @@ public static class MpvWindowsBuildDownloader
     /// 表示本次未下載）。任一層 query 上游失敗（網路不通、API 暫掛等）會吞掉例外 fall
     /// through 到呼叫端的正常下載路徑（仍會走 ProviderFallbackOrder 重試）。
     /// </summary>
-    /// <param name="downloadDirectory">既有 libmpv-2.dll 所在資料夾。</param>
-    /// <param name="options">Windows libmpv 建置下載選項。</param>
-    /// <param name="marker">已讀到的 sidecar marker。</param>
-    /// <param name="existingLibMpvPath">既有 libmpv-2.dll 路徑。</param>
-    /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
-    /// <returns>匹配可 reuse 時為合成結果；不可 reuse 時為 <see langword="null"/>（呼叫端走正常下載）。</returns>
+    /// <param name="downloadDirectory">
+    /// 既有 libmpv-2.dll 所在資料夾。
+    /// </param>
+    /// <param name="options">
+    /// Windows libmpv 建置下載選項。
+    /// </param>
+    /// <param name="marker">
+    /// 已讀到的 sidecar marker。
+    /// </param>
+    /// <param name="existingLibMpvPath">
+    /// 既有 libmpv-2.dll 路徑。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 可取消非同步作業的語彙基元。
+    /// </param>
+    /// <returns>
+    /// 匹配可 reuse 時為合成結果；不可 reuse 時為 <see langword="null"/>（呼叫端走正常下載）。
+    /// </returns>
     private static async Task<MpvWindowsBuildDownloadResult?> TryReuseExistingLibMpvAsync(
         string downloadDirectory,
         MpvWindowsBuildDownloadOptions options,
@@ -328,7 +370,9 @@ public static class MpvWindowsBuildDownloader
     /// <summary>
     /// 嘗試刪除下載的 libmpv 壓縮檔；刪除失敗不擲例外。
     /// </summary>
-    /// <param name="archivePath">要刪除的壓縮檔路徑。</param>
+    /// <param name="archivePath">
+    /// 要刪除的壓縮檔路徑。
+    /// </param>
     private static void TryDeleteArchive(string archivePath)
     {
         try
@@ -352,8 +396,12 @@ public static class MpvWindowsBuildDownloader
     /// 則全部清掉）。處理 (a) 升版後舊版 mpv-dev-*-*.7z 殘留、(b) skip path
     /// 上次留下的 archive 未清等情境。刪除失敗不擲例外（best-effort）。
     /// </summary>
-    /// <param name="downloadDirectory">runtime 下載資料夾。</param>
-    /// <param name="keepArchiveName">要保留的 archive 檔名；<see langword="null"/> 表示全清。</param>
+    /// <param name="downloadDirectory">
+    /// runtime 下載資料夾。
+    /// </param>
+    /// <param name="keepArchiveName">
+    /// 要保留的 archive 檔名；<see langword="null"/> 表示全清。
+    /// </param>
     private static void TryPruneStaleLibMpvArchives(string downloadDirectory, string? keepArchiveName)
     {
         try
@@ -410,8 +458,12 @@ public static class MpvWindowsBuildDownloader
     /// 指向自家資料夾時，誤刪 runtime executables（yt-dlp.exe / deno.exe 等）。
     /// 刪除失敗不擲例外（best-effort）。
     /// </summary>
-    /// <param name="extractRoot">解壓根目錄。</param>
-    /// <param name="libMpvPath">libmpv-2.dll 絕對路徑（供參考；whitelist 策略不依賴）。</param>
+    /// <param name="extractRoot">
+    /// 解壓根目錄。
+    /// </param>
+    /// <param name="libMpvPath">
+    /// libmpv-2.dll 絕對路徑（供參考；whitelist 策略不依賴）。
+    /// </param>
     private static void TryRemoveExtractResidue(string extractRoot, string libMpvPath)
     {
         _ = libMpvPath;
@@ -470,10 +522,18 @@ public static class MpvWindowsBuildDownloader
     /// <summary>
     /// 下載、解壓縮並載入最新 Windows libmpv 建置。
     /// </summary>
-    /// <param name="downloadDirectory">壓縮檔要下載到的資料夾。</param>
-    /// <param name="options">Windows libmpv 建置下載選項；未指定時使用預設選項。</param>
-    /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
-    /// <returns>表示已載入 libmpv 檔案路徑的工作。</returns>
+    /// <param name="downloadDirectory">
+    /// 壓縮檔要下載到的資料夾。
+    /// </param>
+    /// <param name="options">
+    /// Windows libmpv 建置下載選項；未指定時使用預設選項。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 可取消非同步作業的語彙基元。
+    /// </param>
+    /// <returns>
+    /// 表示已載入 libmpv 檔案路徑的工作。
+    /// </returns>
     public static async Task<string> DownloadExtractAndLoadLatestLibMpvAsync(
         string downloadDirectory,
         MpvWindowsBuildDownloadOptions? options = null,
@@ -487,10 +547,18 @@ public static class MpvWindowsBuildDownloader
     /// <summary>
     /// 從設定的提供者取得最新 GitHub 發行資料。
     /// </summary>
-    /// <param name="options">Windows libmpv 建置下載選項。</param>
-    /// <param name="apiUri">要查詢的 GitHub Releases API URI。</param>
-    /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
-    /// <returns>表示 GitHub 發行資料的工作。</returns>
+    /// <param name="options">
+    /// Windows libmpv 建置下載選項。
+    /// </param>
+    /// <param name="apiUri">
+    /// 要查詢的 GitHub Releases API URI。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 可取消非同步作業的語彙基元。
+    /// </param>
+    /// <returns>
+    /// 表示 GitHub 發行資料的工作。
+    /// </returns>
     private static async Task<GitHubRelease> GetLatestReleaseAsync(MpvWindowsBuildDownloadOptions options, Uri apiUri, CancellationToken cancellationToken)
     {
         ValidateProviderArchitecture(options.Provider, options.Architecture);
@@ -501,8 +569,12 @@ public static class MpvWindowsBuildDownloader
     /// <summary>
     /// 驗證指定提供者是否發佈所要求的架構。
     /// </summary>
-    /// <param name="provider">Windows libmpv 建置提供者。</param>
-    /// <param name="architecture">要驗證的 Windows libmpv 架構。</param>
+    /// <param name="provider">
+    /// Windows libmpv 建置提供者。
+    /// </param>
+    /// <param name="architecture">
+    /// 要驗證的 Windows libmpv 架構。
+    /// </param>
     private static void ValidateProviderArchitecture(MpvWindowsBuildProvider provider, MpvWindowsArchitecture architecture)
     {
         _ = provider;
@@ -512,8 +584,12 @@ public static class MpvWindowsBuildDownloader
     /// <summary>
     /// 取得 Windows libmpv 建置提供者的 GitHub 最新發行 API URI。
     /// </summary>
-    /// <param name="provider">Windows libmpv 建置提供者。</param>
-    /// <returns>對應提供者的 GitHub 最新發行 API URI。</returns>
+    /// <param name="provider">
+    /// Windows libmpv 建置提供者。
+    /// </param>
+    /// <returns>
+    /// 對應提供者的 GitHub 最新發行 API URI。
+    /// </returns>
     private static Uri GetReleaseApiUri(MpvWindowsBuildProvider provider)
     {
         switch (provider)
@@ -528,8 +604,12 @@ public static class MpvWindowsBuildDownloader
     /// <summary>
     /// 取得指定 Windows libmpv provider 對應的 GitHub repository 擁有者。
     /// </summary>
-    /// <param name="provider">Windows libmpv 建置提供者。</param>
-    /// <returns>對應 provider 的 GitHub repository 擁有者。</returns>
+    /// <param name="provider">
+    /// Windows libmpv 建置提供者。
+    /// </param>
+    /// <returns>
+    /// 對應 provider 的 GitHub repository 擁有者。
+    /// </returns>
     private static string GetRepositoryOwner(MpvWindowsBuildProvider provider)
     {
         switch (provider)
@@ -544,8 +624,12 @@ public static class MpvWindowsBuildDownloader
     /// <summary>
     /// 取得指定 Windows libmpv provider 對應的 GitHub repository 名稱。
     /// </summary>
-    /// <param name="provider">Windows libmpv 建置提供者。</param>
-    /// <returns>對應 provider 的 GitHub repository 名稱。</returns>
+    /// <param name="provider">
+    /// Windows libmpv 建置提供者。
+    /// </param>
+    /// <returns>
+    /// 對應 provider 的 GitHub repository 名稱。
+    /// </returns>
     private static string GetRepositoryName(MpvWindowsBuildProvider provider)
     {
         switch (provider)
@@ -560,9 +644,15 @@ public static class MpvWindowsBuildDownloader
     /// <summary>
     /// 從 GitHub 發行資料選取符合架構與授權偏好的 libmpv 發行資產。
     /// </summary>
-    /// <param name="release">GitHub 發行資料。</param>
-    /// <param name="options">Windows libmpv 建置下載選項。</param>
-    /// <returns>符合條件的 GitHub 發行資產。</returns>
+    /// <param name="release">
+    /// GitHub 發行資料。
+    /// </param>
+    /// <param name="options">
+    /// Windows libmpv 建置下載選項。
+    /// </param>
+    /// <returns>
+    /// 符合條件的 GitHub 發行資產。
+    /// </returns>
     private static GitHubReleaseAsset SelectLibMpvAsset(GitHubRelease release, MpvWindowsBuildDownloadOptions options)
     {
         GitHubReleaseAsset[] architectureMatches = release.Assets
@@ -612,8 +702,12 @@ public static class MpvWindowsBuildDownloader
     /// <summary>
     /// 建立授權偏好無法符合時使用的例外狀況。
     /// </summary>
-    /// <param name="options">Windows libmpv 建置下載選項。</param>
-    /// <returns>描述授權偏好不符合的例外狀況。</returns>
+    /// <param name="options">
+    /// Windows libmpv 建置下載選項。
+    /// </param>
+    /// <returns>
+    /// 描述授權偏好不符合的例外狀況。
+    /// </returns>
     private static InvalidOperationException CreateLicensePreferenceException(MpvWindowsBuildDownloadOptions options)
     {
         return new InvalidOperationException(
@@ -624,8 +718,12 @@ public static class MpvWindowsBuildDownloader
     /// <summary>
     /// 判斷發行資產名稱是否標示為 LGPL 建置。
     /// </summary>
-    /// <param name="asset">要檢查的 GitHub 發行資產。</param>
-    /// <returns>資產名稱包含 LGPL 標示時為 <see langword="true"/>。</returns>
+    /// <param name="asset">
+    /// 要檢查的 GitHub 發行資產。
+    /// </param>
+    /// <returns>
+    /// 資產名稱包含 LGPL 標示時為 <see langword="true"/>。
+    /// </returns>
     private static bool IsLgplAsset(GitHubReleaseAsset asset)
     {
         return asset.Name.IndexOf("lgpl", StringComparison.OrdinalIgnoreCase) >= 0;
@@ -634,9 +732,15 @@ public static class MpvWindowsBuildDownloader
     /// <summary>
     /// 判斷發行資產名稱是否符合要求的 Windows libmpv 架構。
     /// </summary>
-    /// <param name="name">GitHub 發行資產名稱。</param>
-    /// <param name="architecture">要求的 Windows libmpv 架構。</param>
-    /// <returns>資產名稱符合架構時為 <see langword="true"/>。</returns>
+    /// <param name="name">
+    /// GitHub 發行資產名稱。
+    /// </param>
+    /// <param name="architecture">
+    /// 要求的 Windows libmpv 架構。
+    /// </param>
+    /// <returns>
+    /// 資產名稱符合架構時為 <see langword="true"/>。
+    /// </returns>
     private static bool IsLibMpvAssetForArchitecture(string name, MpvWindowsArchitecture architecture)
     {
         string lower = name.ToLowerInvariant();
@@ -651,8 +755,12 @@ public static class MpvWindowsBuildDownloader
     /// <summary>
     /// 在解壓縮資料夾中尋找 libmpv-2.dll。
     /// </summary>
-    /// <param name="extractDirectory">要搜尋的解壓縮資料夾。</param>
-    /// <returns>找到的 libmpv-2.dll 路徑；找不到時為 <see langword="null"/>。</returns>
+    /// <param name="extractDirectory">
+    /// 要搜尋的解壓縮資料夾。
+    /// </param>
+    /// <returns>
+    /// 找到的 libmpv-2.dll 路徑；找不到時為 <see langword="null"/>。
+    /// </returns>
     private static string? FindLibMpvDll(string extractDirectory)
     {
         return Directory.GetFiles(extractDirectory, LibMpvDllName, SearchOption.AllDirectories).FirstOrDefault();

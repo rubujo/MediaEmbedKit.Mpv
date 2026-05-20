@@ -15,10 +15,18 @@ public static class DenoDownloader
     /// <summary>
     /// 下載並解壓縮最新 Deno Windows 發行檔。
     /// </summary>
-    /// <param name="installDirectory">Deno 可執行檔要安裝到的資料夾。</param>
-    /// <param name="options">Deno 下載選項；未指定時使用預設選項。</param>
-    /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
-    /// <returns>表示 Deno 下載與解壓縮結果的工作。</returns>
+    /// <param name="installDirectory">
+    /// Deno 可執行檔要安裝到的資料夾。
+    /// </param>
+    /// <param name="options">
+    /// Deno 下載選項；未指定時使用預設選項。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 可取消非同步作業的語彙基元。
+    /// </param>
+    /// <returns>
+    /// 表示 Deno 下載與解壓縮結果的工作。
+    /// </returns>
     public static async Task<DenoDownloadResult> DownloadAndExtractLatestAsync(
         string installDirectory,
         DenoDownloadOptions? options = null,
@@ -132,7 +140,9 @@ public static class DenoDownloader
     /// <summary>
     /// 嘗試刪除下載壓縮檔；刪除失敗不擲例外（檔案無關功能、留下也不會壞）。
     /// </summary>
-    /// <param name="archivePath">要刪除的壓縮檔路徑。</param>
+    /// <param name="archivePath">
+    /// 要刪除的壓縮檔路徑。
+    /// </param>
     private static void TryDeleteArchive(string archivePath)
     {
         try
@@ -153,7 +163,9 @@ public static class DenoDownloader
     /// <summary>
     /// 清理過去 Deno 解壓中止留下的暫存資料夾。
     /// </summary>
-    /// <param name="installDirectory">Deno 安裝資料夾。</param>
+    /// <param name="installDirectory">
+    /// Deno 安裝資料夾。
+    /// </param>
     private static void TryPruneDenoExtractWorkspace(string installDirectory)
     {
         string extractParent = Path.Combine(installDirectory, ".deno-extract");
@@ -182,7 +194,9 @@ public static class DenoDownloader
     /// <summary>
     /// 嘗試刪除指定資料夾與其內容；失敗時不擲例外。
     /// </summary>
-    /// <param name="directoryPath">要刪除的資料夾。</param>
+    /// <param name="directoryPath">
+    /// 要刪除的資料夾。
+    /// </param>
     private static void TryDeleteDirectory(string directoryPath)
     {
         try
@@ -203,7 +217,9 @@ public static class DenoDownloader
     /// <summary>
     /// 嘗試刪除空資料夾；資料夾不存在、非空或刪除失敗皆忽略。
     /// </summary>
-    /// <param name="directoryPath">要刪除的空資料夾。</param>
+    /// <param name="directoryPath">
+    /// 要刪除的空資料夾。
+    /// </param>
     private static void TryDeleteEmptyDirectory(string directoryPath)
     {
         try
@@ -224,8 +240,12 @@ public static class DenoDownloader
     /// <summary>
     /// 讀取已安裝 Deno 可執行檔的版本。
     /// </summary>
-    /// <param name="executablePath">Deno 可執行檔路徑。</param>
-    /// <returns>Deno 版本字串；無法讀取時為 <see langword="null"/>。</returns>
+    /// <param name="executablePath">
+    /// Deno 可執行檔路徑。
+    /// </param>
+    /// <returns>
+    /// Deno 版本字串；無法讀取時為 <see langword="null"/>。
+    /// </returns>
     public static string? GetInstalledVersion(string executablePath)
     {
         if (string.IsNullOrWhiteSpace(executablePath) || !File.Exists(executablePath))
@@ -248,11 +268,21 @@ public static class DenoDownloader
     /// <summary>
     /// 執行 Deno 內建的自我升級命令。
     /// </summary>
-    /// <param name="executablePath">Deno 可執行檔路徑。</param>
-    /// <param name="version">要升級到的 Deno 版本；未指定時升級到最新版本。</param>
-    /// <param name="timeout">等待升級命令完成的逾時時間。</param>
-    /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
-    /// <returns>表示 Deno 自我升級命令結果的工作。</returns>
+    /// <param name="executablePath">
+    /// Deno 可執行檔路徑。
+    /// </param>
+    /// <param name="version">
+    /// 要升級到的 Deno 版本；未指定時升級到最新版本。
+    /// </param>
+    /// <param name="timeout">
+    /// 等待升級命令完成的逾時時間。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 可取消非同步作業的語彙基元。
+    /// </param>
+    /// <returns>
+    /// 表示 Deno 自我升級命令結果的工作。
+    /// </returns>
     public static Task<ToolUpdateResult> RunSelfUpgradeAsync(
         string executablePath,
         string? version = null,
@@ -278,12 +308,24 @@ public static class DenoDownloader
     /// <summary>
     /// 執行 Deno 內建的自我升級命令，並要求 Deno 使用指定 SHA-256 checksum 驗證下載內容。
     /// </summary>
-    /// <param name="executablePath">Deno 可執行檔路徑。</param>
-    /// <param name="checksum">Deno 升級壓縮檔的預期 SHA-256 值。</param>
-    /// <param name="version">要升級到的 Deno 版本；未指定時升級到最新版本。</param>
-    /// <param name="timeout">等待升級命令完成的逾時時間。</param>
-    /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
-    /// <returns>表示 Deno 自我升級命令結果的工作。</returns>
+    /// <param name="executablePath">
+    /// Deno 可執行檔路徑。
+    /// </param>
+    /// <param name="checksum">
+    /// Deno 升級壓縮檔的預期 SHA-256 值。
+    /// </param>
+    /// <param name="version">
+    /// 要升級到的 Deno 版本；未指定時升級到最新版本。
+    /// </param>
+    /// <param name="timeout">
+    /// 等待升級命令完成的逾時時間。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 可取消非同步作業的語彙基元。
+    /// </param>
+    /// <returns>
+    /// 表示 Deno 自我升級命令結果的工作。
+    /// </returns>
     public static Task<ToolUpdateResult> RunSelfUpgradeWithChecksumAsync(
         string executablePath,
         string checksum,
@@ -315,8 +357,12 @@ public static class DenoDownloader
     /// <summary>
     /// 將命令列引數值加上引號並逸出內含引號。
     /// </summary>
-    /// <param name="value">要加入命令列的原始值。</param>
-    /// <returns>可放入命令列的引號字串。</returns>
+    /// <param name="value">
+    /// 要加入命令列的原始值。
+    /// </param>
+    /// <returns>
+    /// 可放入命令列的引號字串。
+    /// </returns>
     private static string Quote(string value)
     {
         return "\"" + value.Replace("\"", "\\\"") + "\"";
@@ -325,9 +371,15 @@ public static class DenoDownloader
     /// <summary>
     /// 從 GitHub 發行資料選取符合架構的 Deno 發行資產。
     /// </summary>
-    /// <param name="release">GitHub 發行資料。</param>
-    /// <param name="architecture">要選取的 Deno Windows 架構。</param>
-    /// <returns>符合架構的 GitHub 發行資產。</returns>
+    /// <param name="release">
+    /// GitHub 發行資料。
+    /// </param>
+    /// <param name="architecture">
+    /// 要選取的 Deno Windows 架構。
+    /// </param>
+    /// <returns>
+    /// 符合架構的 GitHub 發行資產。
+    /// </returns>
     private static GitHubReleaseAsset SelectAsset(GitHubRelease release, DenoWindowsArchitecture architecture)
     {
         string assetName = architecture.ToAssetName();
@@ -343,12 +395,24 @@ public static class DenoDownloader
     /// <summary>
     /// 在策略要求時使用 Deno 發行的 sha256sum 檔案驗證下載檔案。
     /// </summary>
-    /// <param name="release">GitHub 發行資料。</param>
-    /// <param name="asset">已下載的 Deno 發行資產。</param>
-    /// <param name="filePath">已下載壓縮檔路徑。</param>
-    /// <param name="options">Deno 下載選項。</param>
-    /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
-    /// <returns>表示驗證流程的工作。</returns>
+    /// <param name="release">
+    /// GitHub 發行資料。
+    /// </param>
+    /// <param name="asset">
+    /// 已下載的 Deno 發行資產。
+    /// </param>
+    /// <param name="filePath">
+    /// 已下載壓縮檔路徑。
+    /// </param>
+    /// <param name="options">
+    /// Deno 下載選項。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 可取消非同步作業的語彙基元。
+    /// </param>
+    /// <returns>
+    /// 表示驗證流程的工作。
+    /// </returns>
     private static async Task VerifyProviderChecksumIfRequiredAsync(
         GitHubRelease release,
         GitHubReleaseAsset asset,
@@ -376,9 +440,15 @@ public static class DenoDownloader
     /// <summary>
     /// 從 GitHub 發行資料選取指定名稱的 checksum 資產。
     /// </summary>
-    /// <param name="release">GitHub 發行資料。</param>
-    /// <param name="assetName">要選取的 checksum 資產名稱。</param>
-    /// <returns>符合名稱的 GitHub 發行資產。</returns>
+    /// <param name="release">
+    /// GitHub 發行資料。
+    /// </param>
+    /// <param name="assetName">
+    /// 要選取的 checksum 資產名稱。
+    /// </param>
+    /// <returns>
+    /// 符合名稱的 GitHub 發行資產。
+    /// </returns>
     private static GitHubReleaseAsset SelectChecksumAsset(GitHubRelease release, string assetName)
     {
         GitHubReleaseAsset? asset = release.Assets.FirstOrDefault(item => string.Equals(item.Name, assetName, StringComparison.OrdinalIgnoreCase));
@@ -393,8 +463,12 @@ public static class DenoDownloader
     /// <summary>
     /// 將 Deno 版本文字正規化為可比較格式。
     /// </summary>
-    /// <param name="value">原始版本文字。</param>
-    /// <returns>正規化後的版本文字；無有效內容時為 <see langword="null"/>。</returns>
+    /// <param name="value">
+    /// 原始版本文字。
+    /// </param>
+    /// <returns>
+    /// 正規化後的版本文字；無有效內容時為 <see langword="null"/>。
+    /// </returns>
     private static string? NormalizeVersion(string? value)
     {
         if (string.IsNullOrWhiteSpace(value))

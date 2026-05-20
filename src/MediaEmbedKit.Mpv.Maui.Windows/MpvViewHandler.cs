@@ -25,7 +25,9 @@ public class MpvViewHandler : ViewHandler<MpvView, object>
     /// <summary>
     /// 取得 MAUI 屬性對應表。
     /// </summary>
-    /// <value>將 <see cref="MpvView"/> 屬性同步到平台控制項的對應表。</value>
+    /// <value>
+    /// 將 <see cref="MpvView"/> 屬性同步到平台控制項的對應表。
+    /// </value>
     public static readonly IPropertyMapper<MpvView, MpvViewHandler> Mapper =
         new PropertyMapper<MpvView, MpvViewHandler>(ViewMapper)
         {
@@ -68,8 +70,12 @@ public class MpvViewHandler : ViewHandler<MpvView, object>
     /// <summary>
     /// 透過平台控制項載入檔案或網址。
     /// </summary>
-    /// <param name="pathOrUrl">要載入的檔案路徑或媒體網址。</param>
-    /// <param name="mode">播放項目加入播放清單的方式。</param>
+    /// <param name="pathOrUrl">
+    /// 要載入的檔案路徑或媒體網址。
+    /// </param>
+    /// <param name="mode">
+    /// 播放項目加入播放清單的方式。
+    /// </param>
     public void LoadFile(string pathOrUrl, MpvLoadFileMode mode = MpvLoadFileMode.Replace)
     {
 #if WINDOWS
@@ -104,7 +110,9 @@ public class MpvViewHandler : ViewHandler<MpvView, object>
     /// <summary>
     /// 建立 Windows 平台使用的 WinUI AirSpace 安全 mpv 控制項。
     /// </summary>
-    /// <returns>新建立的平台 mpv 控制項。</returns>
+    /// <returns>
+    /// 新建立的平台 mpv 控制項。
+    /// </returns>
 #if WINDOWS
     protected override MpvWinUiPlayer CreatePlatformView()
     {
@@ -120,7 +128,9 @@ public class MpvViewHandler : ViewHandler<MpvView, object>
     /// <summary>
     /// 連接 MAUI 虛擬檢視與平台控制項。
     /// </summary>
-    /// <param name="platformView">要連接的平台 mpv 控制項。</param>
+    /// <param name="platformView">
+    /// 要連接的平台 mpv 控制項。
+    /// </param>
 #if WINDOWS
     protected override void ConnectHandler(MpvWinUiPlayer platformView)
 #else
@@ -150,7 +160,9 @@ public class MpvViewHandler : ViewHandler<MpvView, object>
     /// <summary>
     /// 中斷 MAUI 虛擬檢視與平台控制項的連接。
     /// </summary>
-    /// <param name="platformView">要中斷連接的平台 mpv 控制項。</param>
+    /// <param name="platformView">
+    /// 要中斷連接的平台 mpv 控制項。
+    /// </param>
 #if WINDOWS
     protected override void DisconnectHandler(MpvWinUiPlayer platformView)
 #else
@@ -170,8 +182,12 @@ public class MpvViewHandler : ViewHandler<MpvView, object>
     /// <summary>
     /// 在平台控制項建立播放器後同步虛擬檢視的播放器參考。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private void OnPlayerCreated(object? sender, System.EventArgs e)
     {
 #if WINDOWS
@@ -182,8 +198,12 @@ public class MpvViewHandler : ViewHandler<MpvView, object>
     /// <summary>
     /// 將 <see cref="MpvView.Source"/> 屬性變更套用到平台控制項。
     /// </summary>
-    /// <param name="handler">正在處理屬性對應的 MAUI handler。</param>
-    /// <param name="view">來源屬性變更的 MAUI mpv 檢視。</param>
+    /// <param name="handler">
+    /// 正在處理屬性對應的 MAUI handler。
+    /// </param>
+    /// <param name="view">
+    /// 來源屬性變更的 MAUI mpv 檢視。
+    /// </param>
     private static void MapSource(MpvViewHandler handler, MpvView view)
     {
 #if WINDOWS
@@ -197,8 +217,12 @@ public class MpvViewHandler : ViewHandler<MpvView, object>
     /// <summary>
     /// 將 <see cref="MpvView.OverlayView"/> 屬性變更套用到平台控制項。
     /// </summary>
-    /// <param name="handler">正在處理屬性對應的 MAUI handler。</param>
-    /// <param name="view">來源屬性變更的 MAUI mpv 檢視。</param>
+    /// <param name="handler">
+    /// 正在處理屬性對應的 MAUI handler。
+    /// </param>
+    /// <param name="view">
+    /// 來源屬性變更的 MAUI mpv 檢視。
+    /// </param>
     private static void MapOverlayView(MpvViewHandler handler, MpvView view)
     {
         handler.UpdateOverlayContent();
@@ -207,8 +231,12 @@ public class MpvViewHandler : ViewHandler<MpvView, object>
     /// <summary>
     /// 將 <see cref="MpvView.OverlayContent"/> 屬性變更套用到平台控制項。
     /// </summary>
-    /// <param name="handler">正在處理屬性對應的 MAUI handler。</param>
-    /// <param name="view">來源屬性變更的 MAUI mpv 檢視。</param>
+    /// <param name="handler">
+    /// 正在處理屬性對應的 MAUI handler。
+    /// </param>
+    /// <param name="view">
+    /// 來源屬性變更的 MAUI mpv 檢視。
+    /// </param>
     private static void MapOverlayContent(MpvViewHandler handler, MpvView view)
     {
         handler.UpdateOverlayContent();
@@ -217,8 +245,12 @@ public class MpvViewHandler : ViewHandler<MpvView, object>
     /// <summary>
     /// 將 <see cref="MpvView.IsOverlayOpen"/> 屬性變更套用到平台控制項。
     /// </summary>
-    /// <param name="handler">正在處理屬性對應的 MAUI handler。</param>
-    /// <param name="view">來源屬性變更的 MAUI mpv 檢視。</param>
+    /// <param name="handler">
+    /// 正在處理屬性對應的 MAUI handler。
+    /// </param>
+    /// <param name="view">
+    /// 來源屬性變更的 MAUI mpv 檢視。
+    /// </param>
     private static void MapIsOverlayOpen(MpvViewHandler handler, MpvView view)
     {
         handler.UpdateOverlayContent();
@@ -228,7 +260,9 @@ public class MpvViewHandler : ViewHandler<MpvView, object>
     /// <summary>
     /// 解析應交給 WinUI 控制項的覆蓋層內容。
     /// </summary>
-    /// <returns>WinUI 覆蓋層元素；未設定時為 <see langword="null"/>。</returns>
+    /// <returns>
+    /// WinUI 覆蓋層元素；未設定時為 <see langword="null"/>。
+    /// </returns>
     private WinUiElement? ResolveOverlayContent()
     {
         if (VirtualView.OverlayContent != null)
@@ -286,7 +320,9 @@ public class MpvViewHandler : ViewHandler<MpvView, object>
     /// <summary>
     /// 將 MAUI 視窗轉接到 WinUI 播放控制項。
     /// </summary>
-    /// <param name="platformView">要附加視窗的 Windows 平台控制項。</param>
+    /// <param name="platformView">
+    /// 要附加視窗的 Windows 平台控制項。
+    /// </param>
     private void AttachPlatformWindow(MpvWinUiPlayer platformView)
     {
         Microsoft.Maui.Controls.Window? mauiWindow = VirtualView.Window;

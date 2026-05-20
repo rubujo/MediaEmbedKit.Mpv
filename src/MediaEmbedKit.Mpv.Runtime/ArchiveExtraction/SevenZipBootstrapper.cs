@@ -36,19 +36,31 @@ namespace MediaEmbedKit.Mpv.Runtime.ArchiveExtraction;
 /// </remarks>
 internal static class SevenZipBootstrapper
 {
-    /// <summary>ip7z/7zip 最新 release API。</summary>
+    /// <summary>
+    /// ip7z/7zip 最新 release API。
+    /// </summary>
     private static readonly Uri LatestReleaseApiUri = new Uri("https://api.github.com/repos/ip7z/7zip/releases/latest");
 
-    /// <summary>要下載的 asset 名稱。</summary>
+    /// <summary>
+    /// 要下載的 asset 名稱。
+    /// </summary>
     private const string AssetName = "7zr.exe";
 
     /// <summary>
     /// 確保 <paramref name="downloadDirectory"/> 內有可用的 <c>7zr.exe</c>，必要時自動下載。
     /// </summary>
-    /// <param name="downloadDirectory">7zr.exe 要放置的資料夾（同 libmpv 下載資料夾）。</param>
-    /// <param name="userAgent">下載要求使用的 User-Agent；<see langword="null"/> 用 helper 預設。</param>
-    /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
-    /// <returns>本機可執行的 <c>7zr.exe</c> 完整路徑。</returns>
+    /// <param name="downloadDirectory">
+    /// 7zr.exe 要放置的資料夾（同 libmpv 下載資料夾）。
+    /// </param>
+    /// <param name="userAgent">
+    /// 下載要求使用的 User-Agent；<see langword="null"/> 用 helper 預設。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 可取消非同步作業的語彙基元。
+    /// </param>
+    /// <returns>
+    /// 本機可執行的 <c>7zr.exe</c> 完整路徑。
+    /// </returns>
     public static async Task<string> EnsureAvailableAsync(
         string downloadDirectory,
         string? userAgent,

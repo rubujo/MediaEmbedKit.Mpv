@@ -30,8 +30,12 @@ public sealed class MpvOpenGlRenderContext : IDisposable
     /// <summary>
     /// 初始化 <see cref="MpvOpenGlRenderContext"/> 類別的新執行個體。
     /// </summary>
-    /// <param name="context">libmpv render API 內容指標。</param>
-    /// <param name="getProcAddressCallback">OpenGL 函式位址解析委派。</param>
+    /// <param name="context">
+    /// libmpv render API 內容指標。
+    /// </param>
+    /// <param name="getProcAddressCallback">
+    /// OpenGL 函式位址解析委派。
+    /// </param>
     private MpvOpenGlRenderContext(IntPtr context, MpvOpenGlGetProcAddress getProcAddressCallback)
     {
         _context = context;
@@ -48,7 +52,9 @@ public sealed class MpvOpenGlRenderContext : IDisposable
     /// <summary>
     /// 取得目前 render API 內容是否已釋放。
     /// </summary>
-    /// <value>已釋放時為 <see langword="true"/>。</value>
+    /// <value>
+    /// 已釋放時為 <see langword="true"/>。
+    /// </value>
     public bool IsDisposed
     {
         get { return _disposed; }
@@ -57,7 +63,9 @@ public sealed class MpvOpenGlRenderContext : IDisposable
     /// <summary>
     /// 取得 libmpv render API 內容的原生控制代碼。
     /// </summary>
-    /// <value>libmpv render API 內容指標。</value>
+    /// <value>
+    /// libmpv render API 內容指標。
+    /// </value>
     public IntPtr DangerousHandle
     {
         get
@@ -70,9 +78,15 @@ public sealed class MpvOpenGlRenderContext : IDisposable
     /// <summary>
     /// 為指定播放器建立 OpenGL render API 內容。
     /// </summary>
-    /// <param name="player">要關聯的 mpv 播放器。</param>
-    /// <param name="options">OpenGL render API 建立選項。</param>
-    /// <returns>新建立的 OpenGL render API 內容。</returns>
+    /// <param name="player">
+    /// 要關聯的 mpv 播放器。
+    /// </param>
+    /// <param name="options">
+    /// OpenGL render API 建立選項。
+    /// </param>
+    /// <returns>
+    /// 新建立的 OpenGL render API 內容。
+    /// </returns>
     public static MpvOpenGlRenderContext Create(MpvPlayer player, MpvOpenGlRenderContextOptions options)
     {
         if (player == null)
@@ -164,7 +178,9 @@ public sealed class MpvOpenGlRenderContext : IDisposable
     /// <summary>
     /// 讀取並清除 libmpv render API 的更新旗標。
     /// </summary>
-    /// <returns>目前待處理的 render API 更新旗標。</returns>
+    /// <returns>
+    /// 目前待處理的 render API 更新旗標。
+    /// </returns>
     public MpvRenderUpdateFlags Update()
     {
         EnsureNotDisposed();
@@ -174,14 +190,30 @@ public sealed class MpvOpenGlRenderContext : IDisposable
     /// <summary>
     /// 將 mpv 目前影格繪製到指定的 OpenGL framebuffer。
     /// </summary>
-    /// <param name="framebufferObject">OpenGL framebuffer 物件識別碼。</param>
-    /// <param name="width">framebuffer 寬度。</param>
-    /// <param name="height">framebuffer 高度。</param>
-    /// <param name="internalFormat">OpenGL framebuffer 內部格式。</param>
-    /// <param name="flipY">是否垂直翻轉輸出。</param>
-    /// <param name="blockForTargetTime">是否等待影格目標時間。</param>
-    /// <param name="depth">framebuffer 深度值。</param>
-    /// <param name="skipRendering">是否略過實際繪製並只推進 render API 影格狀態。</param>
+    /// <param name="framebufferObject">
+    /// OpenGL framebuffer 物件識別碼。
+    /// </param>
+    /// <param name="width">
+    /// framebuffer 寬度。
+    /// </param>
+    /// <param name="height">
+    /// framebuffer 高度。
+    /// </param>
+    /// <param name="internalFormat">
+    /// OpenGL framebuffer 內部格式。
+    /// </param>
+    /// <param name="flipY">
+    /// 是否垂直翻轉輸出。
+    /// </param>
+    /// <param name="blockForTargetTime">
+    /// 是否等待影格目標時間。
+    /// </param>
+    /// <param name="depth">
+    /// framebuffer 深度值。
+    /// </param>
+    /// <param name="skipRendering">
+    /// 是否略過實際繪製並只推進 render API 影格狀態。
+    /// </param>
     public void Render(
         int framebufferObject,
         int width,
@@ -232,7 +264,9 @@ public sealed class MpvOpenGlRenderContext : IDisposable
     /// <summary>
     /// 略過實際繪製並推進 libmpv render API 影格狀態。
     /// </summary>
-    /// <param name="blockForTargetTime">是否等待影格目標時間。</param>
+    /// <param name="blockForTargetTime">
+    /// 是否等待影格目標時間。
+    /// </param>
     public void SkipRender(bool blockForTargetTime = true)
     {
         EnsureNotDisposed();
@@ -262,7 +296,9 @@ public sealed class MpvOpenGlRenderContext : IDisposable
     /// <summary>
     /// 取得 libmpv 下一個 render API 影格的資訊。
     /// </summary>
-    /// <returns>下一個影格的 render API 資訊。</returns>
+    /// <returns>
+    /// 下一個影格的 render API 資訊。
+    /// </returns>
     public MpvRenderFrameInformation GetNextFrameInformation()
     {
         EnsureNotDisposed();
@@ -286,8 +322,12 @@ public sealed class MpvOpenGlRenderContext : IDisposable
     /// <summary>
     /// 設定 libmpv render API 內容參數。
     /// </summary>
-    /// <param name="type">要設定的 render API 參數型別。</param>
-    /// <param name="data">指向參數資料的原生指標。</param>
+    /// <param name="type">
+    /// 要設定的 render API 參數型別。
+    /// </param>
+    /// <param name="data">
+    /// 指向參數資料的原生指標。
+    /// </param>
     public void SetParameter(MpvRenderParamType type, IntPtr data)
     {
         EnsureNotDisposed();
@@ -297,8 +337,12 @@ public sealed class MpvOpenGlRenderContext : IDisposable
     /// <summary>
     /// 取得 libmpv render API 內容資訊。
     /// </summary>
-    /// <param name="type">要查詢的 render API 資訊型別。</param>
-    /// <param name="data">指向接收資訊資料的原生指標。</param>
+    /// <param name="type">
+    /// 要查詢的 render API 資訊型別。
+    /// </param>
+    /// <param name="data">
+    /// 指向接收資訊資料的原生指標。
+    /// </param>
     public void GetInformation(MpvRenderParamType type, IntPtr data)
     {
         EnsureNotDisposed();
@@ -308,7 +352,9 @@ public sealed class MpvOpenGlRenderContext : IDisposable
     /// <summary>
     /// 設定 ICC 色彩描述檔資料。
     /// </summary>
-    /// <param name="profile">ICC 色彩描述檔位元組資料。</param>
+    /// <param name="profile">
+    /// ICC 色彩描述檔位元組資料。
+    /// </param>
     public void SetIccProfile(byte[] profile)
     {
         if (profile == null)
@@ -353,7 +399,9 @@ public sealed class MpvOpenGlRenderContext : IDisposable
     /// <summary>
     /// 設定環境光照度。
     /// </summary>
-    /// <param name="lux">以 lux 表示的環境光照度。</param>
+    /// <param name="lux">
+    /// 以 lux 表示的環境光照度。
+    /// </param>
     /// <remarks>
     /// libmpv 0.40（client API 版本 2.5）已將對應的
     /// <c>MPV_RENDER_PARAM_AMBIENT_LIGHT</c> 標記為 deprecated 且無替代品。
@@ -410,7 +458,9 @@ public sealed class MpvOpenGlRenderContext : IDisposable
     /// <summary>
     /// 處理 libmpv render API 更新通知並引發受控事件。
     /// </summary>
-    /// <param name="context">libmpv 傳回的回呼內容指標。</param>
+    /// <param name="context">
+    /// libmpv 傳回的回呼內容指標。
+    /// </param>
     private void OnRenderUpdate(IntPtr context)
     {
         UpdateAvailable?.Invoke(this, EventArgs.Empty);
@@ -430,8 +480,12 @@ public sealed class MpvOpenGlRenderContext : IDisposable
     /// <summary>
     /// 將受控 DRM 顯示選項轉換為舊版原生 DRM 顯示參數。
     /// </summary>
-    /// <param name="options">受控 DRM 顯示選項。</param>
-    /// <returns>舊版原生 DRM 顯示參數。</returns>
+    /// <param name="options">
+    /// 受控 DRM 顯示選項。
+    /// </param>
+    /// <returns>
+    /// 舊版原生 DRM 顯示參數。
+    /// </returns>
     private static MpvOpenGlDrmParams ToNativeDrmParams(MpvOpenGlDrmDisplayOptions options)
     {
         return new MpvOpenGlDrmParams
@@ -447,8 +501,12 @@ public sealed class MpvOpenGlRenderContext : IDisposable
     /// <summary>
     /// 將受控 DRM 顯示選項轉換為第二版原生 DRM 顯示參數。
     /// </summary>
-    /// <param name="options">受控 DRM 顯示選項。</param>
-    /// <returns>第二版原生 DRM 顯示參數。</returns>
+    /// <param name="options">
+    /// 受控 DRM 顯示選項。
+    /// </param>
+    /// <returns>
+    /// 第二版原生 DRM 顯示參數。
+    /// </returns>
     private static MpvOpenGlDrmParamsV2 ToNativeDrmParamsV2(MpvOpenGlDrmDisplayOptions options)
     {
         return new MpvOpenGlDrmParamsV2
@@ -464,9 +522,15 @@ public sealed class MpvOpenGlRenderContext : IDisposable
     /// <summary>
     /// 配置原生記憶體並寫入指定結構。
     /// </summary>
-    /// <typeparam name="T">要寫入原生記憶體的結構型別。</typeparam>
-    /// <param name="value">要寫入的結構值。</param>
-    /// <returns>包含指定結構的原生記憶體指標。</returns>
+    /// <typeparam name="T">
+    /// 要寫入原生記憶體的結構型別。
+    /// </typeparam>
+    /// <param name="value">
+    /// 要寫入的結構值。
+    /// </param>
+    /// <returns>
+    /// 包含指定結構的原生記憶體指標。
+    /// </returns>
     private static IntPtr AllocStructure<T>(T value) where T : struct
     {
         IntPtr pointer = Marshal.AllocHGlobal(Marshal.SizeOf<T>());
@@ -477,8 +541,12 @@ public sealed class MpvOpenGlRenderContext : IDisposable
     /// <summary>
     /// 配置原生記憶體並寫入 32 位元整數。
     /// </summary>
-    /// <param name="value">要寫入原生記憶體的整數值。</param>
-    /// <returns>包含指定整數的原生記憶體指標。</returns>
+    /// <param name="value">
+    /// 要寫入原生記憶體的整數值。
+    /// </param>
+    /// <returns>
+    /// 包含指定整數的原生記憶體指標。
+    /// </returns>
     private static IntPtr AllocInt32(int value)
     {
         IntPtr pointer = Marshal.AllocHGlobal(sizeof(int));
@@ -489,7 +557,9 @@ public sealed class MpvOpenGlRenderContext : IDisposable
     /// <summary>
     /// 釋放先前配置的原生記憶體。
     /// </summary>
-    /// <param name="pointer">要釋放的原生記憶體指標。</param>
+    /// <param name="pointer">
+    /// 要釋放的原生記憶體指標。
+    /// </param>
     private static void Free(IntPtr pointer)
     {
         if (pointer != IntPtr.Zero)

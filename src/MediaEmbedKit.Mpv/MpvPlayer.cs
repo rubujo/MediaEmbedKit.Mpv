@@ -104,7 +104,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 使用指定選項初始化 <see cref="MpvPlayer"/> 類別的新執行個體。
     /// </summary>
-    /// <param name="options">建立 libmpv 用戶端時套用的播放器選項。</param>
+    /// <param name="options">
+    /// 建立 libmpv 用戶端時套用的播放器選項。
+    /// </param>
     public MpvPlayer(MpvPlayerOptions options)
     {
         if (options == null)
@@ -143,7 +145,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 依播放器選項建立 ILogger 並訂閱 <see cref="LogMessageReceived"/>。
     /// </summary>
-    /// <param name="options">建立播放器時提供的選項。</param>
+    /// <param name="options">
+    /// 建立播放器時提供的選項。
+    /// </param>
     private void ConfigureLoggerRouting(MpvPlayerOptions options)
     {
         if (options.LoggerFactory == null)
@@ -173,8 +177,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 將 libmpv 記錄等級轉換成 <see cref="Microsoft.Extensions.Logging.LogLevel"/>。
     /// </summary>
-    /// <param name="level">libmpv 記錄等級。</param>
-    /// <returns>對應的 <see cref="Microsoft.Extensions.Logging.LogLevel"/>。</returns>
+    /// <param name="level">
+    /// libmpv 記錄等級。
+    /// </param>
+    /// <returns>
+    /// 對應的 <see cref="Microsoft.Extensions.Logging.LogLevel"/>。
+    /// </returns>
     private static LogLevel MapMpvLogLevel(MpvLogLevel level)
     {
         switch (level)
@@ -205,13 +213,17 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得目前由 libmpv 事件聚合而成的播放狀態。
     /// </summary>
-    /// <value>目前 <see cref="MpvPlaybackState"/>；尚未初始化時為 <see cref="MpvPlaybackState.Idle"/>。</value>
+    /// <value>
+    /// 目前 <see cref="MpvPlaybackState"/>；尚未初始化時為 <see cref="MpvPlaybackState.Idle"/>。
+    /// </value>
     public MpvPlaybackState State { get; private set; } = MpvPlaybackState.Idle;
 
     /// <summary>
     /// 將目前狀態轉換到新狀態並在改變時觸發 <see cref="StateChanged"/>。
     /// </summary>
-    /// <param name="next">新的播放狀態。</param>
+    /// <param name="next">
+    /// 新的播放狀態。
+    /// </param>
     private void TransitionState(MpvPlaybackState next)
     {
         if (State == next)
@@ -352,7 +364,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得 libmpv 用戶端是否已初始化。
     /// </summary>
-    /// <value>已呼叫 <see cref="Initialize"/> 且成功時為 <see langword="true"/>。</value>
+    /// <value>
+    /// 已呼叫 <see cref="Initialize"/> 且成功時為 <see langword="true"/>。
+    /// </value>
     public bool IsInitialized
     {
         get { return _initialized; }
@@ -361,7 +375,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得 libmpv 用戶端的原生控制代碼。
     /// </summary>
-    /// <value>libmpv 用戶端原生控制代碼。</value>
+    /// <value>
+    /// libmpv 用戶端原生控制代碼。
+    /// </value>
     public IntPtr DangerousHandle
     {
         get
@@ -374,7 +390,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得 libmpv 指派給此用戶端的名稱。
     /// </summary>
-    /// <value>libmpv 用戶端名稱。</value>
+    /// <value>
+    /// libmpv 用戶端名稱。
+    /// </value>
     public string ClientName
     {
         get
@@ -387,7 +405,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得 libmpv 指派給此用戶端的識別碼。
     /// </summary>
-    /// <value>libmpv 用戶端識別碼。</value>
+    /// <value>
+    /// libmpv 用戶端識別碼。
+    /// </value>
     public long ClientId
     {
         get
@@ -400,7 +420,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得或設定播放是否暫停。
     /// </summary>
-    /// <value>播放暫停時為 <see langword="true"/>。</value>
+    /// <value>
+    /// 播放暫停時為 <see langword="true"/>。
+    /// </value>
     public bool Pause
     {
         get { return GetPropertyFlag("pause"); }
@@ -410,7 +432,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得或設定播放器音量。
     /// </summary>
-    /// <value>mpv 的 <c>volume</c> 屬性值。</value>
+    /// <value>
+    /// mpv 的 <c>volume</c> 屬性值。
+    /// </value>
     public double Volume
     {
         get { return GetPropertyDouble("volume"); }
@@ -420,7 +444,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得或設定音訊是否靜音。
     /// </summary>
-    /// <value>靜音時為 <see langword="true"/>。</value>
+    /// <value>
+    /// 靜音時為 <see langword="true"/>。
+    /// </value>
     public bool Mute
     {
         get { return GetPropertyFlag("mute"); }
@@ -430,7 +456,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得或設定播放速度。
     /// </summary>
-    /// <value>mpv 的 <c>speed</c> 屬性值。</value>
+    /// <value>
+    /// mpv 的 <c>speed</c> 屬性值。
+    /// </value>
     public double Speed
     {
         get { return GetPropertyDouble("speed"); }
@@ -440,7 +468,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得目前播放位置。
     /// </summary>
-    /// <value>目前播放位置秒數。</value>
+    /// <value>
+    /// 目前播放位置秒數。
+    /// </value>
     public double TimePosition
     {
         get { return GetPropertyDouble("time-pos"); }
@@ -449,7 +479,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得目前播放項目的總長度。
     /// </summary>
-    /// <value>目前播放項目的秒數長度。</value>
+    /// <value>
+    /// 目前播放項目的秒數長度。
+    /// </value>
     public double Duration
     {
         get { return GetPropertyDouble("duration"); }
@@ -458,7 +490,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得目前播放項目的剩餘秒數。
     /// </summary>
-    /// <value>目前播放項目的剩餘秒數。</value>
+    /// <value>
+    /// 目前播放項目的剩餘秒數。
+    /// </value>
     public double TimeRemaining
     {
         get { return GetPropertyDouble("time-remaining"); }
@@ -467,7 +501,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得或設定目前播放清單索引。
     /// </summary>
-    /// <value>以 0 為起始的播放清單索引。</value>
+    /// <value>
+    /// 以 0 為起始的播放清單索引。
+    /// </value>
     public int PlaylistIndex
     {
         get { return checked((int)GetPropertyInt64("playlist-pos")); }
@@ -477,7 +513,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得目前播放清單項目數量。
     /// </summary>
-    /// <value>播放清單項目數量。</value>
+    /// <value>
+    /// 播放清單項目數量。
+    /// </value>
     public int PlaylistEntryCount
     {
         get { return checked((int)GetPropertyInt64("playlist-count")); }
@@ -486,7 +524,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得目前是否處於閒置狀態。
     /// </summary>
-    /// <value>播放器處於閒置狀態時為 <see langword="true"/>。</value>
+    /// <value>
+    /// 播放器處於閒置狀態時為 <see langword="true"/>。
+    /// </value>
     public bool IsIdle
     {
         get { return GetPropertyFlag("idle-active"); }
@@ -495,7 +535,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得目前媒體標題。
     /// </summary>
-    /// <value>目前媒體標題。</value>
+    /// <value>
+    /// 目前媒體標題。
+    /// </value>
     public string? MediaTitle
     {
         get { return GetPropertyString("media-title"); }
@@ -504,7 +546,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得或設定目前播放項目是否循環播放。
     /// </summary>
-    /// <value>目前播放項目循環播放時為 <see langword="true"/>。</value>
+    /// <value>
+    /// 目前播放項目循環播放時為 <see langword="true"/>。
+    /// </value>
     public bool LoopFile
     {
         get { return !string.Equals(GetPropertyString("loop-file"), "no", StringComparison.OrdinalIgnoreCase); }
@@ -514,7 +558,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得或設定播放清單是否循環播放。
     /// </summary>
-    /// <value>播放清單循環播放時為 <see langword="true"/>。</value>
+    /// <value>
+    /// 播放清單循環播放時為 <see langword="true"/>。
+    /// </value>
     public bool LoopPlaylist
     {
         get { return !string.Equals(GetPropertyString("loop-playlist"), "no", StringComparison.OrdinalIgnoreCase); }
@@ -525,7 +571,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// 取得或設定當前章節 0-based 索引；未載入媒體或無章節時取得為 <see langword="null"/>。
     /// 寫入會把播放位置跳到對應章節（mpv <c>chapter</c> property）。
     /// </summary>
-    /// <value>當前章節索引；libmpv 對「無章節」回傳 -1，本屬性轉換為 <see langword="null"/>。</value>
+    /// <value>
+    /// 當前章節索引；libmpv 對「無章節」回傳 -1，本屬性轉換為 <see langword="null"/>。
+    /// </value>
     public int? Chapter
     {
         get
@@ -557,7 +605,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得當前媒體的章節總數；未載入媒體或無章節時為 0。等同 <c>chapters</c> 屬性。
     /// </summary>
-    /// <value>章節總數。</value>
+    /// <value>
+    /// 章節總數。
+    /// </value>
     public int ChapterCount
     {
         get
@@ -574,7 +624,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得目前 libmpv 用戶端 API 版本。
     /// </summary>
-    /// <returns>libmpv 用戶端 API 版本值。</returns>
+    /// <returns>
+    /// libmpv 用戶端 API 版本值。
+    /// </returns>
     public static uint ClientApiVersion()
     {
         return MpvNative.mpv_client_api_version();
@@ -583,8 +635,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得 libmpv 事件識別碼對應的事件名稱。
     /// </summary>
-    /// <param name="eventId">要查詢的 libmpv 事件識別碼。</param>
-    /// <returns>libmpv 提供的事件名稱；未知事件會傳回列舉名稱。</returns>
+    /// <param name="eventId">
+    /// 要查詢的 libmpv 事件識別碼。
+    /// </param>
+    /// <returns>
+    /// libmpv 提供的事件名稱；未知事件會傳回列舉名稱。
+    /// </returns>
     public static string GetEventName(MpvEventId eventId)
     {
         return MpvNative.GetEventName(eventId);
@@ -593,7 +649,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得目前 libmpv 用戶端可用功能的一次性快照。
     /// </summary>
-    /// <returns>包含協定、解碼器、demuxer 與版本資訊的 <see cref="MpvCapabilities"/>。</returns>
+    /// <returns>
+    /// 包含協定、解碼器、demuxer 與版本資訊的 <see cref="MpvCapabilities"/>。
+    /// </returns>
     public MpvCapabilities GetCapabilities()
     {
         EnsureNotDisposed();
@@ -610,8 +668,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 嘗試讀取字串屬性；屬性不存在或暫時無法存取時傳回空字串。
     /// </summary>
-    /// <param name="name">要讀取的屬性名稱。</param>
-    /// <returns>屬性值；失敗時為空字串。</returns>
+    /// <param name="name">
+    /// 要讀取的屬性名稱。
+    /// </param>
+    /// <returns>
+    /// 屬性值；失敗時為空字串。
+    /// </returns>
     private string TryGetPropertyString(string name)
     {
         try
@@ -628,7 +690,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得 libmpv 目前單調時間。
     /// </summary>
-    /// <returns>以奈秒表示的 libmpv 時間。</returns>
+    /// <returns>
+    /// 以奈秒表示的 libmpv 時間。
+    /// </returns>
     public long GetTimeNanoseconds()
     {
         EnsureNotDisposed();
@@ -638,7 +702,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得 libmpv 目前單調時間。
     /// </summary>
-    /// <returns>以微秒表示的 libmpv 時間。</returns>
+    /// <returns>
+    /// 以微秒表示的 libmpv 時間。
+    /// </returns>
     public long GetTimeMicroseconds()
     {
         EnsureNotDisposed();
@@ -676,8 +742,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 非同步初始化 libmpv 用戶端並啟動事件迴圈。
     /// </summary>
-    /// <param name="cancellationToken">取消初始化要求的 token。</param>
-    /// <returns>代表初始化流程的工作。</returns>
+    /// <param name="cancellationToken">
+    /// 取消初始化要求的 token。
+    /// </param>
+    /// <returns>
+    /// 代表初始化流程的工作。
+    /// </returns>
     /// <remarks>
     /// 取消 token 只在開始呼叫 <c>mpv_initialize</c> 之前生效；libmpv 本身為同步介面，
     /// 一旦進入 native 初始化即無法中途中止。
@@ -701,7 +771,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 設定 libmpv 視訊輸出的 Windows 子視窗控制代碼。
     /// </summary>
-    /// <param name="hwnd">要傳給 mpv <c>wid</c> 選項的視窗控制代碼。</param>
+    /// <param name="hwnd">
+    /// 要傳給 mpv <c>wid</c> 選項的視窗控制代碼。
+    /// </param>
     public void SetVideoWindow(IntPtr hwnd)
     {
         EnsureNotDisposed();
@@ -716,7 +788,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 載入指定的 mpv 設定檔。
     /// </summary>
-    /// <param name="fileName">要載入的 mpv 設定檔路徑。</param>
+    /// <param name="fileName">
+    /// 要載入的 mpv 設定檔路徑。
+    /// </param>
     public void LoadConfigFile(string fileName)
     {
         EnsureNotDisposed();
@@ -729,8 +803,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 以字串格式設定 libmpv 選項。
     /// </summary>
-    /// <param name="name">要設定的 mpv 選項名稱。</param>
-    /// <param name="value">要套用到選項的字串值。</param>
+    /// <param name="name">
+    /// 要設定的 mpv 選項名稱。
+    /// </param>
+    /// <param name="value">
+    /// 要套用到選項的字串值。
+    /// </param>
     public void SetOptionString(string name, string value)
     {
         EnsureNotDisposed();
@@ -744,7 +822,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 使用常用預設值設定 yt-dlp 格式選擇。
     /// </summary>
-    /// <param name="preset">要套用的 yt-dlp 格式選擇預設值。</param>
+    /// <param name="preset">
+    /// 要套用的 yt-dlp 格式選擇預設值。
+    /// </param>
     public void SetYtdlpFormat(MpvYtdlpFormatPreset preset)
     {
         SetYtdlpFormat(MpvYtdlpFormatSelector.FromPreset(preset));
@@ -753,7 +833,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 使用自訂字串設定 yt-dlp 格式選擇。
     /// </summary>
-    /// <param name="formatSelector">要傳給 mpv <c>ytdl-format</c> 選項的格式選擇字串。</param>
+    /// <param name="formatSelector">
+    /// 要傳給 mpv <c>ytdl-format</c> 選項的格式選擇字串。
+    /// </param>
     public void SetYtdlpFormat(string formatSelector)
     {
         if (formatSelector == null)
@@ -768,7 +850,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 設定 yt-dlp 最高視訊高度。
     /// </summary>
-    /// <param name="maximumHeight">允許的最大視訊高度。</param>
+    /// <param name="maximumHeight">
+    /// 允許的最大視訊高度。
+    /// </param>
     public void SetYtdlpMaximumHeight(int maximumHeight)
     {
         SetYtdlpFormat(MpvYtdlpFormatSelector.MaxHeight(maximumHeight));
@@ -785,7 +869,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 設定 mpv encoding mode 選項。
     /// </summary>
-    /// <param name="encodingOptions">要套用的 encoding mode 選項。</param>
+    /// <param name="encodingOptions">
+    /// 要套用的 encoding mode 選項。
+    /// </param>
     public void ConfigureEncoding(MpvEncodingOptions encodingOptions)
     {
         if (encodingOptions == null)
@@ -799,7 +885,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得 mpv ytdl hook 找到的外部工具路徑。
     /// </summary>
-    /// <returns>ytdl hook 找到的外部工具路徑；尚未解析或找不到時為 <see langword="null"/>。</returns>
+    /// <returns>
+    /// ytdl hook 找到的外部工具路徑；尚未解析或找不到時為 <see langword="null"/>。
+    /// </returns>
     public string? GetYtdlHookPath()
     {
         return GetPropertyString("user-data/mpv/ytdl/path");
@@ -808,7 +896,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得 mpv ytdl hook 執行 yt-dlp JSON 子程序的結果。
     /// </summary>
-    /// <returns>ytdl JSON 子程序結果；尚未解析 URL 或結果不可用時為 <see langword="null"/>。</returns>
+    /// <returns>
+    /// ytdl JSON 子程序結果；尚未解析 URL 或結果不可用時為 <see langword="null"/>。
+    /// </returns>
     public MpvYtdlJsonSubprocessResult? GetYtdlJsonSubprocessResult()
     {
         try
@@ -825,8 +915,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 嘗試取得 mpv ytdl hook 執行 yt-dlp JSON 子程序的結果。
     /// </summary>
-    /// <param name="result">找到時接收 ytdl JSON 子程序結果；找不到時接收 <see langword="null"/>。</param>
-    /// <returns>找到 ytdl JSON 子程序結果時為 <see langword="true"/>。</returns>
+    /// <param name="result">
+    /// 找到時接收 ytdl JSON 子程序結果；找不到時接收 <see langword="null"/>。
+    /// </param>
+    /// <returns>
+    /// 找到 ytdl JSON 子程序結果時為 <see langword="true"/>。
+    /// </returns>
     public bool TryGetYtdlJsonSubprocessResult(out MpvYtdlJsonSubprocessResult? result)
     {
         result = GetYtdlJsonSubprocessResult();
@@ -836,8 +930,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 以布林旗標格式設定 libmpv 選項。
     /// </summary>
-    /// <param name="name">要設定的 mpv 選項名稱。</param>
-    /// <param name="value">要套用到選項的布林值。</param>
+    /// <param name="name">
+    /// 要設定的 mpv 選項名稱。
+    /// </param>
+    /// <param name="value">
+    /// 要套用到選項的布林值。
+    /// </param>
     public void SetOptionFlag(string name, bool value)
     {
         EnsureNotDisposed();
@@ -854,8 +952,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 以 64 位元整數格式設定 libmpv 選項。
     /// </summary>
-    /// <param name="name">要設定的 mpv 選項名稱。</param>
-    /// <param name="value">要套用到選項的 64 位元整數值。</param>
+    /// <param name="name">
+    /// 要設定的 mpv 選項名稱。
+    /// </param>
+    /// <param name="value">
+    /// 要套用到選項的 64 位元整數值。
+    /// </param>
     public void SetOptionInt64(string name, long value)
     {
         EnsureNotDisposed();
@@ -871,8 +973,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 以雙精確度浮點數格式設定 libmpv 選項。
     /// </summary>
-    /// <param name="name">要設定的 mpv 選項名稱。</param>
-    /// <param name="value">要套用到選項的雙精確度浮點數值。</param>
+    /// <param name="name">
+    /// 要設定的 mpv 選項名稱。
+    /// </param>
+    /// <param name="value">
+    /// 要套用到選項的雙精確度浮點數值。
+    /// </param>
     public void SetOptionDouble(string name, double value)
     {
         EnsureNotDisposed();
@@ -888,8 +994,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 以節點格式設定 libmpv 選項。
     /// </summary>
-    /// <param name="name">要設定的 mpv 選項名稱。</param>
-    /// <param name="value">要套用到選項的節點資料。</param>
+    /// <param name="name">
+    /// 要設定的 mpv 選項名稱。
+    /// </param>
+    /// <param name="value">
+    /// 要套用到選項的節點資料。
+    /// </param>
     public void SetOptionNode(string name, MpvNode value)
     {
         EnsureNotDisposed();
@@ -907,8 +1017,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 以字串格式設定 libmpv 屬性。
     /// </summary>
-    /// <param name="name">要設定的 mpv 屬性名稱。</param>
-    /// <param name="value">要套用到屬性的字串值。</param>
+    /// <param name="name">
+    /// 要設定的 mpv 屬性名稱。
+    /// </param>
+    /// <param name="value">
+    /// 要套用到屬性的字串值。
+    /// </param>
     public void SetPropertyString(string name, string value)
     {
         EnsureNotDisposed();
@@ -922,8 +1036,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 以布林旗標格式設定 libmpv 屬性。
     /// </summary>
-    /// <param name="name">要設定的 mpv 屬性名稱。</param>
-    /// <param name="value">要套用到屬性的布林值。</param>
+    /// <param name="name">
+    /// 要設定的 mpv 屬性名稱。
+    /// </param>
+    /// <param name="value">
+    /// 要套用到屬性的布林值。
+    /// </param>
     public void SetPropertyFlag(string name, bool value)
     {
         EnsureNotDisposed();
@@ -940,8 +1058,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 以 64 位元整數格式設定 libmpv 屬性。
     /// </summary>
-    /// <param name="name">要設定的 mpv 屬性名稱。</param>
-    /// <param name="value">要套用到屬性的 64 位元整數值。</param>
+    /// <param name="name">
+    /// 要設定的 mpv 屬性名稱。
+    /// </param>
+    /// <param name="value">
+    /// 要套用到屬性的 64 位元整數值。
+    /// </param>
     public void SetPropertyInt64(string name, long value)
     {
         EnsureNotDisposed();
@@ -957,8 +1079,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 以雙精確度浮點數格式設定 libmpv 屬性。
     /// </summary>
-    /// <param name="name">要設定的 mpv 屬性名稱。</param>
-    /// <param name="value">要套用到屬性的雙精確度浮點數值。</param>
+    /// <param name="name">
+    /// 要設定的 mpv 屬性名稱。
+    /// </param>
+    /// <param name="value">
+    /// 要套用到屬性的雙精確度浮點數值。
+    /// </param>
     public void SetPropertyDouble(string name, double value)
     {
         EnsureNotDisposed();
@@ -974,8 +1100,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 以節點格式設定 libmpv 屬性。
     /// </summary>
-    /// <param name="name">要設定的 mpv 屬性名稱。</param>
-    /// <param name="value">要套用到屬性的節點資料。</param>
+    /// <param name="name">
+    /// 要設定的 mpv 屬性名稱。
+    /// </param>
+    /// <param name="value">
+    /// 要套用到屬性的節點資料。
+    /// </param>
     public void SetPropertyNode(string name, MpvNode value)
     {
         EnsureNotDisposed();
@@ -993,7 +1123,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 刪除指定的 libmpv 屬性。
     /// </summary>
-    /// <param name="name">要刪除的 mpv 屬性名稱。</param>
+    /// <param name="name">
+    /// 要刪除的 mpv 屬性名稱。
+    /// </param>
     public void DeleteProperty(string name)
     {
         EnsureNotDisposed();
@@ -1006,8 +1138,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 以字串格式取得 libmpv 屬性值。
     /// </summary>
-    /// <param name="name">要讀取的 mpv 屬性名稱。</param>
-    /// <returns>屬性的字串值；沒有值時為 <see langword="null"/>。</returns>
+    /// <param name="name">
+    /// 要讀取的 mpv 屬性名稱。
+    /// </param>
+    /// <returns>
+    /// 屬性的字串值；沒有值時為 <see langword="null"/>。
+    /// </returns>
     public string? GetPropertyString(string name)
     {
         EnsureNotDisposed();
@@ -1031,8 +1167,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得適合螢幕顯示的 libmpv 屬性字串。
     /// </summary>
-    /// <param name="name">要讀取的 mpv 屬性名稱。</param>
-    /// <returns>屬性的螢幕顯示字串；沒有值時為 <see langword="null"/>。</returns>
+    /// <param name="name">
+    /// 要讀取的 mpv 屬性名稱。
+    /// </param>
+    /// <returns>
+    /// 屬性的螢幕顯示字串；沒有值時為 <see langword="null"/>。
+    /// </returns>
     public string? GetPropertyOsdString(string name)
     {
         EnsureNotDisposed();
@@ -1056,8 +1196,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 以布林旗標格式取得 libmpv 屬性值。
     /// </summary>
-    /// <param name="name">要讀取的 mpv 屬性名稱。</param>
-    /// <returns>屬性的布林值。</returns>
+    /// <param name="name">
+    /// 要讀取的 mpv 屬性名稱。
+    /// </param>
+    /// <returns>
+    /// 屬性的布林值。
+    /// </returns>
     public bool GetPropertyFlag(string name)
     {
         EnsureNotDisposed();
@@ -1076,8 +1220,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 以 64 位元整數格式取得 libmpv 屬性值。
     /// </summary>
-    /// <param name="name">要讀取的 mpv 屬性名稱。</param>
-    /// <returns>屬性的 64 位元整數值。</returns>
+    /// <param name="name">
+    /// 要讀取的 mpv 屬性名稱。
+    /// </param>
+    /// <returns>
+    /// 屬性的 64 位元整數值。
+    /// </returns>
     public long GetPropertyInt64(string name)
     {
         EnsureNotDisposed();
@@ -1096,8 +1244,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 以雙精確度浮點數格式取得 libmpv 屬性值。
     /// </summary>
-    /// <param name="name">要讀取的 mpv 屬性名稱。</param>
-    /// <returns>屬性的雙精確度浮點數值。</returns>
+    /// <param name="name">
+    /// 要讀取的 mpv 屬性名稱。
+    /// </param>
+    /// <returns>
+    /// 屬性的雙精確度浮點數值。
+    /// </returns>
     public double GetPropertyDouble(string name)
     {
         EnsureNotDisposed();
@@ -1116,8 +1268,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 以節點格式取得 libmpv 屬性值。
     /// </summary>
-    /// <param name="name">要讀取的 mpv 屬性名稱。</param>
-    /// <returns>屬性的節點資料。</returns>
+    /// <param name="name">
+    /// 要讀取的 mpv 屬性名稱。
+    /// </param>
+    /// <returns>
+    /// 屬性的節點資料。
+    /// </returns>
     public MpvNode GetPropertyNode(string name)
     {
         EnsureNotDisposed();
@@ -1143,9 +1299,15 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 嘗試以字串格式取得 libmpv 屬性值，不會在屬性不存在或暫時無法使用時擲回例外狀況。
     /// </summary>
-    /// <param name="name">要讀取的 mpv 屬性名稱。</param>
-    /// <param name="value">找到時接收屬性字串值，否則為 <see langword="null"/>。</param>
-    /// <returns>成功讀取屬性值時為 <see langword="true"/>。</returns>
+    /// <param name="name">
+    /// 要讀取的 mpv 屬性名稱。
+    /// </param>
+    /// <param name="value">
+    /// 找到時接收屬性字串值，否則為 <see langword="null"/>。
+    /// </param>
+    /// <returns>
+    /// 成功讀取屬性值時為 <see langword="true"/>。
+    /// </returns>
     /// <remarks>
     /// 僅吞下 <see cref="MpvErrorCode.PropertyNotFound"/> 與 <see cref="MpvErrorCode.PropertyUnavailable"/>；
     /// 其他錯誤（含 <see cref="MpvErrorCode.Uninitialized"/>）仍會以 <see cref="MpvException"/> 擲回。
@@ -1167,9 +1329,15 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 嘗試以布林旗標格式取得 libmpv 屬性值，不會在屬性不存在或暫時無法使用時擲回例外狀況。
     /// </summary>
-    /// <param name="name">要讀取的 mpv 屬性名稱。</param>
-    /// <param name="value">找到時接收屬性布林值，否則為 <see langword="false"/>。</param>
-    /// <returns>成功讀取屬性值時為 <see langword="true"/>。</returns>
+    /// <param name="name">
+    /// 要讀取的 mpv 屬性名稱。
+    /// </param>
+    /// <param name="value">
+    /// 找到時接收屬性布林值，否則為 <see langword="false"/>。
+    /// </param>
+    /// <returns>
+    /// 成功讀取屬性值時為 <see langword="true"/>。
+    /// </returns>
     /// <remarks>
     /// 僅吞下 <see cref="MpvErrorCode.PropertyNotFound"/> 與 <see cref="MpvErrorCode.PropertyUnavailable"/>；
     /// 其他錯誤（含 <see cref="MpvErrorCode.Uninitialized"/>、<see cref="MpvErrorCode.PropertyFormat"/>）仍會以 <see cref="MpvException"/> 擲回。
@@ -1191,9 +1359,15 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 嘗試以 64 位元整數格式取得 libmpv 屬性值，不會在屬性不存在或暫時無法使用時擲回例外狀況。
     /// </summary>
-    /// <param name="name">要讀取的 mpv 屬性名稱。</param>
-    /// <param name="value">找到時接收屬性整數值，否則為 <c>0</c>。</param>
-    /// <returns>成功讀取屬性值時為 <see langword="true"/>。</returns>
+    /// <param name="name">
+    /// 要讀取的 mpv 屬性名稱。
+    /// </param>
+    /// <param name="value">
+    /// 找到時接收屬性整數值，否則為 <c>0</c>。
+    /// </param>
+    /// <returns>
+    /// 成功讀取屬性值時為 <see langword="true"/>。
+    /// </returns>
     /// <remarks>
     /// 僅吞下 <see cref="MpvErrorCode.PropertyNotFound"/> 與 <see cref="MpvErrorCode.PropertyUnavailable"/>；
     /// 其他錯誤（含 <see cref="MpvErrorCode.Uninitialized"/>、<see cref="MpvErrorCode.PropertyFormat"/>）仍會以 <see cref="MpvException"/> 擲回。
@@ -1215,9 +1389,15 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 嘗試以雙精確度浮點數格式取得 libmpv 屬性值，不會在屬性不存在或暫時無法使用時擲回例外狀況。
     /// </summary>
-    /// <param name="name">要讀取的 mpv 屬性名稱。</param>
-    /// <param name="value">找到時接收屬性浮點值，否則為 <c>0</c>。</param>
-    /// <returns>成功讀取屬性值時為 <see langword="true"/>。</returns>
+    /// <param name="name">
+    /// 要讀取的 mpv 屬性名稱。
+    /// </param>
+    /// <param name="value">
+    /// 找到時接收屬性浮點值，否則為 <c>0</c>。
+    /// </param>
+    /// <returns>
+    /// 成功讀取屬性值時為 <see langword="true"/>。
+    /// </returns>
     /// <remarks>
     /// 僅吞下 <see cref="MpvErrorCode.PropertyNotFound"/> 與 <see cref="MpvErrorCode.PropertyUnavailable"/>；
     /// 其他錯誤（含 <see cref="MpvErrorCode.Uninitialized"/>、<see cref="MpvErrorCode.PropertyFormat"/>）仍會以 <see cref="MpvException"/> 擲回。
@@ -1239,9 +1419,15 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 嘗試以節點格式取得 libmpv 屬性值，不會在屬性不存在或暫時無法使用時擲回例外狀況。
     /// </summary>
-    /// <param name="name">要讀取的 mpv 屬性名稱。</param>
-    /// <param name="value">找到時接收屬性節點資料，否則為空節點。</param>
-    /// <returns>成功讀取且節點非空時為 <see langword="true"/>。</returns>
+    /// <param name="name">
+    /// 要讀取的 mpv 屬性名稱。
+    /// </param>
+    /// <param name="value">
+    /// 找到時接收屬性節點資料，否則為空節點。
+    /// </param>
+    /// <returns>
+    /// 成功讀取且節點非空時為 <see langword="true"/>。
+    /// </returns>
     /// <remarks>
     /// 僅吞下 <see cref="MpvErrorCode.PropertyNotFound"/> 與 <see cref="MpvErrorCode.PropertyUnavailable"/>；
     /// 其他錯誤（含 <see cref="MpvErrorCode.Uninitialized"/>）仍會以 <see cref="MpvException"/> 擲回。
@@ -1263,7 +1449,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 使用引數陣列同步執行 libmpv 命令。
     /// </summary>
-    /// <param name="arguments">命令名稱與其後續引數。</param>
+    /// <param name="arguments">
+    /// 命令名稱與其後續引數。
+    /// </param>
     public void Command(params string[] arguments)
     {
         EnsureNotDisposed();
@@ -1276,7 +1464,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 使用 mpv 命令列語法同步執行 libmpv 命令。
     /// </summary>
-    /// <param name="command">要傳給 libmpv 的命令文字。</param>
+    /// <param name="command">
+    /// 要傳給 libmpv 的命令文字。
+    /// </param>
     public void CommandString(string command)
     {
         EnsureNotDisposed();
@@ -1289,8 +1479,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 使用引數陣列同步執行 libmpv 命令並取得節點結果。
     /// </summary>
-    /// <param name="arguments">命令名稱與其後續引數。</param>
-    /// <returns>命令回傳的節點資料；沒有回傳資料時為空節點。</returns>
+    /// <param name="arguments">
+    /// 命令名稱與其後續引數。
+    /// </param>
+    /// <returns>
+    /// 命令回傳的節點資料；沒有回傳資料時為空節點。
+    /// </returns>
     public MpvNode CommandWithResult(params string[] arguments)
     {
         EnsureNotDisposed();
@@ -1316,8 +1510,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 使用節點資料同步執行 libmpv 命令並取得節點結果。
     /// </summary>
-    /// <param name="arguments">命令引數節點。</param>
-    /// <returns>命令回傳的節點資料；沒有回傳資料時為空節點。</returns>
+    /// <param name="arguments">
+    /// 命令引數節點。
+    /// </param>
+    /// <returns>
+    /// 命令回傳的節點資料；沒有回傳資料時為空節點。
+    /// </returns>
     public MpvNode CommandNode(MpvNode arguments)
     {
         EnsureNotDisposed();
@@ -1344,9 +1542,15 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 使用具名引數同步執行 libmpv 命令並取得節點結果，並以最新 libmpv 建議的特殊 `_name` 欄位保存命令名稱。
     /// </summary>
-    /// <param name="name">要執行的 mpv 命令名稱。</param>
-    /// <param name="arguments">命令具名引數。</param>
-    /// <returns>命令回傳的節點資料；沒有回傳資料時為空節點。</returns>
+    /// <param name="name">
+    /// 要執行的 mpv 命令名稱。
+    /// </param>
+    /// <param name="arguments">
+    /// 命令具名引數。
+    /// </param>
+    /// <returns>
+    /// 命令回傳的節點資料；沒有回傳資料時為空節點。
+    /// </returns>
     public MpvNode CommandNamed(string name, IDictionary<string, MpvNode> arguments)
     {
         return CommandNode(CreateNamedCommandNode(name, arguments));
@@ -1355,8 +1559,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 使用引數陣列非同步執行 libmpv 命令。
     /// </summary>
-    /// <param name="arguments">命令名稱與其後續引數。</param>
-    /// <returns>代表 libmpv 命令回覆的工作。</returns>
+    /// <param name="arguments">
+    /// 命令名稱與其後續引數。
+    /// </param>
+    /// <returns>
+    /// 代表 libmpv 命令回覆的工作。
+    /// </returns>
     public Task CommandAsync(params string[] arguments)
     {
         EnsureNotDisposed();
@@ -1381,8 +1589,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 使用節點資料非同步執行 libmpv 命令。
     /// </summary>
-    /// <param name="arguments">命令引數節點。</param>
-    /// <returns>代表 libmpv 命令回覆節點的工作。</returns>
+    /// <param name="arguments">
+    /// 命令引數節點。
+    /// </param>
+    /// <returns>
+    /// 代表 libmpv 命令回覆節點的工作。
+    /// </returns>
     public Task<MpvNode> CommandNodeAsync(MpvNode arguments)
     {
         EnsureNotDisposed();
@@ -1413,9 +1625,15 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 使用具名引數非同步執行 libmpv 命令，並以最新 libmpv 建議的特殊 `_name` 欄位保存命令名稱。
     /// </summary>
-    /// <param name="name">要執行的 mpv 命令名稱。</param>
-    /// <param name="arguments">命令具名引數。</param>
-    /// <returns>代表 libmpv 命令回覆節點的工作。</returns>
+    /// <param name="name">
+    /// 要執行的 mpv 命令名稱。
+    /// </param>
+    /// <param name="arguments">
+    /// 命令具名引數。
+    /// </param>
+    /// <returns>
+    /// 代表 libmpv 命令回覆節點的工作。
+    /// </returns>
     public Task<MpvNode> CommandNamedAsync(string name, IDictionary<string, MpvNode> arguments)
     {
         return CommandNodeAsync(CreateNamedCommandNode(name, arguments));
@@ -1424,7 +1642,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 中止指定的 libmpv 非同步命令。
     /// </summary>
-    /// <param name="requestId">要中止的非同步命令要求識別碼。</param>
+    /// <param name="requestId">
+    /// 要中止的非同步命令要求識別碼。
+    /// </param>
     public void AbortAsyncCommand(ulong requestId)
     {
         EnsureNotDisposed();
@@ -1434,9 +1654,15 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 非同步設定布林旗標格式的 libmpv 屬性。
     /// </summary>
-    /// <param name="name">要設定的 mpv 屬性名稱。</param>
-    /// <param name="value">要套用到屬性的布林值。</param>
-    /// <returns>代表 libmpv 設定屬性回覆的工作。</returns>
+    /// <param name="name">
+    /// 要設定的 mpv 屬性名稱。
+    /// </param>
+    /// <param name="value">
+    /// 要套用到屬性的布林值。
+    /// </param>
+    /// <returns>
+    /// 代表 libmpv 設定屬性回覆的工作。
+    /// </returns>
     public Task SetPropertyFlagAsync(string name, bool value)
     {
         EnsureNotDisposed();
@@ -1447,9 +1673,15 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 非同步設定 64 位元整數格式的 libmpv 屬性。
     /// </summary>
-    /// <param name="name">要設定的 mpv 屬性名稱。</param>
-    /// <param name="value">要套用到屬性的 64 位元整數值。</param>
-    /// <returns>代表 libmpv 設定屬性回覆的工作。</returns>
+    /// <param name="name">
+    /// 要設定的 mpv 屬性名稱。
+    /// </param>
+    /// <param name="value">
+    /// 要套用到屬性的 64 位元整數值。
+    /// </param>
+    /// <returns>
+    /// 代表 libmpv 設定屬性回覆的工作。
+    /// </returns>
     public Task SetPropertyInt64Async(string name, long value)
     {
         EnsureNotDisposed();
@@ -1459,9 +1691,15 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 非同步設定雙精確度浮點數格式的 libmpv 屬性。
     /// </summary>
-    /// <param name="name">要設定的 mpv 屬性名稱。</param>
-    /// <param name="value">要套用到屬性的雙精確度浮點數值。</param>
-    /// <returns>代表 libmpv 設定屬性回覆的工作。</returns>
+    /// <param name="name">
+    /// 要設定的 mpv 屬性名稱。
+    /// </param>
+    /// <param name="value">
+    /// 要套用到屬性的雙精確度浮點數值。
+    /// </param>
+    /// <returns>
+    /// 代表 libmpv 設定屬性回覆的工作。
+    /// </returns>
     public Task SetPropertyDoubleAsync(string name, double value)
     {
         EnsureNotDisposed();
@@ -1471,9 +1709,15 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 非同步設定字串格式的 libmpv 屬性。
     /// </summary>
-    /// <param name="name">要設定的 mpv 屬性名稱。</param>
-    /// <param name="value">要套用到屬性的字串值。</param>
-    /// <returns>代表 libmpv 設定屬性回覆的工作。</returns>
+    /// <param name="name">
+    /// 要設定的 mpv 屬性名稱。
+    /// </param>
+    /// <param name="value">
+    /// 要套用到屬性的字串值。
+    /// </param>
+    /// <returns>
+    /// 代表 libmpv 設定屬性回覆的工作。
+    /// </returns>
     public Task SetPropertyStringAsync(string name, string value)
     {
         EnsureNotDisposed();
@@ -1483,9 +1727,15 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 非同步設定節點格式的 libmpv 屬性。
     /// </summary>
-    /// <param name="name">要設定的 mpv 屬性名稱。</param>
-    /// <param name="value">要套用到屬性的節點資料。</param>
-    /// <returns>代表 libmpv 設定屬性回覆的工作。</returns>
+    /// <param name="name">
+    /// 要設定的 mpv 屬性名稱。
+    /// </param>
+    /// <param name="value">
+    /// 要套用到屬性的節點資料。
+    /// </param>
+    /// <returns>
+    /// 代表 libmpv 設定屬性回覆的工作。
+    /// </returns>
     public Task SetPropertyNodeAsync(string name, MpvNode value)
     {
         EnsureNotDisposed();
@@ -1517,9 +1767,15 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 非同步取得 libmpv 屬性。
     /// </summary>
-    /// <param name="name">要讀取的 mpv 屬性名稱。</param>
-    /// <param name="format">屬性值要使用的 libmpv 資料格式。</param>
-    /// <returns>可用於追蹤回覆事件的要求識別碼。</returns>
+    /// <param name="name">
+    /// 要讀取的 mpv 屬性名稱。
+    /// </param>
+    /// <param name="format">
+    /// 屬性值要使用的 libmpv 資料格式。
+    /// </param>
+    /// <returns>
+    /// 可用於追蹤回覆事件的要求識別碼。
+    /// </returns>
     public ulong GetPropertyAsync(string name, MpvFormat format)
     {
         EnsureNotDisposed();
@@ -1535,8 +1791,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 非同步取得 libmpv 屬性並以節點工作接收回覆。
     /// </summary>
-    /// <param name="name">要讀取的 mpv 屬性名稱。</param>
-    /// <returns>代表 libmpv 屬性回覆節點的工作。</returns>
+    /// <param name="name">
+    /// 要讀取的 mpv 屬性名稱。
+    /// </param>
+    /// <returns>
+    /// 代表 libmpv 屬性回覆節點的工作。
+    /// </returns>
     public Task<MpvNode> GetPropertyNodeAsync(string name)
     {
         return GetPropertyNodeAsync(name, MpvFormat.Node);
@@ -1545,9 +1805,15 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 非同步取得 libmpv 屬性並以節點工作接收回覆。
     /// </summary>
-    /// <param name="name">要讀取的 mpv 屬性名稱。</param>
-    /// <param name="format">屬性值要使用的 libmpv 資料格式。</param>
-    /// <returns>代表 libmpv 屬性回覆節點的工作。</returns>
+    /// <param name="name">
+    /// 要讀取的 mpv 屬性名稱。
+    /// </param>
+    /// <param name="format">
+    /// 屬性值要使用的 libmpv 資料格式。
+    /// </param>
+    /// <returns>
+    /// 代表 libmpv 屬性回覆節點的工作。
+    /// </returns>
     public Task<MpvNode> GetPropertyNodeAsync(string name, MpvFormat format)
     {
         EnsureNotDisposed();
@@ -1572,7 +1838,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得目前 mpv 可用命令清單。
     /// </summary>
-    /// <returns>目前 mpv 回報的命令描述集合。</returns>
+    /// <returns>
+    /// 目前 mpv 回報的命令描述集合。
+    /// </returns>
     public IReadOnlyList<MpvCommandInfo> GetCommandList()
     {
         IReadOnlyList<MpvNode> nodes = GetPropertyNode("command-list").AsArray();
@@ -1588,7 +1856,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得目前 mpv 可用屬性清單。
     /// </summary>
-    /// <returns>目前 mpv 回報的屬性名稱集合。</returns>
+    /// <returns>
+    /// 目前 mpv 回報的屬性名稱集合。
+    /// </returns>
     public IReadOnlyList<string> GetPropertyList()
     {
         IReadOnlyList<MpvNode> nodes = GetPropertyNode("property-list").AsArray();
@@ -1604,7 +1874,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得目前 mpv 可用設定檔清單。
     /// </summary>
-    /// <returns>目前 mpv 回報的設定檔資訊集合。</returns>
+    /// <returns>
+    /// 目前 mpv 回報的設定檔資訊集合。
+    /// </returns>
     public IReadOnlyList<MpvProfileInfo> GetProfiles()
     {
         IReadOnlyList<MpvNode> nodes = GetPropertyNode("profile-list").AsArray();
@@ -1620,7 +1892,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得目前 mpv 可用解碼器清單。
     /// </summary>
-    /// <returns>目前 mpv 回報的解碼器資訊集合。</returns>
+    /// <returns>
+    /// 目前 mpv 回報的解碼器資訊集合。
+    /// </returns>
     public IReadOnlyList<MpvDecoderInfo> GetDecoders()
     {
         IReadOnlyList<MpvNode> nodes = GetPropertyNode("decoder-list").AsArray();
@@ -1636,7 +1910,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得目前 mpv 可用通訊協定清單。
     /// </summary>
-    /// <returns>目前 mpv 回報的通訊協定名稱集合。</returns>
+    /// <returns>
+    /// 目前 mpv 回報的通訊協定名稱集合。
+    /// </returns>
     public IReadOnlyList<string> GetProtocols()
     {
         return SplitCommaList(GetPropertyString("protocol-list"));
@@ -1645,7 +1921,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得目前 FFmpeg demuxer 清單。
     /// </summary>
-    /// <returns>目前 mpv 回報的 demuxer 名稱集合。</returns>
+    /// <returns>
+    /// 目前 mpv 回報的 demuxer 名稱集合。
+    /// </returns>
     public IReadOnlyList<string> GetDemuxers()
     {
         return SplitCommaList(GetPropertyString("demuxer-lavf-list"));
@@ -1654,7 +1932,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得目前播放清單。
     /// </summary>
-    /// <returns>目前播放清單項目集合。</returns>
+    /// <returns>
+    /// 目前播放清單項目集合。
+    /// </returns>
     public IReadOnlyList<MpvPlaylistEntry> GetPlaylist()
     {
         IReadOnlyList<MpvNode> nodes = GetPropertyNode("playlist").AsArray();
@@ -1670,7 +1950,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得目前播放軌清單。
     /// </summary>
-    /// <returns>目前播放軌資訊集合。</returns>
+    /// <returns>
+    /// 目前播放軌資訊集合。
+    /// </returns>
     public IReadOnlyList<MpvTrackInfo> GetTracks()
     {
         return ReadTracks(GetPropertyNode("track-list"));
@@ -1679,7 +1961,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得目前章節清單。
     /// </summary>
-    /// <returns>目前章節資訊集合。</returns>
+    /// <returns>
+    /// 目前章節資訊集合。
+    /// </returns>
     public IReadOnlyList<MpvChapterInfo> GetChapters()
     {
         IReadOnlyList<MpvNode> nodes = GetPropertyNode("chapter-list").AsArray();
@@ -1695,7 +1979,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得目前版本清單。
     /// </summary>
-    /// <returns>目前版本資訊集合。</returns>
+    /// <returns>
+    /// 目前版本資訊集合。
+    /// </returns>
     public IReadOnlyList<MpvEditionInfo> GetEditions()
     {
         IReadOnlyList<MpvNode> nodes = GetPropertyNode("edition-list").AsArray();
@@ -1711,7 +1997,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得目前媒體中繼資料。
     /// </summary>
-    /// <returns>目前媒體中繼資料字典。</returns>
+    /// <returns>
+    /// 目前媒體中繼資料字典。
+    /// </returns>
     public IReadOnlyDictionary<string, string> GetMetadata()
     {
         Dictionary<string, string> metadata = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -1726,7 +2014,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得目前可用音訊裝置清單。
     /// </summary>
-    /// <returns>目前可用音訊裝置資訊集合。</returns>
+    /// <returns>
+    /// 目前可用音訊裝置資訊集合。
+    /// </returns>
     public IReadOnlyList<MpvAudioDeviceInfo> GetAudioDevices()
     {
         IReadOnlyList<MpvNode> nodes = GetPropertyNode("audio-device-list").AsArray();
@@ -1742,7 +2032,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得目前視訊參數。
     /// </summary>
-    /// <returns>目前視訊參數。</returns>
+    /// <returns>
+    /// 目前視訊參數。
+    /// </returns>
     public MpvVideoParameters GetVideoParameters()
     {
         return MpvVideoParameters.FromNode(GetPropertyNode("video-params"));
@@ -1751,7 +2043,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得目前音訊參數。
     /// </summary>
-    /// <returns>目前音訊參數。</returns>
+    /// <returns>
+    /// 目前音訊參數。
+    /// </returns>
     public MpvAudioParameters GetAudioParameters()
     {
         return MpvAudioParameters.FromNode(GetPropertyNode("audio-params"));
@@ -1760,7 +2054,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得目前輸入綁定清單。
     /// </summary>
-    /// <returns>目前輸入綁定資訊集合。</returns>
+    /// <returns>
+    /// 目前輸入綁定資訊集合。
+    /// </returns>
     public IReadOnlyList<MpvInputBindingInfo> GetInputBindings()
     {
         IReadOnlyList<MpvNode> nodes = GetPropertyNode("input-bindings").AsArray();
@@ -1776,7 +2072,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得目前 demuxer 快取狀態。
     /// </summary>
-    /// <returns>目前 demuxer 快取狀態。</returns>
+    /// <returns>
+    /// 目前 demuxer 快取狀態。
+    /// </returns>
     public MpvDemuxerCacheState GetDemuxerCacheState()
     {
         return MpvDemuxerCacheState.FromNode(GetPropertyNode("demuxer-cache-state"));
@@ -1794,7 +2092,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 設定 libmpv 事件喚醒通知。
     /// </summary>
-    /// <param name="callback">收到事件喚醒通知時要執行的動作；傳入 <see langword="null"/> 可清除回呼。</param>
+    /// <param name="callback">
+    /// 收到事件喚醒通知時要執行的動作；傳入 <see langword="null"/> 可清除回呼。
+    /// </param>
     public void SetWakeupCallback(Action? callback)
     {
         EnsureNotDisposed();
@@ -1826,7 +2126,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得 libmpv 事件喚醒 pipe 檔案描述元。
     /// </summary>
-    /// <returns>喚醒 pipe 檔案描述元；Windows 平台通常會傳回負值。</returns>
+    /// <returns>
+    /// 喚醒 pipe 檔案描述元；Windows 平台通常會傳回負值。
+    /// </returns>
     public int GetWakeupPipe()
     {
         EnsureNotDisposed();
@@ -1836,8 +2138,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 從目前用戶端建立新的強參考受控用戶端控制代碼。
     /// </summary>
-    /// <param name="name">新用戶端名稱。</param>
-    /// <returns>新建立的 libmpv 受控用戶端控制代碼。</returns>
+    /// <param name="name">
+    /// 新用戶端名稱。
+    /// </param>
+    /// <returns>
+    /// 新建立的 libmpv 受控用戶端控制代碼。
+    /// </returns>
     public MpvClientHandle CreateClient(string name)
     {
         return new MpvClientHandle(CreateClientHandle(name), false);
@@ -1846,8 +2152,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 從目前用戶端建立新的弱參考受控用戶端控制代碼。
     /// </summary>
-    /// <param name="name">新用戶端名稱。</param>
-    /// <returns>新建立的弱參考 libmpv 受控用戶端控制代碼。</returns>
+    /// <param name="name">
+    /// 新用戶端名稱。
+    /// </param>
+    /// <returns>
+    /// 新建立的弱參考 libmpv 受控用戶端控制代碼。
+    /// </returns>
     public MpvClientHandle CreateWeakClient(string name)
     {
         return new MpvClientHandle(CreateWeakClientHandle(name), false);
@@ -1856,8 +2166,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 從目前用戶端建立新的強參考原生用戶端。
     /// </summary>
-    /// <param name="name">新用戶端名稱。</param>
-    /// <returns>新建立的 libmpv 原生用戶端控制代碼。</returns>
+    /// <param name="name">
+    /// 新用戶端名稱。
+    /// </param>
+    /// <returns>
+    /// 新建立的 libmpv 原生用戶端控制代碼。
+    /// </returns>
     public IntPtr CreateClientHandle(string name)
     {
         EnsureNotDisposed();
@@ -1876,8 +2190,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 從目前用戶端建立新的弱參考原生用戶端。
     /// </summary>
-    /// <param name="name">新用戶端名稱。</param>
-    /// <returns>新建立的弱參考 libmpv 原生用戶端控制代碼。</returns>
+    /// <param name="name">
+    /// 新用戶端名稱。
+    /// </param>
+    /// <returns>
+    /// 新建立的弱參考 libmpv 原生用戶端控制代碼。
+    /// </returns>
     public IntPtr CreateWeakClientHandle(string name)
     {
         EnsureNotDisposed();
@@ -1896,7 +2214,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 銷毀由 libmpv 建立的原生用戶端控制代碼。
     /// </summary>
-    /// <param name="clientHandle">要銷毀的原生用戶端控制代碼。</param>
+    /// <param name="clientHandle">
+    /// 要銷毀的原生用戶端控制代碼。
+    /// </param>
     public static void DestroyClientHandle(IntPtr clientHandle)
     {
         if (clientHandle != IntPtr.Zero)
@@ -1908,7 +2228,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 終止並銷毀由 libmpv 建立的原生用戶端控制代碼。
     /// </summary>
-    /// <param name="clientHandle">要終止並銷毀的原生用戶端控制代碼。</param>
+    /// <param name="clientHandle">
+    /// 要終止並銷毀的原生用戶端控制代碼。
+    /// </param>
     public static void TerminateDestroyClientHandle(IntPtr clientHandle)
     {
         if (clientHandle != IntPtr.Zero)
@@ -1920,8 +2242,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 載入檔案或網址作為播放項目。
     /// </summary>
-    /// <param name="pathOrUrl">要載入的檔案路徑或媒體網址。</param>
-    /// <param name="mode">播放項目加入播放清單的方式。</param>
+    /// <param name="pathOrUrl">
+    /// 要載入的檔案路徑或媒體網址。
+    /// </param>
+    /// <param name="mode">
+    /// 播放項目加入播放清單的方式。
+    /// </param>
     public void LoadFile(string pathOrUrl, MpvLoadFileMode mode = MpvLoadFileMode.Replace)
     {
         LoadFile(pathOrUrl, mode, null, null);
@@ -1930,10 +2256,18 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 載入檔案或網址作為播放項目，並可指定插入索引與單檔選項。
     /// </summary>
-    /// <param name="pathOrUrl">要載入的檔案路徑或媒體網址。</param>
-    /// <param name="mode">播放項目加入播放清單的方式。</param>
-    /// <param name="insertIndex">使用插入模式時要插入的索引；未指定時由 mpv 決定。</param>
-    /// <param name="fileOptions">只在此播放項目播放期間套用的 mpv 選項。</param>
+    /// <param name="pathOrUrl">
+    /// 要載入的檔案路徑或媒體網址。
+    /// </param>
+    /// <param name="mode">
+    /// 播放項目加入播放清單的方式。
+    /// </param>
+    /// <param name="insertIndex">
+    /// 使用插入模式時要插入的索引；未指定時由 mpv 決定。
+    /// </param>
+    /// <param name="fileOptions">
+    /// 只在此播放項目播放期間套用的 mpv 選項。
+    /// </param>
     public void LoadFile(string pathOrUrl, MpvLoadFileMode mode, int? insertIndex, IDictionary<string, string>? fileOptions)
     {
         if (fileOptions != null)
@@ -1973,8 +2307,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 使用 <see cref="MpvMediaItem"/> 載入播放項目。
     /// </summary>
-    /// <param name="item">要載入的媒體項目；可帶 HTTP 標頭、起訖時間與 per-file 選項。</param>
-    /// <param name="mode">播放項目加入播放清單的方式。</param>
+    /// <param name="item">
+    /// 要載入的媒體項目；可帶 HTTP 標頭、起訖時間與 per-file 選項。
+    /// </param>
+    /// <param name="mode">
+    /// 播放項目加入播放清單的方式。
+    /// </param>
     public void Load(MpvMediaItem item, MpvLoadFileMode mode = MpvLoadFileMode.Replace)
     {
         if (item == null)
@@ -1989,11 +2327,21 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 使用 <see cref="MpvMediaItem"/> 載入播放項目，並等到 libmpv 完成載入或回報失敗。
     /// </summary>
-    /// <param name="item">要載入的媒體項目。</param>
-    /// <param name="mode">播放項目加入播放清單的方式。</param>
-    /// <param name="timeout">等待 <c>FileLoaded</c> 事件的逾時時間；未指定時使用 30 秒。</param>
-    /// <param name="cancellationToken">取消等待的 token。</param>
-    /// <returns>代表載入流程的工作；libmpv 回報 <c>EndFile</c> 為錯誤時擲出 <see cref="MpvException"/>。</returns>
+    /// <param name="item">
+    /// 要載入的媒體項目。
+    /// </param>
+    /// <param name="mode">
+    /// 播放項目加入播放清單的方式。
+    /// </param>
+    /// <param name="timeout">
+    /// 等待 <c>FileLoaded</c> 事件的逾時時間；未指定時使用 30 秒。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 取消等待的 token。
+    /// </param>
+    /// <returns>
+    /// 代表載入流程的工作；libmpv 回報 <c>EndFile</c> 為錯誤時擲出 <see cref="MpvException"/>。
+    /// </returns>
     public Task LoadAsync(
         MpvMediaItem item,
         MpvLoadFileMode mode = MpvLoadFileMode.Replace,
@@ -2011,11 +2359,21 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 執行 <see cref="LoadAsync(MpvMediaItem, MpvLoadFileMode, TimeSpan?, CancellationToken)"/> 的內部流程。
     /// </summary>
-    /// <param name="item">要載入的媒體項目。</param>
-    /// <param name="mode">播放項目加入播放清單的方式。</param>
-    /// <param name="timeout">等待 <c>FileLoaded</c> 事件的逾時時間。</param>
-    /// <param name="cancellationToken">取消等待的 token。</param>
-    /// <returns>代表載入流程的工作。</returns>
+    /// <param name="item">
+    /// 要載入的媒體項目。
+    /// </param>
+    /// <param name="mode">
+    /// 播放項目加入播放清單的方式。
+    /// </param>
+    /// <param name="timeout">
+    /// 等待 <c>FileLoaded</c> 事件的逾時時間。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 取消等待的 token。
+    /// </param>
+    /// <returns>
+    /// 代表載入流程的工作。
+    /// </returns>
     private async Task LoadAsyncCore(
         MpvMediaItem item,
         MpvLoadFileMode mode,
@@ -2071,7 +2429,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 停止目前播放。
     /// </summary>
-    /// <param name="keepPlaylist">停止後是否保留目前播放清單。</param>
+    /// <param name="keepPlaylist">
+    /// 停止後是否保留目前播放清單。
+    /// </param>
     public void Stop(bool keepPlaylist)
     {
         if (keepPlaylist)
@@ -2086,8 +2446,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 搜尋目前播放項目的播放位置。
     /// </summary>
-    /// <param name="seconds">要搜尋的秒數。</param>
-    /// <param name="mode">mpv 搜尋模式，例如 <c>relative</c> 或 <c>absolute</c>。</param>
+    /// <param name="seconds">
+    /// 要搜尋的秒數。
+    /// </param>
+    /// <param name="mode">
+    /// mpv 搜尋模式，例如 <c>relative</c> 或 <c>absolute</c>。
+    /// </param>
     public void Seek(double seconds, string mode = "relative")
     {
         Command("seek", seconds.ToString(CultureInfo.InvariantCulture), mode);
@@ -2096,9 +2460,15 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 非同步搜尋目前播放項目的播放位置。
     /// </summary>
-    /// <param name="seconds">要搜尋的秒數。</param>
-    /// <param name="mode">mpv 搜尋模式，例如 <c>relative</c> 或 <c>absolute</c>。</param>
-    /// <returns>代表 libmpv 命令回覆的工作。</returns>
+    /// <param name="seconds">
+    /// 要搜尋的秒數。
+    /// </param>
+    /// <param name="mode">
+    /// mpv 搜尋模式，例如 <c>relative</c> 或 <c>absolute</c>。
+    /// </param>
+    /// <returns>
+    /// 代表 libmpv 命令回覆的工作。
+    /// </returns>
     public Task SeekAsync(double seconds, string mode = "relative")
     {
         return CommandAsync("seek", seconds.ToString(CultureInfo.InvariantCulture), mode);
@@ -2123,7 +2493,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 還原上一個搜尋位置或標記搜尋位置。
     /// </summary>
-    /// <param name="mark">是否只標記目前位置作為之後還原目標。</param>
+    /// <param name="mark">
+    /// 是否只標記目前位置作為之後還原目標。
+    /// </param>
     public void RevertSeek(bool mark = false)
     {
         if (mark)
@@ -2146,8 +2518,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 前進指定數量的視訊影格。
     /// </summary>
-    /// <param name="frames">要前進的影格數。</param>
-    /// <param name="flags">mpv 影格步進旗標；未指定時使用 mpv 預設值。</param>
+    /// <param name="frames">
+    /// 要前進的影格數。
+    /// </param>
+    /// <param name="flags">
+    /// mpv 影格步進旗標；未指定時使用 mpv 預設值。
+    /// </param>
     public void FrameStep(int frames, string? flags = null)
     {
         if (string.IsNullOrEmpty(flags))
@@ -2170,9 +2546,15 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 載入播放清單檔案或網址。
     /// </summary>
-    /// <param name="pathOrUrl">要載入的播放清單檔案路徑或網址。</param>
-    /// <param name="mode">播放清單加入目前播放清單的方式。</param>
-    /// <param name="insertIndex">使用插入模式時要插入的索引；未指定時由 mpv 決定。</param>
+    /// <param name="pathOrUrl">
+    /// 要載入的播放清單檔案路徑或網址。
+    /// </param>
+    /// <param name="mode">
+    /// 播放清單加入目前播放清單的方式。
+    /// </param>
+    /// <param name="insertIndex">
+    /// 使用插入模式時要插入的索引；未指定時由 mpv 決定。
+    /// </param>
     public void LoadList(string pathOrUrl, MpvLoadListMode mode = MpvLoadListMode.Replace, int? insertIndex = null)
     {
         List<string> arguments = new List<string>
@@ -2193,7 +2575,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 前往播放清單下一個項目。
     /// </summary>
-    /// <param name="force">位於最後一個項目時是否強制結束目前播放。</param>
+    /// <param name="force">
+    /// 位於最後一個項目時是否強制結束目前播放。
+    /// </param>
     public void PlaylistNext(bool force = false)
     {
         Command("playlist-next", force ? "force" : "weak");
@@ -2202,7 +2586,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 前往播放清單上一個項目。
     /// </summary>
-    /// <param name="force">位於第一個項目時是否強制結束目前播放。</param>
+    /// <param name="force">
+    /// 位於第一個項目時是否強制結束目前播放。
+    /// </param>
     public void PlaylistPrevious(bool force = false)
     {
         Command("playlist-prev", force ? "force" : "weak");
@@ -2227,7 +2613,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 播放指定索引的播放清單項目。
     /// </summary>
-    /// <param name="index">以 0 為起始的播放清單索引。</param>
+    /// <param name="index">
+    /// 以 0 為起始的播放清單索引。
+    /// </param>
     public void PlayPlaylistIndex(int index)
     {
         Command("playlist-play-index", index.ToString(CultureInfo.InvariantCulture));
@@ -2260,7 +2648,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 移除指定索引的播放清單項目。
     /// </summary>
-    /// <param name="index">以 0 為起始的播放清單索引。</param>
+    /// <param name="index">
+    /// 以 0 為起始的播放清單索引。
+    /// </param>
     public void RemovePlaylistIndex(int index)
     {
         Command("playlist-remove", index.ToString(CultureInfo.InvariantCulture));
@@ -2277,8 +2667,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 移動播放清單項目。
     /// </summary>
-    /// <param name="sourceIndex">要移動的播放清單索引。</param>
-    /// <param name="destinationIndex">目標播放清單索引。</param>
+    /// <param name="sourceIndex">
+    /// 要移動的播放清單索引。
+    /// </param>
+    /// <param name="destinationIndex">
+    /// 目標播放清單索引。
+    /// </param>
     public void MovePlaylistIndex(int sourceIndex, int destinationIndex)
     {
         Command(
@@ -2337,9 +2731,15 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// 等同 <c>Chapter = index</c>，提供方法形式以對齊既有 <see cref="PlayPlaylistIndex(int)"/>
     /// 命名慣例。
     /// </summary>
-    /// <param name="index">目標章節索引；libmpv 會拒絕超出 <see cref="ChapterCount"/> 範圍的值。</param>
-    /// <exception cref="ArgumentOutOfRangeException">索引為負時擲回。</exception>
-    /// <exception cref="MpvException">索引超出範圍或當前媒體無章節時擲回。</exception>
+    /// <param name="index">
+    /// 目標章節索引；libmpv 會拒絕超出 <see cref="ChapterCount"/> 範圍的值。
+    /// </param>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// 索引為負時擲回。
+    /// </exception>
+    /// <exception cref="MpvException">
+    /// 索引超出範圍或當前媒體無章節時擲回。
+    /// </exception>
     public void SeekChapter(int index)
     {
         if (index < 0)
@@ -2353,7 +2753,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得或設定主字幕軌是否顯示（mpv <c>sub-visibility</c>）。
     /// </summary>
-    /// <value>顯示時為 <see langword="true"/>。</value>
+    /// <value>
+    /// 顯示時為 <see langword="true"/>。
+    /// </value>
     public bool SubtitleVisible
     {
         get { return GetPropertyFlag("sub-visibility"); }
@@ -2363,7 +2765,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得或設定主字幕同步偏移（mpv <c>sub-delay</c>，秒）。正值延後、負值提前。
     /// </summary>
-    /// <value>字幕同步偏移時間。</value>
+    /// <value>
+    /// 字幕同步偏移時間。
+    /// </value>
     public TimeSpan SubtitleDelay
     {
         get { return TimeSpan.FromSeconds(GetPropertyDouble("sub-delay")); }
@@ -2374,7 +2778,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// 取得或設定主字幕垂直位置（mpv <c>sub-pos</c>），0 為畫面最頂、100 為最底。
     /// 範圍允許 0–150（150 會超出畫面下緣讓字幕隱藏）。
     /// </summary>
-    /// <value>字幕垂直位置百分比。</value>
+    /// <value>
+    /// 字幕垂直位置百分比。
+    /// </value>
     public double SubtitlePosition
     {
         get { return GetPropertyDouble("sub-pos"); }
@@ -2384,7 +2790,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得或設定主字幕縮放（mpv <c>sub-scale</c>），1.0 為原始大小。
     /// </summary>
-    /// <value>字幕縮放比例。</value>
+    /// <value>
+    /// 字幕縮放比例。
+    /// </value>
     public double SubtitleScale
     {
         get { return GetPropertyDouble("sub-scale"); }
@@ -2394,7 +2802,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得或設定主字幕字型大小（mpv <c>sub-font-size</c>），單位為 pt at 720p reference。
     /// </summary>
-    /// <value>字幕字型大小。</value>
+    /// <value>
+    /// 字幕字型大小。
+    /// </value>
     public double SubtitleFontSize
     {
         get { return GetPropertyDouble("sub-font-size"); }
@@ -2404,7 +2814,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得或設定主字幕字型家族（mpv <c>sub-font</c>），例如 <c>"sans-serif"</c> 或 <c>"Noto Sans CJK TC"</c>。
     /// </summary>
-    /// <value>字幕字型家族名稱；未設定時為空字串。</value>
+    /// <value>
+    /// 字幕字型家族名稱；未設定時為空字串。
+    /// </value>
     public string? SubtitleFontFamily
     {
         get { return GetPropertyString("sub-font"); }
@@ -2416,7 +2828,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <c>#RRGGBB</c> / 命名色彩 / 浮點 RGBA 等格式；可用 <see cref="MpvColor"/> 工具
     /// 從 ARGB 分量建構。
     /// </summary>
-    /// <value>mpv 接受的色彩字串。</value>
+    /// <value>
+    /// mpv 接受的色彩字串。
+    /// </value>
     public string? SubtitleColor
     {
         get { return GetPropertyString("sub-color"); }
@@ -2426,7 +2840,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得或設定主字幕背景色彩（mpv <c>sub-back-color</c>），格式同 <see cref="SubtitleColor"/>。
     /// </summary>
-    /// <value>mpv 接受的色彩字串。</value>
+    /// <value>
+    /// mpv 接受的色彩字串。
+    /// </value>
     public string? SubtitleBackgroundColor
     {
         get { return GetPropertyString("sub-back-color"); }
@@ -2436,7 +2852,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得或設定主字幕粗體（mpv <c>sub-bold</c>）。
     /// </summary>
-    /// <value>套用粗體時為 <see langword="true"/>。</value>
+    /// <value>
+    /// 套用粗體時為 <see langword="true"/>。
+    /// </value>
     public bool SubtitleBold
     {
         get { return GetPropertyFlag("sub-bold"); }
@@ -2446,7 +2864,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得或設定主字幕斜體（mpv <c>sub-italic</c>）。
     /// </summary>
-    /// <value>套用斜體時為 <see langword="true"/>。</value>
+    /// <value>
+    /// 套用斜體時為 <see langword="true"/>。
+    /// </value>
     public bool SubtitleItalic
     {
         get { return GetPropertyFlag("sub-italic"); }
@@ -2456,7 +2876,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得或設定主音訊軌同步偏移（mpv <c>audio-delay</c>，秒）。正值延後、負值提前。
     /// </summary>
-    /// <value>音訊同步偏移時間。</value>
+    /// <value>
+    /// 音訊同步偏移時間。
+    /// </value>
     public TimeSpan AudioDelay
     {
         get { return TimeSpan.FromSeconds(GetPropertyDouble("audio-delay")); }
@@ -2466,11 +2888,21 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 載入外部字幕播放軌。
     /// </summary>
-    /// <param name="url">字幕檔案路徑或網路網址。</param>
-    /// <param name="mode">字幕載入後的選取模式。</param>
-    /// <param name="flags">字幕播放軌旗標。</param>
-    /// <param name="title">字幕播放軌標題。</param>
-    /// <param name="language">字幕播放軌語言代碼。</param>
+    /// <param name="url">
+    /// 字幕檔案路徑或網路網址。
+    /// </param>
+    /// <param name="mode">
+    /// 字幕載入後的選取模式。
+    /// </param>
+    /// <param name="flags">
+    /// 字幕播放軌旗標。
+    /// </param>
+    /// <param name="title">
+    /// 字幕播放軌標題。
+    /// </param>
+    /// <param name="language">
+    /// 字幕播放軌語言代碼。
+    /// </param>
     public void AddSubtitle(string url, MpvTrackLoadMode mode = MpvTrackLoadMode.Select, MpvTrackLoadFlags flags = MpvTrackLoadFlags.None, string? title = null, string? language = null)
     {
         Command(BuildExternalTrackArguments("sub-add", url, mode, flags, title, language, null));
@@ -2479,12 +2911,24 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 非同步載入外部字幕播放軌。
     /// </summary>
-    /// <param name="url">字幕檔案路徑或網路網址。</param>
-    /// <param name="mode">字幕載入後的選取模式。</param>
-    /// <param name="flags">字幕播放軌旗標。</param>
-    /// <param name="title">字幕播放軌標題。</param>
-    /// <param name="language">字幕播放軌語言代碼。</param>
-    /// <returns>代表 libmpv 命令回覆的工作。</returns>
+    /// <param name="url">
+    /// 字幕檔案路徑或網路網址。
+    /// </param>
+    /// <param name="mode">
+    /// 字幕載入後的選取模式。
+    /// </param>
+    /// <param name="flags">
+    /// 字幕播放軌旗標。
+    /// </param>
+    /// <param name="title">
+    /// 字幕播放軌標題。
+    /// </param>
+    /// <param name="language">
+    /// 字幕播放軌語言代碼。
+    /// </param>
+    /// <returns>
+    /// 代表 libmpv 命令回覆的工作。
+    /// </returns>
     public Task AddSubtitleAsync(string url, MpvTrackLoadMode mode = MpvTrackLoadMode.Select, MpvTrackLoadFlags flags = MpvTrackLoadFlags.None, string? title = null, string? language = null)
     {
         return CommandAsync(BuildExternalTrackArguments("sub-add", url, mode, flags, title, language, null));
@@ -2493,7 +2937,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 移除外部字幕播放軌。
     /// </summary>
-    /// <param name="trackId">要移除的字幕播放軌識別碼；未指定時移除目前字幕軌。</param>
+    /// <param name="trackId">
+    /// 要移除的字幕播放軌識別碼；未指定時移除目前字幕軌。
+    /// </param>
     public void RemoveSubtitle(long? trackId = null)
     {
         CommandOptionalTrackId("sub-remove", trackId);
@@ -2502,7 +2948,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 重新載入外部字幕播放軌。
     /// </summary>
-    /// <param name="trackId">要重新載入的字幕播放軌識別碼；未指定時重新載入目前字幕軌。</param>
+    /// <param name="trackId">
+    /// 要重新載入的字幕播放軌識別碼；未指定時重新載入目前字幕軌。
+    /// </param>
     public void ReloadSubtitle(long? trackId = null)
     {
         CommandOptionalTrackId("sub-reload", trackId);
@@ -2511,8 +2959,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 依字幕事件調整字幕顯示時間。
     /// </summary>
-    /// <param name="skip">要前進或後退的字幕事件數。</param>
-    /// <param name="target">要操作的字幕軌。</param>
+    /// <param name="skip">
+    /// 要前進或後退的字幕事件數。
+    /// </param>
+    /// <param name="target">
+    /// 要操作的字幕軌。
+    /// </param>
     public void StepSubtitle(int skip, MpvSubtitleStepTarget target = MpvSubtitleStepTarget.Primary)
     {
         Command("sub-step", skip.ToString(CultureInfo.InvariantCulture), ToSubtitleStepTargetText(target));
@@ -2521,8 +2973,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 依字幕事件搜尋播放位置。
     /// </summary>
-    /// <param name="skip">要前進或後退的字幕事件數。</param>
-    /// <param name="target">要操作的字幕軌。</param>
+    /// <param name="skip">
+    /// 要前進或後退的字幕事件數。
+    /// </param>
+    /// <param name="target">
+    /// 要操作的字幕軌。
+    /// </param>
     public void SeekSubtitle(int skip, MpvSubtitleStepTarget target = MpvSubtitleStepTarget.Primary)
     {
         Command("sub-seek", skip.ToString(CultureInfo.InvariantCulture), ToSubtitleStepTargetText(target));
@@ -2531,11 +2987,21 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 載入外部音訊播放軌。
     /// </summary>
-    /// <param name="url">音訊檔案路徑或網路網址。</param>
-    /// <param name="mode">音訊載入後的選取模式。</param>
-    /// <param name="flags">音訊播放軌旗標。</param>
-    /// <param name="title">音訊播放軌標題。</param>
-    /// <param name="language">音訊播放軌語言代碼。</param>
+    /// <param name="url">
+    /// 音訊檔案路徑或網路網址。
+    /// </param>
+    /// <param name="mode">
+    /// 音訊載入後的選取模式。
+    /// </param>
+    /// <param name="flags">
+    /// 音訊播放軌旗標。
+    /// </param>
+    /// <param name="title">
+    /// 音訊播放軌標題。
+    /// </param>
+    /// <param name="language">
+    /// 音訊播放軌語言代碼。
+    /// </param>
     public void AddAudioTrack(string url, MpvTrackLoadMode mode = MpvTrackLoadMode.Select, MpvTrackLoadFlags flags = MpvTrackLoadFlags.None, string? title = null, string? language = null)
     {
         Command(BuildExternalTrackArguments("audio-add", url, mode, flags, title, language, null));
@@ -2544,12 +3010,24 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 非同步載入外部音訊播放軌。
     /// </summary>
-    /// <param name="url">音訊檔案路徑或網路網址。</param>
-    /// <param name="mode">音訊載入後的選取模式。</param>
-    /// <param name="flags">音訊播放軌旗標。</param>
-    /// <param name="title">音訊播放軌標題。</param>
-    /// <param name="language">音訊播放軌語言代碼。</param>
-    /// <returns>代表 libmpv 命令回覆的工作。</returns>
+    /// <param name="url">
+    /// 音訊檔案路徑或網路網址。
+    /// </param>
+    /// <param name="mode">
+    /// 音訊載入後的選取模式。
+    /// </param>
+    /// <param name="flags">
+    /// 音訊播放軌旗標。
+    /// </param>
+    /// <param name="title">
+    /// 音訊播放軌標題。
+    /// </param>
+    /// <param name="language">
+    /// 音訊播放軌語言代碼。
+    /// </param>
+    /// <returns>
+    /// 代表 libmpv 命令回覆的工作。
+    /// </returns>
     public Task AddAudioTrackAsync(string url, MpvTrackLoadMode mode = MpvTrackLoadMode.Select, MpvTrackLoadFlags flags = MpvTrackLoadFlags.None, string? title = null, string? language = null)
     {
         return CommandAsync(BuildExternalTrackArguments("audio-add", url, mode, flags, title, language, null));
@@ -2558,7 +3036,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 移除外部音訊播放軌。
     /// </summary>
-    /// <param name="trackId">要移除的音訊播放軌識別碼；未指定時移除目前音訊軌。</param>
+    /// <param name="trackId">
+    /// 要移除的音訊播放軌識別碼；未指定時移除目前音訊軌。
+    /// </param>
     public void RemoveAudioTrack(long? trackId = null)
     {
         CommandOptionalTrackId("audio-remove", trackId);
@@ -2567,7 +3047,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 重新載入外部音訊播放軌。
     /// </summary>
-    /// <param name="trackId">要重新載入的音訊播放軌識別碼；未指定時重新載入目前音訊軌。</param>
+    /// <param name="trackId">
+    /// 要重新載入的音訊播放軌識別碼；未指定時重新載入目前音訊軌。
+    /// </param>
     public void ReloadAudioTrack(long? trackId = null)
     {
         CommandOptionalTrackId("audio-reload", trackId);
@@ -2576,12 +3058,24 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 載入外部視訊播放軌。
     /// </summary>
-    /// <param name="url">視訊檔案路徑或網路網址。</param>
-    /// <param name="mode">視訊載入後的選取模式。</param>
-    /// <param name="flags">視訊播放軌旗標。</param>
-    /// <param name="title">視訊播放軌標題。</param>
-    /// <param name="language">視訊播放軌語言代碼。</param>
-    /// <param name="albumArt">是否將視訊當作專輯封面載入。</param>
+    /// <param name="url">
+    /// 視訊檔案路徑或網路網址。
+    /// </param>
+    /// <param name="mode">
+    /// 視訊載入後的選取模式。
+    /// </param>
+    /// <param name="flags">
+    /// 視訊播放軌旗標。
+    /// </param>
+    /// <param name="title">
+    /// 視訊播放軌標題。
+    /// </param>
+    /// <param name="language">
+    /// 視訊播放軌語言代碼。
+    /// </param>
+    /// <param name="albumArt">
+    /// 是否將視訊當作專輯封面載入。
+    /// </param>
     public void AddVideoTrack(string url, MpvTrackLoadMode mode = MpvTrackLoadMode.Select, MpvTrackLoadFlags flags = MpvTrackLoadFlags.None, string? title = null, string? language = null, bool albumArt = false)
     {
         Command(BuildExternalTrackArguments("video-add", url, mode, flags, title, language, albumArt));
@@ -2590,13 +3084,27 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 非同步載入外部視訊播放軌。
     /// </summary>
-    /// <param name="url">視訊檔案路徑或網路網址。</param>
-    /// <param name="mode">視訊載入後的選取模式。</param>
-    /// <param name="flags">視訊播放軌旗標。</param>
-    /// <param name="title">視訊播放軌標題。</param>
-    /// <param name="language">視訊播放軌語言代碼。</param>
-    /// <param name="albumArt">是否將視訊當作專輯封面載入。</param>
-    /// <returns>代表 libmpv 命令回覆的工作。</returns>
+    /// <param name="url">
+    /// 視訊檔案路徑或網路網址。
+    /// </param>
+    /// <param name="mode">
+    /// 視訊載入後的選取模式。
+    /// </param>
+    /// <param name="flags">
+    /// 視訊播放軌旗標。
+    /// </param>
+    /// <param name="title">
+    /// 視訊播放軌標題。
+    /// </param>
+    /// <param name="language">
+    /// 視訊播放軌語言代碼。
+    /// </param>
+    /// <param name="albumArt">
+    /// 是否將視訊當作專輯封面載入。
+    /// </param>
+    /// <returns>
+    /// 代表 libmpv 命令回覆的工作。
+    /// </returns>
     public Task AddVideoTrackAsync(string url, MpvTrackLoadMode mode = MpvTrackLoadMode.Select, MpvTrackLoadFlags flags = MpvTrackLoadFlags.None, string? title = null, string? language = null, bool albumArt = false)
     {
         return CommandAsync(BuildExternalTrackArguments("video-add", url, mode, flags, title, language, albumArt));
@@ -2605,7 +3113,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 移除外部視訊播放軌。
     /// </summary>
-    /// <param name="trackId">要移除的視訊播放軌識別碼；未指定時移除目前視訊軌。</param>
+    /// <param name="trackId">
+    /// 要移除的視訊播放軌識別碼；未指定時移除目前視訊軌。
+    /// </param>
     public void RemoveVideoTrack(long? trackId = null)
     {
         CommandOptionalTrackId("video-remove", trackId);
@@ -2614,7 +3124,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 重新載入外部視訊播放軌。
     /// </summary>
-    /// <param name="trackId">要重新載入的視訊播放軌識別碼；未指定時重新載入目前視訊軌。</param>
+    /// <param name="trackId">
+    /// 要重新載入的視訊播放軌識別碼；未指定時重新載入目前視訊軌。
+    /// </param>
     public void ReloadVideoTrack(long? trackId = null)
     {
         CommandOptionalTrackId("video-reload", trackId);
@@ -2623,7 +3135,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 重新掃描外部字幕、音訊與封面檔案。
     /// </summary>
-    /// <param name="mode">重新掃描後的選軌行為。</param>
+    /// <param name="mode">
+    /// 重新掃描後的選軌行為。
+    /// </param>
     public void RescanExternalFiles(MpvExternalFilesRescanMode mode = MpvExternalFilesRescanMode.Reselect)
     {
         Command("rescan-external-files", mode == MpvExternalFilesRescanMode.KeepSelection ? "keep-selection" : "reselect");
@@ -2632,7 +3146,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 選取指定視訊播放軌。
     /// </summary>
-    /// <param name="trackId">要選取的視訊播放軌識別碼；未指定時停用視訊播放軌。</param>
+    /// <param name="trackId">
+    /// 要選取的視訊播放軌識別碼；未指定時停用視訊播放軌。
+    /// </param>
     public void SelectVideoTrack(long? trackId)
     {
         SetTrackSelection("vid", trackId);
@@ -2641,7 +3157,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 選取指定音訊播放軌。
     /// </summary>
-    /// <param name="trackId">要選取的音訊播放軌識別碼；未指定時停用音訊播放軌。</param>
+    /// <param name="trackId">
+    /// 要選取的音訊播放軌識別碼；未指定時停用音訊播放軌。
+    /// </param>
     public void SelectAudioTrack(long? trackId)
     {
         SetTrackSelection("aid", trackId);
@@ -2650,7 +3168,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 選取指定字幕播放軌。
     /// </summary>
-    /// <param name="trackId">要選取的字幕播放軌識別碼；未指定時停用字幕播放軌。</param>
+    /// <param name="trackId">
+    /// 要選取的字幕播放軌識別碼；未指定時停用字幕播放軌。
+    /// </param>
     public void SelectSubtitleTrack(long? trackId)
     {
         SetTrackSelection("sid", trackId);
@@ -2659,7 +3179,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 選取指定次要字幕播放軌。
     /// </summary>
-    /// <param name="trackId">要選取的次要字幕播放軌識別碼；未指定時停用次要字幕播放軌。</param>
+    /// <param name="trackId">
+    /// 要選取的次要字幕播放軌識別碼；未指定時停用次要字幕播放軌。
+    /// </param>
     public void SelectSecondarySubtitleTrack(long? trackId)
     {
         SetTrackSelection("secondary-sid", trackId);
@@ -2668,7 +3190,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 選取指定章節。
     /// </summary>
-    /// <param name="chapterIndex">以 0 為起始的章節索引。</param>
+    /// <param name="chapterIndex">
+    /// 以 0 為起始的章節索引。
+    /// </param>
     public void SelectChapter(long chapterIndex)
     {
         SetPropertyInt64("chapter", chapterIndex);
@@ -2677,7 +3201,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 選取指定版本。
     /// </summary>
-    /// <param name="editionIndex">以 0 為起始的版本索引。</param>
+    /// <param name="editionIndex">
+    /// 以 0 為起始的版本索引。
+    /// </param>
     public void SelectEdition(long editionIndex)
     {
         SetPropertyInt64("edition", editionIndex);
@@ -2686,7 +3212,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 選取指定音訊輸出裝置。
     /// </summary>
-    /// <param name="name">音訊裝置名稱；傳入 <see langword="null"/> 或空字串時使用自動選取。</param>
+    /// <param name="name">
+    /// 音訊裝置名稱；傳入 <see langword="null"/> 或空字串時使用自動選取。
+    /// </param>
     public void SelectAudioDevice(string? name)
     {
         SetPropertyString("audio-device", string.IsNullOrEmpty(name) ? "auto" : name!);
@@ -2695,9 +3223,15 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 顯示 mpv 文字 OSD。
     /// </summary>
-    /// <param name="text">要顯示的文字。</param>
-    /// <param name="durationMilliseconds">顯示毫秒數；未指定時使用 mpv 預設值。</param>
-    /// <param name="minimumOsdLevel">最低 OSD 等級；未指定時使用 mpv 預設值。</param>
+    /// <param name="text">
+    /// 要顯示的文字。
+    /// </param>
+    /// <param name="durationMilliseconds">
+    /// 顯示毫秒數；未指定時使用 mpv 預設值。
+    /// </param>
+    /// <param name="minimumOsdLevel">
+    /// 最低 OSD 等級；未指定時使用 mpv 預設值。
+    /// </param>
     public void ShowText(string text, int? durationMilliseconds = null, int? minimumOsdLevel = null)
     {
         List<string> arguments = new List<string> { "show-text", text };
@@ -2725,7 +3259,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 將文字輸出到 mpv 標準輸出。
     /// </summary>
-    /// <param name="text">要輸出的文字。</param>
+    /// <param name="text">
+    /// 要輸出的文字。
+    /// </param>
     public void PrintText(string text)
     {
         Command("print-text", text);
@@ -2734,8 +3270,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 展開文字中的 mpv 屬性參照。
     /// </summary>
-    /// <param name="text">要展開的文字。</param>
-    /// <returns>展開後的文字。</returns>
+    /// <param name="text">
+    /// 要展開的文字。
+    /// </param>
+    /// <returns>
+    /// 展開後的文字。
+    /// </returns>
     public string ExpandText(string text)
     {
         return CommandWithResult("expand-text", text).AsString() ?? string.Empty;
@@ -2744,8 +3284,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 展開 mpv 雙波浪符號路徑。
     /// </summary>
-    /// <param name="path">要展開的路徑文字。</param>
-    /// <returns>展開後的路徑文字。</returns>
+    /// <param name="path">
+    /// 要展開的路徑文字。
+    /// </param>
+    /// <returns>
+    /// 展開後的路徑文字。
+    /// </returns>
     public string ExpandPath(string path)
     {
         return CommandWithResult("expand-path", path).AsString() ?? string.Empty;
@@ -2754,8 +3298,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 正規化檔案路徑或網址。
     /// </summary>
-    /// <param name="pathOrUrl">要正規化的檔案路徑或網址。</param>
-    /// <returns>正規化後的檔案路徑或網址。</returns>
+    /// <param name="pathOrUrl">
+    /// 要正規化的檔案路徑或網址。
+    /// </param>
+    /// <returns>
+    /// 正規化後的檔案路徑或網址。
+    /// </returns>
     public string NormalizePath(string pathOrUrl)
     {
         return CommandWithResult("normalize-path", pathOrUrl).AsString() ?? string.Empty;
@@ -2764,8 +3312,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 將文字轉成可在 ASS OSD 中逐字顯示的內容。
     /// </summary>
-    /// <param name="text">要轉換的文字。</param>
-    /// <returns>已轉換的 ASS 文字。</returns>
+    /// <param name="text">
+    /// 要轉換的文字。
+    /// </param>
+    /// <returns>
+    /// 已轉換的 ASS 文字。
+    /// </returns>
     public string EscapeAss(string text)
     {
         return CommandWithResult("escape-ass", text).AsString() ?? string.Empty;
@@ -2774,14 +3326,30 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 新增或更新 ASS 文字 OSD 覆疊層。
     /// </summary>
-    /// <param name="id">覆疊層識別碼。</param>
-    /// <param name="assEvents">ASS 事件文字。</param>
-    /// <param name="resolutionX">ASS PlayResX 值。</param>
-    /// <param name="resolutionY">ASS PlayResY 值。</param>
-    /// <param name="zOrder">覆疊層 Z 順序。</param>
-    /// <param name="hidden">是否隱藏覆疊層。</param>
-    /// <param name="computeBounds">是否要求 mpv 回傳覆疊層邊界。</param>
-    /// <returns>mpv 回傳的覆疊層結果節點。</returns>
+    /// <param name="id">
+    /// 覆疊層識別碼。
+    /// </param>
+    /// <param name="assEvents">
+    /// ASS 事件文字。
+    /// </param>
+    /// <param name="resolutionX">
+    /// ASS PlayResX 值。
+    /// </param>
+    /// <param name="resolutionY">
+    /// ASS PlayResY 值。
+    /// </param>
+    /// <param name="zOrder">
+    /// 覆疊層 Z 順序。
+    /// </param>
+    /// <param name="hidden">
+    /// 是否隱藏覆疊層。
+    /// </param>
+    /// <param name="computeBounds">
+    /// 是否要求 mpv 回傳覆疊層邊界。
+    /// </param>
+    /// <returns>
+    /// mpv 回傳的覆疊層結果節點。
+    /// </returns>
     public MpvNode ShowAssOverlay(int id, string assEvents, int resolutionX = 0, int resolutionY = 720, int zOrder = 0, bool hidden = false, bool computeBounds = false)
     {
         Dictionary<string, MpvNode> arguments = new Dictionary<string, MpvNode>(StringComparer.Ordinal)
@@ -2801,8 +3369,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 移除 ASS 文字 OSD 覆疊層。
     /// </summary>
-    /// <param name="id">要移除的覆疊層識別碼。</param>
-    /// <returns>mpv 回傳的覆疊層結果節點。</returns>
+    /// <param name="id">
+    /// 要移除的覆疊層識別碼。
+    /// </param>
+    /// <returns>
+    /// mpv 回傳的覆疊層結果節點。
+    /// </returns>
     public MpvNode RemoveAssOverlay(int id)
     {
         Dictionary<string, MpvNode> arguments = new Dictionary<string, MpvNode>(StringComparer.Ordinal)
@@ -2816,17 +3388,39 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 新增或更新原始像素 OSD 覆疊層。
     /// </summary>
-    /// <param name="id">覆疊層識別碼。</param>
-    /// <param name="x">覆疊層 X 座標。</param>
-    /// <param name="y">覆疊層 Y 座標。</param>
-    /// <param name="fileName">包含原始像素資料的檔案路徑。</param>
-    /// <param name="offset">像素資料在檔案中的起始位移。</param>
-    /// <param name="format">像素格式文字。</param>
-    /// <param name="width">來源寬度。</param>
-    /// <param name="height">來源高度。</param>
-    /// <param name="stride">來源每列位元組距離。</param>
-    /// <param name="displayWidth">顯示寬度。</param>
-    /// <param name="displayHeight">顯示高度。</param>
+    /// <param name="id">
+    /// 覆疊層識別碼。
+    /// </param>
+    /// <param name="x">
+    /// 覆疊層 X 座標。
+    /// </param>
+    /// <param name="y">
+    /// 覆疊層 Y 座標。
+    /// </param>
+    /// <param name="fileName">
+    /// 包含原始像素資料的檔案路徑。
+    /// </param>
+    /// <param name="offset">
+    /// 像素資料在檔案中的起始位移。
+    /// </param>
+    /// <param name="format">
+    /// 像素格式文字。
+    /// </param>
+    /// <param name="width">
+    /// 來源寬度。
+    /// </param>
+    /// <param name="height">
+    /// 來源高度。
+    /// </param>
+    /// <param name="stride">
+    /// 來源每列位元組距離。
+    /// </param>
+    /// <param name="displayWidth">
+    /// 顯示寬度。
+    /// </param>
+    /// <param name="displayHeight">
+    /// 顯示高度。
+    /// </param>
     public void AddOverlay(
         int id,
         int x,
@@ -2858,7 +3452,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 移除原始像素 OSD 覆疊層。
     /// </summary>
-    /// <param name="id">要移除的覆疊層識別碼。</param>
+    /// <param name="id">
+    /// 要移除的覆疊層識別碼。
+    /// </param>
     public void RemoveOverlay(int id)
     {
         Command("overlay-remove", id.ToString(CultureInfo.InvariantCulture));
@@ -2867,7 +3463,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 依 mpv 截圖設定擷取截圖檔案。
     /// </summary>
-    /// <param name="mode">截圖內容模式。</param>
+    /// <param name="mode">
+    /// 截圖內容模式。
+    /// </param>
     public void TakeScreenshot(MpvScreenshotMode mode = MpvScreenshotMode.Subtitles)
     {
         Command("screenshot", ToScreenshotModeText(mode));
@@ -2876,8 +3474,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 依 mpv 截圖設定與進階旗標擷取截圖檔案。
     /// </summary>
-    /// <param name="mode">截圖內容模式。</param>
-    /// <param name="flags">截圖進階旗標。</param>
+    /// <param name="mode">
+    /// 截圖內容模式。
+    /// </param>
+    /// <param name="flags">
+    /// 截圖進階旗標。
+    /// </param>
     public void TakeScreenshot(MpvScreenshotMode mode, MpvScreenshotFlags flags)
     {
         Command("screenshot", ToScreenshotArgumentText(mode, flags));
@@ -2886,9 +3488,15 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 將目前畫面截圖儲存到指定檔案。
     /// </summary>
-    /// <param name="fileName">要儲存的截圖檔案名稱。</param>
-    /// <param name="mode">截圖內容模式。</param>
-    /// <returns>mpv 實際回報的檔案名稱；沒有回報時傳回輸入檔名。</returns>
+    /// <param name="fileName">
+    /// 要儲存的截圖檔案名稱。
+    /// </param>
+    /// <param name="mode">
+    /// 截圖內容模式。
+    /// </param>
+    /// <returns>
+    /// mpv 實際回報的檔案名稱；沒有回報時傳回輸入檔名。
+    /// </returns>
     public string TakeScreenshotToFile(string fileName, MpvScreenshotMode mode = MpvScreenshotMode.Subtitles)
     {
         MpvNode result = CommandWithResult("screenshot-to-file", fileName, ToScreenshotModeText(mode));
@@ -2898,10 +3506,18 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 將目前畫面截圖儲存到指定檔案，並套用進階旗標。
     /// </summary>
-    /// <param name="fileName">要儲存的截圖檔案名稱。</param>
-    /// <param name="mode">截圖內容模式。</param>
-    /// <param name="flags">截圖進階旗標。</param>
-    /// <returns>mpv 實際回報的檔案名稱；沒有回報時傳回輸入檔名。</returns>
+    /// <param name="fileName">
+    /// 要儲存的截圖檔案名稱。
+    /// </param>
+    /// <param name="mode">
+    /// 截圖內容模式。
+    /// </param>
+    /// <param name="flags">
+    /// 截圖進階旗標。
+    /// </param>
+    /// <returns>
+    /// mpv 實際回報的檔案名稱；沒有回報時傳回輸入檔名。
+    /// </returns>
     public string TakeScreenshotToFile(string fileName, MpvScreenshotMode mode, MpvScreenshotFlags flags)
     {
         MpvNode result = CommandWithResult("screenshot-to-file", fileName, ToScreenshotArgumentText(mode, flags));
@@ -2911,9 +3527,15 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 將目前畫面截圖回傳為記憶體像素資料。
     /// </summary>
-    /// <param name="mode">截圖內容模式。</param>
-    /// <param name="format">截圖像素格式。</param>
-    /// <returns>記憶體截圖結果。</returns>
+    /// <param name="mode">
+    /// 截圖內容模式。
+    /// </param>
+    /// <param name="format">
+    /// 截圖像素格式。
+    /// </param>
+    /// <returns>
+    /// 記憶體截圖結果。
+    /// </returns>
     public MpvScreenshot TakeRawScreenshot(MpvScreenshotMode mode = MpvScreenshotMode.Subtitles, MpvScreenshotFormat format = MpvScreenshotFormat.Bgr0)
     {
         return MpvScreenshot.FromNode(CommandWithResult("screenshot-raw", ToScreenshotModeText(mode), ToScreenshotFormatText(format)));
@@ -2922,10 +3544,18 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 將目前畫面截圖回傳為記憶體像素資料，並套用進階旗標。
     /// </summary>
-    /// <param name="mode">截圖內容模式。</param>
-    /// <param name="flags">截圖進階旗標。</param>
-    /// <param name="format">截圖像素格式。</param>
-    /// <returns>記憶體截圖結果。</returns>
+    /// <param name="mode">
+    /// 截圖內容模式。
+    /// </param>
+    /// <param name="flags">
+    /// 截圖進階旗標。
+    /// </param>
+    /// <param name="format">
+    /// 截圖像素格式。
+    /// </param>
+    /// <returns>
+    /// 記憶體截圖結果。
+    /// </returns>
     public MpvScreenshot TakeRawScreenshot(MpvScreenshotMode mode, MpvScreenshotFlags flags, MpvScreenshotFormat format = MpvScreenshotFormat.Bgr0)
     {
         return MpvScreenshot.FromNode(CommandWithResult("screenshot-raw", ToScreenshotArgumentText(mode, flags), ToScreenshotFormatText(format)));
@@ -2934,7 +3564,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 將濾鏡加入音訊濾鏡鏈。
     /// </summary>
-    /// <param name="filter">要加入的音訊濾鏡描述。</param>
+    /// <param name="filter">
+    /// 要加入的音訊濾鏡描述。
+    /// </param>
     public void AddAudioFilter(string filter)
     {
         Command("af", "add", filter);
@@ -2943,7 +3575,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 設定整個音訊濾鏡鏈。
     /// </summary>
-    /// <param name="filters">完整音訊濾鏡鏈描述。</param>
+    /// <param name="filters">
+    /// 完整音訊濾鏡鏈描述。
+    /// </param>
     public void SetAudioFilters(string filters)
     {
         Command("af", "set", filters);
@@ -2952,7 +3586,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 從音訊濾鏡鏈移除濾鏡。
     /// </summary>
-    /// <param name="filter">要移除的音訊濾鏡描述。</param>
+    /// <param name="filter">
+    /// 要移除的音訊濾鏡描述。
+    /// </param>
     public void RemoveAudioFilter(string filter)
     {
         Command("af", "remove", filter);
@@ -2961,7 +3597,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 切換音訊濾鏡鏈中的濾鏡。
     /// </summary>
-    /// <param name="filter">要切換的音訊濾鏡描述。</param>
+    /// <param name="filter">
+    /// 要切換的音訊濾鏡描述。
+    /// </param>
     public void ToggleAudioFilter(string filter)
     {
         Command("af", "toggle", filter);
@@ -2978,7 +3616,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 將濾鏡加入視訊濾鏡鏈。
     /// </summary>
-    /// <param name="filter">要加入的視訊濾鏡描述。</param>
+    /// <param name="filter">
+    /// 要加入的視訊濾鏡描述。
+    /// </param>
     public void AddVideoFilter(string filter)
     {
         Command("vf", "add", filter);
@@ -2987,7 +3627,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 設定整個視訊濾鏡鏈。
     /// </summary>
-    /// <param name="filters">完整視訊濾鏡鏈描述。</param>
+    /// <param name="filters">
+    /// 完整視訊濾鏡鏈描述。
+    /// </param>
     public void SetVideoFilters(string filters)
     {
         Command("vf", "set", filters);
@@ -2996,7 +3638,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 從視訊濾鏡鏈移除濾鏡。
     /// </summary>
-    /// <param name="filter">要移除的視訊濾鏡描述。</param>
+    /// <param name="filter">
+    /// 要移除的視訊濾鏡描述。
+    /// </param>
     public void RemoveVideoFilter(string filter)
     {
         Command("vf", "remove", filter);
@@ -3005,7 +3649,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 切換視訊濾鏡鏈中的濾鏡。
     /// </summary>
-    /// <param name="filter">要切換的視訊濾鏡描述。</param>
+    /// <param name="filter">
+    /// 要切換的視訊濾鏡描述。
+    /// </param>
     public void ToggleVideoFilter(string filter)
     {
         Command("vf", "toggle", filter);
@@ -3022,11 +3668,21 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 將命令傳送給指定視訊或音訊濾鏡。
     /// </summary>
-    /// <param name="target">濾鏡鏈目標。</param>
-    /// <param name="label">濾鏡標籤。</param>
-    /// <param name="commandName">濾鏡命令名稱。</param>
-    /// <param name="argument">濾鏡命令引數。</param>
-    /// <param name="commandTarget">濾鏡命令目標；未指定時使用 mpv 預設值。</param>
+    /// <param name="target">
+    /// 濾鏡鏈目標。
+    /// </param>
+    /// <param name="label">
+    /// 濾鏡標籤。
+    /// </param>
+    /// <param name="commandName">
+    /// 濾鏡命令名稱。
+    /// </param>
+    /// <param name="argument">
+    /// 濾鏡命令引數。
+    /// </param>
+    /// <param name="commandTarget">
+    /// 濾鏡命令目標；未指定時使用 mpv 預設值。
+    /// </param>
     public void SendFilterCommand(MpvFilterCommandTarget target, string label, string commandName, string argument, string? commandTarget = null)
     {
         string mpvCommand = target == MpvFilterCommandTarget.Audio ? "af-command" : "vf-command";
@@ -3042,8 +3698,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 將指定屬性增加指定數值。
     /// </summary>
-    /// <param name="propertyName">要變更的 mpv 屬性名稱。</param>
-    /// <param name="value">要增加的數值。</param>
+    /// <param name="propertyName">
+    /// 要變更的 mpv 屬性名稱。
+    /// </param>
+    /// <param name="value">
+    /// 要增加的數值。
+    /// </param>
     public void AddProperty(string propertyName, double value)
     {
         Command("add", propertyName, value.ToString(CultureInfo.InvariantCulture));
@@ -3052,8 +3712,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 將指定屬性乘上指定數值。
     /// </summary>
-    /// <param name="propertyName">要變更的 mpv 屬性名稱。</param>
-    /// <param name="value">要乘上的數值。</param>
+    /// <param name="propertyName">
+    /// 要變更的 mpv 屬性名稱。
+    /// </param>
+    /// <param name="value">
+    /// 要乘上的數值。
+    /// </param>
     public void MultiplyProperty(string propertyName, double value)
     {
         Command("multiply", propertyName, value.ToString(CultureInfo.InvariantCulture));
@@ -3062,8 +3726,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 循環切換指定屬性。
     /// </summary>
-    /// <param name="propertyName">要循環切換的 mpv 屬性名稱。</param>
-    /// <param name="reverse">是否反向循環。</param>
+    /// <param name="propertyName">
+    /// 要循環切換的 mpv 屬性名稱。
+    /// </param>
+    /// <param name="reverse">
+    /// 是否反向循環。
+    /// </param>
     public void CycleProperty(string propertyName, bool reverse = false)
     {
         if (reverse)
@@ -3078,9 +3746,15 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 在指定值集合中循環切換屬性。
     /// </summary>
-    /// <param name="propertyName">要循環切換的 mpv 屬性名稱。</param>
-    /// <param name="reverse">是否反向循環。</param>
-    /// <param name="values">可循環切換的屬性值集合。</param>
+    /// <param name="propertyName">
+    /// 要循環切換的 mpv 屬性名稱。
+    /// </param>
+    /// <param name="reverse">
+    /// 是否反向循環。
+    /// </param>
+    /// <param name="values">
+    /// 可循環切換的屬性值集合。
+    /// </param>
     public void CyclePropertyValues(string propertyName, bool reverse, params string[] values)
     {
         List<string> arguments = new List<string> { "cycle-values" };
@@ -3097,9 +3771,15 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 變更 mpv 清單型選項或屬性。
     /// </summary>
-    /// <param name="name">清單型選項或屬性名稱。</param>
-    /// <param name="operation">清單變更操作。</param>
-    /// <param name="value">清單項目值；操作不需要值時可省略。</param>
+    /// <param name="name">
+    /// 清單型選項或屬性名稱。
+    /// </param>
+    /// <param name="operation">
+    /// 清單變更操作。
+    /// </param>
+    /// <param name="value">
+    /// 清單項目值；操作不需要值時可省略。
+    /// </param>
     public void ChangeList(string name, MpvListChangeOperation operation, string? value = null)
     {
         Command("change-list", name, ToListChangeOperationText(operation), value ?? string.Empty);
@@ -3108,8 +3788,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 將鍵盤按鍵事件送入 mpv 輸入處理器。
     /// </summary>
-    /// <param name="keyName">mpv input.conf 使用的按鍵名稱。</param>
-    /// <param name="scale">可縮放輸入的縮放值；未指定時使用 mpv 預設值。</param>
+    /// <param name="keyName">
+    /// mpv input.conf 使用的按鍵名稱。
+    /// </param>
+    /// <param name="scale">
+    /// 可縮放輸入的縮放值；未指定時使用 mpv 預設值。
+    /// </param>
     public void KeyPress(string keyName, double? scale = null)
     {
         if (scale.HasValue)
@@ -3124,7 +3808,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 將鍵盤按下事件送入 mpv 輸入處理器。
     /// </summary>
-    /// <param name="keyName">mpv input.conf 使用的按鍵名稱。</param>
+    /// <param name="keyName">
+    /// mpv input.conf 使用的按鍵名稱。
+    /// </param>
     public void KeyDown(string keyName)
     {
         Command("keydown", keyName);
@@ -3133,7 +3819,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 將鍵盤放開事件送入 mpv 輸入處理器。
     /// </summary>
-    /// <param name="keyName">mpv input.conf 使用的按鍵名稱；未指定時放開全部按鍵。</param>
+    /// <param name="keyName">
+    /// mpv input.conf 使用的按鍵名稱；未指定時放開全部按鍵。
+    /// </param>
     public void KeyUp(string? keyName = null)
     {
         if (string.IsNullOrEmpty(keyName))
@@ -3148,10 +3836,18 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 將滑鼠事件送入 mpv 輸入處理器。
     /// </summary>
-    /// <param name="x">滑鼠 X 座標。</param>
-    /// <param name="y">滑鼠 Y 座標。</param>
-    /// <param name="button">滑鼠按鈕編號；未指定時只更新滑鼠位置。</param>
-    /// <param name="doubleClick">是否送出雙擊事件。</param>
+    /// <param name="x">
+    /// 滑鼠 X 座標。
+    /// </param>
+    /// <param name="y">
+    /// 滑鼠 Y 座標。
+    /// </param>
+    /// <param name="button">
+    /// 滑鼠按鈕編號；未指定時只更新滑鼠位置。
+    /// </param>
+    /// <param name="doubleClick">
+    /// 是否送出雙擊事件。
+    /// </param>
     public void Mouse(int x, int y, int? button = null, bool doubleClick = false)
     {
         if (button.HasValue)
@@ -3171,7 +3867,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 載入 mpv 輸入設定檔。
     /// </summary>
-    /// <param name="fileName">input.conf 檔案路徑。</param>
+    /// <param name="fileName">
+    /// input.conf 檔案路徑。
+    /// </param>
     public void LoadInputConfigFile(string fileName)
     {
         Command("load-input-conf", fileName);
@@ -3180,9 +3878,15 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 設定單一輸入按鍵綁定。
     /// </summary>
-    /// <param name="keyName">mpv input.conf 使用的按鍵名稱。</param>
-    /// <param name="commandText">要綁定的完整 mpv 命令文字。</param>
-    /// <param name="comment">綁定註解。</param>
+    /// <param name="keyName">
+    /// mpv input.conf 使用的按鍵名稱。
+    /// </param>
+    /// <param name="commandText">
+    /// 要綁定的完整 mpv 命令文字。
+    /// </param>
+    /// <param name="comment">
+    /// 綁定註解。
+    /// </param>
     public void BindKey(string keyName, string commandText, string? comment = null)
     {
         if (comment == null)
@@ -3197,9 +3901,15 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 定義 mpv 輸入 section。
     /// </summary>
-    /// <param name="name">section 名稱。</param>
-    /// <param name="contents">section 內容，格式同 input.conf。</param>
-    /// <param name="mode">section 建立模式。</param>
+    /// <param name="name">
+    /// section 名稱。
+    /// </param>
+    /// <param name="contents">
+    /// section 內容，格式同 input.conf。
+    /// </param>
+    /// <param name="mode">
+    /// section 建立模式。
+    /// </param>
     public void DefineInputSection(string name, string contents, MpvInputSectionMode mode = MpvInputSectionMode.Default)
     {
         Command("define-section", name, contents, mode == MpvInputSectionMode.Force ? "force" : "default");
@@ -3208,8 +3918,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 啟用 mpv 輸入 section。
     /// </summary>
-    /// <param name="name">要啟用的 section 名稱。</param>
-    /// <param name="flags">啟用 section 時使用的旗標。</param>
+    /// <param name="name">
+    /// 要啟用的 section 名稱。
+    /// </param>
+    /// <param name="flags">
+    /// 啟用 section 時使用的旗標。
+    /// </param>
     public void EnableInputSection(string name, MpvInputSectionFlags flags = MpvInputSectionFlags.None)
     {
         if (flags == MpvInputSectionFlags.None)
@@ -3224,7 +3938,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 停用 mpv 輸入 section。
     /// </summary>
-    /// <param name="name">要停用的 section 名稱。</param>
+    /// <param name="name">
+    /// 要停用的 section 名稱。
+    /// </param>
     public void DisableInputSection(string name)
     {
         Command("disable-section", name);
@@ -3233,7 +3949,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 載入 Lua 或 JavaScript 腳本檔案。
     /// </summary>
-    /// <param name="fileName">Lua 或 JavaScript 腳本檔案路徑。</param>
+    /// <param name="fileName">
+    /// Lua 或 JavaScript 腳本檔案路徑。
+    /// </param>
     public void LoadScript(string fileName)
     {
         Command("load-script", fileName);
@@ -3242,7 +3960,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 傳送訊息給所有 mpv 指令碼與用戶端。
     /// </summary>
-    /// <param name="arguments">訊息引數集合。</param>
+    /// <param name="arguments">
+    /// 訊息引數集合。
+    /// </param>
     public void SendScriptMessage(params string[] arguments)
     {
         List<string> commandArguments = new List<string> { "script-message" };
@@ -3253,8 +3973,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 傳送訊息給指定 mpv 指令碼或用戶端。
     /// </summary>
-    /// <param name="target">目標指令碼或用戶端名稱。</param>
-    /// <param name="arguments">訊息引數集合。</param>
+    /// <param name="target">
+    /// 目標指令碼或用戶端名稱。
+    /// </param>
+    /// <param name="arguments">
+    /// 訊息引數集合。
+    /// </param>
     public void SendScriptMessageTo(string target, params string[] arguments)
     {
         List<string> commandArguments = new List<string> { "script-message-to", target };
@@ -3265,8 +3989,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 呼叫指令碼提供的按鍵綁定。
     /// </summary>
-    /// <param name="name">指令碼綁定名稱。</param>
-    /// <param name="argument">傳給指令碼綁定的自訂引數。</param>
+    /// <param name="name">
+    /// 指令碼綁定名稱。
+    /// </param>
+    /// <param name="argument">
+    /// 傳給指令碼綁定的自訂引數。
+    /// </param>
     public void InvokeScriptBinding(string name, string? argument = null)
     {
         if (argument == null)
@@ -3281,8 +4009,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 執行外部處理序命令。
     /// </summary>
-    /// <param name="fileName">要執行的檔案名稱。</param>
-    /// <param name="arguments">傳給處理序的引數集合。</param>
+    /// <param name="fileName">
+    /// 要執行的檔案名稱。
+    /// </param>
+    /// <param name="arguments">
+    /// 傳給處理序的引數集合。
+    /// </param>
     public void RunProcess(string fileName, params string[] arguments)
     {
         List<string> commandArguments = new List<string> { "run", fileName };
@@ -3293,16 +4025,36 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 使用 mpv <c>subprocess</c> 命令執行外部處理序並取得結果。
     /// </summary>
-    /// <param name="arguments">處理序命令與引數集合。</param>
-    /// <param name="captureStdout">是否擷取標準輸出。</param>
-    /// <param name="captureStderr">是否擷取標準錯誤。</param>
-    /// <param name="playbackOnly">是否只允許在播放期間執行。</param>
-    /// <param name="captureSize">擷取標準輸出與標準錯誤的最大位元組數；未指定時使用 mpv 預設值。</param>
-    /// <param name="detach">是否以分離模式執行處理序。</param>
-    /// <param name="environment">要傳給處理序的環境變數集合，格式為 <c>名稱=值</c>；未指定時使用 mpv 預設值。</param>
-    /// <param name="stdinData">要寫入處理序標準輸入的文字；未指定時不寫入。</param>
-    /// <param name="passthroughStdin">是否將 mpv 標準輸入傳遞給處理序。</param>
-    /// <returns>mpv 回傳的處理序結果節點。</returns>
+    /// <param name="arguments">
+    /// 處理序命令與引數集合。
+    /// </param>
+    /// <param name="captureStdout">
+    /// 是否擷取標準輸出。
+    /// </param>
+    /// <param name="captureStderr">
+    /// 是否擷取標準錯誤。
+    /// </param>
+    /// <param name="playbackOnly">
+    /// 是否只允許在播放期間執行。
+    /// </param>
+    /// <param name="captureSize">
+    /// 擷取標準輸出與標準錯誤的最大位元組數；未指定時使用 mpv 預設值。
+    /// </param>
+    /// <param name="detach">
+    /// 是否以分離模式執行處理序。
+    /// </param>
+    /// <param name="environment">
+    /// 要傳給處理序的環境變數集合，格式為 <c>名稱=值</c>；未指定時使用 mpv 預設值。
+    /// </param>
+    /// <param name="stdinData">
+    /// 要寫入處理序標準輸入的文字；未指定時不寫入。
+    /// </param>
+    /// <param name="passthroughStdin">
+    /// 是否將 mpv 標準輸入傳遞給處理序。
+    /// </param>
+    /// <returns>
+    /// mpv 回傳的處理序結果節點。
+    /// </returns>
     public MpvNode RunSubprocess(
         IReadOnlyList<string> arguments,
         bool captureStdout = true,
@@ -3362,8 +4114,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 套用或還原 mpv profile。
     /// </summary>
-    /// <param name="profileName">profile 名稱。</param>
-    /// <param name="mode">profile 套用模式。</param>
+    /// <param name="profileName">
+    /// profile 名稱。
+    /// </param>
+    /// <param name="mode">
+    /// profile 套用模式。
+    /// </param>
     public void ApplyProfile(string profileName, MpvApplyProfileMode mode = MpvApplyProfileMode.Apply)
     {
         Command("apply-profile", profileName, mode == MpvApplyProfileMode.Restore ? "restore" : "apply");
@@ -3380,7 +4136,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 刪除稍後觀看設定。
     /// </summary>
-    /// <param name="fileName">要刪除設定的檔案名稱；未指定時刪除目前播放項目對應設定。</param>
+    /// <param name="fileName">
+    /// 要刪除設定的檔案名稱；未指定時刪除目前播放項目對應設定。
+    /// </param>
     public void DeleteWatchLaterConfig(string? fileName = null)
     {
         if (string.IsNullOrEmpty(fileName))
@@ -3395,7 +4153,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 以稍後觀看模式結束播放器。
     /// </summary>
-    /// <param name="exitCode">處理序結束碼；未指定時使用 mpv 預設值。</param>
+    /// <param name="exitCode">
+    /// 處理序結束碼；未指定時使用 mpv 預設值。
+    /// </param>
     public void QuitWatchLater(int? exitCode = null)
     {
         if (exitCode.HasValue)
@@ -3410,7 +4170,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 要求 mpv 結束。
     /// </summary>
-    /// <param name="exitCode">處理序結束碼；未指定時使用 mpv 預設值。</param>
+    /// <param name="exitCode">
+    /// 處理序結束碼；未指定時使用 mpv 預設值。
+    /// </param>
     public void Quit(int? exitCode = null)
     {
         if (exitCode.HasValue)
@@ -3433,9 +4195,15 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 將 demuxer 快取區間傾印到檔案。
     /// </summary>
-    /// <param name="start">起始秒數。</param>
-    /// <param name="end">結束秒數；傳入 <see langword="null"/> 表示持續傾印。</param>
-    /// <param name="fileName">輸出檔案名稱；空字串會停止目前傾印。</param>
+    /// <param name="start">
+    /// 起始秒數。
+    /// </param>
+    /// <param name="end">
+    /// 結束秒數；傳入 <see langword="null"/> 表示持續傾印。
+    /// </param>
+    /// <param name="fileName">
+    /// 輸出檔案名稱；空字串會停止目前傾印。
+    /// </param>
     public void DumpCache(double start, double? end, string fileName)
     {
         Command(
@@ -3464,8 +4232,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 設定 A-B 重複播放區間。
     /// </summary>
-    /// <param name="startSeconds">A 點秒數；未指定時清除 A 點。</param>
-    /// <param name="endSeconds">B 點秒數；未指定時清除 B 點。</param>
+    /// <param name="startSeconds">
+    /// A 點秒數；未指定時清除 A 點。
+    /// </param>
+    /// <param name="endSeconds">
+    /// B 點秒數；未指定時清除 B 點。
+    /// </param>
     public void SetAbLoop(double? startSeconds, double? endSeconds)
     {
         SetPropertyString("ab-loop-a", startSeconds.HasValue ? startSeconds.Value.ToString(CultureInfo.InvariantCulture) : "no");
@@ -3483,7 +4255,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 依目前 A-B 重複播放點傾印快取。
     /// </summary>
-    /// <param name="fileName">輸出檔案名稱。</param>
+    /// <param name="fileName">
+    /// 輸出檔案名稱。
+    /// </param>
     public void DumpAbLoopCache(string fileName)
     {
         Command("ab-loop-dump-cache", fileName);
@@ -3516,7 +4290,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 訂閱播放軌清單變更通知。
     /// </summary>
-    /// <returns>可用於取消觀察的要求識別碼。</returns>
+    /// <returns>
+    /// 可用於取消觀察的要求識別碼。
+    /// </returns>
     public ulong ObserveTrackList()
     {
         return ObserveProperty("track-list", MpvFormat.Node);
@@ -3525,9 +4301,15 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 訂閱指定 libmpv 屬性的變更通知。
     /// </summary>
-    /// <param name="name">要觀察的 mpv 屬性名稱。</param>
-    /// <param name="format">屬性值要使用的 libmpv 資料格式。</param>
-    /// <returns>可用於取消觀察的要求識別碼。</returns>
+    /// <param name="name">
+    /// 要觀察的 mpv 屬性名稱。
+    /// </param>
+    /// <param name="format">
+    /// 屬性值要使用的 libmpv 資料格式。
+    /// </param>
+    /// <returns>
+    /// 可用於取消觀察的要求識別碼。
+    /// </returns>
     /// <remarks>
     /// 這是 libmpv <c>mpv_observe_property</c> 的薄包裝；變更通知會以原始字串/節點形式
     /// 透過 <see cref="PropertyChanged"/> 事件投遞，並由訂閱者自行解碼。
@@ -3550,7 +4332,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取消指定 libmpv 屬性的變更通知。
     /// </summary>
-    /// <param name="observeId">先前由 <see cref="ObserveProperty"/> 傳回的觀察識別碼。</param>
+    /// <param name="observeId">
+    /// 先前由 <see cref="ObserveProperty"/> 傳回的觀察識別碼。
+    /// </param>
     public void UnobserveProperty(ulong observeId)
     {
         EnsureNotDisposed();
@@ -3570,9 +4354,15 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得指定 libmpv 屬性的 <see cref="IObservable{T}"/>，多個訂閱者共享單一觀察註冊。
     /// </summary>
-    /// <typeparam name="T">屬性值型別；支援 <see cref="double"/>、<see cref="long"/>、<see cref="bool"/>、<see cref="string"/> 與 <see cref="MpvNode"/>。</typeparam>
-    /// <param name="propertyName">要觀察的屬性名稱。</param>
-    /// <returns>會於每次屬性變更時呼叫 <see cref="IObserver{T}.OnNext"/> 的 <see cref="IObservable{T}"/>。</returns>
+    /// <typeparam name="T">
+    /// 屬性值型別；支援 <see cref="double"/>、<see cref="long"/>、<see cref="bool"/>、<see cref="string"/> 與 <see cref="MpvNode"/>。
+    /// </typeparam>
+    /// <param name="propertyName">
+    /// 要觀察的屬性名稱。
+    /// </param>
+    /// <returns>
+    /// 會於每次屬性變更時呼叫 <see cref="IObserver{T}.OnNext"/> 的 <see cref="IObservable{T}"/>。
+    /// </returns>
     public IObservable<T> WatchProperty<T>(string propertyName)
     {
         EnsureNotDisposed();
@@ -3599,8 +4389,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 啟用或停用指定的 libmpv 事件。
     /// </summary>
-    /// <param name="eventId">要設定的 libmpv 事件識別碼。</param>
-    /// <param name="enable">啟用事件時為 <see langword="true"/>。</param>
+    /// <param name="eventId">
+    /// 要設定的 libmpv 事件識別碼。
+    /// </param>
+    /// <param name="enable">
+    /// 啟用事件時為 <see langword="true"/>。
+    /// </param>
     public void RequestEvent(MpvEventId eventId, bool enable)
     {
         EnsureNotDisposed();
@@ -3610,7 +4404,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 訂閱 libmpv 記錄訊息。
     /// </summary>
-    /// <param name="minLevel">要接收的最低 mpv 記錄等級文字。</param>
+    /// <param name="minLevel">
+    /// 要接收的最低 mpv 記錄等級文字。
+    /// </param>
     public void RequestLogMessages(string minLevel)
     {
         EnsureNotDisposed();
@@ -3623,9 +4419,15 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 新增 libmpv 掛鉤。
     /// </summary>
-    /// <param name="name">要新增的 libmpv 掛鉤名稱。</param>
-    /// <param name="priority">掛鉤執行優先順序。</param>
-    /// <param name="replyUserData">掛鉤回覆事件中使用的使用者資料。</param>
+    /// <param name="name">
+    /// 要新增的 libmpv 掛鉤名稱。
+    /// </param>
+    /// <param name="priority">
+    /// 掛鉤執行優先順序。
+    /// </param>
+    /// <param name="replyUserData">
+    /// 掛鉤回覆事件中使用的使用者資料。
+    /// </param>
     public void AddHook(string name, int priority = 0, ulong replyUserData = 0)
     {
         EnsureNotDisposed();
@@ -3638,7 +4440,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 繼續指定的 libmpv 掛鉤。
     /// </summary>
-    /// <param name="hookId">libmpv 掛鉤識別碼。</param>
+    /// <param name="hookId">
+    /// libmpv 掛鉤識別碼。
+    /// </param>
     public void ContinueHook(ulong hookId)
     {
         EnsureNotDisposed();
@@ -3648,8 +4452,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 註冊 libmpv 自訂唯讀串流通訊協定。
     /// </summary>
-    /// <param name="protocol">不含 <c>://</c> 的通訊協定前置詞。</param>
-    /// <param name="openStream">依 URI 建立可讀取串流的委派；傳回 <see langword="null"/> 表示拒絕開啟。</param>
+    /// <param name="protocol">
+    /// 不含 <c>://</c> 的通訊協定前置詞。
+    /// </param>
+    /// <param name="openStream">
+    /// 依 URI 建立可讀取串流的委派；傳回 <see langword="null"/> 表示拒絕開啟。
+    /// </param>
     public void RegisterStreamProtocol(string protocol, Func<string, Stream?> openStream)
     {
         lock (_lifetimeGate)
@@ -3663,8 +4471,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 註冊 libmpv 自訂唯讀串流通訊協定。
     /// </summary>
-    /// <param name="protocol">不含 <c>://</c> 的通訊協定前置詞。</param>
-    /// <param name="openStream">可透過事件資料提供串流的事件處理常式。</param>
+    /// <param name="protocol">
+    /// 不含 <c>://</c> 的通訊協定前置詞。
+    /// </param>
+    /// <param name="openStream">
+    /// 可透過事件資料提供串流的事件處理常式。
+    /// </param>
     public void RegisterStreamProtocol(string protocol, EventHandler<MpvStreamOpenEventArgs> openStream)
     {
         if (openStream == null)
@@ -3683,8 +4495,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 建立與此播放器關聯的 OpenGL render API 內容。
     /// </summary>
-    /// <param name="options">建立 OpenGL render API 內容所需的選項。</param>
-    /// <returns>可用來以 OpenGL 繪製 mpv 影格的 render API 內容。</returns>
+    /// <param name="options">
+    /// 建立 OpenGL render API 內容所需的選項。
+    /// </param>
+    /// <returns>
+    /// 可用來以 OpenGL 繪製 mpv 影格的 render API 內容。
+    /// </returns>
     public MpvOpenGlRenderContext CreateOpenGlRenderContext(MpvOpenGlRenderContextOptions options)
     {
         EnsureNotDisposed();
@@ -3702,7 +4518,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 建立與此播放器關聯的 software render API 內容。
     /// </summary>
-    /// <returns>可用來將 mpv 影格繪製到記憶體像素緩衝區的 render API 內容。</returns>
+    /// <returns>
+    /// 可用來將 mpv 影格繪製到記憶體像素緩衝區的 render API 內容。
+    /// </returns>
     public MpvSoftwareRenderContext CreateSoftwareRenderContext()
     {
         EnsureNotDisposed();
@@ -3720,8 +4538,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 使用短期租用的 libmpv 控制代碼建立 render API 內容。
     /// </summary>
-    /// <param name="parameters">傳給 libmpv render API 的建立參數。</param>
-    /// <returns>新建立的 render API 內容指標。</returns>
+    /// <param name="parameters">
+    /// 傳給 libmpv render API 的建立參數。
+    /// </param>
+    /// <returns>
+    /// 新建立的 render API 內容指標。
+    /// </returns>
     internal IntPtr CreateRenderContext(MpvRenderParam[] parameters)
     {
         if (parameters == null)
@@ -3740,9 +4562,15 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 使用短期租用的 libmpv 控制代碼註冊唯讀串流通訊協定。
     /// </summary>
-    /// <param name="protocolName">通訊協定名稱的 UTF-8 原生指標。</param>
-    /// <param name="userData">傳給 libmpv 回呼的使用者資料。</param>
-    /// <param name="openCallback">開啟串流時使用的原生回呼委派。</param>
+    /// <param name="protocolName">
+    /// 通訊協定名稱的 UTF-8 原生指標。
+    /// </param>
+    /// <param name="userData">
+    /// 傳給 libmpv 回呼的使用者資料。
+    /// </param>
+    /// <param name="openCallback">
+    /// 開啟串流時使用的原生回呼委派。
+    /// </param>
     internal void RegisterStreamProtocolCore(IntPtr protocolName, IntPtr userData, MpvStreamOpenCallback openCallback)
     {
         using (NativeHandleLease handleLease = AcquireNativeHandle())
@@ -3754,7 +4582,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 非同步釋放 libmpv 用戶端，先嘗試讓 libmpv 完成 quit 並等候 Shutdown 事件後再同步釋放資源。
     /// </summary>
-    /// <returns>代表非同步釋放流程的 <see cref="ValueTask"/>。</returns>
+    /// <returns>
+    /// 代表非同步釋放流程的 <see cref="ValueTask"/>。
+    /// </returns>
     public async ValueTask DisposeAsync()
     {
         if (Volatile.Read(ref _disposed))
@@ -3769,9 +4599,15 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 嘗試讓 libmpv 完成播放並接收 Shutdown 事件，提供同步 <see cref="Dispose"/> 前的 graceful 收尾。
     /// </summary>
-    /// <param name="timeout">等待 Shutdown 事件的逾時時間；<see langword="null"/> 時使用 2 秒。</param>
-    /// <param name="cancellationToken">取消等候的 token。</param>
-    /// <returns>代表 graceful shutdown 等候流程的工作。</returns>
+    /// <param name="timeout">
+    /// 等待 Shutdown 事件的逾時時間；<see langword="null"/> 時使用 2 秒。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 取消等候的 token。
+    /// </param>
+    /// <returns>
+    /// 代表 graceful shutdown 等候流程的工作。
+    /// </returns>
     public async Task ShutdownAsync(TimeSpan? timeout = null, CancellationToken cancellationToken = default)
     {
         if (Volatile.Read(ref _disposed))
@@ -3926,7 +4762,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 登錄由此播放器建立的 render API 內容，讓播放器釋放時可先釋放子資源。
     /// </summary>
-    /// <param name="context">要登錄的 render API 內容。</param>
+    /// <param name="context">
+    /// 要登錄的 render API 內容。
+    /// </param>
     private void RegisterRenderContext(IDisposable context)
     {
         lock (_renderContextsGate)
@@ -3972,10 +4810,18 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 安全分派受控事件，避免使用者事件處理常式中止 libmpv 事件迴圈。
     /// </summary>
-    /// <typeparam name="TEventArgs">事件資料型別。</typeparam>
-    /// <param name="eventHandler">要分派的事件處理常式。</param>
-    /// <param name="args">要傳給事件處理常式的事件資料。</param>
-    /// <param name="eventName">事件名稱。</param>
+    /// <typeparam name="TEventArgs">
+    /// 事件資料型別。
+    /// </typeparam>
+    /// <param name="eventHandler">
+    /// 要分派的事件處理常式。
+    /// </param>
+    /// <param name="args">
+    /// 要傳給事件處理常式的事件資料。
+    /// </param>
+    /// <param name="eventName">
+    /// 事件名稱。
+    /// </param>
     private void DispatchManagedEvent<TEventArgs>(EventHandler<TEventArgs>? eventHandler, TEventArgs args, string eventName)
         where TEventArgs : EventArgs
     {
@@ -4002,8 +4848,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 分派受控事件處理常式例外狀況通知。
     /// </summary>
-    /// <param name="eventName">發生例外狀況的事件名稱。</param>
-    /// <param name="exception">事件處理常式擲回的例外狀況。</param>
+    /// <param name="eventName">
+    /// 發生例外狀況的事件名稱。
+    /// </param>
+    /// <param name="exception">
+    /// 事件處理常式擲回的例外狀況。
+    /// </param>
     private void DispatchEventHandlerException(string eventName, Exception exception)
     {
         EventHandler<MpvEventDispatchExceptionEventArgs>? eventHandler = EventDispatchException;
@@ -4030,7 +4880,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 在安全租用 libmpv 控制代碼期間執行原生作業。
     /// </summary>
-    /// <param name="action">要執行的原生作業。</param>
+    /// <param name="action">
+    /// 要執行的原生作業。
+    /// </param>
     private void InvokeNative(Action<IntPtr> action)
     {
         if (action == null)
@@ -4047,9 +4899,15 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 在安全租用 libmpv 控制代碼期間執行原生作業並傳回結果。
     /// </summary>
-    /// <typeparam name="TResult">原生作業回傳值型別。</typeparam>
-    /// <param name="action">要執行的原生作業。</param>
-    /// <returns>原生作業回傳值。</returns>
+    /// <typeparam name="TResult">
+    /// 原生作業回傳值型別。
+    /// </typeparam>
+    /// <param name="action">
+    /// 要執行的原生作業。
+    /// </param>
+    /// <returns>
+    /// 原生作業回傳值。
+    /// </returns>
     private TResult InvokeNative<TResult>(Func<IntPtr, TResult> action)
     {
         if (action == null)
@@ -4066,7 +4924,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得目前 libmpv 控制代碼的短期租用。
     /// </summary>
-    /// <returns>目前 libmpv 控制代碼的短期租用。</returns>
+    /// <returns>
+    /// 目前 libmpv 控制代碼的短期租用。
+    /// </returns>
     private NativeHandleLease AcquireNativeHandle()
     {
         NativeHandleLease handleLease;
@@ -4081,8 +4941,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 嘗試取得目前 libmpv 控制代碼的短期租用。
     /// </summary>
-    /// <param name="handleLease">成功時接收控制代碼租用。</param>
-    /// <returns>成功取得控制代碼租用時為 <see langword="true"/>。</returns>
+    /// <param name="handleLease">
+    /// 成功時接收控制代碼租用。
+    /// </param>
+    /// <returns>
+    /// 成功取得控制代碼租用時為 <see langword="true"/>。
+    /// </returns>
     private bool TryAcquireNativeHandle(out NativeHandleLease handleLease)
     {
         lock (_lifetimeGate)
@@ -4116,7 +4980,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
         /// <summary>
         /// 初始化 <see cref="NativeHandleLease"/> 類別的新執行個體。
         /// </summary>
-        /// <param name="handle">要租用的安全控制代碼。</param>
+        /// <param name="handle">
+        /// 要租用的安全控制代碼。
+        /// </param>
         public NativeHandleLease(SafeMpvHandle handle)
         {
             _handle = handle;
@@ -4127,7 +4993,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
         /// <summary>
         /// 取得租用期間可使用的原生控制代碼。
         /// </summary>
-        /// <value>libmpv 原生控制代碼。</value>
+        /// <value>
+        /// libmpv 原生控制代碼。
+        /// </value>
         public IntPtr Handle { get; private set; }
 
         /// <summary>
@@ -4149,9 +5017,15 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 建立 libmpv 具名命令節點。
     /// </summary>
-    /// <param name="name">要執行的 mpv 命令名稱。</param>
-    /// <param name="arguments">命令具名引數。</param>
-    /// <returns>可傳給 <see cref="CommandNode"/> 的命令節點。</returns>
+    /// <param name="name">
+    /// 要執行的 mpv 命令名稱。
+    /// </param>
+    /// <param name="arguments">
+    /// 命令具名引數。
+    /// </param>
+    /// <returns>
+    /// 可傳給 <see cref="CommandNode"/> 的命令節點。
+    /// </returns>
     private static MpvNode CreateNamedCommandNode(string name, IDictionary<string, MpvNode> arguments)
     {
         if (name == null)
@@ -4174,8 +5048,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 從播放軌節點讀取播放軌清單。
     /// </summary>
-    /// <param name="node">mpv 播放軌清單節點。</param>
-    /// <returns>播放軌資訊集合。</returns>
+    /// <param name="node">
+    /// mpv 播放軌清單節點。
+    /// </param>
+    /// <returns>
+    /// 播放軌資訊集合。
+    /// </returns>
     private static IReadOnlyList<MpvTrackInfo> ReadTracks(MpvNode node)
     {
         IReadOnlyList<MpvNode> nodes = node.AsArray();
@@ -4191,8 +5069,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 將逗號分隔的 mpv 清單屬性轉為唯讀集合。
     /// </summary>
-    /// <param name="value">逗號分隔的清單屬性值。</param>
-    /// <returns>清單項目集合。</returns>
+    /// <param name="value">
+    /// 逗號分隔的清單屬性值。
+    /// </param>
+    /// <returns>
+    /// 清單項目集合。
+    /// </returns>
     private static IReadOnlyList<string> SplitCommaList(string? value)
     {
         if (string.IsNullOrEmpty(value))
@@ -4213,14 +5095,30 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 建立外部播放軌載入命令引數。
     /// </summary>
-    /// <param name="command">mpv 外部播放軌載入命令名稱。</param>
-    /// <param name="url">播放軌檔案路徑或網路網址。</param>
-    /// <param name="mode">播放軌載入後的選取模式。</param>
-    /// <param name="flags">播放軌載入旗標。</param>
-    /// <param name="title">播放軌標題。</param>
-    /// <param name="language">播放軌語言代碼。</param>
-    /// <param name="albumArt">是否將視訊當作專輯封面載入。</param>
-    /// <returns>可傳給 <see cref="Command(string[])"/> 的命令引數。</returns>
+    /// <param name="command">
+    /// mpv 外部播放軌載入命令名稱。
+    /// </param>
+    /// <param name="url">
+    /// 播放軌檔案路徑或網路網址。
+    /// </param>
+    /// <param name="mode">
+    /// 播放軌載入後的選取模式。
+    /// </param>
+    /// <param name="flags">
+    /// 播放軌載入旗標。
+    /// </param>
+    /// <param name="title">
+    /// 播放軌標題。
+    /// </param>
+    /// <param name="language">
+    /// 播放軌語言代碼。
+    /// </param>
+    /// <param name="albumArt">
+    /// 是否將視訊當作專輯封面載入。
+    /// </param>
+    /// <returns>
+    /// 可傳給 <see cref="Command(string[])"/> 的命令引數。
+    /// </returns>
     private static string[] BuildExternalTrackArguments(string command, string url, MpvTrackLoadMode mode, MpvTrackLoadFlags flags, string? title, string? language, bool? albumArt)
     {
         List<string> arguments = new List<string>
@@ -4251,8 +5149,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 執行可省略播放軌識別碼的 mpv 命令。
     /// </summary>
-    /// <param name="command">mpv 命令名稱。</param>
-    /// <param name="trackId">播放軌識別碼；未指定時不傳遞識別碼。</param>
+    /// <param name="command">
+    /// mpv 命令名稱。
+    /// </param>
+    /// <param name="trackId">
+    /// 播放軌識別碼；未指定時不傳遞識別碼。
+    /// </param>
     private void CommandOptionalTrackId(string command, long? trackId)
     {
         if (trackId.HasValue)
@@ -4267,8 +5169,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 設定播放軌選取屬性。
     /// </summary>
-    /// <param name="propertyName">mpv 選軌屬性名稱。</param>
-    /// <param name="trackId">要選取的播放軌識別碼；未指定時設定為 <c>no</c>。</param>
+    /// <param name="propertyName">
+    /// mpv 選軌屬性名稱。
+    /// </param>
+    /// <param name="trackId">
+    /// 要選取的播放軌識別碼；未指定時設定為 <c>no</c>。
+    /// </param>
     private void SetTrackSelection(string propertyName, long? trackId)
     {
         SetPropertyString(propertyName, trackId.HasValue ? trackId.Value.ToString(CultureInfo.InvariantCulture) : "no");
@@ -4277,9 +5183,15 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 將外部播放軌載入模式與旗標轉為 mpv 文字。
     /// </summary>
-    /// <param name="mode">播放軌載入後的選取模式。</param>
-    /// <param name="flags">播放軌載入旗標。</param>
-    /// <returns>mpv 外部播放軌旗標文字。</returns>
+    /// <param name="mode">
+    /// 播放軌載入後的選取模式。
+    /// </param>
+    /// <param name="flags">
+    /// 播放軌載入旗標。
+    /// </param>
+    /// <returns>
+    /// mpv 外部播放軌旗標文字。
+    /// </returns>
     private static string ToTrackLoadFlagsText(MpvTrackLoadMode mode, MpvTrackLoadFlags flags)
     {
         List<string> parts = new List<string>();
@@ -4327,8 +5239,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 將字幕步進目標轉為 mpv 文字。
     /// </summary>
-    /// <param name="target">字幕步進目標。</param>
-    /// <returns>mpv 字幕步進目標文字。</returns>
+    /// <param name="target">
+    /// 字幕步進目標。
+    /// </param>
+    /// <returns>
+    /// mpv 字幕步進目標文字。
+    /// </returns>
     private static string ToSubtitleStepTargetText(MpvSubtitleStepTarget target)
     {
         return target == MpvSubtitleStepTarget.Secondary ? "secondary" : "primary";
@@ -4337,8 +5253,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 將檔案載入模式轉為 mpv 文字。
     /// </summary>
-    /// <param name="mode">檔案載入模式。</param>
-    /// <returns>mpv 檔案載入模式文字。</returns>
+    /// <param name="mode">
+    /// 檔案載入模式。
+    /// </param>
+    /// <returns>
+    /// mpv 檔案載入模式文字。
+    /// </returns>
     private static string ToLoadFileModeText(MpvLoadFileMode mode)
     {
         switch (mode)
@@ -4363,8 +5283,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 將播放清單載入模式轉為 mpv 文字。
     /// </summary>
-    /// <param name="mode">播放清單載入模式。</param>
-    /// <returns>mpv 播放清單載入模式文字。</returns>
+    /// <param name="mode">
+    /// 播放清單載入模式。
+    /// </param>
+    /// <returns>
+    /// mpv 播放清單載入模式文字。
+    /// </returns>
     private static string ToLoadListModeText(MpvLoadListMode mode)
     {
         switch (mode)
@@ -4389,8 +5313,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 將截圖模式轉為 mpv 文字。
     /// </summary>
-    /// <param name="mode">截圖內容模式。</param>
-    /// <returns>mpv 截圖模式文字。</returns>
+    /// <param name="mode">
+    /// 截圖內容模式。
+    /// </param>
+    /// <returns>
+    /// mpv 截圖模式文字。
+    /// </returns>
     private static string ToScreenshotModeText(MpvScreenshotMode mode)
     {
         switch (mode)
@@ -4407,9 +5335,15 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 將截圖模式與進階旗標轉為 mpv 命令引數文字。
     /// </summary>
-    /// <param name="mode">截圖內容模式。</param>
-    /// <param name="flags">截圖進階旗標。</param>
-    /// <returns>mpv 截圖命令引數文字。</returns>
+    /// <param name="mode">
+    /// 截圖內容模式。
+    /// </param>
+    /// <param name="flags">
+    /// 截圖進階旗標。
+    /// </param>
+    /// <returns>
+    /// mpv 截圖命令引數文字。
+    /// </returns>
     private static string ToScreenshotArgumentText(MpvScreenshotMode mode, MpvScreenshotFlags flags)
     {
         List<string> parts = new List<string>
@@ -4438,8 +5372,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 將截圖像素格式轉為 mpv 文字。
     /// </summary>
-    /// <param name="format">截圖像素格式。</param>
-    /// <returns>mpv 截圖像素格式文字。</returns>
+    /// <param name="format">
+    /// 截圖像素格式。
+    /// </param>
+    /// <returns>
+    /// mpv 截圖像素格式文字。
+    /// </returns>
     private static string ToScreenshotFormatText(MpvScreenshotFormat format)
     {
         switch (format)
@@ -4458,8 +5396,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 將清單變更動作轉為 mpv 文字。
     /// </summary>
-    /// <param name="operation">清單變更動作。</param>
-    /// <returns>mpv 清單變更動作文字。</returns>
+    /// <param name="operation">
+    /// 清單變更動作。
+    /// </param>
+    /// <returns>
+    /// mpv 清單變更動作文字。
+    /// </returns>
     private static string ToListChangeOperationText(MpvListChangeOperation operation)
     {
         switch (operation)
@@ -4480,8 +5422,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 將輸入 section 旗標轉為 mpv 文字。
     /// </summary>
-    /// <param name="flags">輸入 section 旗標。</param>
-    /// <returns>mpv 輸入 section 旗標文字。</returns>
+    /// <param name="flags">
+    /// 輸入 section 旗標。
+    /// </param>
+    /// <returns>
+    /// mpv 輸入 section 旗標文字。
+    /// </returns>
     private static string ToInputSectionFlagsText(MpvInputSectionFlags flags)
     {
         List<string> parts = new List<string>();
@@ -4506,9 +5452,15 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 非同步設定整數旗標格式的 libmpv 屬性。
     /// </summary>
-    /// <param name="name">要設定的 mpv 屬性名稱。</param>
-    /// <param name="value">要套用到屬性的旗標值參考。</param>
-    /// <returns>代表 libmpv 設定屬性回覆的工作。</returns>
+    /// <param name="name">
+    /// 要設定的 mpv 屬性名稱。
+    /// </param>
+    /// <param name="value">
+    /// 要套用到屬性的旗標值參考。
+    /// </param>
+    /// <returns>
+    /// 代表 libmpv 設定屬性回覆的工作。
+    /// </returns>
     private Task SetPropertyFlagAsyncCore(string name, ref int value)
     {
         ulong requestId = NextRequestId();
@@ -4537,9 +5489,15 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 非同步設定 64 位元整數格式的 libmpv 屬性。
     /// </summary>
-    /// <param name="name">要設定的 mpv 屬性名稱。</param>
-    /// <param name="value">要套用到屬性的 64 位元整數值參考。</param>
-    /// <returns>代表 libmpv 設定屬性回覆的工作。</returns>
+    /// <param name="name">
+    /// 要設定的 mpv 屬性名稱。
+    /// </param>
+    /// <param name="value">
+    /// 要套用到屬性的 64 位元整數值參考。
+    /// </param>
+    /// <returns>
+    /// 代表 libmpv 設定屬性回覆的工作。
+    /// </returns>
     private Task SetPropertyInt64AsyncCore(string name, ref long value)
     {
         ulong requestId = NextRequestId();
@@ -4568,9 +5526,15 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 非同步設定雙精確度浮點數格式的 libmpv 屬性。
     /// </summary>
-    /// <param name="name">要設定的 mpv 屬性名稱。</param>
-    /// <param name="value">要套用到屬性的雙精確度浮點數值參考。</param>
-    /// <returns>代表 libmpv 設定屬性回覆的工作。</returns>
+    /// <param name="name">
+    /// 要設定的 mpv 屬性名稱。
+    /// </param>
+    /// <param name="value">
+    /// 要套用到屬性的雙精確度浮點數值參考。
+    /// </param>
+    /// <returns>
+    /// 代表 libmpv 設定屬性回覆的工作。
+    /// </returns>
     private Task SetPropertyDoubleAsyncCore(string name, ref double value)
     {
         ulong requestId = NextRequestId();
@@ -4599,7 +5563,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 將建立選項套用到尚未初始化的 libmpv 用戶端。
     /// </summary>
-    /// <param name="options">要套用的播放器建立選項。</param>
+    /// <param name="options">
+    /// 要套用的播放器建立選項。
+    /// </param>
     private void ApplyInitialOptions(MpvPlayerOptions options)
     {
         if (options.LoadUserConfig || !string.IsNullOrWhiteSpace(options.ConfigDirectory))
@@ -4675,8 +5641,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 設定可能不存在於目前 libmpv 建置的選項。
     /// </summary>
-    /// <param name="name">要設定的 mpv 選項名稱。</param>
-    /// <param name="value">要套用到選項的字串值。</param>
+    /// <param name="name">
+    /// 要設定的 mpv 選項名稱。
+    /// </param>
+    /// <param name="value">
+    /// 要套用到選項的字串值。
+    /// </param>
     private void SetOptionalOptionString(string name, string value)
     {
         using (Utf8String optionName = new Utf8String(name))
@@ -4695,8 +5665,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 判斷例外狀況是否代表屬性不存在或目前無法使用。
     /// </summary>
-    /// <param name="exception">要檢查的 mpv 例外狀況。</param>
-    /// <returns>例外狀況代表屬性不存在或目前無法使用時為 <see langword="true"/>。</returns>
+    /// <param name="exception">
+    /// 要檢查的 mpv 例外狀況。
+    /// </param>
+    /// <returns>
+    /// 例外狀況代表屬性不存在或目前無法使用時為 <see langword="true"/>。
+    /// </returns>
     private static bool IsUnavailablePropertyError(MpvException exception)
     {
         return exception.ErrorCode == (int)MpvErrorCode.PropertyNotFound ||
@@ -4751,8 +5725,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 將單一 libmpv 原生事件轉換並分派給受控事件。
     /// </summary>
-    /// <param name="eventPointer">libmpv 原生事件指標。</param>
-    /// <param name="nativeEvent">libmpv 原生事件資料。</param>
+    /// <param name="eventPointer">
+    /// libmpv 原生事件指標。
+    /// </param>
+    /// <param name="nativeEvent">
+    /// libmpv 原生事件資料。
+    /// </param>
     private void DispatchEvent(IntPtr eventPointer, MpvEvent nativeEvent)
     {
         MpvEventArgs args = new MpvEventArgs(nativeEvent.EventId, nativeEvent.Error, nativeEvent.ReplyUserData);
@@ -4832,7 +5810,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 完成指定原生命令回覆對應的非同步工作。
     /// </summary>
-    /// <param name="nativeEvent">libmpv 命令回覆事件資料。</param>
+    /// <param name="nativeEvent">
+    /// libmpv 命令回覆事件資料。
+    /// </param>
     private void CompletePendingCommand(MpvEvent nativeEvent)
     {
         MpvNode result = DecodeCommandResult(nativeEvent);
@@ -4843,7 +5823,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 完成指定原生屬性回覆對應的非同步工作。
     /// </summary>
-    /// <param name="nativeEvent">libmpv 屬性回覆事件資料。</param>
+    /// <param name="nativeEvent">
+    /// libmpv 屬性回覆事件資料。
+    /// </param>
     private void CompletePendingProperty(MpvEvent nativeEvent)
     {
         MpvNode result = nativeEvent.Error < 0 ? MpvNode.None() : DecodePropertyNode(nativeEvent);
@@ -4853,8 +5835,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 完成指定原生事件對應的非同步工作。
     /// </summary>
-    /// <param name="nativeEvent">libmpv 回覆事件資料。</param>
-    /// <param name="result">回覆事件的節點結果。</param>
+    /// <param name="nativeEvent">
+    /// libmpv 回覆事件資料。
+    /// </param>
+    /// <param name="result">
+    /// 回覆事件的節點結果。
+    /// </param>
     private void CompletePendingRequest(MpvEvent nativeEvent, MpvNode result)
     {
         TaskCompletionSource<MpvNode>? completion;
@@ -4876,8 +5862,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 將命令回覆事件資料轉換為節點。
     /// </summary>
-    /// <param name="nativeEvent">libmpv 命令回覆事件資料。</param>
-    /// <returns>命令回傳節點；沒有資料時為空節點。</returns>
+    /// <param name="nativeEvent">
+    /// libmpv 命令回覆事件資料。
+    /// </param>
+    /// <returns>
+    /// 命令回傳節點；沒有資料時為空節點。
+    /// </returns>
     private static MpvNode DecodeCommandResult(MpvEvent nativeEvent)
     {
         if (nativeEvent.Data == IntPtr.Zero)
@@ -4892,8 +5882,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 將屬性回覆事件資料轉換為節點。
     /// </summary>
-    /// <param name="nativeEvent">libmpv 屬性回覆事件資料。</param>
-    /// <returns>屬性回傳節點；沒有資料時為空節點。</returns>
+    /// <param name="nativeEvent">
+    /// libmpv 屬性回覆事件資料。
+    /// </param>
+    /// <returns>
+    /// 屬性回傳節點；沒有資料時為空節點。
+    /// </returns>
     private static MpvNode DecodePropertyNode(MpvEvent nativeEvent)
     {
         if (nativeEvent.Data == IntPtr.Zero)
@@ -4924,8 +5918,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 將 libmpv 原生事件轉換為節點並分派。
     /// </summary>
-    /// <param name="eventPointer">libmpv 原生事件指標。</param>
-    /// <param name="nativeEvent">libmpv 原生事件資料。</param>
+    /// <param name="eventPointer">
+    /// libmpv 原生事件指標。
+    /// </param>
+    /// <param name="nativeEvent">
+    /// libmpv 原生事件資料。
+    /// </param>
     private void DispatchNodeEvent(IntPtr eventPointer, MpvEvent nativeEvent)
     {
         if (eventPointer == IntPtr.Zero || EventNodeReceived == null)
@@ -4957,7 +5955,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 分派 libmpv 屬性變更事件。
     /// </summary>
-    /// <param name="nativeEvent">libmpv 屬性變更事件資料。</param>
+    /// <param name="nativeEvent">
+    /// libmpv 屬性變更事件資料。
+    /// </param>
     private void DispatchPropertyChange(MpvEvent nativeEvent)
     {
         if (nativeEvent.Data == IntPtr.Zero)
@@ -4978,8 +5978,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 將 libmpv 屬性原生資料轉換成受控值。
     /// </summary>
-    /// <param name="property">libmpv 屬性事件資料。</param>
-    /// <returns>轉換後的受控屬性值；無法轉換時為 <see langword="null"/>。</returns>
+    /// <param name="property">
+    /// libmpv 屬性事件資料。
+    /// </param>
+    /// <returns>
+    /// 轉換後的受控屬性值；無法轉換時為 <see langword="null"/>。
+    /// </returns>
     private static object? DecodePropertyValue(MpvEventProperty property)
     {
         if (property.Data == IntPtr.Zero)
@@ -5011,7 +6015,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 分派 libmpv 記錄訊息事件。
     /// </summary>
-    /// <param name="nativeEvent">libmpv 記錄訊息事件資料。</param>
+    /// <param name="nativeEvent">
+    /// libmpv 記錄訊息事件資料。
+    /// </param>
     private void DispatchLogMessage(MpvEvent nativeEvent)
     {
         if (nativeEvent.Data == IntPtr.Zero)
@@ -5030,7 +6036,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 分派 libmpv 播放項目開始載入事件。
     /// </summary>
-    /// <param name="nativeEvent">libmpv 播放項目開始載入事件資料。</param>
+    /// <param name="nativeEvent">
+    /// libmpv 播放項目開始載入事件資料。
+    /// </param>
     private void DispatchStartFile(MpvEvent nativeEvent)
     {
         if (nativeEvent.Data == IntPtr.Zero)
@@ -5045,7 +6053,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 分派 libmpv 播放項目結束事件。
     /// </summary>
-    /// <param name="nativeEvent">libmpv 播放項目結束事件資料。</param>
+    /// <param name="nativeEvent">
+    /// libmpv 播放項目結束事件資料。
+    /// </param>
     private void DispatchEndFile(MpvEvent nativeEvent)
     {
         if (nativeEvent.Data == IntPtr.Zero)
@@ -5066,7 +6076,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 分派 libmpv 用戶端訊息事件。
     /// </summary>
-    /// <param name="nativeEvent">libmpv 用戶端訊息事件資料。</param>
+    /// <param name="nativeEvent">
+    /// libmpv 用戶端訊息事件資料。
+    /// </param>
     private void DispatchClientMessage(MpvEvent nativeEvent)
     {
         if (nativeEvent.Data == IntPtr.Zero)
@@ -5084,7 +6096,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 分派 libmpv 掛鉤事件。
     /// </summary>
-    /// <param name="nativeEvent">libmpv 掛鉤事件資料。</param>
+    /// <param name="nativeEvent">
+    /// libmpv 掛鉤事件資料。
+    /// </param>
     private void DispatchHook(MpvEvent nativeEvent)
     {
         if (nativeEvent.Data == IntPtr.Zero)
@@ -5103,8 +6117,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 將 libmpv 用戶端訊息引數轉換為受控字串集合。
     /// </summary>
-    /// <param name="message">libmpv 用戶端訊息事件資料。</param>
-    /// <returns>轉換後的訊息引數集合。</returns>
+    /// <param name="message">
+    /// libmpv 用戶端訊息事件資料。
+    /// </param>
+    /// <returns>
+    /// 轉換後的訊息引數集合。
+    /// </returns>
     private static IReadOnlyList<string> DecodeClientMessageArguments(MpvEventClientMessage message)
     {
         if (message.ArgumentCount <= 0 || message.Arguments == IntPtr.Zero)
@@ -5125,7 +6143,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 取得下一個 libmpv 非同步要求識別碼。
     /// </summary>
-    /// <returns>下一個要求識別碼。</returns>
+    /// <returns>
+    /// 下一個要求識別碼。
+    /// </returns>
     private ulong NextRequestId()
     {
         long value = Interlocked.Increment(ref _nextRequestId);
@@ -5135,7 +6155,9 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <summary>
     /// 處理 libmpv 喚醒通知。
     /// </summary>
-    /// <param name="context">libmpv 傳回的回呼內容指標。</param>
+    /// <param name="context">
+    /// libmpv 傳回的回呼內容指標。
+    /// </param>
     private void OnWakeup(IntPtr context)
     {
         try

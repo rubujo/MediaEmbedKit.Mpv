@@ -18,8 +18,12 @@ internal static class Program
     /// <summary>
     /// 執行 Console minimal sample。
     /// </summary>
-    /// <param name="args">第一個非旗標引數可指定要播放的檔案路徑或媒體網址；可選旗標：<c>--runtime-check</c>、<c>--license-audit</c>、<c>--apply-staged</c>、<c>--encode &lt;output&gt;</c>。</param>
-    /// <returns>處理程序結束代碼。</returns>
+    /// <param name="args">
+    /// 第一個非旗標引數可指定要播放的檔案路徑或媒體網址；可選旗標：<c>--runtime-check</c>、<c>--license-audit</c>、<c>--apply-staged</c>、<c>--encode &lt;output&gt;</c>。
+    /// </param>
+    /// <returns>
+    /// 處理程序結束代碼。
+    /// </returns>
     private static async Task<int> Main(string[] args)
     {
         string? source = null;
@@ -149,10 +153,18 @@ internal static class Program
     /// <summary>
     /// 以 <see cref="MpvEncoder.EncodeAsync"/> 示範一站式轉碼：根據輸出副檔名自動選擇音訊或音影一同轉碼。
     /// </summary>
-    /// <param name="inputPath">輸入媒體路徑或網址。</param>
-    /// <param name="outputPath">輸出檔案路徑。</param>
-    /// <param name="runtimeDirectory">執行階段資料夾。</param>
-    /// <returns>處理程序結束代碼（0 成功；非 0 失敗）。</returns>
+    /// <param name="inputPath">
+    /// 輸入媒體路徑或網址。
+    /// </param>
+    /// <param name="outputPath">
+    /// 輸出檔案路徑。
+    /// </param>
+    /// <param name="runtimeDirectory">
+    /// 執行階段資料夾。
+    /// </param>
+    /// <returns>
+    /// 處理程序結束代碼（0 成功；非 0 失敗）。
+    /// </returns>
     private static async Task<int> RunEncodeAsync(string inputPath, string outputPath, string runtimeDirectory)
     {
         Console.WriteLine("[encode] input=" + inputPath);
@@ -225,7 +237,9 @@ internal static class Program
     /// <summary>
     /// 在 libmpv 載入前嘗試套用先前暫存的更新；若沒有暫存就略過。
     /// </summary>
-    /// <param name="runtimeDirectory">執行階段資料夾。</param>
+    /// <param name="runtimeDirectory">
+    /// 執行階段資料夾。
+    /// </param>
     private static void ApplyStagedRuntimeUpdates(string runtimeDirectory)
     {
         MpvLibraryUpdateScheduler scheduler = new MpvLibraryUpdateScheduler(runtimeDirectory);
@@ -236,8 +250,12 @@ internal static class Program
     /// <summary>
     /// 印出 <see cref="MpvRuntimeHealthCheck"/> 報告摘要。
     /// </summary>
-    /// <param name="runtimeDirectory">執行階段資料夾。</param>
-    /// <returns>代表分析流程的工作。</returns>
+    /// <param name="runtimeDirectory">
+    /// 執行階段資料夾。
+    /// </param>
+    /// <returns>
+    /// 代表分析流程的工作。
+    /// </returns>
     private static async Task PrintRuntimeHealthAsync(string runtimeDirectory)
     {
         MpvRuntimeHealthReport report = await MpvRuntimeHealthCheck.AnalyzeAsync(runtimeDirectory).ConfigureAwait(false);
@@ -256,8 +274,12 @@ internal static class Program
     /// <summary>
     /// 印出 <see cref="MpvLicenseAuditor"/> 報告摘要。
     /// </summary>
-    /// <param name="runtimeDirectory">執行階段資料夾。</param>
-    /// <returns>代表分析流程的工作。</returns>
+    /// <param name="runtimeDirectory">
+    /// 執行階段資料夾。
+    /// </param>
+    /// <returns>
+    /// 代表分析流程的工作。
+    /// </returns>
     private static async Task PrintLicenseAuditAsync(string runtimeDirectory)
     {
         MpvLicenseAuditReport report = await MpvLicenseAuditor.AnalyzeAsync(runtimeDirectory).ConfigureAwait(false);
@@ -274,8 +296,12 @@ internal static class Program
     /// <summary>
     /// 輸出 libmpv 一般事件。
     /// </summary>
-    /// <param name="sender">引發事件的播放器。</param>
-    /// <param name="e">libmpv 事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的播放器。
+    /// </param>
+    /// <param name="e">
+    /// libmpv 事件資料。
+    /// </param>
     private static void PlayerEventReceived(object? sender, MpvEventArgs e)
     {
         Console.WriteLine("[event] " + e.EventId + " error=" + e.ErrorCode + " reply=" + e.ReplyUserData);
@@ -284,8 +310,12 @@ internal static class Program
     /// <summary>
     /// 輸出 libmpv 記錄訊息。
     /// </summary>
-    /// <param name="sender">引發事件的播放器。</param>
-    /// <param name="e">libmpv 記錄訊息資料。</param>
+    /// <param name="sender">
+    /// 引發事件的播放器。
+    /// </param>
+    /// <param name="e">
+    /// libmpv 記錄訊息資料。
+    /// </param>
     private static void PlayerLogMessageReceived(object? sender, MpvLogMessageEventArgs e)
     {
         Console.WriteLine("[log] " + e.Level + " " + e.Prefix + " | " + e.Text.TrimEnd());
@@ -294,8 +324,12 @@ internal static class Program
     /// <summary>
     /// 輸出檔案載入完成事件。
     /// </summary>
-    /// <param name="sender">引發事件的播放器。</param>
-    /// <param name="e">libmpv 事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的播放器。
+    /// </param>
+    /// <param name="e">
+    /// libmpv 事件資料。
+    /// </param>
     private static void PlayerFileLoaded(object? sender, MpvEventArgs e)
     {
         Console.WriteLine("[lifecycle] file-loaded");
@@ -304,8 +338,12 @@ internal static class Program
     /// <summary>
     /// 輸出播放器關閉事件。
     /// </summary>
-    /// <param name="sender">引發事件的播放器。</param>
-    /// <param name="e">libmpv 事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的播放器。
+    /// </param>
+    /// <param name="e">
+    /// libmpv 事件資料。
+    /// </param>
     private static void PlayerShutdown(object? sender, MpvEventArgs e)
     {
         Console.WriteLine("[lifecycle] shutdown");
@@ -317,7 +355,9 @@ internal static class Program
     /// 本身只收 <see cref="IObserver{T}"/>；本範例不依賴 <c>System.Reactive</c>，所以提供
     /// 此小型 adapter。
     /// </summary>
-    /// <typeparam name="T">觀察者接收的值型別。</typeparam>
+    /// <typeparam name="T">
+    /// 觀察者接收的值型別。
+    /// </typeparam>
     private sealed class ActionObserver<T> : IObserver<T>
     {
         /// <summary>
@@ -328,7 +368,9 @@ internal static class Program
         /// <summary>
         /// 初始化 <see cref="ActionObserver{T}"/> 類別的新執行個體。
         /// </summary>
-        /// <param name="onNext">收到新值時要呼叫的委派。</param>
+        /// <param name="onNext">
+        /// 收到新值時要呼叫的委派。
+        /// </param>
         public ActionObserver(Action<T> onNext)
         {
             _onNext = onNext ?? throw new ArgumentNullException(nameof(onNext));
@@ -337,7 +379,9 @@ internal static class Program
         /// <summary>
         /// 把新值轉發到委派。
         /// </summary>
-        /// <param name="value">收到的新值。</param>
+        /// <param name="value">
+        /// 收到的新值。
+        /// </param>
         public void OnNext(T value) => _onNext(value);
 
         /// <summary>
@@ -348,7 +392,9 @@ internal static class Program
         /// <summary>
         /// 訂閱遇到例外狀況時忽略；本範例不需特別處理。
         /// </summary>
-        /// <param name="error">未使用。</param>
+        /// <param name="error">
+        /// 未使用。
+        /// </param>
         public void OnError(Exception error) { }
     }
 
@@ -365,7 +411,9 @@ internal static class Program
         /// <summary>
         /// 接收 time-pos 的新值並節流輸出到 stdout。
         /// </summary>
-        /// <param name="value">最新的 time-pos 屬性值。</param>
+        /// <param name="value">
+        /// 最新的 time-pos 屬性值。
+        /// </param>
         public void OnNext(double value)
         {
             if (DateTimeOffset.UtcNow - _lastPrintedAt < TimeSpan.FromSeconds(1))
@@ -388,7 +436,9 @@ internal static class Program
         /// <summary>
         /// 在訂閱收到例外狀況時通知 stdout。
         /// </summary>
-        /// <param name="error">訂閱觀察到的例外狀況。</param>
+        /// <param name="error">
+        /// 訂閱觀察到的例外狀況。
+        /// </param>
         public void OnError(Exception error)
         {
             Console.WriteLine("[time-pos] error: " + error.Message);

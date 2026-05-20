@@ -18,7 +18,9 @@ public sealed class YtDlpProcessRunner
     /// <summary>
     /// 初始化 <see cref="YtDlpProcessRunner"/> 類別的新執行個體。
     /// </summary>
-    /// <param name="executablePath">yt-dlp 可執行檔路徑。</param>
+    /// <param name="executablePath">
+    /// yt-dlp 可執行檔路徑。
+    /// </param>
     public YtDlpProcessRunner(string executablePath)
     {
         _runner = new ExternalToolProcessRunner(executablePath);
@@ -36,7 +38,9 @@ public sealed class YtDlpProcessRunner
     /// <summary>
     /// 取得 yt-dlp 可執行檔路徑。
     /// </summary>
-    /// <value>yt-dlp 可執行檔路徑。</value>
+    /// <value>
+    /// yt-dlp 可執行檔路徑。
+    /// </value>
     public string ExecutablePath
     {
         get { return _runner.ExecutablePath; }
@@ -45,7 +49,9 @@ public sealed class YtDlpProcessRunner
     /// <summary>
     /// 取得或設定 yt-dlp 工作目錄。
     /// </summary>
-    /// <value>yt-dlp 工作目錄；未指定時使用目前處理序工作目錄。</value>
+    /// <value>
+    /// yt-dlp 工作目錄；未指定時使用目前處理序工作目錄。
+    /// </value>
     public string? WorkingDirectory
     {
         get { return _runner.WorkingDirectory; }
@@ -55,7 +61,9 @@ public sealed class YtDlpProcessRunner
     /// <summary>
     /// 取得或設定預設等待 yt-dlp 完成的時間。
     /// </summary>
-    /// <value>預設等待 yt-dlp 完成的時間。</value>
+    /// <value>
+    /// 預設等待 yt-dlp 完成的時間。
+    /// </value>
     public TimeSpan DefaultTimeout
     {
         get { return _runner.DefaultTimeout; }
@@ -65,8 +73,12 @@ public sealed class YtDlpProcessRunner
     /// <summary>
     /// 設定 yt-dlp 處理序的環境變數。
     /// </summary>
-    /// <param name="name">環境變數名稱。</param>
-    /// <param name="value">環境變數值。</param>
+    /// <param name="name">
+    /// 環境變數名稱。
+    /// </param>
+    /// <param name="value">
+    /// 環境變數值。
+    /// </param>
     public void SetEnvironmentVariable(string name, string value)
     {
         _runner.SetEnvironmentVariable(name, value);
@@ -75,10 +87,18 @@ public sealed class YtDlpProcessRunner
     /// <summary>
     /// 非同步執行 yt-dlp。
     /// </summary>
-    /// <param name="arguments">要傳給 yt-dlp 的引數集合。</param>
-    /// <param name="timeout">等待 yt-dlp 完成的時間；未指定時使用 <see cref="DefaultTimeout"/>。</param>
-    /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
-    /// <returns>表示 yt-dlp 執行結果的工作。</returns>
+    /// <param name="arguments">
+    /// 要傳給 yt-dlp 的引數集合。
+    /// </param>
+    /// <param name="timeout">
+    /// 等待 yt-dlp 完成的時間；未指定時使用 <see cref="DefaultTimeout"/>。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 可取消非同步作業的語彙基元。
+    /// </param>
+    /// <returns>
+    /// 表示 yt-dlp 執行結果的工作。
+    /// </returns>
     public Task<ExternalToolProcessResult> RunAsync(
         IEnumerable<string> arguments,
         TimeSpan? timeout = null,
@@ -90,10 +110,18 @@ public sealed class YtDlpProcessRunner
     /// <summary>
     /// 取得指定媒體網址的格式清單。
     /// </summary>
-    /// <param name="url">要分析的媒體網址。</param>
-    /// <param name="timeout">等待 yt-dlp 完成的時間；未指定時使用 <see cref="DefaultTimeout"/>。</param>
-    /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
-    /// <returns>表示 yt-dlp 格式清單命令結果的工作。</returns>
+    /// <param name="url">
+    /// 要分析的媒體網址。
+    /// </param>
+    /// <param name="timeout">
+    /// 等待 yt-dlp 完成的時間；未指定時使用 <see cref="DefaultTimeout"/>。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 可取消非同步作業的語彙基元。
+    /// </param>
+    /// <returns>
+    /// 表示 yt-dlp 格式清單命令結果的工作。
+    /// </returns>
     public Task<ExternalToolProcessResult> ListFormatsAsync(
         string url,
         TimeSpan? timeout = null,
@@ -110,10 +138,18 @@ public sealed class YtDlpProcessRunner
     /// <summary>
     /// 以單行 JSON 形式取得指定媒體網址的資訊。
     /// </summary>
-    /// <param name="url">要分析的媒體網址。</param>
-    /// <param name="timeout">等待 yt-dlp 完成的時間；未指定時使用 <see cref="DefaultTimeout"/>。</param>
-    /// <param name="cancellationToken">可取消非同步作業的語彙基元。</param>
-    /// <returns>表示 yt-dlp 單行 JSON 命令結果的工作。</returns>
+    /// <param name="url">
+    /// 要分析的媒體網址。
+    /// </param>
+    /// <param name="timeout">
+    /// 等待 yt-dlp 完成的時間；未指定時使用 <see cref="DefaultTimeout"/>。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 可取消非同步作業的語彙基元。
+    /// </param>
+    /// <returns>
+    /// 表示 yt-dlp 單行 JSON 命令結果的工作。
+    /// </returns>
     public Task<ExternalToolProcessResult> DumpSingleJsonAsync(
         string url,
         TimeSpan? timeout = null,
@@ -130,9 +166,15 @@ public sealed class YtDlpProcessRunner
     /// <summary>
     /// 以 <see cref="IAsyncEnumerable{T}"/> 串流執行 yt-dlp。
     /// </summary>
-    /// <param name="arguments">要傳給 yt-dlp 的引數集合。</param>
-    /// <param name="cancellationToken">取消列舉的 token；取消時會嘗試終止處理序。</param>
-    /// <returns>逐行回傳 yt-dlp 的輸出事件。</returns>
+    /// <param name="arguments">
+    /// 要傳給 yt-dlp 的引數集合。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 取消列舉的 token；取消時會嘗試終止處理序。
+    /// </param>
+    /// <returns>
+    /// 逐行回傳 yt-dlp 的輸出事件。
+    /// </returns>
     public IAsyncEnumerable<ExternalToolOutputEventArgs> StreamAsync(
         IEnumerable<string> arguments,
         CancellationToken cancellationToken = default(CancellationToken))
@@ -143,9 +185,15 @@ public sealed class YtDlpProcessRunner
     /// <summary>
     /// 以 <see cref="IAsyncEnumerable{T}"/> 串流取得指定媒體網址的格式清單。
     /// </summary>
-    /// <param name="url">要分析的媒體網址。</param>
-    /// <param name="cancellationToken">取消列舉的 token。</param>
-    /// <returns>逐行回傳 yt-dlp 格式清單命令的輸出事件。</returns>
+    /// <param name="url">
+    /// 要分析的媒體網址。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 取消列舉的 token。
+    /// </param>
+    /// <returns>
+    /// 逐行回傳 yt-dlp 格式清單命令的輸出事件。
+    /// </returns>
     public IAsyncEnumerable<ExternalToolOutputEventArgs> StreamFormatsAsync(
         string url,
         CancellationToken cancellationToken = default(CancellationToken))
@@ -161,8 +209,12 @@ public sealed class YtDlpProcessRunner
     /// <summary>
     /// 建立明確指定 Deno 執行階段路徑時使用的 yt-dlp 引數值。
     /// </summary>
-    /// <param name="denoPath">Deno 可執行檔路徑。</param>
-    /// <returns>可傳給 <c>--js-runtimes</c> 的 Deno 引數值。</returns>
+    /// <param name="denoPath">
+    /// Deno 可執行檔路徑。
+    /// </param>
+    /// <returns>
+    /// 可傳給 <c>--js-runtimes</c> 的 Deno 引數值。
+    /// </returns>
     public static string CreateDenoJavaScriptRuntimeArgument(string denoPath)
     {
         if (string.IsNullOrWhiteSpace(denoPath))

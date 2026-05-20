@@ -47,8 +47,12 @@ internal static class BrowserRequestHeaders
     /// <summary>
     /// 將瀏覽器相容標頭套用到指定的 HTTP 要求標頭集合。
     /// </summary>
-    /// <param name="headers">要套用標頭的 HTTP 要求標頭集合。</param>
-    /// <param name="userAgent">自訂使用者代理字串；未指定時使用專案預設值。</param>
+    /// <param name="headers">
+    /// 要套用標頭的 HTTP 要求標頭集合。
+    /// </param>
+    /// <param name="userAgent">
+    /// 自訂使用者代理字串；未指定時使用專案預設值。
+    /// </param>
     /// <remarks>
     /// 套用完整 Chrome 瀏覽器標頭（含 sec-ch-ua 系列 client hints），適用於下載 CDN
     /// （GitHub release asset / shinchiro / zhongfly 等）—— 部分 CDN 對非瀏覽器 UA
@@ -72,7 +76,9 @@ internal static class BrowserRequestHeaders
     /// 將 GitHub API 適用的誠實 UA 套到指定的 HTTP 要求標頭集合（**不**含 sec-ch-ua
     /// 系列 client hints —— JSON API 不需要也不期望這些瀏覽器專屬 headers）。
     /// </summary>
-    /// <param name="headers">要套用標頭的 HTTP 要求標頭集合。</param>
+    /// <param name="headers">
+    /// 要套用標頭的 HTTP 要求標頭集合。
+    /// </param>
     /// <param name="userAgent">
     /// 自訂使用者代理字串；未指定時用 <c>MediaEmbedKit.Mpv/&lt;assemblyVersion&gt; (+repo)</c>
     /// 形式，符合 GitHub ToS 偏好「標識性 UA」的觀感。
@@ -89,7 +95,12 @@ internal static class BrowserRequestHeaders
     /// </summary>
     public static readonly string GitHubApiUserAgent = "MediaEmbedKit.Mpv/" + GetAssemblyVersion() + " (+https://github.com/rubujo/MediaEmbedKit.Mpv)";
 
-    /// <summary>取得當前 assembly 版本字串（用於建構 GitHubApiUserAgent）。</summary>
+    /// <summary>
+    /// 取得當前 assembly 版本字串（用於建構 GitHubApiUserAgent）。
+    /// </summary>
+    /// <returns>
+    /// 目前 assembly 的 major.minor.patch 版本字串；無法取得時為 <c>0.0.0</c>。
+    /// </returns>
     private static string GetAssemblyVersion()
     {
         try
@@ -106,8 +117,12 @@ internal static class BrowserRequestHeaders
     /// <summary>
     /// 從使用者代理字串取得 Chrome 完整版本。
     /// </summary>
-    /// <param name="userAgent">要檢查的使用者代理字串。</param>
-    /// <returns>Chrome 完整版本；無法解析時傳回專案預設版本。</returns>
+    /// <param name="userAgent">
+    /// 要檢查的使用者代理字串。
+    /// </param>
+    /// <returns>
+    /// Chrome 完整版本；無法解析時傳回專案預設版本。
+    /// </returns>
     private static string GetChromeVersion(string userAgent)
     {
         const string token = "Chrome/";
@@ -141,8 +156,12 @@ internal static class BrowserRequestHeaders
     /// <summary>
     /// 從 Chrome 完整版本取得主要版本。
     /// </summary>
-    /// <param name="version">Chrome 完整版本。</param>
-    /// <returns>Chrome 主要版本；無法解析時傳回專案預設主要版本。</returns>
+    /// <param name="version">
+    /// Chrome 完整版本。
+    /// </param>
+    /// <returns>
+    /// Chrome 主要版本；無法解析時傳回專案預設主要版本。
+    /// </returns>
     private static string GetChromeMajorVersion(string version)
     {
         int separatorIndex = version.IndexOf('.');
@@ -157,8 +176,12 @@ internal static class BrowserRequestHeaders
     /// <summary>
     /// 建立 sec-ch-ua 標頭值。
     /// </summary>
-    /// <param name="majorVersion">Chrome 主要版本。</param>
-    /// <returns>可加入 HTTP 要求的 sec-ch-ua 標頭值。</returns>
+    /// <param name="majorVersion">
+    /// Chrome 主要版本。
+    /// </param>
+    /// <returns>
+    /// 可加入 HTTP 要求的 sec-ch-ua 標頭值。
+    /// </returns>
     private static string CreateSecChUa(string majorVersion)
     {
         if (string.Equals(majorVersion, ChromeStableMajorVersion, StringComparison.Ordinal))
@@ -172,8 +195,12 @@ internal static class BrowserRequestHeaders
     /// <summary>
     /// 建立 sec-ch-ua-full-version-list 標頭值。
     /// </summary>
-    /// <param name="version">Chrome 完整版本。</param>
-    /// <returns>可加入 HTTP 要求的 sec-ch-ua-full-version-list 標頭值。</returns>
+    /// <param name="version">
+    /// Chrome 完整版本。
+    /// </param>
+    /// <returns>
+    /// 可加入 HTTP 要求的 sec-ch-ua-full-version-list 標頭值。
+    /// </returns>
     private static string CreateSecChUaFullVersionList(string version)
     {
         if (string.Equals(version, ChromeStableVersion, StringComparison.Ordinal))

@@ -86,7 +86,9 @@ public partial class MainWindow : Window
     /// <summary>
     /// 在視窗關閉時釋放事件橋接器。
     /// </summary>
-    /// <param name="e">事件資料。</param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     protected override void OnClosed(EventArgs e)
     {
         _statusDispatcher.Dispose();
@@ -105,8 +107,12 @@ public partial class MainWindow : Window
     /// <summary>
     /// 在視窗載入後載入預設媒體並執行冒煙測試。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private async void WindowLoaded(object sender, RoutedEventArgs e)
     {
         try
@@ -141,7 +147,9 @@ public partial class MainWindow : Window
     /// <summary>
     /// 非同步初始化範例 runtime 與 WPF 播放控制項。
     /// </summary>
-    /// <returns>初始化成功時為 <see langword="true"/>。</returns>
+    /// <returns>
+    /// 初始化成功時為 <see langword="true"/>。
+    /// </returns>
     private async Task<bool> InitializeRuntimeAsync()
     {
         SetStatusText("正在準備 runtime...");
@@ -198,7 +206,9 @@ public partial class MainWindow : Window
     /// <summary>
     /// 建立由 `MpvWpfPlayer` 管理的 AirSpace 安全覆蓋層。
     /// </summary>
-    /// <returns>可交給 WPF 播放控制項管理的覆蓋層元素。</returns>
+    /// <returns>
+    /// 可交給 WPF 播放控制項管理的覆蓋層元素。
+    /// </returns>
     private static UIElement CreateSafeOverlayContent()
     {
         Grid root = new Grid
@@ -230,8 +240,12 @@ public partial class MainWindow : Window
     /// <summary>
     /// 將 <see cref="SampleTheme"/> 的 ARGB 整數轉成 WPF 顏色物件。
     /// </summary>
-    /// <param name="argb">要轉換的 ARGB 整數。</param>
-    /// <returns>對應的 WPF 顏色物件。</returns>
+    /// <param name="argb">
+    /// 要轉換的 ARGB 整數。
+    /// </param>
+    /// <returns>
+    /// 對應的 WPF 顏色物件。
+    /// </returns>
     private static Color ThemeColor(int argb)
     {
         return Color.FromArgb(SampleTheme.AlphaOf(argb), SampleTheme.RedOf(argb), SampleTheme.GreenOf(argb), SampleTheme.BlueOf(argb));
@@ -240,7 +254,9 @@ public partial class MainWindow : Window
     /// <summary>
     /// 執行 WPF 範例播放冒煙測試。
     /// </summary>
-    /// <returns>代表冒煙測試流程的工作。</returns>
+    /// <returns>
+    /// 代表冒煙測試流程的工作。
+    /// </returns>
     private Task RunSmokeAsync()
     {
         return SampleRuntime.RunSmokeUntilPlaybackAsync("WpfSample", () => _playerHost?.Player, Close);
@@ -249,8 +265,12 @@ public partial class MainWindow : Window
     /// <summary>
     /// 處理播放器建立事件並開始輸出 libmpv 事件。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private void PlayerCreated(object? sender, EventArgs e)
     {
         _eventBridge?.Dispose();
@@ -265,8 +285,12 @@ public partial class MainWindow : Window
     /// <summary>
     /// 處理載入按鈕點選事件並載入輸入的媒體來源。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private void LoadClick(object sender, RoutedEventArgs e)
     {
         LoadCurrentSource();
@@ -303,8 +327,12 @@ public partial class MainWindow : Window
     /// <summary>
     /// 切換目前播放器的暫停狀態。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private void PauseClick(object sender, RoutedEventArgs e)
     {
         if (!EnsureRuntimeReady())
@@ -322,8 +350,12 @@ public partial class MainWindow : Window
     /// <summary>
     /// 停止目前播放項目。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private void StopClick(object sender, RoutedEventArgs e)
     {
         if (!EnsureRuntimeReady())
@@ -338,8 +370,12 @@ public partial class MainWindow : Window
     /// <summary>
     /// 在格式選項變更時套用 yt-dlp 格式。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private void FormatComboBoxSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         SampleYtdlpFormatChoice? choice = FormatComboBox.SelectedItem as SampleYtdlpFormatChoice;
@@ -369,8 +405,12 @@ public partial class MainWindow : Window
     /// <summary>
     /// 處理 OSD 按鈕點選事件。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private void OsdClick(object sender, RoutedEventArgs e)
     {
         RunFeature(() => _features.ShowOsd());
@@ -379,8 +419,12 @@ public partial class MainWindow : Window
     /// <summary>
     /// 處理倒退按鈕點選事件。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private void SeekBackwardClick(object sender, RoutedEventArgs e)
     {
         RunFeature(() => _features.SeekRelative(-10));
@@ -389,8 +433,12 @@ public partial class MainWindow : Window
     /// <summary>
     /// 處理快轉按鈕點選事件。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private void SeekForwardClick(object sender, RoutedEventArgs e)
     {
         RunFeature(() => _features.SeekRelative(10));
@@ -399,8 +447,12 @@ public partial class MainWindow : Window
     /// <summary>
     /// 處理降低音量按鈕點選事件。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private void VolumeDownClick(object sender, RoutedEventArgs e)
     {
         RunFeature(() => _features.ChangeVolume(-5));
@@ -409,8 +461,12 @@ public partial class MainWindow : Window
     /// <summary>
     /// 處理提高音量按鈕點選事件。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private void VolumeUpClick(object sender, RoutedEventArgs e)
     {
         RunFeature(() => _features.ChangeVolume(5));
@@ -419,8 +475,12 @@ public partial class MainWindow : Window
     /// <summary>
     /// 處理靜音按鈕點選事件。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private void MuteClick(object sender, RoutedEventArgs e)
     {
         RunFeature(() => _features.ToggleMute());
@@ -429,8 +489,12 @@ public partial class MainWindow : Window
     /// <summary>
     /// 處理播放速度按鈕點選事件。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private void SpeedClick(object sender, RoutedEventArgs e)
     {
         RunFeature(() => _features.CycleSpeed());
@@ -439,8 +503,12 @@ public partial class MainWindow : Window
     /// <summary>
     /// 處理字幕按鈕點選事件。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private void SubtitleClick(object sender, RoutedEventArgs e)
     {
         RunFeature(() => _features.AddSampleSubtitle());
@@ -449,8 +517,12 @@ public partial class MainWindow : Window
     /// <summary>
     /// 處理播放軌按鈕點選事件。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private void TracksClick(object sender, RoutedEventArgs e)
     {
         RunFeature(() => _features.DumpTracks());
@@ -459,8 +531,12 @@ public partial class MainWindow : Window
     /// <summary>
     /// 處理截圖按鈕點選事件。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private void ScreenshotClick(object sender, RoutedEventArgs e)
     {
         RunFeature(() => _features.TakeScreenshot());
@@ -469,8 +545,12 @@ public partial class MainWindow : Window
     /// <summary>
     /// 處理設定檔按鈕點選事件。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private void ConfigClick(object sender, RoutedEventArgs e)
     {
         RunFeature(() => _features.LoadSampleConfig());
@@ -479,8 +559,12 @@ public partial class MainWindow : Window
     /// <summary>
     /// 處理 Lua 按鈕點選事件。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private async void LuaClick(object sender, RoutedEventArgs e)
     {
         await RunFeatureAsync(() => _features.LoadSampleLuaScriptAsync()).ConfigureAwait(true);
@@ -489,8 +573,12 @@ public partial class MainWindow : Window
     /// <summary>
     /// 處理 yt-dlp 診斷按鈕點選事件。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private async void YtdlpClick(object sender, RoutedEventArgs e)
     {
         await RunFeatureAsync(() => _features.RunYtdlpDiagnosticsAsync(UrlTextBox.Text)).ConfigureAwait(true);
@@ -499,8 +587,12 @@ public partial class MainWindow : Window
     /// <summary>
     /// 處理 Deno 診斷按鈕點選事件。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private async void DenoClick(object sender, RoutedEventArgs e)
     {
         await RunFeatureAsync(() => _features.RunDenoDiagnosticsAsync()).ConfigureAwait(true);
@@ -509,8 +601,12 @@ public partial class MainWindow : Window
     /// <summary>
     /// 處理 FFmpeg 診斷按鈕點選事件。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private async void FFmpegClick(object sender, RoutedEventArgs e)
     {
         await RunFeatureAsync(() => _features.RunFFmpegDiagnosticsAsync()).ConfigureAwait(true);
@@ -519,8 +615,12 @@ public partial class MainWindow : Window
     /// <summary>
     /// 處理「Save as MP4」按鈕點選事件：以 <see cref="MpvEncoder.EncodeAsync"/> 把目前 URL 來源轉碼成 mp4 並回報進度。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private async void SaveAsMp4Click(object sender, RoutedEventArgs e)
     {
         await RunFeatureAsync(() => EncodeCurrentSourceToMp4Async()).ConfigureAwait(true);
@@ -529,7 +629,9 @@ public partial class MainWindow : Window
     /// <summary>
     /// 以共用 <see cref="SampleEncodingHelper"/> 把 <see cref="UrlTextBox"/> 內容轉碼為 mp4。
     /// </summary>
-    /// <returns>代表編碼流程的工作。</returns>
+    /// <returns>
+    /// 代表編碼流程的工作。
+    /// </returns>
     private async Task EncodeCurrentSourceToMp4Async()
     {
         if (!_runtimeReady)
@@ -565,8 +667,12 @@ public partial class MainWindow : Window
     /// <summary>
     /// 處理 yt-dlp 更新按鈕點選事件。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private async void YtdlpUpdateClick(object sender, RoutedEventArgs e)
     {
         await RunFeatureAsync(() => _features.RunYtdlpSelfUpdateAsync()).ConfigureAwait(true);
@@ -575,8 +681,12 @@ public partial class MainWindow : Window
     /// <summary>
     /// 處理 Deno 更新按鈕點選事件。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private async void DenoUpdateClick(object sender, RoutedEventArgs e)
     {
         await RunFeatureAsync(() => _features.RunDenoSelfUpgradeAsync()).ConfigureAwait(true);
@@ -585,7 +695,9 @@ public partial class MainWindow : Window
     /// <summary>
     /// 執行同步範例功能並處理錯誤。
     /// </summary>
-    /// <param name="action">要執行的功能。</param>
+    /// <param name="action">
+    /// 要執行的功能。
+    /// </param>
     private void RunFeature(Action action)
     {
         if (!EnsureRuntimeReady())
@@ -607,8 +719,12 @@ public partial class MainWindow : Window
     /// <summary>
     /// 執行非同步範例功能並處理錯誤。
     /// </summary>
-    /// <param name="action">要執行的非同步功能。</param>
-    /// <returns>代表功能執行流程的工作。</returns>
+    /// <param name="action">
+    /// 要執行的非同步功能。
+    /// </param>
+    /// <returns>
+    /// 代表功能執行流程的工作。
+    /// </returns>
     private async Task RunFeatureAsync(Func<Task> action)
     {
         if (!EnsureRuntimeReady())
@@ -645,7 +761,9 @@ public partial class MainWindow : Window
     /// <summary>
     /// 確認 runtime 已完成初始化。
     /// </summary>
-    /// <returns>runtime 已就緒時為 <see langword="true"/>。</returns>
+    /// <returns>
+    /// runtime 已就緒時為 <see langword="true"/>。
+    /// </returns>
     private bool EnsureRuntimeReady()
     {
         if (_runtimeReady)
@@ -660,7 +778,9 @@ public partial class MainWindow : Window
     /// <summary>
     /// 遞迴登錄需要等 runtime 就緒後才可操作的控制項。
     /// </summary>
-    /// <param name="dependencyObject">要掃描的視覺樹節點。</param>
+    /// <param name="dependencyObject">
+    /// 要掃描的視覺樹節點。
+    /// </param>
     private void RegisterRuntimeControls(DependencyObject dependencyObject)
     {
         Control? control = dependencyObject as Control;
@@ -679,7 +799,9 @@ public partial class MainWindow : Window
     /// <summary>
     /// 遞迴登錄非同步功能進行中需暫時禁用的按鈕。
     /// </summary>
-    /// <param name="dependencyObject">要掃描的視覺樹節點。</param>
+    /// <param name="dependencyObject">
+    /// 要掃描的視覺樹節點。
+    /// </param>
     private void RegisterFeatureButtons(DependencyObject dependencyObject)
     {
         Button? button = dependencyObject as Button;
@@ -698,7 +820,9 @@ public partial class MainWindow : Window
     /// <summary>
     /// 設定 runtime 相關控制項是否可操作。
     /// </summary>
-    /// <param name="enabled">控制項可操作時為 <see langword="true"/>。</param>
+    /// <param name="enabled">
+    /// 控制項可操作時為 <see langword="true"/>。
+    /// </param>
     private void SetRuntimeControlsEnabled(bool enabled)
     {
         foreach (Control control in _runtimeControls)
@@ -710,7 +834,9 @@ public partial class MainWindow : Window
     /// <summary>
     /// 設定非同步功能進行中需暫時禁用的按鈕是否可操作。
     /// </summary>
-    /// <param name="enabled">按鈕可操作時為 <see langword="true"/>。</param>
+    /// <param name="enabled">
+    /// 按鈕可操作時為 <see langword="true"/>。
+    /// </param>
     private void SetFeatureButtonsEnabled(bool enabled)
     {
         foreach (Button button in _featureButtons)
@@ -722,7 +848,9 @@ public partial class MainWindow : Window
     /// <summary>
     /// 將目前選擇的 yt-dlp 格式套用到指定播放器選項。
     /// </summary>
-    /// <param name="options">要套用格式的播放器選項。</param>
+    /// <param name="options">
+    /// 要套用格式的播放器選項。
+    /// </param>
     private void ApplySelectedYtdlpFormatToPlayerOptions(MpvPlayerOptions options)
     {
         SampleYtdlpFormatChoice? selectedChoice = FormatComboBox.SelectedItem as SampleYtdlpFormatChoice;
@@ -735,7 +863,9 @@ public partial class MainWindow : Window
     /// <summary>
     /// 將事件文字加入 UI 清單。
     /// </summary>
-    /// <param name="line">要加入事件清單的文字列。</param>
+    /// <param name="line">
+    /// 要加入事件清單的文字列。
+    /// </param>
     private void AppendEventLine(string line)
     {
         _eventLogDispatcher.Enqueue(line);
@@ -744,7 +874,9 @@ public partial class MainWindow : Window
     /// <summary>
     /// 批次加入事件文字列到 UI 清單。
     /// </summary>
-    /// <param name="lines">要加入事件清單的文字列集合。</param>
+    /// <param name="lines">
+    /// 要加入事件清單的文字列集合。
+    /// </param>
     private void AppendEventLines(IReadOnlyList<string> lines)
     {
         EventListBox.BeginInit();
@@ -775,8 +907,12 @@ public partial class MainWindow : Window
     /// <summary>
     /// 將事件清單更新排入 WPF UI 執行緒。
     /// </summary>
-    /// <param name="action">要在 UI 執行緒執行的更新。</param>
-    /// <returns>成功排入 UI 執行緒時為 <see langword="true"/>。</returns>
+    /// <param name="action">
+    /// 要在 UI 執行緒執行的更新。
+    /// </param>
+    /// <returns>
+    /// 成功排入 UI 執行緒時為 <see langword="true"/>。
+    /// </returns>
     private bool ScheduleEventLogFlush(Action action)
     {
         return ScheduleUiUpdate(action);
@@ -785,8 +921,12 @@ public partial class MainWindow : Window
     /// <summary>
     /// 將指定動作排入 WPF UI 執行緒。
     /// </summary>
-    /// <param name="action">要在 UI 執行緒執行的動作。</param>
-    /// <returns>成功排入 UI 執行緒時為 <see langword="true"/>。</returns>
+    /// <param name="action">
+    /// 要在 UI 執行緒執行的動作。
+    /// </param>
+    /// <returns>
+    /// 成功排入 UI 執行緒時為 <see langword="true"/>。
+    /// </returns>
     private bool ScheduleUiUpdate(Action action)
     {
         if (Dispatcher.HasShutdownStarted || Dispatcher.HasShutdownFinished)
@@ -812,7 +952,9 @@ public partial class MainWindow : Window
     /// <summary>
     /// 套用背景輪詢取得的狀態列文字。
     /// </summary>
-    /// <param name="text">要顯示的狀態列文字。</param>
+    /// <param name="text">
+    /// 要顯示的狀態列文字。
+    /// </param>
     private void SetStatusText(string text)
     {
         StatusTextBlock.Text = text;
@@ -821,9 +963,15 @@ public partial class MainWindow : Window
     /// <summary>
     /// 建立範例生命週期文字列。
     /// </summary>
-    /// <param name="stage">生命週期階段名稱。</param>
-    /// <param name="detail">階段補充內容。</param>
-    /// <returns>可顯示在事件清單中的生命週期文字列。</returns>
+    /// <param name="stage">
+    /// 生命週期階段名稱。
+    /// </param>
+    /// <param name="detail">
+    /// 階段補充內容。
+    /// </param>
+    /// <returns>
+    /// 可顯示在事件清單中的生命週期文字列。
+    /// </returns>
     private static string CreateLifecycleLine(string stage, string detail)
     {
         return DateTimeOffset.Now.ToString("HH:mm:ss.fff", CultureInfo.InvariantCulture) + " [lifecycle] " + stage + " | " + detail;

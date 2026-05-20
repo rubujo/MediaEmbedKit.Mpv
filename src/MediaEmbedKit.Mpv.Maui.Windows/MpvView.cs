@@ -220,7 +220,9 @@ public class MpvView : View
     /// <summary>
     /// 取得讓播放器開始或續播的指令。
     /// </summary>
-    /// <value>對應 mpv <c>pause=no</c>。</value>
+    /// <value>
+    /// 對應 mpv <c>pause=no</c>。
+    /// </value>
     [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public ICommand PlayCommand
     {
@@ -230,7 +232,9 @@ public class MpvView : View
     /// <summary>
     /// 取得暫停播放的指令。
     /// </summary>
-    /// <value>對應 mpv <c>pause=yes</c>。</value>
+    /// <value>
+    /// 對應 mpv <c>pause=yes</c>。
+    /// </value>
     [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public ICommand PauseCommand
     {
@@ -240,7 +244,9 @@ public class MpvView : View
     /// <summary>
     /// 取得停止播放的指令。
     /// </summary>
-    /// <value>對應 mpv <c>stop</c>。</value>
+    /// <value>
+    /// 對應 mpv <c>stop</c>。
+    /// </value>
     [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public ICommand StopCommand
     {
@@ -250,7 +256,9 @@ public class MpvView : View
     /// <summary>
     /// 取得切換暫停狀態的指令。
     /// </summary>
-    /// <value>切換 mpv <c>pause</c>。</value>
+    /// <value>
+    /// 切換 mpv <c>pause</c>。
+    /// </value>
     [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public ICommand TogglePauseCommand
     {
@@ -260,7 +268,9 @@ public class MpvView : View
     /// <summary>
     /// 取得切換靜音狀態的指令。
     /// </summary>
-    /// <value>切換 mpv <c>mute</c>。</value>
+    /// <value>
+    /// 切換 mpv <c>mute</c>。
+    /// </value>
     [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public ICommand ToggleMuteCommand
     {
@@ -270,7 +280,9 @@ public class MpvView : View
     /// <summary>
     /// 判斷指令目前是否有可用播放器。
     /// </summary>
-    /// <returns>已綁定播放器時為 <see langword="true"/>。</returns>
+    /// <returns>
+    /// 已綁定播放器時為 <see langword="true"/>。
+    /// </returns>
     private bool CanExecutePlayerCommand()
     {
         return Player != null;
@@ -356,21 +368,27 @@ public class MpvView : View
     /// <summary>
     /// 取得建立播放器時使用的選項。
     /// </summary>
-    /// <value>播放器建立選項。</value>
+    /// <value>
+    /// 播放器建立選項。
+    /// </value>
     [System.ComponentModel.Browsable(false)]
     public MpvPlayerOptions PlayerOptions { get; private set; }
 
     /// <summary>
     /// 取得目前平台 handler 建立的播放器。
     /// </summary>
-    /// <value>目前播放器；尚未建立時為 <see langword="null"/>。</value>
+    /// <value>
+    /// 目前播放器；尚未建立時為 <see langword="null"/>。
+    /// </value>
     [System.ComponentModel.Browsable(false)]
     public MpvPlayer? Player { get; private set; }
 
     /// <summary>
     /// 取得目前是否在 MAUI 設計工具中執行。
     /// </summary>
-    /// <value>檢視位於設計階段時為 <see langword="true"/>。</value>
+    /// <value>
+    /// 檢視位於設計階段時為 <see langword="true"/>。
+    /// </value>
     public bool IsDesignMode
     {
         get { return DesignMode.IsDesignModeEnabled; }
@@ -379,7 +397,9 @@ public class MpvView : View
     /// <summary>
     /// 取得或設定要載入的媒體來源。
     /// </summary>
-    /// <value>檔案路徑或媒體網址。</value>
+    /// <value>
+    /// 檔案路徑或媒體網址。
+    /// </value>
     [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public string? Source
     {
@@ -390,7 +410,9 @@ public class MpvView : View
     /// <summary>
     /// 取得或設定建議使用的 MAUI 覆蓋層檢視。
     /// </summary>
-    /// <value>由 handler 轉換並顯示在視訊上方的 MAUI 檢視；未設定時為 <see langword="null"/>。</value>
+    /// <value>
+    /// 由 handler 轉換並顯示在視訊上方的 MAUI 檢視；未設定時為 <see langword="null"/>。
+    /// </value>
     [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public View? OverlayView
     {
@@ -401,7 +423,9 @@ public class MpvView : View
     /// <summary>
     /// 取得或設定 Windows 原生 WinUI 覆蓋層內容。
     /// </summary>
-    /// <value>直接交給 Windows 平台控制項的 WinUI 元素；未設定時為 <see langword="null"/>。</value>
+    /// <value>
+    /// 直接交給 Windows 平台控制項的 WinUI 元素；未設定時為 <see langword="null"/>。
+    /// </value>
     [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public WinUiElement? OverlayContent
     {
@@ -412,7 +436,9 @@ public class MpvView : View
     /// <summary>
     /// 取得或設定 Windows 平台控制項管理的 AirSpace 覆蓋層是否開啟。
     /// </summary>
-    /// <value>覆蓋層應保持開啟時為 <see langword="true"/>。</value>
+    /// <value>
+    /// 覆蓋層應保持開啟時為 <see langword="true"/>。
+    /// </value>
     [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public bool IsOverlayOpen
     {
@@ -423,7 +449,9 @@ public class MpvView : View
     /// <summary>
     /// 取得或設定目前播放位置。
     /// </summary>
-    /// <value>對應 mpv <c>time-pos</c>；雙向繫結時設值會觸發 seek。</value>
+    /// <value>
+    /// 對應 mpv <c>time-pos</c>；雙向繫結時設值會觸發 seek。
+    /// </value>
     [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public TimeSpan Position
     {
@@ -434,7 +462,9 @@ public class MpvView : View
     /// <summary>
     /// 取得目前媒體總時長。
     /// </summary>
-    /// <value>對應 mpv <c>duration</c>。</value>
+    /// <value>
+    /// 對應 mpv <c>duration</c>。
+    /// </value>
     [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public TimeSpan Duration
     {
@@ -444,7 +474,9 @@ public class MpvView : View
     /// <summary>
     /// 取得或設定音量。
     /// </summary>
-    /// <value>對應 mpv <c>volume</c>，範圍 0–130；預設 100。</value>
+    /// <value>
+    /// 對應 mpv <c>volume</c>，範圍 0–130；預設 100。
+    /// </value>
     [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public double Volume
     {
@@ -455,7 +487,9 @@ public class MpvView : View
     /// <summary>
     /// 取得或設定是否暫停。
     /// </summary>
-    /// <value>對應 mpv <c>pause</c>。</value>
+    /// <value>
+    /// 對應 mpv <c>pause</c>。
+    /// </value>
     [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public bool IsPaused
     {
@@ -466,7 +500,9 @@ public class MpvView : View
     /// <summary>
     /// 取得或設定是否靜音。
     /// </summary>
-    /// <value>對應 mpv <c>mute</c>。</value>
+    /// <value>
+    /// 對應 mpv <c>mute</c>。
+    /// </value>
     [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public bool IsMuted
     {
@@ -477,7 +513,9 @@ public class MpvView : View
     /// <summary>
     /// 取得目前由 libmpv 事件聚合而成的播放狀態。
     /// </summary>
-    /// <value>對應 <see cref="MpvPlayer.State"/>。</value>
+    /// <value>
+    /// 對應 <see cref="MpvPlayer.State"/>。
+    /// </value>
     [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public MpvPlaybackState PlaybackState
     {
@@ -487,7 +525,9 @@ public class MpvView : View
     /// <summary>
     /// 取得或設定目前播放清單索引。
     /// </summary>
-    /// <value>對應 mpv <c>playlist-pos</c>；以 0 起始。</value>
+    /// <value>
+    /// 對應 mpv <c>playlist-pos</c>；以 0 起始。
+    /// </value>
     [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public int PlaylistIndex
     {
@@ -498,7 +538,9 @@ public class MpvView : View
     /// <summary>
     /// 取得或設定目前章節索引。
     /// </summary>
-    /// <value>對應 mpv <c>chapter</c>；以 0 起始，<see langword="null"/> 代表無章節或尚未載入。</value>
+    /// <value>
+    /// 對應 mpv <c>chapter</c>；以 0 起始，<see langword="null"/> 代表無章節或尚未載入。
+    /// </value>
     [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
     public int? Chapter
     {
@@ -509,13 +551,17 @@ public class MpvView : View
     /// <summary>
     /// 取得等待平台 handler 建立後載入的媒體來源。
     /// </summary>
-    /// <value>等待載入的檔案路徑或媒體網址。</value>
+    /// <value>
+    /// 等待載入的檔案路徑或媒體網址。
+    /// </value>
     internal string? PendingSource { get; private set; }
 
     /// <summary>
     /// 取得等待平台 handler 建立後套用的載入模式。
     /// </summary>
-    /// <value>等待套用的載入模式。</value>
+    /// <value>
+    /// 等待套用的載入模式。
+    /// </value>
     internal MpvLoadFileMode PendingMode
     {
         get { return _pendingMode; }
@@ -524,8 +570,12 @@ public class MpvView : View
     /// <summary>
     /// 載入檔案或網址作為播放項目。
     /// </summary>
-    /// <param name="pathOrUrl">要載入的檔案路徑或媒體網址。</param>
-    /// <param name="mode">播放項目加入播放清單的方式。</param>
+    /// <param name="pathOrUrl">
+    /// 要載入的檔案路徑或媒體網址。
+    /// </param>
+    /// <param name="mode">
+    /// 播放項目加入播放清單的方式。
+    /// </param>
     public void LoadFile(string pathOrUrl, MpvLoadFileMode mode = MpvLoadFileMode.Replace)
     {
         PendingSource = pathOrUrl;
@@ -545,7 +595,9 @@ public class MpvView : View
     /// <summary>
     /// 從平台 handler 同步目前播放器參考。
     /// </summary>
-    /// <param name="player">平台 handler 建立的播放器；中斷連線時為 <see langword="null"/>。</param>
+    /// <param name="player">
+    /// 平台 handler 建立的播放器；中斷連線時為 <see langword="null"/>。
+    /// </param>
     internal void SetPlayer(MpvPlayer? player)
     {
         if (ReferenceEquals(Player, player))
@@ -571,7 +623,9 @@ public class MpvView : View
     /// <summary>
     /// 將檢視的 BindableProperty 與目前播放器雙向綁定。
     /// </summary>
-    /// <param name="player">已初始化的播放器。</param>
+    /// <param name="player">
+    /// 已初始化的播放器。
+    /// </param>
     private void AttachPlayerBindings(MpvPlayer player)
     {
         _propertyWatchers.Add(player.WatchProperty<bool>("pause").Subscribe(new MpvDpObserver<bool>(value => UpdateFromPlayer(IsPausedProperty, value))));
@@ -626,9 +680,15 @@ public class MpvView : View
     /// <summary>
     /// 在 UI 執行緒以「來自 player」的標記更新可讀寫 BindableProperty，避免回頭再寫 player 觸發迴圈。
     /// </summary>
-    /// <typeparam name="T">屬性值型別。</typeparam>
-    /// <param name="property">要更新的 BindableProperty。</param>
-    /// <param name="value">新值。</param>
+    /// <typeparam name="T">
+    /// 屬性值型別。
+    /// </typeparam>
+    /// <param name="property">
+    /// 要更新的 BindableProperty。
+    /// </param>
+    /// <param name="value">
+    /// 新值。
+    /// </param>
     private void UpdateFromPlayer<T>(BindableProperty property, T value)
     {
         IDispatcher? dispatcher = Dispatcher;
@@ -654,9 +714,15 @@ public class MpvView : View
     /// <summary>
     /// 在 UI 執行緒更新唯讀 BindableProperty。
     /// </summary>
-    /// <typeparam name="T">屬性值型別。</typeparam>
-    /// <param name="key">屬性金鑰。</param>
-    /// <param name="value">新值。</param>
+    /// <typeparam name="T">
+    /// 屬性值型別。
+    /// </typeparam>
+    /// <param name="key">
+    /// 屬性金鑰。
+    /// </param>
+    /// <param name="value">
+    /// 新值。
+    /// </param>
     private void UpdateReadOnlyFromPlayer<T>(BindablePropertyKey key, T value)
     {
         IDispatcher? dispatcher = Dispatcher;
@@ -671,8 +737,12 @@ public class MpvView : View
     /// <summary>
     /// 處理 <see cref="MpvPlayer.StateChanged"/> 並把新狀態寫進 <see cref="PlaybackState"/>。
     /// </summary>
-    /// <param name="sender">引發事件的播放器。</param>
-    /// <param name="state">新的播放狀態。</param>
+    /// <param name="sender">
+    /// 引發事件的播放器。
+    /// </param>
+    /// <param name="state">
+    /// 新的播放狀態。
+    /// </param>
     private void OnPlayerStateChanged(object? sender, MpvPlaybackState state)
     {
         UpdateReadOnlyFromPlayer<MpvPlaybackState>(PlaybackStatePropertyKey, state);
@@ -681,9 +751,15 @@ public class MpvView : View
     /// <summary>
     /// 在 <see cref="Source"/> 屬性變更時載入新的媒體來源。
     /// </summary>
-    /// <param name="bindable">屬性所屬的可繫結物件。</param>
-    /// <param name="oldValue">屬性先前的值。</param>
-    /// <param name="newValue">屬性新的值。</param>
+    /// <param name="bindable">
+    /// 屬性所屬的可繫結物件。
+    /// </param>
+    /// <param name="oldValue">
+    /// 屬性先前的值。
+    /// </param>
+    /// <param name="newValue">
+    /// 屬性新的值。
+    /// </param>
     private static void OnSourceChanged(BindableObject bindable, object oldValue, object newValue)
     {
         MpvView view = (MpvView)bindable;
@@ -702,9 +778,15 @@ public class MpvView : View
     /// <summary>
     /// 在 <see cref="Position"/> 屬性變更時 seek 到指定位置。
     /// </summary>
-    /// <param name="bindable">屬性所屬的可繫結物件。</param>
-    /// <param name="oldValue">屬性先前的值。</param>
-    /// <param name="newValue">屬性新的值。</param>
+    /// <param name="bindable">
+    /// 屬性所屬的可繫結物件。
+    /// </param>
+    /// <param name="oldValue">
+    /// 屬性先前的值。
+    /// </param>
+    /// <param name="newValue">
+    /// 屬性新的值。
+    /// </param>
     private static void OnPositionChanged(BindableObject bindable, object oldValue, object newValue)
     {
         MpvView view = (MpvView)bindable;
@@ -725,9 +807,15 @@ public class MpvView : View
     /// <summary>
     /// 在 <see cref="Volume"/> 屬性變更時寫入 player。
     /// </summary>
-    /// <param name="bindable">屬性所屬的可繫結物件。</param>
-    /// <param name="oldValue">屬性先前的值。</param>
-    /// <param name="newValue">屬性新的值。</param>
+    /// <param name="bindable">
+    /// 屬性所屬的可繫結物件。
+    /// </param>
+    /// <param name="oldValue">
+    /// 屬性先前的值。
+    /// </param>
+    /// <param name="newValue">
+    /// 屬性新的值。
+    /// </param>
     private static void OnVolumeChanged(BindableObject bindable, object oldValue, object newValue)
     {
         MpvView view = (MpvView)bindable;
@@ -748,9 +836,15 @@ public class MpvView : View
     /// <summary>
     /// 在 <see cref="IsPaused"/> 屬性變更時寫入 player。
     /// </summary>
-    /// <param name="bindable">屬性所屬的可繫結物件。</param>
-    /// <param name="oldValue">屬性先前的值。</param>
-    /// <param name="newValue">屬性新的值。</param>
+    /// <param name="bindable">
+    /// 屬性所屬的可繫結物件。
+    /// </param>
+    /// <param name="oldValue">
+    /// 屬性先前的值。
+    /// </param>
+    /// <param name="newValue">
+    /// 屬性新的值。
+    /// </param>
     private static void OnIsPausedChanged(BindableObject bindable, object oldValue, object newValue)
     {
         MpvView view = (MpvView)bindable;
@@ -771,9 +865,15 @@ public class MpvView : View
     /// <summary>
     /// 在 <see cref="IsMuted"/> 屬性變更時寫入 player。
     /// </summary>
-    /// <param name="bindable">屬性所屬的可繫結物件。</param>
-    /// <param name="oldValue">屬性先前的值。</param>
-    /// <param name="newValue">屬性新的值。</param>
+    /// <param name="bindable">
+    /// 屬性所屬的可繫結物件。
+    /// </param>
+    /// <param name="oldValue">
+    /// 屬性先前的值。
+    /// </param>
+    /// <param name="newValue">
+    /// 屬性新的值。
+    /// </param>
     private static void OnIsMutedChanged(BindableObject bindable, object oldValue, object newValue)
     {
         MpvView view = (MpvView)bindable;
@@ -794,9 +894,15 @@ public class MpvView : View
     /// <summary>
     /// 在 <see cref="PlaylistIndex"/> 屬性變更時寫入 player；負數忽略。
     /// </summary>
-    /// <param name="bindable">屬性所屬的可繫結物件。</param>
-    /// <param name="oldValue">屬性先前的值。</param>
-    /// <param name="newValue">屬性新的值。</param>
+    /// <param name="bindable">
+    /// 屬性所屬的可繫結物件。
+    /// </param>
+    /// <param name="oldValue">
+    /// 屬性先前的值。
+    /// </param>
+    /// <param name="newValue">
+    /// 屬性新的值。
+    /// </param>
     private static void OnPlaylistIndexChanged(BindableObject bindable, object oldValue, object newValue)
     {
         MpvView view = (MpvView)bindable;
@@ -823,9 +929,15 @@ public class MpvView : View
     /// <summary>
     /// 在 <see cref="Chapter"/> 屬性變更時寫入 player；null 或負數忽略。
     /// </summary>
-    /// <param name="bindable">屬性所屬的可繫結物件。</param>
-    /// <param name="oldValue">屬性先前的值。</param>
-    /// <param name="newValue">屬性新的值。</param>
+    /// <param name="bindable">
+    /// 屬性所屬的可繫結物件。
+    /// </param>
+    /// <param name="oldValue">
+    /// 屬性先前的值。
+    /// </param>
+    /// <param name="newValue">
+    /// 屬性新的值。
+    /// </param>
     private static void OnChapterChanged(BindableObject bindable, object oldValue, object newValue)
     {
         MpvView view = (MpvView)bindable;
@@ -855,7 +967,9 @@ public class MpvView : View
     /// <summary>
     /// 提供將 <see cref="IObservable{T}"/> 訂閱包裝成委派的最小 observer。
     /// </summary>
-    /// <typeparam name="T">屬性值型別。</typeparam>
+    /// <typeparam name="T">
+    /// 屬性值型別。
+    /// </typeparam>
     private sealed class MpvDpObserver<T> : IObserver<T>
     {
         /// <summary>
@@ -866,7 +980,9 @@ public class MpvView : View
         /// <summary>
         /// 初始化 <see cref="MpvDpObserver{T}"/> 類別的新執行個體。
         /// </summary>
-        /// <param name="onNext">收到新值時要執行的委派。</param>
+        /// <param name="onNext">
+        /// 收到新值時要執行的委派。
+        /// </param>
         public MpvDpObserver(Action<T> onNext)
         {
             _onNext = onNext;
@@ -882,7 +998,9 @@ public class MpvView : View
         /// <summary>
         /// 在訂閱收到例外狀況時通知；目前不做事。
         /// </summary>
-        /// <param name="error">例外狀況。</param>
+        /// <param name="error">
+        /// 例外狀況。
+        /// </param>
         public void OnError(Exception error)
         {
         }
@@ -890,7 +1008,9 @@ public class MpvView : View
         /// <summary>
         /// 收到新值並轉發。
         /// </summary>
-        /// <param name="value">新值。</param>
+        /// <param name="value">
+        /// 新值。
+        /// </param>
         public void OnNext(T value)
         {
             _onNext(value);
@@ -900,9 +1020,15 @@ public class MpvView : View
     /// <summary>
     /// 在 <see cref="OverlayView"/> 屬性變更時同步平台控制項。
     /// </summary>
-    /// <param name="bindable">屬性所屬的可繫結物件。</param>
-    /// <param name="oldValue">屬性先前的值。</param>
-    /// <param name="newValue">屬性新的值。</param>
+    /// <param name="bindable">
+    /// 屬性所屬的可繫結物件。
+    /// </param>
+    /// <param name="oldValue">
+    /// 屬性先前的值。
+    /// </param>
+    /// <param name="newValue">
+    /// 屬性新的值。
+    /// </param>
     private static void OnOverlayViewChanged(BindableObject bindable, object oldValue, object newValue)
     {
         MpvView view = (MpvView)bindable;
@@ -915,9 +1041,15 @@ public class MpvView : View
     /// <summary>
     /// 在 <see cref="OverlayContent"/> 屬性變更時同步平台控制項。
     /// </summary>
-    /// <param name="bindable">屬性所屬的可繫結物件。</param>
-    /// <param name="oldValue">屬性先前的值。</param>
-    /// <param name="newValue">屬性新的值。</param>
+    /// <param name="bindable">
+    /// 屬性所屬的可繫結物件。
+    /// </param>
+    /// <param name="oldValue">
+    /// 屬性先前的值。
+    /// </param>
+    /// <param name="newValue">
+    /// 屬性新的值。
+    /// </param>
     private static void OnOverlayContentChanged(BindableObject bindable, object oldValue, object newValue)
     {
         MpvView view = (MpvView)bindable;
@@ -930,9 +1062,15 @@ public class MpvView : View
     /// <summary>
     /// 在 <see cref="IsOverlayOpen"/> 屬性變更時同步平台控制項。
     /// </summary>
-    /// <param name="bindable">屬性所屬的可繫結物件。</param>
-    /// <param name="oldValue">屬性先前的值。</param>
-    /// <param name="newValue">屬性新的值。</param>
+    /// <param name="bindable">
+    /// 屬性所屬的可繫結物件。
+    /// </param>
+    /// <param name="oldValue">
+    /// 屬性先前的值。
+    /// </param>
+    /// <param name="newValue">
+    /// 屬性新的值。
+    /// </param>
     private static void OnIsOverlayOpenChanged(BindableObject bindable, object oldValue, object newValue)
     {
         MpvView view = (MpvView)bindable;

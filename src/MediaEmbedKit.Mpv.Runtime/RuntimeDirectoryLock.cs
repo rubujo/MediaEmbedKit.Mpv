@@ -31,13 +31,19 @@ namespace MediaEmbedKit.Mpv.Runtime;
 /// </remarks>
 internal sealed class RuntimeDirectoryLock : IDisposable
 {
-    /// <summary>Lock 檔的固定檔名。</summary>
+    /// <summary>
+    /// Lock 檔的固定檔名。
+    /// </summary>
     public const string LockFileName = ".lock";
 
-    /// <summary>預設 acquire 等待 timeout（5 分鐘）。</summary>
+    /// <summary>
+    /// 預設 acquire 等待 timeout（5 分鐘）。
+    /// </summary>
     public static readonly TimeSpan DefaultAcquireTimeout = TimeSpan.FromMinutes(5);
 
-    /// <summary>持鎖期間的 FileStream；Dispose 時自動 close 並刪檔。</summary>
+    /// <summary>
+    /// 持鎖期間的 FileStream；Dispose 時自動 close 並刪檔。
+    /// </summary>
     private FileStream? _stream;
 
     private RuntimeDirectoryLock(FileStream stream)
@@ -49,11 +55,21 @@ internal sealed class RuntimeDirectoryLock : IDisposable
     /// 在指定 runtime 資料夾上取得 cross-process 互斥鎖。被其他 process 占用時等待，
     /// 超過 timeout 擲 <see cref="TimeoutException"/>。
     /// </summary>
-    /// <param name="runtimeDirectory">runtime 資料夾路徑。</param>
-    /// <param name="timeout">等待 timeout；未指定時用 <see cref="DefaultAcquireTimeout"/>。</param>
-    /// <param name="cancellationToken">可取消等待的 token。</param>
-    /// <returns>取得的鎖；釋放鎖請 Dispose。</returns>
-    /// <exception cref="TimeoutException">等待逾時。</exception>
+    /// <param name="runtimeDirectory">
+    /// runtime 資料夾路徑。
+    /// </param>
+    /// <param name="timeout">
+    /// 等待 timeout；未指定時用 <see cref="DefaultAcquireTimeout"/>。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 可取消等待的 token。
+    /// </param>
+    /// <returns>
+    /// 取得的鎖；釋放鎖請 Dispose。
+    /// </returns>
+    /// <exception cref="TimeoutException">
+    /// 等待逾時。
+    /// </exception>
     public static async Task<RuntimeDirectoryLock> AcquireAsync(
         string runtimeDirectory,
         TimeSpan? timeout = null,

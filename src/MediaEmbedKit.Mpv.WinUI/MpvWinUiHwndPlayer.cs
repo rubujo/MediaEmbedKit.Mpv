@@ -139,13 +139,17 @@ internal sealed class MpvWinUiHwndPlayer : Grid, IDisposable
     /// <summary>
     /// 取得控制項建立播放器時使用的選項。
     /// </summary>
-    /// <value>播放器建立選項。</value>
+    /// <value>
+    /// 播放器建立選項。
+    /// </value>
     public MpvPlayerOptions PlayerOptions { get; private set; }
 
     /// <summary>
     /// 取得控制項目前建立的播放器。
     /// </summary>
-    /// <value>目前播放器；尚未建立時為 <see langword="null"/>。</value>
+    /// <value>
+    /// 目前播放器；尚未建立時為 <see langword="null"/>。
+    /// </value>
     public MpvPlayer? Player
     {
         get { return _player; }
@@ -154,7 +158,9 @@ internal sealed class MpvWinUiHwndPlayer : Grid, IDisposable
     /// <summary>
     /// 取得傳給 libmpv 的原生子視窗控制代碼。
     /// </summary>
-    /// <value>原生子視窗尚未建立時為 <see cref="IntPtr.Zero"/>。</value>
+    /// <value>
+    /// 原生子視窗尚未建立時為 <see cref="IntPtr.Zero"/>。
+    /// </value>
     public IntPtr VideoWindowHandle
     {
         get { return _videoHwnd; }
@@ -163,7 +169,9 @@ internal sealed class MpvWinUiHwndPlayer : Grid, IDisposable
     /// <summary>
     /// 取得目前是否已附加父視窗控制代碼。
     /// </summary>
-    /// <value>父視窗控制代碼已設定時為 <see langword="true"/>。</value>
+    /// <value>
+    /// 父視窗控制代碼已設定時為 <see langword="true"/>。
+    /// </value>
     public bool IsAttached
     {
         get { return _parentHwnd != IntPtr.Zero; }
@@ -172,7 +180,9 @@ internal sealed class MpvWinUiHwndPlayer : Grid, IDisposable
     /// <summary>
     /// 取得或設定要由控制項自行放入 AirSpace 覆蓋層的 WinUI 內容。
     /// </summary>
-    /// <value>顯示在影片上方的 WinUI 元素；未設定時為 <see langword="null"/>。</value>
+    /// <value>
+    /// 顯示在影片上方的 WinUI 元素；未設定時為 <see langword="null"/>。
+    /// </value>
     public UIElement? OverlayContent
     {
         get { return (UIElement?)GetValue(OverlayContentProperty); }
@@ -182,7 +192,9 @@ internal sealed class MpvWinUiHwndPlayer : Grid, IDisposable
     /// <summary>
     /// 取得或設定控制項管理的 AirSpace 覆蓋層是否開啟。
     /// </summary>
-    /// <value>覆蓋層應保持開啟時為 <see langword="true"/>。</value>
+    /// <value>
+    /// 覆蓋層應保持開啟時為 <see langword="true"/>。
+    /// </value>
     public bool IsOverlayOpen
     {
         get { return (bool)GetValue(IsOverlayOpenProperty); }
@@ -192,7 +204,9 @@ internal sealed class MpvWinUiHwndPlayer : Grid, IDisposable
     /// <summary>
     /// 取得控制項是否已建立覆蓋層用的原生子視窗。
     /// </summary>
-    /// <value>覆蓋層子視窗已建立時為 <see langword="true"/>。</value>
+    /// <value>
+    /// 覆蓋層子視窗已建立時為 <see langword="true"/>。
+    /// </value>
     public bool IsOverlayHostCreated
     {
         get { return _overlayHwnd != IntPtr.Zero; }
@@ -201,7 +215,9 @@ internal sealed class MpvWinUiHwndPlayer : Grid, IDisposable
     /// <summary>
     /// 附加 WinUI 視窗，讓控制項可以建立原生子視窗。
     /// </summary>
-    /// <param name="window">要附加的 WinUI 視窗。</param>
+    /// <param name="window">
+    /// 要附加的 WinUI 視窗。
+    /// </param>
     public void Attach(Window window)
     {
         if (window == null)
@@ -218,7 +234,9 @@ internal sealed class MpvWinUiHwndPlayer : Grid, IDisposable
     /// <summary>
     /// 附加父視窗控制代碼，讓控制項可以建立原生子視窗。
     /// </summary>
-    /// <param name="parentHwnd">可容納原生子視窗的父視窗控制代碼。</param>
+    /// <param name="parentHwnd">
+    /// 可容納原生子視窗的父視窗控制代碼。
+    /// </param>
     public void Attach(IntPtr parentHwnd)
     {
         EnsureNotDisposed();
@@ -243,8 +261,12 @@ internal sealed class MpvWinUiHwndPlayer : Grid, IDisposable
     /// <summary>
     /// 載入檔案或網址作為播放項目。
     /// </summary>
-    /// <param name="pathOrUrl">要載入的檔案路徑或媒體網址。</param>
-    /// <param name="mode">播放項目加入播放清單的方式。</param>
+    /// <param name="pathOrUrl">
+    /// 要載入的檔案路徑或媒體網址。
+    /// </param>
+    /// <param name="mode">
+    /// 播放項目加入播放清單的方式。
+    /// </param>
     public void LoadFile(string pathOrUrl, MpvLoadFileMode mode = MpvLoadFileMode.Replace)
     {
         if (string.IsNullOrWhiteSpace(pathOrUrl))
@@ -291,8 +313,12 @@ internal sealed class MpvWinUiHwndPlayer : Grid, IDisposable
     /// <summary>
     /// 在控制項載入後建立原生子視窗與播放器。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         if (MpvWinUiDesignMode.IsEnabled)
@@ -309,8 +335,12 @@ internal sealed class MpvWinUiHwndPlayer : Grid, IDisposable
     /// <summary>
     /// 在控制項卸載時釋放原生子視窗與播放器。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
         UnsubscribeXamlRootChanged();
@@ -352,8 +382,12 @@ internal sealed class MpvWinUiHwndPlayer : Grid, IDisposable
     /// <summary>
     /// 在 <see cref="XamlRoot"/> 變更（含 DPI 變更）時重算原生子視窗邊界。
     /// </summary>
-    /// <param name="sender">引發事件的 <see cref="XamlRoot"/>。</param>
-    /// <param name="args">變更事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的 <see cref="XamlRoot"/>。
+    /// </param>
+    /// <param name="args">
+    /// 變更事件資料。
+    /// </param>
     private void XamlRootChanged(XamlRoot sender, XamlRootChangedEventArgs args)
     {
         ScheduleWindowBoundsUpdate();
@@ -362,8 +396,12 @@ internal sealed class MpvWinUiHwndPlayer : Grid, IDisposable
     /// <summary>
     /// 在控制項大小變更時同步原生子視窗位置與大小。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="e">大小變更事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 大小變更事件資料。
+    /// </param>
     private void OnSizeChanged(object sender, SizeChangedEventArgs e)
     {
         ScheduleWindowBoundsUpdate();
@@ -372,8 +410,12 @@ internal sealed class MpvWinUiHwndPlayer : Grid, IDisposable
     /// <summary>
     /// 在附加的 WinUI 視窗關閉時釋放控制項資源。
     /// </summary>
-    /// <param name="sender">引發事件的物件。</param>
-    /// <param name="args">視窗關閉事件資料。</param>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="args">
+    /// 視窗關閉事件資料。
+    /// </param>
     private void AttachedWindowClosed(object sender, WindowEventArgs args)
     {
         Dispose();
@@ -536,8 +578,12 @@ internal sealed class MpvWinUiHwndPlayer : Grid, IDisposable
     /// <summary>
     /// 在覆蓋層內容變更時同步 XAML Island 內容。
     /// </summary>
-    /// <param name="dependencyObject">相依性屬性所屬物件。</param>
-    /// <param name="e">相依性屬性變更資料。</param>
+    /// <param name="dependencyObject">
+    /// 相依性屬性所屬物件。
+    /// </param>
+    /// <param name="e">
+    /// 相依性屬性變更資料。
+    /// </param>
     private static void OverlayContentChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs e)
     {
         MpvWinUiHwndPlayer player = (MpvWinUiHwndPlayer)dependencyObject;
@@ -547,8 +593,12 @@ internal sealed class MpvWinUiHwndPlayer : Grid, IDisposable
     /// <summary>
     /// 在覆蓋層開啟狀態變更時同步原生子視窗顯示狀態。
     /// </summary>
-    /// <param name="dependencyObject">相依性屬性所屬物件。</param>
-    /// <param name="e">相依性屬性變更資料。</param>
+    /// <param name="dependencyObject">
+    /// 相依性屬性所屬物件。
+    /// </param>
+    /// <param name="e">
+    /// 相依性屬性變更資料。
+    /// </param>
     private static void OverlayOpenChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs e)
     {
         MpvWinUiHwndPlayer player = (MpvWinUiHwndPlayer)dependencyObject;
@@ -558,7 +608,9 @@ internal sealed class MpvWinUiHwndPlayer : Grid, IDisposable
     /// <summary>
     /// 套用要顯示在影片上方的 WinUI 內容。
     /// </summary>
-    /// <param name="content">新的 WinUI 覆蓋層內容。</param>
+    /// <param name="content">
+    /// 新的 WinUI 覆蓋層內容。
+    /// </param>
     private void ApplyOverlayContent(UIElement? content)
     {
         RestoreOverlayContentMargin();
@@ -681,7 +733,9 @@ internal sealed class MpvWinUiHwndPlayer : Grid, IDisposable
     /// <summary>
     /// 將最上層覆蓋層元素的 Margin 轉成原生子視窗位移，避免 XAML Island 透明留白顯示成黑底。
     /// </summary>
-    /// <param name="content">覆蓋層內容。</param>
+    /// <param name="content">
+    /// 覆蓋層內容。
+    /// </param>
     private void CaptureOverlayContentMargin(UIElement content)
     {
         FrameworkElement? element = content as FrameworkElement;
@@ -728,9 +782,15 @@ internal sealed class MpvWinUiHwndPlayer : Grid, IDisposable
     /// <summary>
     /// 將裝置獨立像素轉成實際像素。
     /// </summary>
-    /// <param name="value">裝置獨立像素值。</param>
-    /// <param name="scale">目前 XAML rasterization scale。</param>
-    /// <returns>四捨五入後的實際像素值。</returns>
+    /// <param name="value">
+    /// 裝置獨立像素值。
+    /// </param>
+    /// <param name="scale">
+    /// 目前 XAML rasterization scale。
+    /// </param>
+    /// <returns>
+    /// 四捨五入後的實際像素值。
+    /// </returns>
     private static int ConvertDeviceIndependentPixel(double value, double scale)
     {
         return (int)Math.Round(value * scale);
@@ -739,10 +799,18 @@ internal sealed class MpvWinUiHwndPlayer : Grid, IDisposable
     /// <summary>
     /// 解析覆蓋層內容所需的原生子視窗大小。
     /// </summary>
-    /// <param name="maximumWidth">覆蓋層可用的最大寬度。</param>
-    /// <param name="maximumHeight">覆蓋層可用的最大高度。</param>
-    /// <param name="width">解析後的覆蓋層寬度。</param>
-    /// <param name="height">解析後的覆蓋層高度。</param>
+    /// <param name="maximumWidth">
+    /// 覆蓋層可用的最大寬度。
+    /// </param>
+    /// <param name="maximumHeight">
+    /// 覆蓋層可用的最大高度。
+    /// </param>
+    /// <param name="width">
+    /// 解析後的覆蓋層寬度。
+    /// </param>
+    /// <param name="height">
+    /// 解析後的覆蓋層高度。
+    /// </param>
     private void ResolveOverlayContentSize(int maximumWidth, int maximumHeight, out int width, out int height)
     {
         width = maximumWidth;
@@ -891,19 +959,45 @@ internal sealed class MpvWinUiHwndPlayer : Grid, IDisposable
         /// <summary>
         /// 建立 Win32 視窗。
         /// </summary>
-        /// <param name="dwExStyle">延伸視窗樣式。</param>
-        /// <param name="lpClassName">視窗類別名稱。</param>
-        /// <param name="lpWindowName">視窗名稱。</param>
-        /// <param name="dwStyle">視窗樣式。</param>
-        /// <param name="x">視窗左上角 X 座標。</param>
-        /// <param name="y">視窗左上角 Y 座標。</param>
-        /// <param name="nWidth">視窗寬度。</param>
-        /// <param name="nHeight">視窗高度。</param>
-        /// <param name="hWndParent">父視窗控制代碼。</param>
-        /// <param name="hMenu">功能表控制代碼。</param>
-        /// <param name="hInstance">執行個體控制代碼。</param>
-        /// <param name="lpParam">建立參數指標。</param>
-        /// <returns>新建立視窗的控制代碼。</returns>
+        /// <param name="dwExStyle">
+        /// 延伸視窗樣式。
+        /// </param>
+        /// <param name="lpClassName">
+        /// 視窗類別名稱。
+        /// </param>
+        /// <param name="lpWindowName">
+        /// 視窗名稱。
+        /// </param>
+        /// <param name="dwStyle">
+        /// 視窗樣式。
+        /// </param>
+        /// <param name="x">
+        /// 視窗左上角 X 座標。
+        /// </param>
+        /// <param name="y">
+        /// 視窗左上角 Y 座標。
+        /// </param>
+        /// <param name="nWidth">
+        /// 視窗寬度。
+        /// </param>
+        /// <param name="nHeight">
+        /// 視窗高度。
+        /// </param>
+        /// <param name="hWndParent">
+        /// 父視窗控制代碼。
+        /// </param>
+        /// <param name="hMenu">
+        /// 功能表控制代碼。
+        /// </param>
+        /// <param name="hInstance">
+        /// 執行個體控制代碼。
+        /// </param>
+        /// <param name="lpParam">
+        /// 建立參數指標。
+        /// </param>
+        /// <returns>
+        /// 新建立視窗的控制代碼。
+        /// </returns>
         [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
         internal static extern IntPtr CreateWindowEx(
             int dwExStyle,
@@ -922,22 +1016,42 @@ internal sealed class MpvWinUiHwndPlayer : Grid, IDisposable
         /// <summary>
         /// 銷毀指定的 Win32 視窗。
         /// </summary>
-        /// <param name="hwnd">要銷毀的視窗控制代碼。</param>
-        /// <returns>作業成功時為 <see langword="true"/>。</returns>
+        /// <param name="hwnd">
+        /// 要銷毀的視窗控制代碼。
+        /// </param>
+        /// <returns>
+        /// 作業成功時為 <see langword="true"/>。
+        /// </returns>
         [DllImport("user32.dll", SetLastError = true)]
         internal static extern bool DestroyWindow(IntPtr hwnd);
 
         /// <summary>
         /// 設定指定 Win32 視窗的位置與大小。
         /// </summary>
-        /// <param name="hwnd">要調整的視窗控制代碼。</param>
-        /// <param name="hwndInsertAfter">Z 順序參考視窗控制代碼。</param>
-        /// <param name="x">新的 X 座標。</param>
-        /// <param name="y">新的 Y 座標。</param>
-        /// <param name="cx">新的寬度。</param>
-        /// <param name="cy">新的高度。</param>
-        /// <param name="flags">SetWindowPos 旗標。</param>
-        /// <returns>作業成功時為 <see langword="true"/>。</returns>
+        /// <param name="hwnd">
+        /// 要調整的視窗控制代碼。
+        /// </param>
+        /// <param name="hwndInsertAfter">
+        /// Z 順序參考視窗控制代碼。
+        /// </param>
+        /// <param name="x">
+        /// 新的 X 座標。
+        /// </param>
+        /// <param name="y">
+        /// 新的 Y 座標。
+        /// </param>
+        /// <param name="cx">
+        /// 新的寬度。
+        /// </param>
+        /// <param name="cy">
+        /// 新的高度。
+        /// </param>
+        /// <param name="flags">
+        /// SetWindowPos 旗標。
+        /// </param>
+        /// <returns>
+        /// 作業成功時為 <see langword="true"/>。
+        /// </returns>
         [DllImport("user32.dll", SetLastError = true)]
         internal static extern bool SetWindowPos(
             IntPtr hwnd,

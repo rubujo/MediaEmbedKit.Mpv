@@ -15,7 +15,9 @@ internal sealed class SampleAsyncFeatureGate
     /// <summary>
     /// 取得目前是否已有非同步功能正在執行。
     /// </summary>
-    /// <value>已有非同步功能執行中時為 <see langword="true"/>。</value>
+    /// <value>
+    /// 已有非同步功能執行中時為 <see langword="true"/>。
+    /// </value>
     public bool IsRunning
     {
         get { return Volatile.Read(ref _isRunning) != 0; }
@@ -24,7 +26,9 @@ internal sealed class SampleAsyncFeatureGate
     /// <summary>
     /// 嘗試進入非同步功能執行區段。
     /// </summary>
-    /// <returns>成功取得執行權時為 <see langword="true"/>。</returns>
+    /// <returns>
+    /// 成功取得執行權時為 <see langword="true"/>。
+    /// </returns>
     public bool TryEnter()
     {
         return Interlocked.Exchange(ref _isRunning, 1) == 0;

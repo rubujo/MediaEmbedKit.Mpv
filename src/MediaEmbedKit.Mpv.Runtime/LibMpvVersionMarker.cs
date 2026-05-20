@@ -21,31 +21,49 @@ namespace MediaEmbedKit.Mpv.Runtime;
 /// </remarks>
 internal sealed class LibMpvVersionMarker
 {
-    /// <summary>Marker 檔的副檔名後綴。</summary>
+    /// <summary>
+    /// Marker 檔的副檔名後綴。
+    /// </summary>
     public const string FileExtension = ".version.json";
 
-    /// <summary>當前 marker schema 版本；未來欄位演進可用此辨識。</summary>
+    /// <summary>
+    /// 當前 marker schema 版本；未來欄位演進可用此辨識。
+    /// </summary>
     public const int CurrentSchemaVersion = 1;
 
-    /// <summary>Marker schema 版本。</summary>
+    /// <summary>
+    /// Marker schema 版本。
+    /// </summary>
     [JsonPropertyName("schemaVersion")]
     public int SchemaVersion { get; set; } = CurrentSchemaVersion;
 
-    /// <summary>產生此 marker 的 provider（<see cref="MpvWindowsBuildProvider"/> 的字串形式）。</summary>
+    /// <summary>
+    /// 產生此 marker 的 provider（<see cref="MpvWindowsBuildProvider"/> 的字串形式）。
+    /// </summary>
     [JsonPropertyName("provider")]
     public string Provider { get; set; } = string.Empty;
 
-    /// <summary>GitHub release tag 名稱。</summary>
+    /// <summary>
+    /// GitHub release tag 名稱。
+    /// </summary>
     [JsonPropertyName("releaseTag")]
     public string ReleaseTag { get; set; } = string.Empty;
 
-    /// <summary>下載 / 解壓的 asset 檔名（含 libmpv-dev / -lgpl / arch 等變體區分）。</summary>
+    /// <summary>
+    /// 下載 / 解壓的 asset 檔名（含 libmpv-dev / -lgpl / arch 等變體區分）。
+    /// </summary>
     [JsonPropertyName("assetName")]
     public string AssetName { get; set; } = string.Empty;
 
-    /// <summary>從 marker 檔讀取；檔案不存在 / 解析失敗 / schema 版本不認識皆回傳 null。</summary>
-    /// <param name="markerPath">marker 檔完整路徑（含 <see cref="FileExtension"/> 後綴）。</param>
-    /// <returns>讀到且 schema 認得時為 <see cref="LibMpvVersionMarker"/> 實例；否則為 <see langword="null"/>。</returns>
+    /// <summary>
+    /// 從 marker 檔讀取；檔案不存在 / 解析失敗 / schema 版本不認識皆回傳 null。
+    /// </summary>
+    /// <param name="markerPath">
+    /// marker 檔完整路徑（含 <see cref="FileExtension"/> 後綴）。
+    /// </param>
+    /// <returns>
+    /// 讀到且 schema 認得時為 <see cref="LibMpvVersionMarker"/> 實例；否則為 <see langword="null"/>。
+    /// </returns>
     public static LibMpvVersionMarker? TryRead(string markerPath)
     {
         if (string.IsNullOrWhiteSpace(markerPath) || !File.Exists(markerPath))
@@ -83,10 +101,18 @@ internal sealed class LibMpvVersionMarker
     /// 避免系統當機 / 程序強制中斷期間留下半寫入 JSON。寫入失敗不擲例外
     /// （marker 是 best-effort 快取，缺失只是下次重抓）。
     /// </summary>
-    /// <param name="markerPath">marker 檔完整路徑。</param>
-    /// <param name="provider">本次安裝來源 provider。</param>
-    /// <param name="releaseTag">本次安裝的 release tag。</param>
-    /// <param name="assetName">本次安裝的 asset 檔名。</param>
+    /// <param name="markerPath">
+    /// marker 檔完整路徑。
+    /// </param>
+    /// <param name="provider">
+    /// 本次安裝來源 provider。
+    /// </param>
+    /// <param name="releaseTag">
+    /// 本次安裝的 release tag。
+    /// </param>
+    /// <param name="assetName">
+    /// 本次安裝的 asset 檔名。
+    /// </param>
     public static void Write(string markerPath, MpvWindowsBuildProvider provider, string releaseTag, string assetName)
     {
         LibMpvVersionMarker marker = new LibMpvVersionMarker
@@ -126,7 +152,12 @@ internal sealed class LibMpvVersionMarker
         }
     }
 
-    /// <summary>清理 atomic write 失敗時殘留的 .tmp 檔，失敗也吞掉。</summary>
+    /// <summary>
+    /// 清理 atomic write 失敗時殘留的 .tmp 檔，失敗也吞掉。
+    /// </summary>
+    /// <param name="tempPath">
+    /// 要刪除的暫存 marker 路徑。
+    /// </param>
     private static void TryDeleteTempMarker(string tempPath)
     {
         try

@@ -41,8 +41,12 @@ internal sealed class SampleFeatureController
     /// <summary>
     /// 初始化 <see cref="SampleFeatureController"/> 類別的新執行個體。
     /// </summary>
-    /// <param name="getPlayer">取得目前播放器的委派。</param>
-    /// <param name="appendLine">接收診斷訊息的委派。</param>
+    /// <param name="getPlayer">
+    /// 取得目前播放器的委派。
+    /// </param>
+    /// <param name="appendLine">
+    /// 接收診斷訊息的委派。
+    /// </param>
     public SampleFeatureController(Func<MpvPlayer?> getPlayer, Action<string> appendLine)
     {
         _getPlayer = getPlayer ?? throw new ArgumentNullException(nameof(getPlayer));
@@ -52,7 +56,9 @@ internal sealed class SampleFeatureController
     /// <summary>
     /// 建立範例預設的 yt-dlp 格式選項清單。
     /// </summary>
-    /// <returns>可繫結到 UI 下拉選單的格式選項清單。</returns>
+    /// <returns>
+    /// 可繫結到 UI 下拉選單的格式選項清單。
+    /// </returns>
     public static IReadOnlyList<SampleYtdlpFormatChoice> CreateYtdlpFormatChoices()
     {
         return new[]
@@ -70,7 +76,9 @@ internal sealed class SampleFeatureController
     /// <summary>
     /// 取得範例預設的 yt-dlp 格式選項。
     /// </summary>
-    /// <returns>以播放順暢度優先的 720p 格式選項。</returns>
+    /// <returns>
+    /// 以播放順暢度優先的 720p 格式選項。
+    /// </returns>
     public static SampleYtdlpFormatChoice CreateDefaultYtdlpFormatChoice()
     {
         return new SampleYtdlpFormatChoice("流暢 720p", SampleRuntime.SmoothPlaybackYtdlpFormat);
@@ -79,8 +87,12 @@ internal sealed class SampleFeatureController
     /// <summary>
     /// 將 yt-dlp 格式選項套用到播放器選項。
     /// </summary>
-    /// <param name="options">要套用的播放器選項。</param>
-    /// <param name="choice">要套用的格式選項。</param>
+    /// <param name="options">
+    /// 要套用的播放器選項。
+    /// </param>
+    /// <param name="choice">
+    /// 要套用的格式選項。
+    /// </param>
     public static void ApplyYtdlpFormat(MpvPlayerOptions options, SampleYtdlpFormatChoice choice)
     {
         if (options == null)
@@ -101,7 +113,9 @@ internal sealed class SampleFeatureController
     /// <summary>
     /// 將 yt-dlp 格式選項套用到目前播放器。
     /// </summary>
-    /// <param name="choice">要套用的格式選項。</param>
+    /// <param name="choice">
+    /// 要套用的格式選項。
+    /// </param>
     public void ApplyYtdlpFormat(SampleYtdlpFormatChoice choice)
     {
         MpvPlayer player = RequirePlayer();
@@ -123,7 +137,9 @@ internal sealed class SampleFeatureController
     /// <summary>
     /// 依指定秒數相對跳轉。
     /// </summary>
-    /// <param name="seconds">要相對跳轉的秒數。</param>
+    /// <param name="seconds">
+    /// 要相對跳轉的秒數。
+    /// </param>
     public void SeekRelative(double seconds)
     {
         MpvPlayer player = RequirePlayer();
@@ -134,7 +150,9 @@ internal sealed class SampleFeatureController
     /// <summary>
     /// 依指定差值調整音量。
     /// </summary>
-    /// <param name="delta">音量差值。</param>
+    /// <param name="delta">
+    /// 音量差值。
+    /// </param>
     public void ChangeVolume(double delta)
     {
         MpvPlayer player = RequirePlayer();
@@ -230,7 +248,9 @@ internal sealed class SampleFeatureController
     /// <summary>
     /// 載入範例 Lua 指令碼並確認指令碼可接收訊息。
     /// </summary>
-    /// <returns>代表 Lua 指令碼載入與確認流程的工作。</returns>
+    /// <returns>
+    /// 代表 Lua 指令碼載入與確認流程的工作。
+    /// </returns>
     public async Task LoadSampleLuaScriptAsync()
     {
         SampleRuntime.EnsureSampleFiles();
@@ -275,9 +295,15 @@ internal sealed class SampleFeatureController
     /// <summary>
     /// 等待範例 Lua 指令碼回覆。
     /// </summary>
-    /// <param name="player">要送出指令碼訊息的播放器。</param>
-    /// <param name="replyTask">等待指令碼回覆的工作。</param>
-    /// <returns>代表 Lua 指令碼回覆的事件資料。</returns>
+    /// <param name="player">
+    /// 要送出指令碼訊息的播放器。
+    /// </param>
+    /// <param name="replyTask">
+    /// 等待指令碼回覆的工作。
+    /// </param>
+    /// <returns>
+    /// 代表 Lua 指令碼回覆的事件資料。
+    /// </returns>
     private static async Task<MpvClientMessageEventArgs> WaitForLuaScriptReplyAsync(MpvPlayer player, Task<MpvClientMessageEventArgs> replyTask)
     {
         using (CancellationTokenSource timeout = new CancellationTokenSource(TimeSpan.FromSeconds(4)))
@@ -300,8 +326,12 @@ internal sealed class SampleFeatureController
     /// <summary>
     /// 執行 yt-dlp 診斷命令並輸出版本與格式清單摘要。
     /// </summary>
-    /// <param name="url">要交給 yt-dlp 檢查的媒體網址。</param>
-    /// <returns>代表診斷流程的工作。</returns>
+    /// <param name="url">
+    /// 要交給 yt-dlp 檢查的媒體網址。
+    /// </param>
+    /// <returns>
+    /// 代表診斷流程的工作。
+    /// </returns>
     public async Task RunYtdlpDiagnosticsAsync(string url)
     {
         Append("yt-dlp", "版本：" + (YtDlpDownloader.GetInstalledVersion(SampleRuntime.YtDlpPath) ?? "無法讀取"));
@@ -329,7 +359,9 @@ internal sealed class SampleFeatureController
     /// <summary>
     /// 執行 Deno 診斷命令並輸出版本。
     /// </summary>
-    /// <returns>代表診斷流程的工作。</returns>
+    /// <returns>
+    /// 代表診斷流程的工作。
+    /// </returns>
     public async Task RunDenoDiagnosticsAsync()
     {
         Append("deno", "版本：" + (DenoDownloader.GetInstalledVersion(SampleRuntime.DenoPath) ?? "無法讀取"));
@@ -356,7 +388,9 @@ internal sealed class SampleFeatureController
     /// <summary>
     /// 執行 FFmpeg 與 FFprobe 診斷命令並輸出版本資訊。
     /// </summary>
-    /// <returns>代表診斷流程的工作。</returns>
+    /// <returns>
+    /// 代表診斷流程的工作。
+    /// </returns>
     public async Task RunFFmpegDiagnosticsAsync()
     {
         Append("ffmpeg", "版本：" + (FFmpegDownloader.GetInstalledVersion(SampleRuntime.FFmpegPath) ?? "無法讀取"));
@@ -369,10 +403,18 @@ internal sealed class SampleFeatureController
     /// <summary>
     /// 以共用流程執行外部工具並輸出結果。
     /// </summary>
-    /// <param name="category">事件分類名稱。</param>
-    /// <param name="executablePath">外部工具可執行檔路徑。</param>
-    /// <param name="arguments">要傳給外部工具的引數集合。</param>
-    /// <returns>代表執行流程的工作。</returns>
+    /// <param name="category">
+    /// 事件分類名稱。
+    /// </param>
+    /// <param name="executablePath">
+    /// 外部工具可執行檔路徑。
+    /// </param>
+    /// <param name="arguments">
+    /// 要傳給外部工具的引數集合。
+    /// </param>
+    /// <returns>
+    /// 代表執行流程的工作。
+    /// </returns>
     private async Task RunExternalToolAsync(string category, string executablePath, IReadOnlyList<string> arguments)
     {
         ExternalToolProcessRunner runner = new ExternalToolProcessRunner(executablePath)
@@ -402,7 +444,9 @@ internal sealed class SampleFeatureController
     /// <summary>
     /// 執行 yt-dlp 自我更新命令。
     /// </summary>
-    /// <returns>代表更新流程的工作。</returns>
+    /// <returns>
+    /// 代表更新流程的工作。
+    /// </returns>
     public async Task RunYtdlpSelfUpdateAsync()
     {
         ToolUpdateResult result = await YtDlpDownloader.RunSelfUpdateAsync(SampleRuntime.YtDlpPath).ConfigureAwait(false);
@@ -412,7 +456,9 @@ internal sealed class SampleFeatureController
     /// <summary>
     /// 執行 Deno 自我更新命令。
     /// </summary>
-    /// <returns>代表更新流程的工作。</returns>
+    /// <returns>
+    /// 代表更新流程的工作。
+    /// </returns>
     public async Task RunDenoSelfUpgradeAsync()
     {
         ToolUpdateResult result = await DenoDownloader.RunSelfUpgradeAsync(SampleRuntime.DenoPath).ConfigureAwait(false);
@@ -422,7 +468,9 @@ internal sealed class SampleFeatureController
     /// <summary>
     /// 取得目前播放器狀態摘要。
     /// </summary>
-    /// <returns>可顯示在狀態列的播放器狀態文字。</returns>
+    /// <returns>
+    /// 可顯示在狀態列的播放器狀態文字。
+    /// </returns>
     public string GetStatusText()
     {
         MpvPlayer? player = _getPlayer();
@@ -442,7 +490,9 @@ internal sealed class SampleFeatureController
     /// <summary>
     /// 取得目前播放器，若尚未建立則擲回例外狀況。
     /// </summary>
-    /// <returns>目前播放器。</returns>
+    /// <returns>
+    /// 目前播放器。
+    /// </returns>
     private MpvPlayer RequirePlayer()
     {
         MpvPlayer? player = _getPlayer();
@@ -457,8 +507,12 @@ internal sealed class SampleFeatureController
     /// <summary>
     /// 將訊息送回事件清單。
     /// </summary>
-    /// <param name="category">訊息分類。</param>
-    /// <param name="message">訊息內容。</param>
+    /// <param name="category">
+    /// 訊息分類。
+    /// </param>
+    /// <param name="message">
+    /// 訊息內容。
+    /// </param>
     private void Append(string category, string message)
     {
         string line = DateTimeOffset.Now.ToString("HH:mm:ss.fff", CultureInfo.InvariantCulture) + " [" + category + "] " + message;
@@ -468,9 +522,15 @@ internal sealed class SampleFeatureController
     /// <summary>
     /// 讀取 double 屬性並格式化。
     /// </summary>
-    /// <param name="player">要讀取的播放器。</param>
-    /// <param name="name">屬性名稱。</param>
-    /// <returns>格式化後的屬性值。</returns>
+    /// <param name="player">
+    /// 要讀取的播放器。
+    /// </param>
+    /// <param name="name">
+    /// 屬性名稱。
+    /// </param>
+    /// <returns>
+    /// 格式化後的屬性值。
+    /// </returns>
     private static string TryGetDouble(MpvPlayer player, string name)
     {
         try
@@ -486,9 +546,15 @@ internal sealed class SampleFeatureController
     /// <summary>
     /// 讀取布林屬性並格式化。
     /// </summary>
-    /// <param name="player">要讀取的播放器。</param>
-    /// <param name="name">屬性名稱。</param>
-    /// <returns>格式化後的屬性值。</returns>
+    /// <param name="player">
+    /// 要讀取的播放器。
+    /// </param>
+    /// <param name="name">
+    /// 屬性名稱。
+    /// </param>
+    /// <returns>
+    /// 格式化後的屬性值。
+    /// </returns>
     private static string TryGetFlag(MpvPlayer player, string name)
     {
         try
@@ -504,8 +570,12 @@ internal sealed class SampleFeatureController
     /// <summary>
     /// 將外部工具執行結果輸出到事件清單。
     /// </summary>
-    /// <param name="category">訊息分類。</param>
-    /// <param name="result">工具執行結果。</param>
+    /// <param name="category">
+    /// 訊息分類。
+    /// </param>
+    /// <param name="result">
+    /// 工具執行結果。
+    /// </param>
     private void AppendProcessResult(string category, ToolUpdateResult result)
     {
         Append(category, Path.GetFileName(result.ExecutablePath) + " " + result.Arguments + " exit=" + result.ExitCode.ToString(CultureInfo.InvariantCulture));
@@ -516,8 +586,12 @@ internal sealed class SampleFeatureController
     /// <summary>
     /// 將外部工具執行結果輸出到事件清單。
     /// </summary>
-    /// <param name="category">訊息分類。</param>
-    /// <param name="result">工具執行結果。</param>
+    /// <param name="category">
+    /// 訊息分類。
+    /// </param>
+    /// <param name="result">
+    /// 工具執行結果。
+    /// </param>
     private void AppendProcessResult(string category, ExternalToolProcessResult result)
     {
         Append(category, Path.GetFileName(result.ExecutablePath) + " " + result.ArgumentText + " exit=" + result.ExitCode.ToString(CultureInfo.InvariantCulture));
@@ -526,9 +600,15 @@ internal sealed class SampleFeatureController
     /// <summary>
     /// 將 yt-dlp 輸出事件連接到範例事件清單。
     /// </summary>
-    /// <param name="runner">要觀察的 yt-dlp 處理序執行器。</param>
-    /// <param name="category">訊息分類。</param>
-    /// <returns>已註冊到輸出事件的處理常式。</returns>
+    /// <param name="runner">
+    /// 要觀察的 yt-dlp 處理序執行器。
+    /// </param>
+    /// <param name="category">
+    /// 訊息分類。
+    /// </param>
+    /// <returns>
+    /// 已註冊到輸出事件的處理常式。
+    /// </returns>
     private EventHandler<ExternalToolOutputEventArgs> AttachExternalToolOutput(YtDlpProcessRunner runner, string category)
     {
         int emittedLines = 0;
@@ -544,9 +624,15 @@ internal sealed class SampleFeatureController
     /// <summary>
     /// 將 Deno 輸出事件連接到範例事件清單。
     /// </summary>
-    /// <param name="runner">要觀察的 Deno 處理序執行器。</param>
-    /// <param name="category">訊息分類。</param>
-    /// <returns>已註冊到輸出事件的處理常式。</returns>
+    /// <param name="runner">
+    /// 要觀察的 Deno 處理序執行器。
+    /// </param>
+    /// <param name="category">
+    /// 訊息分類。
+    /// </param>
+    /// <returns>
+    /// 已註冊到輸出事件的處理常式。
+    /// </returns>
     private EventHandler<ExternalToolOutputEventArgs> AttachExternalToolOutput(DenoProcessRunner runner, string category)
     {
         int emittedLines = 0;
@@ -562,9 +648,15 @@ internal sealed class SampleFeatureController
     /// <summary>
     /// 將外部工具單列輸出寫入事件清單。
     /// </summary>
-    /// <param name="category">訊息分類。</param>
-    /// <param name="e">外部工具輸出事件資料。</param>
-    /// <param name="lineNumber">目前已輸出的列數。</param>
+    /// <param name="category">
+    /// 訊息分類。
+    /// </param>
+    /// <param name="e">
+    /// 外部工具輸出事件資料。
+    /// </param>
+    /// <param name="lineNumber">
+    /// 目前已輸出的列數。
+    /// </param>
     private void AppendExternalToolOutput(string category, ExternalToolOutputEventArgs e, int lineNumber)
     {
         if (lineNumber > DiagnosticOutputLineLimit)
@@ -579,8 +671,12 @@ internal sealed class SampleFeatureController
     /// <summary>
     /// 將外部工具輸出拆列並限制輸出數量。
     /// </summary>
-    /// <param name="category">訊息分類。</param>
-    /// <param name="text">外部工具輸出文字。</param>
+    /// <param name="category">
+    /// 訊息分類。
+    /// </param>
+    /// <param name="text">
+    /// 外部工具輸出文字。
+    /// </param>
     private void AppendOutputLines(string category, string text)
     {
         string[] lines = text.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None)
@@ -602,8 +698,12 @@ internal sealed class SampleYtdlpFormatChoice
     /// <summary>
     /// 初始化 <see cref="SampleYtdlpFormatChoice"/> 類別的新執行個體。
     /// </summary>
-    /// <param name="displayName">顯示在 UI 的名稱。</param>
-    /// <param name="preset">對應的 yt-dlp 格式預設值。</param>
+    /// <param name="displayName">
+    /// 顯示在 UI 的名稱。
+    /// </param>
+    /// <param name="preset">
+    /// 對應的 yt-dlp 格式預設值。
+    /// </param>
     public SampleYtdlpFormatChoice(string displayName, MpvYtdlpFormatPreset preset)
     {
         DisplayName = displayName ?? throw new ArgumentNullException(nameof(displayName));
@@ -615,8 +715,12 @@ internal sealed class SampleYtdlpFormatChoice
     /// <summary>
     /// 初始化 <see cref="SampleYtdlpFormatChoice"/> 類別的新執行個體。
     /// </summary>
-    /// <param name="displayName">顯示在 UI 的名稱。</param>
-    /// <param name="selector">對應的 yt-dlp selector 字串。</param>
+    /// <param name="displayName">
+    /// 顯示在 UI 的名稱。
+    /// </param>
+    /// <param name="selector">
+    /// 對應的 yt-dlp selector 字串。
+    /// </param>
     public SampleYtdlpFormatChoice(string displayName, string selector)
     {
         DisplayName = displayName ?? throw new ArgumentNullException(nameof(displayName));
@@ -628,31 +732,41 @@ internal sealed class SampleYtdlpFormatChoice
     /// <summary>
     /// 取得顯示在 UI 的名稱。
     /// </summary>
-    /// <value>格式選項顯示名稱。</value>
+    /// <value>
+    /// 格式選項顯示名稱。
+    /// </value>
     public string DisplayName { get; private set; }
 
     /// <summary>
     /// 取得對應的 yt-dlp 格式預設值。
     /// </summary>
-    /// <value>yt-dlp 格式預設值。</value>
+    /// <value>
+    /// yt-dlp 格式預設值。
+    /// </value>
     public MpvYtdlpFormatPreset Preset { get; private set; }
 
     /// <summary>
     /// 取得對應的 yt-dlp selector 字串。
     /// </summary>
-    /// <value>yt-dlp selector 字串。</value>
+    /// <value>
+    /// yt-dlp selector 字串。
+    /// </value>
     public string Selector { get; private set; }
 
     /// <summary>
     /// 取得格式選項是否直接對應到內建預設值。
     /// </summary>
-    /// <value>格式選項使用內建預設值時為 <see langword="true"/>。</value>
+    /// <value>
+    /// 格式選項使用內建預設值時為 <see langword="true"/>。
+    /// </value>
     public bool UsesPreset { get; private set; }
 
     /// <summary>
     /// 將格式選項轉成 UI 顯示文字。
     /// </summary>
-    /// <returns>格式選項顯示名稱。</returns>
+    /// <returns>
+    /// 格式選項顯示名稱。
+    /// </returns>
     public override string ToString()
     {
         return DisplayName;

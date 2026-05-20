@@ -22,8 +22,12 @@ internal static class Program
     /// <summary>
     /// 測試執行進入點。
     /// </summary>
-    /// <param name="args">命令列引數；目前未使用。</param>
-    /// <returns>全部通過時為 0，否則為 1。</returns>
+    /// <param name="args">
+    /// 命令列引數；目前未使用。
+    /// </param>
+    /// <returns>
+    /// 全部通過時為 0，否則為 1。
+    /// </returns>
     private static int Main(string[] args)
     {
         _ = args;
@@ -68,8 +72,12 @@ internal static class Program
     /// <summary>
     /// 執行單一測試並於 stdout 印出結果。
     /// </summary>
-    /// <param name="name">測試名稱。</param>
-    /// <param name="action">測試動作。</param>
+    /// <param name="name">
+    /// 測試名稱。
+    /// </param>
+    /// <param name="action">
+    /// 測試動作。
+    /// </param>
     private static void Run(string name, Action action)
     {
         DateTimeOffset start = DateTimeOffset.UtcNow;
@@ -227,8 +235,12 @@ internal static class Program
     /// <summary>
     /// 條件斷言；失敗時擲出含訊息的例外。
     /// </summary>
-    /// <param name="condition">應為 true 的條件。</param>
-    /// <param name="message">失敗訊息。</param>
+    /// <param name="condition">
+    /// 應為 true 的條件。
+    /// </param>
+    /// <param name="message">
+    /// 失敗訊息。
+    /// </param>
     private static void Assert(bool condition, string message)
     {
         if (!condition)

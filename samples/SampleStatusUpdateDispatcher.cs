@@ -49,9 +49,15 @@ internal sealed class SampleStatusUpdateDispatcher : IDisposable
     /// <summary>
     /// 初始化 <see cref="SampleStatusUpdateDispatcher"/> 類別的新執行個體。
     /// </summary>
-    /// <param name="readStatusText">在背景執行緒讀取狀態文字的委派。</param>
-    /// <param name="applyStatusText">在 UI 執行緒套用狀態文字的委派。</param>
-    /// <param name="scheduleOnUiThread">將 UI 更新排入 UI 執行緒的委派。</param>
+    /// <param name="readStatusText">
+    /// 在背景執行緒讀取狀態文字的委派。
+    /// </param>
+    /// <param name="applyStatusText">
+    /// 在 UI 執行緒套用狀態文字的委派。
+    /// </param>
+    /// <param name="scheduleOnUiThread">
+    /// 將 UI 更新排入 UI 執行緒的委派。
+    /// </param>
     public SampleStatusUpdateDispatcher(
         Func<string> readStatusText,
         Action<string> applyStatusText,
@@ -92,7 +98,9 @@ internal sealed class SampleStatusUpdateDispatcher : IDisposable
     /// <summary>
     /// 在背景執行緒讀取狀態，必要時排入 UI 更新。
     /// </summary>
-    /// <param name="state">計時器狀態；未使用。</param>
+    /// <param name="state">
+    /// 計時器狀態；未使用。
+    /// </param>
     private void PollStatus(object? state)
     {
         lock (_syncRoot)
@@ -143,7 +151,9 @@ internal sealed class SampleStatusUpdateDispatcher : IDisposable
     /// <summary>
     /// 安全讀取狀態文字。
     /// </summary>
-    /// <returns>可顯示於範例 UI 的狀態文字。</returns>
+    /// <returns>
+    /// 可顯示於範例 UI 的狀態文字。
+    /// </returns>
     private string ReadStatusText()
     {
         try
@@ -163,7 +173,9 @@ internal sealed class SampleStatusUpdateDispatcher : IDisposable
     /// <summary>
     /// 在 UI 執行緒套用狀態文字。
     /// </summary>
-    /// <param name="statusText">要套用的狀態文字。</param>
+    /// <param name="statusText">
+    /// 要套用的狀態文字。
+    /// </param>
     private void ApplyStatusText(string statusText)
     {
         try
