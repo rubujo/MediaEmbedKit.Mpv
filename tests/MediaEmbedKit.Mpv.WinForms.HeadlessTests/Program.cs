@@ -34,8 +34,8 @@ internal static class Program
             Run("Source setter round-trip 並觸發 PropertyChanged", VerifySourceRoundTrip);
             Run("PlaylistIndex / Chapter 無 player 時接受無效值且不擲例外", VerifyNavigationInvalidValuesSafeWithoutPlayer);
             Run("Duration / PlaybackState 唯讀（無 public setter）", VerifyReadOnlyProperties);
-            Run("5 個命令 都已暴露且 CanExecute 在無 player 時為 false", Verify命令Exposed);
-            Run("無 player 時 命令.Execute 不擲例外", Verify命令SafeWithoutPlayer);
+            Run("5 個命令 都已暴露且 CanExecute 在無 player 時為 false", VerifyCommandsExposed);
+            Run("無 player 時 命令.Execute 不擲例外", VerifyCommandsSafeWithoutPlayer);
             Console.WriteLine("WinForms 無頭測試完成：全部通過。");
             return 0;
         }
@@ -194,7 +194,7 @@ internal static class Program
     /// <summary>
     /// 驗證 5 個命令 全暴露且無 player 時 CanExecute=false。
     /// </summary>
-    private static void Verify命令Exposed()
+    private static void VerifyCommandsExposed()
     {
         using MpvPlayerControl control = new MpvPlayerControl();
         ICommand[] commands = new[]
@@ -213,7 +213,7 @@ internal static class Program
     /// <summary>
     /// 驗證無 player 時 命令.Execute 安全（守備路徑）。
     /// </summary>
-    private static void Verify命令SafeWithoutPlayer()
+    private static void VerifyCommandsSafeWithoutPlayer()
     {
         using MpvPlayerControl control = new MpvPlayerControl();
         control.PlayCommand.Execute(null);

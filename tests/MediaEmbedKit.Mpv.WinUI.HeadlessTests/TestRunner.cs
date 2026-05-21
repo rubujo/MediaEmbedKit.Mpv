@@ -34,8 +34,8 @@ internal static class TestRunner
         Run("Source / Position / Volume / IsPaused / IsMuted CLR setter round-trip", VerifyReadWriteRoundTrip);
         Run("Duration / PlaybackState 模擬唯讀（外部寫入還原）", VerifyReadOnlyDependencyProperties);
         Run("OverlayContent / IsOverlayOpen 預設與 round-trip", VerifyOverlayProperties);
-        Run("Play / Pause / Stop / TogglePause / ToggleMute 命令 可取得且 CanExecute 預設 false（無 player）", Verify命令Exposed);
-        Run("命令.Execute 在無 player 時不擲例外", Verify命令SafeWithoutPlayer);
+        Run("Play / Pause / Stop / TogglePause / ToggleMute 命令 可取得且 CanExecute 預設 false（無 player）", VerifyCommandsExposed);
+        Run("命令.Execute 在無 player 時不擲例外", VerifyCommandsSafeWithoutPlayer);
         Run("Dispose 可重入（無 player 與重複 Dispose 都不擲例外）", VerifyDisposeReentrant);
 
         if (Failures.Count == 0)
@@ -207,7 +207,7 @@ internal static class TestRunner
     /// <summary>
     /// 驗證 5 個命令 都已暴露且 CanExecute 在無 player 時為 false。
     /// </summary>
-    private static void Verify命令Exposed()
+    private static void VerifyCommandsExposed()
     {
         MpvWinUiPlayer player = new MpvWinUiPlayer();
         try
@@ -233,7 +233,7 @@ internal static class TestRunner
     /// <summary>
     /// 驗證在無 player 情況下呼叫 命令.Execute 不擲例外（守備路徑）。
     /// </summary>
-    private static void Verify命令SafeWithoutPlayer()
+    private static void VerifyCommandsSafeWithoutPlayer()
     {
         MpvWinUiPlayer player = new MpvWinUiPlayer();
         try

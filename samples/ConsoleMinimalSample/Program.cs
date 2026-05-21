@@ -170,10 +170,10 @@ internal static class Program
         Console.WriteLine("[encode] input=" + inputPath);
         Console.WriteLine("[encode] output=" + outputPath);
 
-        string 擴充方法 = System.IO.Path.GetExtension(outputPath).ToLowerInvariant();
+        string extension = System.IO.Path.GetExtension(outputPath).ToLowerInvariant();
         bool audioOnly =
-            擴充方法 == ".m4a" || 擴充方法 == ".mp3" || 擴充方法 == ".ogg"
-            || 擴充方法 == ".opus" || 擴充方法 == ".aac" || 擴充方法 == ".wav";
+            extension == ".m4a" || extension == ".mp3" || extension == ".ogg"
+            || extension == ".opus" || extension == ".aac" || extension == ".wav";
 
         MpvEncodingOptions options;
         if (audioOnly)

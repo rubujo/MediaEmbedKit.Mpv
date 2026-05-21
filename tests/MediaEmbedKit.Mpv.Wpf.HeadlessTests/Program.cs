@@ -32,8 +32,8 @@ internal static class Program
             Run("Volume / IsPaused / IsMuted CLR setter round-trip", VerifyReadWriteRoundTrip);
             Run("Duration / PlaybackState 唯讀（外部無法 SetValue）", VerifyReadOnlyDependencyProperties);
             Run("Source 設定後可讀回", VerifySourceRoundTrip);
-            Run("Play / Pause / Stop / TogglePause / ToggleMute 命令 可取得且 CanExecute 預設 false（無 player）", Verify命令Exposed);
-            Run("RaiseCanExecuteChanged 透過 player 生命週期傳遞（無 player 仍可呼叫）", Verify命令SafeWithoutPlayer);
+            Run("Play / Pause / Stop / TogglePause / ToggleMute 命令 可取得且 CanExecute 預設 false（無 player）", VerifyCommandsExposed);
+            Run("RaiseCanExecuteChanged 透過 player 生命週期傳遞（無 player 仍可呼叫）", VerifyCommandsSafeWithoutPlayer);
             Console.WriteLine("WPF 無頭測試完成：全部通過。");
             return 0;
         }
@@ -137,7 +137,7 @@ internal static class Program
     /// <summary>
     /// 驗證 5 個命令 都已暴露且 CanExecute 在無 player 時為 false。
     /// </summary>
-    private static void Verify命令Exposed()
+    private static void VerifyCommandsExposed()
     {
         MpvWpfPlayer player = new MpvWpfPlayer();
         ICommand[] commands = new[]
@@ -157,7 +157,7 @@ internal static class Program
     /// <summary>
     /// 驗證在無 player 情況下呼叫 命令.Execute 不擲例外（守備路徑）。
     /// </summary>
-    private static void Verify命令SafeWithoutPlayer()
+    private static void VerifyCommandsSafeWithoutPlayer()
     {
         MpvWpfPlayer player = new MpvWpfPlayer();
         player.PlayCommand.Execute(null);

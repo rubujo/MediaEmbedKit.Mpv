@@ -341,7 +341,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// <summary>
     /// 通知所有指令重新評估 <see cref="ICommand.CanExecute"/>。
     /// </summary>
-    private void Raise命令CanExecuteChanged()
+    private void RaiseCommandCanExecuteChanged()
     {
         _playCommand.RaiseCanExecuteChanged();
         _pauseCommand.RaiseCanExecuteChanged();
@@ -819,7 +819,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
             AttachPlayerBindings(player);
         }
 
-        Raise命令CanExecuteChanged();
+        RaiseCommandCanExecuteChanged();
         PlayerCreated?.Invoke(this, EventArgs.Empty);
     }
 
@@ -1265,7 +1265,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
 
         if (hadPlayer)
         {
-            Raise命令CanExecuteChanged();
+            RaiseCommandCanExecuteChanged();
         }
     }
 

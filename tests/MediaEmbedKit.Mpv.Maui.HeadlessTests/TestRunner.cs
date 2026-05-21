@@ -34,8 +34,8 @@ internal static class TestRunner
         Run("Source / Position / Volume / IsPaused / IsMuted CLR setter round-trip", VerifyReadWriteRoundTrip);
         Run("Duration / PlaybackState 唯讀 BindableProperty（外部 SetValue 應被拒）", VerifyReadOnlyBindableProperties);
         Run("OverlayView / IsOverlayOpen 預設與 round-trip", VerifyOverlayProperties);
-        Run("Play / Pause / Stop / TogglePause / ToggleMute 命令 可取得且 CanExecute 預設 false（無 player）", Verify命令Exposed);
-        Run("命令.Execute 在無 player 時不擲例外", Verify命令SafeWithoutPlayer);
+        Run("Play / Pause / Stop / TogglePause / ToggleMute 命令 可取得且 CanExecute 預設 false（無 player）", VerifyCommandsExposed);
+        Run("命令.Execute 在無 player 時不擲例外", VerifyCommandsSafeWithoutPlayer);
         Run("Binding StringFormat 對 PlaybackState 正常運作", VerifyPlaybackStateBindingFormat);
     }
 
@@ -213,7 +213,7 @@ internal static class TestRunner
     /// <summary>
     /// 驗證 5 個命令 都已暴露且 CanExecute 在無 player 時為 false。
     /// </summary>
-    private static void Verify命令Exposed()
+    private static void VerifyCommandsExposed()
     {
         MpvView view = new MpvView();
         ICommand[] commands = new[]
@@ -232,7 +232,7 @@ internal static class TestRunner
     /// <summary>
     /// 驗證在無 player 情況下呼叫 命令.Execute 不擲例外（守備路徑）。
     /// </summary>
-    private static void Verify命令SafeWithoutPlayer()
+    private static void VerifyCommandsSafeWithoutPlayer()
     {
         MpvView view = new MpvView();
         view.PlayCommand.Execute(null);

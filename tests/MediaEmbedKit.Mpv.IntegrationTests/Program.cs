@@ -238,7 +238,7 @@ internal static class Program
         {
             return VerifyHardwareDecodingPropertyPathAsync(runtimeDirectory);
         });
-        runner.Add("HDR target-prim / target-trc / tone-對應表 屬性 round-trip", delegate
+        runner.Add("HDR target-prim / target-trc / tone-mapping 屬性 round-trip", delegate
         {
             return VerifyHdrPropertyPathAsync(runtimeDirectory);
         });
@@ -1821,7 +1821,7 @@ internal static class Program
 
     /// <summary>
     /// 驗證 libmpv HDR 相關屬性的 wrapper API 路徑：<c>target-prim</c> / <c>target-trc</c> /
-    /// <c>tone-對應表</c> 可寫入 BT.2020 / PQ / HDR tone-對應表 等合法值並讀回。
+    /// <c>tone-mapping</c> 可寫入 BT.2020 / PQ / HDR tone-mapping 等合法值並讀回。
     /// 本測試**不**驗證實際 HDR 渲染輸出 — 那需要 HDR 內容 + HDR 顯示器 + render API 路徑。
     /// 焦點是 wrapper 對這幾條 mpv property 路徑的 Get/Set 行為與 BT.2020/PQ 識別碼合法。
     /// </summary>
@@ -1854,12 +1854,12 @@ internal static class Program
             player.SetPropertyString("target-trc", "auto");
             IntegrationAssert.Equal("auto", player.GetPropertyString("target-trc"), "target-trc=auto round-trip。");
 
-            // tone-對應表：HDR → SDR / HDR → HDR 色調映射演算法選擇。
+            // tone-mapping：HDR → SDR / HDR → HDR 色調映射演算法選擇。
             string[] toneMappingValues = new[] { "auto", "clip", "bt.2390", "reinhard", "hable", "mobius" };
             foreach (string value in toneMappingValues)
             {
-                player.SetPropertyString("tone-對應表", value);
-                IntegrationAssert.Equal(value, player.GetPropertyString("tone-對應表"), "tone-對應表=" + value + " round-trip。");
+                player.SetPropertyString("tone-mapping", value);
+                IntegrationAssert.Equal(value, player.GetPropertyString("tone-mapping"), "tone-mapping=" + value + " round-trip。");
             }
 
             // video-params/* 是 libmpv 報告當前載入媒體的視訊參數（唯讀）；未載入媒體時
