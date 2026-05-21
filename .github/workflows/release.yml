@@ -2,17 +2,17 @@ name: release
 
 # 觸發策略：
 # - push semver-style tag（v0.1.0-alpha.1 / v1.0.0 等）自動跑
-# - 工作流程_dispatch 允許手動測試
+# - workflow_dispatch 允許手動測試
 # 不 push 到 nuget.org；只把 .nupkg / .snupkg 上傳到對應 GitHub Releases 頁面。
 
 on:
   push:
     tags:
       - 'v*.*.*'
-  工作流程_dispatch:
+  workflow_dispatch:
 
 concurrency:
-  group: ${{ github.工作流程 }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
 permissions:
