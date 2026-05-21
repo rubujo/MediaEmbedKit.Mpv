@@ -1,6 +1,6 @@
 # 參考來源
 
-本文件列出專案規範採用的主要來源。最後查核日期：2026-05-20。
+本文件列出專案規範採用的主要來源。最後查核日期：2026-05-22。
 
 ## libmpv 與 mpv
 
@@ -62,7 +62,10 @@
 - GitHub Actions dependency caching：https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching
 - GitHub Actions cache REST API：https://docs.github.com/en/rest/actions/cache
 - GitHub Actions secure use：https://docs.github.com/en/actions/security-for-github-actions/security-guides/security-hardening-for-github-actions
+- GitHub Actions artifact attestations：https://docs.github.com/en/actions/how-tos/secure-your-work/use-artifact-attestations/use-artifact-attestations
 - actions/cache：https://github.com/actions/cache
+- actions/attest：https://github.com/actions/attest
+- actions/attest-build-provenance：https://github.com/actions/attest-build-provenance
 
 ## AI Agent 與提交規範
 

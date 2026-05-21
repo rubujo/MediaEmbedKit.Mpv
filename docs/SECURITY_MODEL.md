@@ -26,7 +26,7 @@
 
 ### NuGet 套件建置來源證明
 
-本專案發行的 `.nupkg` 與 `.snupkg` 透過 `actions/attest-build-provenance` 產生 Sigstore 簽署的建置來源證明 attestation，寫入 Rekor transparency log。使用端可用 GitHub CLI 或 cosign 驗證套件是否由 `github.com/rubujo/MediaEmbedKit.Mpv` 的特定 commit 與工作流程執行紀錄建出。
+本專案發行的 `.nupkg` 與 `.snupkg` 透過 `actions/attest` 產生 Sigstore 簽署的建置來源證明 attestation。使用端可用 GitHub CLI 或 cosign 驗證套件是否由 `github.com/rubujo/MediaEmbedKit.Mpv` 的特定 commit 與工作流程執行紀錄建出。
 
 ```powershell
 gh attestation verify MediaEmbedKit.Mpv.<version>.nupkg --owner rubujo

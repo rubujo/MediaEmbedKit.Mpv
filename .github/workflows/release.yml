@@ -17,8 +17,8 @@ concurrency:
 
 permissions:
   contents: write   # softprops/action-gh-release 上傳檔到 Release 需要
-  id-token: write   # actions/attest-build-provenance Sigstore OIDC token 需要
-  attestations: write   # actions/attest-build-provenance 產生 attestation 需要
+  id-token: write   # actions/attest Sigstore OIDC token 需要
+  attestations: write   # actions/attest 產生 attestation 需要
 
 jobs:
   pack-and-release:
@@ -90,13 +90,13 @@ jobs:
           .\tools\Invoke-PreReleaseValidation.ps1 -IncludeDocSyncCheck
 
       - name: Generate build provenance attestations
-        # actions/attest-build-provenance 用 GitHub OIDC token 透過 Sigstore Public
-        # Good Instance 對每個 .nupkg / .snupkg 產生 build provenance attestation，
-        # 寫進 Rekor transparency log。Consumer 端可用 `gh attestation verify` 或
-        # `cosign verify-blob` 驗證套件的 provenance（建置來源是哪個 commit / 工作流程）。
-        # 上游 mpv / FFmpeg-Builds 等第三方 二進位檔 尚未採用此機制；本步驟只保證
+        # actions/attest 用 GitHub OIDC token 透過 Sigstore Public Good Instance
+        # 對每個 .nupkg / .snupkg 產生 build provenance attestation。Consumer 端
+        # 可用 `gh attestation verify` 或 `cosign verify-blob` 驗證套件的 provenance
+        # （建置來源是哪個 commit / 工作流程）。上游 mpv / FFmpeg-Builds 等第三方
+        # 二進位檔尚未採用此機制；本步驟只保證
         # MediaEmbedKit.Mpv 自家 NuGet 套件的 provenance。詳見 docs/SECURITY_MODEL.md。
-        uses: actions/attest-build-provenance@v4
+        uses: actions/attest@v4
         with:
           subject-path: |
             artifacts/packages/*.nupkg
