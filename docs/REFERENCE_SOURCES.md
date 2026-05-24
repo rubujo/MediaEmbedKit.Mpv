@@ -1,6 +1,6 @@
 # 參考來源
 
-本文件列出專案規範採用的主要來源。最後查核日期：2026-05-22。
+本文件列出專案規範採用的主要來源。最後查核日期：2026-05-24。
 
 ## libmpv 與 mpv
 
@@ -73,8 +73,12 @@
 - Codex Agent Skills：https://developers.openai.com/codex/skills
 - AGENTS.md 開放格式：https://agents.md/
 - Agent Skills 規格：https://agentskills.io/specification
-- Claude Code memory：https://docs.claude.com/en/docs/claude-code/memory
+- Claude Code memory：https://code.claude.com/docs/en/memory
 - Claude Code skills：https://docs.claude.com/en/docs/claude-code/skills
 - Gemini CLI `GEMINI.md`：https://google-gemini.github.io/gemini-cli/docs/cli/gemini-md.html
+- GitHub Copilot CLI repository instructions：https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-custom-instructions
+- GitHub Copilot CLI skills：https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/create-skills
 - GitHub Copilot repository custom instructions：https://docs.github.com/en/copilot/how-tos/configure-custom-instructions/add-repository-instructions
+- Google Antigravity CLI migration：https://antigravity.google/docs/gcli-migration
+- Google Antigravity Agent Skills：https://antigravity.google/docs/skills
 - 慣例式提交 1.0.0：https://www.conventionalcommits.org/zh-hant/v1.0.0/

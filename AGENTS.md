@@ -15,7 +15,7 @@
 - 專案編修：`docs/ai/skills/mediaembedkit-mpv.md`
 - 提供者 git build 追蹤：`docs/ai/skills/libmpv-git-build-tracker.md`
 
-`.agents` 與 `.claude` 下的 `SKILL.md` 僅供工具發現；實際流程以 `docs/ai/skills/*.md` 為準。
+`.agents/skills` 為 Codex CLI、GitHub Copilot CLI 與 Google Antigravity CLI 的跨工具技能入口；`.claude/skills` 僅作為 Claude Code 橋接。所有 `SKILL.md` 僅供工具發現；實際流程以 `docs/ai/skills/*.md` 為準。
 
 ## 基本規則
 

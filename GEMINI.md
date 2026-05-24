@@ -1,3 +1,3 @@
-# Gemini CLI 指示
+# Google Antigravity CLI 相容指示
 
 @AGENTS.md

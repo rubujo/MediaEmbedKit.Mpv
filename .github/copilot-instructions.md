@@ -1,13 +1,13 @@
 <!--
-此檔案由 tools/Sync-CopilotInstructions.ps1 從 AGENTS.md 自動同步。
+此檔案由 tools/Sync-CopilotInstructions.ps1 從 AGENTS.md 產生相容鏡像。
 請勿手動編輯；要更動規則請改 AGENTS.md，再執行：
   pwsh tools/Sync-CopilotInstructions.ps1
-GitHub Copilot 不支援 @import 機制，因此必須內嵌內容。
+GitHub Copilot CLI 以 AGENTS.md 為主要入口；此檔保留給 GitHub Copilot 的儲存庫自訂指示介面。
 -->
 
 # GitHub Copilot 指示
 
-本文件是 GitHub Copilot 與 Copilot CLI 看到的系統指令。內容必須與 `AGENTS.md` 保持一致。
+本文件是 GitHub Copilot 的相容鏡像。主要規則來源為 `AGENTS.md`。
 
 ---
 # AGENTS.md
@@ -27,7 +27,7 @@ GitHub Copilot 不支援 @import 機制，因此必須內嵌內容。
 - 專案編修：`docs/ai/skills/mediaembedkit-mpv.md`
 - 提供者 git build 追蹤：`docs/ai/skills/libmpv-git-build-tracker.md`
 
-`.agents` 與 `.claude` 下的 `SKILL.md` 僅供工具發現；實際流程以 `docs/ai/skills/*.md` 為準。
+`.agents/skills` 為 Codex CLI、GitHub Copilot CLI 與 Google Antigravity CLI 的跨工具技能入口；`.claude/skills` 僅作為 Claude Code 橋接。所有 `SKILL.md` 僅供工具發現；實際流程以 `docs/ai/skills/*.md` 為準。
 
 ## 基本規則
 
