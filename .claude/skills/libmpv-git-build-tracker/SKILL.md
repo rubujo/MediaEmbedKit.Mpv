@@ -5,4 +5,4 @@ description: 追蹤 shinchiro 與 zhongfly mpv git build，並對齊 libmpv C AP
 
 # libmpv git build 追蹤
 
-此 skill 僅供工具發現。請先閱讀 `AGENTS.md`，再依 `docs/ai/skills/libmpv-git-build-tracker.md` 執行。
+此技能僅供工具發現。請先閱讀 `AGENTS.md`，再依 `docs/ai/skills/libmpv-git-build-tracker.md` 執行。

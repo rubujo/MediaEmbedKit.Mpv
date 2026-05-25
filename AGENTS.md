@@ -1,6 +1,6 @@
 # AGENTS.md
 
-本文件是本儲存庫提供給 AI 代理的主要入口。其他 CLI 專屬入口僅作橋接用途，不應放置重複規則。
+本文件是本儲存庫提供給 AI 代理的唯一主要入口。其他 CLI 專屬入口僅作必要橋接用途，不應放置重複規則。
 
 ## 文件入口
 
@@ -15,7 +15,7 @@
 - 專案編修：`docs/ai/skills/mediaembedkit-mpv.md`
 - 提供者 git build 追蹤：`docs/ai/skills/libmpv-git-build-tracker.md`
 
-`.agents/skills` 為 Codex CLI、GitHub Copilot CLI 與 Google Antigravity CLI 的跨工具技能入口；`.claude/skills` 僅作為 Claude Code 橋接。所有 `SKILL.md` 僅供工具發現；實際流程以 `docs/ai/skills/*.md` 為準。
+`.agents/skills` 為 Codex CLI、GitHub Copilot CLI 與 Google Antigravity CLI 的跨工具技能入口；`.claude/skills` 僅作為 Claude Code 橋接。所有 `SKILL.md` 必須保留 `name` 與 `description`，且僅供工具發現；實際流程以 `docs/ai/skills/*.md` 為準。
 
 ## 基本規則
 
