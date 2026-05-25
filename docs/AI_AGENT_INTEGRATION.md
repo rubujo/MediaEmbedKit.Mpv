@@ -1,45 +1,30 @@
-# AI 代理整合規範
+# AI 代理最大公因數規範
 
-本專案採用 `AGENTS.md` 單一主要入口與薄型橋接設計。主要支援 Codex CLI、Claude Code、GitHub Copilot CLI 與 Google Antigravity CLI；過時的非目標工具設定與 GitHub Copilot 鏡像檔已移除，避免同一組規則被載入多次。
+本專案依 Codex CLI、Claude Code、GitHub Copilot CLI 與 Google Antigravity CLI 的官方文件，只保留四者共同可穩定使用的規則與技能結構。目標是降低重複入口、避免同一規則被載入多次，並移除非必要的歷史相容檔。
 
-## 結構
+## 最大公因數
 
-| 位置 | 角色 |
-| --- | --- |
-| `AGENTS.md` | 唯一主要規則入口；Codex CLI、GitHub Copilot CLI 與 Google Antigravity CLI 可直接讀取。 |
-| `CLAUDE.md` | Claude Code 橋接，以 `@AGENTS.md` 匯入主要入口。 |
-| `.agents/skills/*/SKILL.md` | Codex CLI、GitHub Copilot CLI 與 Google Antigravity CLI 的跨工具技能發現檔。 |
-| `.claude/skills/*/SKILL.md` | Claude Code 專案技能橋接檔。 |
-| `docs/ai/skills/*.md` | 技能實際流程來源。 |
-| `docs/ai/AGENT_GUIDE.md` | 舊路徑相容索引，不作為規則來源。 |
+| 類型 | 保留結構 | 原因 |
+| --- | --- | --- |
+| 主要規則 | `AGENTS.md` | Codex CLI、GitHub Copilot CLI 與 Google Antigravity CLI 可直接讀取；Claude Code 可透過 `CLAUDE.md` 匯入。 |
+| Claude Code 橋接 | `CLAUDE.md` | Claude Code 官方仍讀取 `CLAUDE.md`，且官方建議既有 `AGENTS.md` 專案用 `@AGENTS.md` 匯入。 |
+| 跨工具技能 | `.agents/skills/*/SKILL.md` | Codex CLI、GitHub Copilot CLI 與 Google Antigravity CLI 共同支援的專案技能位置。 |
+| Claude Code 技能 | `.claude/skills/*/SKILL.md` | Claude Code 官方專案技能位置；這是唯一必要的技能橋接副本。 |
+| 技能正文 | `docs/ai/skills/*.md` | 兩個技能發現根目錄共用同一份實際流程，避免重複維護。 |
 
-不保留 `.github/copilot-instructions.md`，因為 GitHub Copilot CLI 會同時讀取根目錄 `AGENTS.md` 與 `.github/copilot-instructions.md`；保留鏡像會造成規則重複。不保留 `GEMINI.md` 與 `.gemini/settings.json`，因為 Google Antigravity CLI 已支援 `AGENTS.md` 與 `.agents/skills`。
+`SKILL.md` 的共通格式是獨立資料夾、`SKILL.md` 檔案、YAML front matter 與清楚的 `description`。本專案一律保留 `name` 與 `description`，讓 Codex CLI、Claude Code、GitHub Copilot CLI 與 Google Antigravity CLI 都能穩定辨識。
 
-## 四工具能力矩陣
+## 不保留項目
 
-| 機制 | Codex CLI | Claude Code | GitHub Copilot CLI | Google Antigravity CLI |
-| --- | :-: | :-: | :-: | :-: |
-| 主要規則入口 | `AGENTS.md` | `CLAUDE.md` 匯入 `AGENTS.md` | `AGENTS.md` | `AGENTS.md` |
-| 專案技能發現 | `.agents/skills/` | `.claude/skills/` | `.agents/skills/` | `.agents/skills/` |
-| 共用技能流程指南 | `docs/ai/skills/*.md` | `docs/ai/skills/*.md` | `docs/ai/skills/*.md` | `docs/ai/skills/*.md` |
-| 工具專屬橋接 | 不需要 | `CLAUDE.md`、`.claude/skills/` | 不需要 | 不需要 |
-
-> `AGENTS.md` 是唯一主要規則來源。工具專屬入口只做必要橋接或技能發現，不放置平行規則。
-
-## 技能
-
-| 位置 | 角色 |
-| --- | --- |
-| `docs/ai/skills/mediaembedkit-mpv.md` | 本專案共用技能流程。 |
-| `docs/ai/skills/libmpv-git-build-tracker.md` | 提供者 git build 與 libmpv 標頭追蹤流程。 |
-| `.agents/skills/*/SKILL.md` | 跨工具主要技能發現檔。 |
-| `.claude/skills/*/SKILL.md` | Claude Code 專案技能橋接檔。 |
-
-每個 `SKILL.md` 必須使用獨立資料夾，並保留 YAML front matter 的 `name` 與 `description`。`description` 要清楚說明何時使用技能，讓 Codex CLI、Claude Code、GitHub Copilot CLI 與 Google Antigravity CLI 都能正確觸發。`SKILL.md` 本體只保留簡短標題與共用技能路徑，實際規則一律維護於 `docs/ai/skills/*.md`。
+- 不保留 `.github/copilot-instructions.md`：GitHub Copilot CLI 會同時讀取根目錄 `AGENTS.md` 與此檔，保留會造成規則重複。
+- 不保留 `GEMINI.md` 與 `.gemini/settings.json`：Google Antigravity CLI 已支援 `AGENTS.md` 與 `.agents/skills`，本專案不再以 Gemini CLI 作為支援目標。
+- 不保留 `.codex/skills` 或 `.github/skills`：`.agents/skills` 已是 Codex CLI、GitHub Copilot CLI 與 Google Antigravity CLI 的共同位置。
+- 不保留工具專屬 hooks、subagents、MCP 或 plugins 規範：四套工具的格式與行為不同，不屬於最大公因數。
+- 不保留舊路徑索引文件：代理入口只從 `AGENTS.md` 與本文件說明，不再維護平行指南。
 
 ## 維護原則
 
-- 修改跨工具入口時，只更新 `AGENTS.md`、`CLAUDE.md` 與本文件。
-- 修改技能行為時，只更新 `docs/ai/skills/*.md`，再確認 `.agents/skills` 與 `.claude/skills` 的橋接檔仍指向正確文件。
-- 不新增 `.github/copilot-instructions.md`、`GEMINI.md`、`.gemini/settings.json` 或 `.codex/skills`，除非官方文件改變且本文件同步更新。
-- 不新增平行 CLI 專屬規則；必要入口只能轉接 `AGENTS.md` 或指向共用技能文件。
+- 修改專案規則時，只更新 `AGENTS.md` 與必要專責文件。
+- 修改技能流程時，只更新 `docs/ai/skills/*.md`，並確認 `.agents/skills` 與 `.claude/skills` 的 `SKILL.md` 仍指向正確文件。
+- 新增技能時，同步新增 `.agents/skills/<skill-name>/SKILL.md` 與 `.claude/skills/<skill-name>/SKILL.md`，兩者只放 front matter、簡短標題與共用技能路徑。
+- 若官方文件新增真正共同入口，才重新評估是否移除現有橋接；不得為單一工具新增平行規則來源。
