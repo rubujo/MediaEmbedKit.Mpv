@@ -1,4 +1,4 @@
-param(
+﻿param(
     [Parameter(Mandatory = $true)]
     [ValidateSet('Shinchiro', 'Zhongfly')]
     [string] $Provider,
@@ -39,7 +39,7 @@ function Get-MpvCommit {
         }
     }
 
-    throw "無法從 release '$($Release.tag_name)' 解析 mpv commit。"
+    throw "無法從發行版 '$($Release.tag_name)' 解析 mpv commit。"
 }
 
 $repository = Get-RepositoryName -ProviderName $Provider

@@ -87,8 +87,11 @@ function Invoke-HeaderDiff {
         [string] $TargetPath
     )
 
+    $oldEap = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
     $output = & git diff --no-index -- $BasePath $TargetPath 2>&1
     $exitCode = $LASTEXITCODE
+    $ErrorActionPreference = $oldEap
     return [ordered]@{
         hasDifference = ($exitCode -ne 0)
         exitCode = $exitCode
