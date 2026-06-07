@@ -1,40 +1,40 @@
 {
-    "schemaVersion":  1,
-    "lastCheckedDate":  "2026-06-02",
-    "stableBaseline":  {
-                           "mpvTag":  "v0.41.0",
-                           "clientApiVersion":  "2.5",
-                           "headers":  [
-                                           "client.h",
-                                           "render.h",
-                                           "render_gl.h",
-                                           "stream_cb.h"
-                                       ]
-                       },
-    "providers":  [
-                      {
-                          "name":  "Shinchiro",
-                          "repository":  "shinchiro/mpv-winbuild-cmake",
-                          "releaseTag":  "20260602",
-                          "releaseUrl":  "https://github.com/shinchiro/mpv-winbuild-cmake/releases/tag/20260602",
-                          "publishedAt":  "2026-06-02T00:39:07Z",
-                          "mpvCommit":  "f5d4d9b",
-                          "sourceKind":  "git-build",
-                          "cApiStatus":  "header-compatible",
-                          "managedAction":  "CommandNamed 已針對 mpv_command_node 具名命令 map 使用 _name；本次無需新增 P/Invoke 或受控型別。",
-                          "notes":  "Compare-LibMpvHeaders.ps1 -TargetCommit f5d4d9b：client.h 僅既有 _name 與 mpv_wait_async_requests 註解差異；render.h、render_gl.h、stream_cb.h 無差異。"
-                      },
-                      {
-                          "name":  "Zhongfly",
-                          "repository":  "zhongfly/mpv-winbuild",
-                          "releaseTag":  "2026-06-01-f5d4d9b029",
-                          "releaseUrl":  "https://github.com/zhongfly/mpv-winbuild/releases/tag/2026-06-01-f5d4d9b029",
-                          "publishedAt":  "2026-06-01T15:38:39Z",
-                          "mpvCommit":  "f5d4d9b029",
-                          "sourceKind":  "git-build",
-                          "cApiStatus":  "header-compatible",
-                          "managedAction":  "CommandNamed 已針對 mpv_command_node 具名命令 map 使用 _name；本次無需新增 P/Invoke 或受控型別。",
-                          "notes":  "Compare-LibMpvHeaders.ps1 -TargetCommit f5d4d9b029：公開 header hash 與 Shinchiro target 一致；client.h 僅既有註解差異，render 相關與 stream callback header 無差異。"
-                      }
-                  ]
+  "schemaVersion": 1,
+  "lastCheckedDate": "2026-06-08",
+  "stableBaseline": {
+    "mpvTag": "v0.41.0",
+    "clientApiVersion": "2.5",
+    "headers": [
+      "client.h",
+      "render.h",
+      "render_gl.h",
+      "stream_cb.h"
+    ]
+  },
+  "providers": [
+    {
+      "name": "Shinchiro",
+      "repository": "shinchiro/mpv-winbuild-cmake",
+      "releaseTag": "20260607",
+      "releaseUrl": "https://github.com/shinchiro/mpv-winbuild-cmake/releases/tag/20260607",
+      "publishedAt": "2026-06-07T00:27:31Z",
+      "mpvCommit": "71ebd08",
+      "sourceKind": "git-build",
+      "cApiStatus": "header-compatible",
+      "managedAction": "CommandNamed 已針對 mpv_command_node 具名命令 map 使用 _name；本次無需新增 P/Invoke 或受控型別。",
+      "notes": "Compare-LibMpvHeaders.ps1 -TargetCommit 71ebd08：client.h 僅既有 _name 與 mpv_wait_async_requests 註解差異；render.h、render_gl.h、stream_cb.h 無差異。"
+    },
+    {
+      "name": "Zhongfly",
+      "repository": "zhongfly/mpv-winbuild",
+      "releaseTag": "2026-06-07-43b14a4c9f",
+      "releaseUrl": "https://github.com/zhongfly/mpv-winbuild/releases/tag/2026-06-07-43b14a4c9f",
+      "publishedAt": "2026-06-07T15:23:30Z",
+      "mpvCommit": "43b14a4c9f",
+      "sourceKind": "git-build",
+      "cApiStatus": "header-compatible",
+      "managedAction": "CommandNamed 已針對 mpv_command_node 具名命令 map 使用 _name；本次無需新增 P/Invoke 或受控型別。",
+      "notes": "Compare-LibMpvHeaders.ps1 -TargetCommit 43b14a4c9f：公開 header hash 與 Shinchiro target 一致；client.h 僅既有註解差異，render 相關與 stream callback header 無差異。"
+    }
+  ]
 }
