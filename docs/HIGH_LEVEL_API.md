@@ -314,7 +314,7 @@ mpv 的 encoding mode 允許把 player 當作一次性轉碼器：設定 `o=...`
 | FFmpeg（shinchiro / zhongfly build 內建） | git master commits（2026-04+，內含 SVT-AV1 two-pass patch `5ba2525`，2026-02-25）；對應 stable 為 FFmpeg 8.1 "Hoare"（2026-03-16） |
 | SVT-AV1 | `4.0`（2026-01-13） |
 
-可用編碼器（依 shinchiro 20260607 / zhongfly 2026-06-07 build）：
+可用編碼器（依 shinchiro 20260607 / zhongfly 2026-06-21 build）：
 
 - 視訊：`libx264` / `libx265` / `libvpx-vp9` / `libsvtav1` / `libaom-av1` / `*_nvenc` / `*_qsv` / `*_amf`
 - 音訊：`aac`（內建） / `libopus` / `libmp3lame`

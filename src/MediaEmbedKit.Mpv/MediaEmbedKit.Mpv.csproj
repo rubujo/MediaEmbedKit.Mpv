@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;net472;net48;net10.0</TargetFrameworks>
     <AssemblyName>MediaEmbedKit.Mpv</AssemblyName>
@@ -6,6 +6,7 @@
     <Description>供 Windows 桌面控制項使用的受控 libmpv 包裝函式庫。</Description>
     <PackageId>MediaEmbedKit.Mpv</PackageId>
     <Title>MediaEmbedKit.Mpv</Title>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0'">
@@ -14,7 +15,7 @@
       （SYSLIB1062）；net7.0+ 走 LibraryImport 路徑時必須啟用。其他 TFM 仍走
       DllImport，不需要 unsafe。
     -->
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- AllowUnsafeBlocks 已提升為全域設定 -->
     <!--
       66 / 66 P/Invoke 已透過 LibraryImport source generator 產生 marshalling，
       MpvNodeMarshaller 等內部反射路徑已避免使用 type-name 反射；本核心套件對

@@ -112,7 +112,7 @@ internal sealed class Utf8StringArray : IDisposable
 /// <summary>
 /// 提供 UTF-8 原生字串與受控字串之間的轉換方法。
 /// </summary>
-internal static class Utf8StringMarshaller
+internal static unsafe class Utf8StringMarshaller
 {
     /// <summary>
     /// 將零結尾 UTF-8 原生字串轉換為受控字串。
@@ -130,19 +130,22 @@ internal static class Utf8StringMarshaller
             return null;
         }
 
-        int length = 0;
-        while (Marshal.ReadByte(pointer, length) != 0)
+#if NET5_0_OR_GREATER
+        return Marshal.PtrToStringUTF8(pointer);
+#else
+        byte* walk = (byte*)pointer;
+        while (*walk != 0)
         {
-            length++;
+            walk++;
         }
 
+        int length = (int)(walk - (byte*)pointer);
         if (length == 0)
         {
             return string.Empty;
         }
 
-        byte[] bytes = new byte[length];
-        Marshal.Copy(pointer, bytes, 0, length);
-        return Encoding.UTF8.GetString(bytes, 0, bytes.Length);
+        return Encoding.UTF8.GetString((byte*)pointer, length);
+#endif
     }
 }

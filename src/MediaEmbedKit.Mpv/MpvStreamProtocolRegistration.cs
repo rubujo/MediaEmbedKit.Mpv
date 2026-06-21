@@ -248,14 +248,21 @@ internal sealed class MpvStreamProtocolRegistration : IDisposable
             }
 
             int count = (int)Math.Min(byteCount, (ulong)MaximumReadBufferSize);
-            byte[] managedBuffer = new byte[count];
-            int read = stream.Read(managedBuffer, 0, count);
-            if (read > 0)
+            byte[] managedBuffer = System.Buffers.ArrayPool<byte>.Shared.Rent(count);
+            try
             {
-                Marshal.Copy(managedBuffer, 0, buffer, read);
-            }
+                int read = stream.Read(managedBuffer, 0, count);
+                if (read > 0)
+                {
+                    Marshal.Copy(managedBuffer, 0, buffer, read);
+                }
 
-            return read;
+                return read;
+            }
+            finally
+            {
+                System.Buffers.ArrayPool<byte>.Shared.Return(managedBuffer);
+            }
         }
         catch
         {
