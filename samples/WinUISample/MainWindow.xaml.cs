@@ -75,6 +75,18 @@ public sealed partial class MainWindow : Window
     /// 表示冒煙測試是否已啟動。
     /// </summary>
     private bool _smokeStarted;
+    /// <summary>
+    /// WinUI 視窗對應的 AppWindow。
+    /// </summary>
+    private readonly AppWindow _appWindow;
+    /// <summary>
+    /// 表示關閉前的 libmpv 收尾流程是否已完成。
+    /// </summary>
+    private bool _closeShutdownCompleted;
+    /// <summary>
+    /// 表示關閉前的 libmpv 收尾流程是否已啟動。
+    /// </summary>
+    private bool _closeShutdownStarted;
 
     /// <summary>
     /// 初始化 <see cref="MainWindow"/> 類別的新執行個體。
@@ -82,7 +94,7 @@ public sealed partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-        ResizeWindow();
+        _appWindow = ResizeWindow();
         EventList.ItemsSource = _eventLines;
         SourceBox.Text = SampleRuntime.PlaybackUrl;
         _features = new SampleFeatureController(() => _currentPlayer, AppendEventLine);
@@ -94,8 +106,32 @@ public sealed partial class MainWindow : Window
         {
             rootElement.Loaded += RootLoaded;
         }
+
+        _appWindow.Closing += AppWindowClosing;
         Closed += WindowClosed;
         AppendEventLine(CreateLifecycleLine("WindowCreated", "WinUI 視窗已建立，等待執行階段初始化。"));
+    }
+
+    /// <summary>
+    /// 在視窗關閉前先讓 libmpv 非同步結束，避免 UI 執行緒在 HWND 控制項釋放階段等待事件執行緒。
+    /// </summary>
+    /// <param name="sender">
+    /// 引發事件的 AppWindow。
+    /// </param>
+    /// <param name="args">
+    /// 視窗關閉事件資料。
+    /// </param>
+    private async void AppWindowClosing(AppWindow sender, AppWindowClosingEventArgs args)
+    {
+        if (!_closeShutdownCompleted && !_closeShutdownStarted && _currentPlayer != null)
+        {
+            args.Cancel = true;
+            _closeShutdownStarted = true;
+            SetRuntimeControlsEnabled(false);
+            await SampleShutdown.PreparePlayerCloseAsync(_currentPlayer, WriteCloseLifecycle).ConfigureAwait(true);
+            _closeShutdownCompleted = true;
+            Close();
+        }
     }
 
     /// <summary>
@@ -109,6 +145,7 @@ public sealed partial class MainWindow : Window
     /// </param>
     private void WindowClosed(object sender, WindowEventArgs args)
     {
+        _appWindow.Closing -= AppWindowClosing;
         _statusDispatcher.Dispose();
         _eventBridge?.WriteLifecycle("WindowClosed", "視窗已關閉，準備取消事件訂閱。");
         _eventBridge?.Dispose();
@@ -120,6 +157,20 @@ public sealed partial class MainWindow : Window
         }
 
         _currentPlayer = null;
+    }
+
+    /// <summary>
+    /// 寫入關閉流程生命週期事件。
+    /// </summary>
+    /// <param name="name">
+    /// 事件名稱。
+    /// </param>
+    /// <param name="message">
+    /// 事件訊息。
+    /// </param>
+    private void WriteCloseLifecycle(string name, string message)
+    {
+        AppendEventLine(CreateLifecycleLine(name, message));
     }
 
     /// <summary>
@@ -1009,11 +1060,12 @@ public sealed partial class MainWindow : Window
     /// <summary>
     /// 將 WinUI 視窗調整為範例標準尺寸。
     /// </summary>
-    private void ResizeWindow()
+    private AppWindow ResizeWindow()
     {
         nint windowHandle = WindowNative.GetWindowHandle(this);
         WindowId windowId = Win32Interop.GetWindowIdFromWindow(windowHandle);
         AppWindow appWindow = AppWindow.GetFromWindowId(windowId);
         appWindow.Resize(new SizeInt32(SampleRuntime.SampleWindowWidth, SampleRuntime.SampleWindowHeight));
+        return appWindow;
     }
 }

@@ -66,6 +66,14 @@ public partial class MainWindow : Window
     /// 表示冒煙測試是否已啟動。
     /// </summary>
     private bool _smokeStarted;
+    /// <summary>
+    /// 表示關閉前的 libmpv 收尾流程是否已完成。
+    /// </summary>
+    private bool _closeShutdownCompleted;
+    /// <summary>
+    /// 表示關閉前的 libmpv 收尾流程是否已啟動。
+    /// </summary>
+    private bool _closeShutdownStarted;
 
     /// <summary>
     /// 初始化 <see cref="MainWindow"/> 類別的新執行個體。
@@ -81,6 +89,28 @@ public partial class MainWindow : Window
         SetRuntimeControlsEnabled(false);
         Loaded += WindowLoaded;
         AppendEventLine(CreateLifecycleLine("WindowCreated", "WPF 視窗已建立，等待執行階段初始化。"));
+    }
+
+    /// <summary>
+    /// 在視窗關閉前先讓 libmpv 非同步結束，避免 UI 執行緒在 HwndHost 釋放階段等待事件執行緒。
+    /// </summary>
+    /// <param name="e">
+    /// 視窗關閉事件資料。
+    /// </param>
+    protected override async void OnClosing(System.ComponentModel.CancelEventArgs e)
+    {
+        if (!_closeShutdownCompleted && !_closeShutdownStarted && _currentPlayer != null)
+        {
+            e.Cancel = true;
+            _closeShutdownStarted = true;
+            SetRuntimeControlsEnabled(false);
+            await SampleShutdown.PreparePlayerCloseAsync(_currentPlayer, WriteCloseLifecycle).ConfigureAwait(true);
+            _closeShutdownCompleted = true;
+            Close();
+            return;
+        }
+
+        base.OnClosing(e);
     }
 
     /// <summary>
@@ -102,6 +132,20 @@ public partial class MainWindow : Window
 
         _currentPlayer = null;
         base.OnClosed(e);
+    }
+
+    /// <summary>
+    /// 寫入關閉流程生命週期事件。
+    /// </summary>
+    /// <param name="name">
+    /// 事件名稱。
+    /// </param>
+    /// <param name="message">
+    /// 事件訊息。
+    /// </param>
+    private void WriteCloseLifecycle(string name, string message)
+    {
+        AppendEventLine(CreateLifecycleLine(name, message));
     }
 
     /// <summary>

@@ -55,6 +55,14 @@ public sealed partial class MainForm : Form
     /// 控制非同步範例功能不可重入的閘門。
     /// </summary>
     private readonly SampleAsyncFeatureGate _asyncFeatureGate = new SampleAsyncFeatureGate();
+    /// <summary>
+    /// 表示關閉前的 libmpv 收尾流程是否已完成。
+    /// </summary>
+    private bool _closeShutdownCompleted;
+    /// <summary>
+    /// 表示關閉前的 libmpv 收尾流程是否已啟動。
+    /// </summary>
+    private bool _closeShutdownStarted;
 
     /// <summary>
     /// 初始化 <see cref="MainForm"/> 類別的新執行個體。
@@ -103,6 +111,28 @@ public sealed partial class MainForm : Form
     }
 
     /// <summary>
+    /// 在視窗關閉前先讓 libmpv 非同步結束，避免 UI 執行緒在 Dispose 階段等待事件執行緒。
+    /// </summary>
+    /// <param name="e">
+    /// 視窗關閉事件資料。
+    /// </param>
+    protected override async void OnFormClosing(FormClosingEventArgs e)
+    {
+        if (!_closeShutdownCompleted && !_closeShutdownStarted && _currentPlayer != null)
+        {
+            e.Cancel = true;
+            _closeShutdownStarted = true;
+            SetPlaybackControlsEnabled(false);
+            await SampleShutdown.PreparePlayerCloseAsync(_currentPlayer, WriteCloseLifecycle).ConfigureAwait(true);
+            _closeShutdownCompleted = true;
+            Close();
+            return;
+        }
+
+        base.OnFormClosing(e);
+    }
+
+    /// <summary>
     /// 釋放範例視窗所使用的受控與非受控資源。
     /// </summary>
     /// <param name="disposing">
@@ -122,6 +152,20 @@ public sealed partial class MainForm : Form
         }
 
         base.Dispose(disposing);
+    }
+
+    /// <summary>
+    /// 寫入關閉流程生命週期事件。
+    /// </summary>
+    /// <param name="name">
+    /// 事件名稱。
+    /// </param>
+    /// <param name="message">
+    /// 事件訊息。
+    /// </param>
+    private void WriteCloseLifecycle(string name, string message)
+    {
+        AppendEventLine(CreateLifecycleLine(name, message));
     }
 
     /// <summary>

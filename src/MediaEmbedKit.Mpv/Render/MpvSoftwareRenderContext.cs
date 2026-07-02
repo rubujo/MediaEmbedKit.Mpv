@@ -21,6 +21,10 @@ public sealed class MpvSoftwareRenderContext : IDisposable
     /// 表示目前 render API 內容是否已釋放。
     /// </summary>
     private bool _disposed;
+    /// <summary>
+    /// 通知擁有端此 render API 內容已釋放的回呼。
+    /// </summary>
+    private readonly Action<IDisposable>? _disposeCallback;
 
     /// <summary>
     /// 初始化 <see cref="MpvSoftwareRenderContext"/> 類別的新執行個體。
@@ -28,9 +32,13 @@ public sealed class MpvSoftwareRenderContext : IDisposable
     /// <param name="context">
     /// libmpv render API 內容指標。
     /// </param>
-    private MpvSoftwareRenderContext(IntPtr context)
+    /// <param name="disposeCallback">
+    /// 釋放時通知擁有端的回呼。
+    /// </param>
+    private MpvSoftwareRenderContext(IntPtr context, Action<IDisposable>? disposeCallback)
     {
         _context = context;
+        _disposeCallback = disposeCallback;
         _updateCallback = OnRenderUpdate;
         MpvNative.mpv_render_context_set_update_callback(_context, _updateCallback, IntPtr.Zero);
     }
@@ -82,6 +90,28 @@ public sealed class MpvSoftwareRenderContext : IDisposable
             throw new ArgumentNullException(nameof(player));
         }
 
+        return player.CreateSoftwareRenderContext();
+    }
+
+    /// <summary>
+    /// 建立不自行登錄擁有關係的 software render API 內容；呼叫端必須負責追蹤其生命週期。
+    /// </summary>
+    /// <param name="player">
+    /// 要關聯的 mpv 播放器。
+    /// </param>
+    /// <param name="disposeCallback">
+    /// 釋放時通知擁有端的回呼。
+    /// </param>
+    /// <returns>
+    /// 新建立的 software render API 內容。
+    /// </returns>
+    internal static MpvSoftwareRenderContext CreateUntracked(MpvPlayer player, Action<IDisposable>? disposeCallback)
+    {
+        if (player == null)
+        {
+            throw new ArgumentNullException(nameof(player));
+        }
+
         using (Utf8String apiType = new Utf8String("sw"))
         {
             MpvRenderParam[] parameters = new[]
@@ -91,7 +121,7 @@ public sealed class MpvSoftwareRenderContext : IDisposable
             };
 
             IntPtr context = player.CreateRenderContext(parameters);
-            return new MpvSoftwareRenderContext(context);
+            return new MpvSoftwareRenderContext(context, disposeCallback);
         }
     }
 
@@ -395,6 +425,7 @@ public sealed class MpvSoftwareRenderContext : IDisposable
             _context = IntPtr.Zero;
         }
 
+        _disposeCallback?.Invoke(this);
         GC.KeepAlive(_updateCallback);
         GC.SuppressFinalize(this);
     }

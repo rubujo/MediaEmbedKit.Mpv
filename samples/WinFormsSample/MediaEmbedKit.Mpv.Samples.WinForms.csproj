@@ -17,6 +17,7 @@
     <Compile Include="..\SampleFeatureController.cs" Link="SampleFeatureController.cs" />
     <Compile Include="..\SampleEncodingHelper.cs" Link="SampleEncodingHelper.cs" />
     <Compile Include="..\SampleAsyncFeatureGate.cs" Link="SampleAsyncFeatureGate.cs" />
+    <Compile Include="..\SampleShutdown.cs" Link="SampleShutdown.cs" />
     <Compile Include="..\SampleTheme.cs" Link="SampleTheme.cs" />
     <ProjectReference Include="..\..\src\MediaEmbedKit.Mpv.WinForms\MediaEmbedKit.Mpv.WinForms.csproj" />
     <ProjectReference Include="..\..\src\MediaEmbedKit.Mpv.Externals\MediaEmbedKit.Mpv.Externals.csproj" />

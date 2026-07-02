@@ -28,6 +28,7 @@ public sealed class MpvWindowsBuildDownloadOptions
             MpvWindowsBuildProvider.Shinchiro,
         };
         RetainArchive = false;
+        LockReleaseSource = true;
     }
 
     /// <summary>
@@ -145,6 +146,14 @@ public sealed class MpvWindowsBuildDownloadOptions
     public Uri? ReleaseApiUriOverride { get; set; }
 
     /// <summary>
+    /// 取得或設定是否鎖定 GitHub Releases API 與下載 URL 必須屬於選定 libmpv 建置提供者的官方儲存庫。
+    /// </summary>
+    /// <value>
+    /// 啟用來源鎖定時為 <see langword="true"/>；預設為 <see langword="true"/>。
+    /// </value>
+    public bool LockReleaseSource { get; set; }
+
+    /// <summary>
     /// 取得或設定解壓縮成功後是否保留下載的 libmpv 壓縮檔。
     /// </summary>
     /// <value>
@@ -179,6 +188,7 @@ public sealed class MpvWindowsBuildDownloadOptions
             ExtractDirectory = ExtractDirectory,
             ReleaseApiUriOverride = ReleaseApiUriOverride,
             RetainArchive = RetainArchive,
+            LockReleaseSource = LockReleaseSource,
         };
         copy.ProviderFallbackOrder.Clear();
         foreach (MpvWindowsBuildProvider fallback in ProviderFallbackOrder)

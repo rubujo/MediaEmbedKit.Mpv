@@ -348,6 +348,7 @@ internal sealed class MpvWinUiHwndPlayer : Grid, IDisposable
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
         UnsubscribeXamlRootChanged();
+        ReleasePlayer();
         DestroyOverlayWindow();
         DestroyVideoWindow();
     }

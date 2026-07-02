@@ -26,6 +26,10 @@ public sealed class MpvOpenGlRenderContext : IDisposable
     /// 表示目前 render API 內容是否已釋放。
     /// </summary>
     private bool _disposed;
+    /// <summary>
+    /// 通知擁有端此 render API 內容已釋放的回呼。
+    /// </summary>
+    private readonly Action<IDisposable>? _disposeCallback;
 
     /// <summary>
     /// 初始化 <see cref="MpvOpenGlRenderContext"/> 類別的新執行個體。
@@ -36,10 +40,14 @@ public sealed class MpvOpenGlRenderContext : IDisposable
     /// <param name="getProcAddressCallback">
     /// OpenGL 函式位址解析委派。
     /// </param>
-    private MpvOpenGlRenderContext(IntPtr context, MpvOpenGlGetProcAddress getProcAddressCallback)
+    /// <param name="disposeCallback">
+    /// 釋放時通知擁有端的回呼。
+    /// </param>
+    private MpvOpenGlRenderContext(IntPtr context, MpvOpenGlGetProcAddress getProcAddressCallback, Action<IDisposable>? disposeCallback)
     {
         _context = context;
         _getProcAddressCallback = getProcAddressCallback;
+        _disposeCallback = disposeCallback;
         _updateCallback = OnRenderUpdate;
         MpvNative.mpv_render_context_set_update_callback(_context, _updateCallback, IntPtr.Zero);
     }
@@ -88,6 +96,31 @@ public sealed class MpvOpenGlRenderContext : IDisposable
     /// 新建立的 OpenGL render API 內容。
     /// </returns>
     public static MpvOpenGlRenderContext Create(MpvPlayer player, MpvOpenGlRenderContextOptions options)
+    {
+        if (player == null)
+        {
+            throw new ArgumentNullException(nameof(player));
+        }
+
+        return player.CreateOpenGlRenderContext(options);
+    }
+
+    /// <summary>
+    /// 建立不自行登錄擁有關係的 OpenGL render API 內容；呼叫端必須負責追蹤其生命週期。
+    /// </summary>
+    /// <param name="player">
+    /// 要關聯的 mpv 播放器。
+    /// </param>
+    /// <param name="options">
+    /// OpenGL render API 建立選項。
+    /// </param>
+    /// <param name="disposeCallback">
+    /// 釋放時通知擁有端的回呼。
+    /// </param>
+    /// <returns>
+    /// 新建立的 OpenGL render API 內容。
+    /// </returns>
+    internal static MpvOpenGlRenderContext CreateUntracked(MpvPlayer player, MpvOpenGlRenderContextOptions options, Action<IDisposable>? disposeCallback)
     {
         if (player == null)
         {
@@ -162,7 +195,7 @@ public sealed class MpvOpenGlRenderContext : IDisposable
                 parameters.Add(MpvRenderParam.Terminator);
 
                 IntPtr context = player.CreateRenderContext(parameters.ToArray());
-                return new MpvOpenGlRenderContext(context, callback);
+                return new MpvOpenGlRenderContext(context, callback, disposeCallback);
             }
             finally
             {
@@ -451,6 +484,7 @@ public sealed class MpvOpenGlRenderContext : IDisposable
             _context = IntPtr.Zero;
         }
 
+        _disposeCallback?.Invoke(this);
         GC.KeepAlive(_getProcAddressCallback);
         GC.KeepAlive(_updateCallback);
         GC.SuppressFinalize(this);

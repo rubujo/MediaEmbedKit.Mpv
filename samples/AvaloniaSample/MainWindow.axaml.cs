@@ -78,6 +78,14 @@ public sealed partial class MainWindow : Window
     /// 表示冒煙測試是否已啟動。
     /// </summary>
     private bool _smokeStarted;
+    /// <summary>
+    /// 表示關閉前的 libmpv 收尾流程是否已完成。
+    /// </summary>
+    private bool _closeShutdownCompleted;
+    /// <summary>
+    /// 表示關閉前的 libmpv 收尾流程是否已啟動。
+    /// </summary>
+    private bool _closeShutdownStarted;
 
     /// <summary>
     /// 初始化 <see cref="MainWindow"/> 類別的新執行個體。XAML 序列化後加上動態按鈕與
@@ -144,6 +152,28 @@ public sealed partial class MainWindow : Window
     // 會選錯版本導致 _sourceBox / _toolbarHost 等欄位永遠為 null。
 
     /// <summary>
+    /// 在視窗關閉前先讓 libmpv 非同步結束，避免 UI 執行緒在 OpenGL 控制項釋放階段等待事件執行緒。
+    /// </summary>
+    /// <param name="e">
+    /// 視窗關閉事件資料。
+    /// </param>
+    protected override async void OnClosing(WindowClosingEventArgs e)
+    {
+        if (!_closeShutdownCompleted && !_closeShutdownStarted && _currentPlayer != null)
+        {
+            e.Cancel = true;
+            _closeShutdownStarted = true;
+            SetRuntimeControlsEnabled(false);
+            await SampleShutdown.PreparePlayerCloseAsync(_currentPlayer, WriteCloseLifecycle).ConfigureAwait(true);
+            _closeShutdownCompleted = true;
+            Close();
+            return;
+        }
+
+        base.OnClosing(e);
+    }
+
+    /// <summary>
     /// 在視窗關閉時釋放事件橋接器。
     /// </summary>
     /// <param name="e">
@@ -158,10 +188,25 @@ public sealed partial class MainWindow : Window
         if (_player != null)
         {
             _player.PlayerCreated -= PlayerCreated;
+            _player.Dispose();
         }
 
         _currentPlayer = null;
         base.OnClosed(e);
+    }
+
+    /// <summary>
+    /// 寫入關閉流程生命週期事件。
+    /// </summary>
+    /// <param name="name">
+    /// 事件名稱。
+    /// </param>
+    /// <param name="message">
+    /// 事件訊息。
+    /// </param>
+    private void WriteCloseLifecycle(string name, string message)
+    {
+        AppendEventLine(CreateLifecycleLine(name, message));
     }
 
     /// <summary>

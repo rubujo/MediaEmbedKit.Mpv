@@ -281,7 +281,12 @@ internal static class Program
             IntegrationAssert.True(player.IsInitialized, "播放器應完成初始化。");
         }
 
-        IntegrationAssert.True(!player.IsInitialized || true, "DisposeAsync 後應已釋放資源（不擲例外即視為通過）。");
+        IntegrationAssert.Throws<ObjectDisposedException>(
+            delegate
+            {
+                _ = player.DangerousHandle;
+            },
+            "DisposeAsync 後存取原生控制代碼應擲出 ObjectDisposedException。");
     }
 
     /// <summary>

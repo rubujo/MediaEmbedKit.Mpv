@@ -68,10 +68,18 @@ $metaPackageIds = @(
 $forbiddenRuntimeFiles = @(
     "libmpv-2.dll",
     "yt-dlp.exe",
+    "yt-dlp_arm64.exe",
     "deno.exe",
     "ffmpeg.exe",
     "ffprobe.exe",
-    "ffmpeg-master-latest-win64-gpl.zip"
+    "7zr.exe"
+)
+
+$forbiddenRuntimeFilePatterns = @(
+    "^ffmpeg-master-latest-win(64|arm64)-gpl\.zip$",
+    "^deno-(x86_64|aarch64)-pc-windows-msvc\.zip$",
+    "^mpv-.*\.7z$",
+    "^mpv-dev-.*\.7z$"
 )
 
 foreach ($packageId in $expectedPackageIds) {
@@ -108,6 +116,15 @@ foreach ($packageId in $expectedPackageIds) {
         foreach ($runtimeFile in $forbiddenRuntimeFiles) {
             if ($entryNames | Where-Object { [System.IO.Path]::GetFileName($_) -eq $runtimeFile }) {
                 throw "套件不應包含第三方 runtime：$runtimeFile"
+            }
+        }
+
+        foreach ($runtimeFilePattern in $forbiddenRuntimeFilePatterns) {
+            $matchedForbiddenRuntime = @($entryNames | Where-Object {
+                [System.IO.Path]::GetFileName($_) -match $runtimeFilePattern
+            })
+            if ($matchedForbiddenRuntime.Count -gt 0) {
+                throw "套件不應包含第三方 runtime 或封存檔：$($matchedForbiddenRuntime[0])"
             }
         }
     }

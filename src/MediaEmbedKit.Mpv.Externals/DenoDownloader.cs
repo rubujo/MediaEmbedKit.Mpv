@@ -49,6 +49,13 @@ public static class DenoDownloader
             cancellationToken).ConfigureAwait(false);
 
         GitHubReleaseAsset asset = SelectAsset(release, options.Architecture);
+        DownloadUtility.ValidateLockedGitHubSource(
+            apiUri,
+            defaultApiUri,
+            asset.BrowserDownloadUrl,
+            "denoland",
+            "deno",
+            options.LockReleaseSource);
 
         string archivePath = Path.Combine(installDirectory, asset.Name);
         string executablePath = Path.Combine(installDirectory, "deno.exe");

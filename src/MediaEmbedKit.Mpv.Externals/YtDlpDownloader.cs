@@ -48,6 +48,13 @@ public static class YtDlpDownloader
             cancellationToken).ConfigureAwait(false);
 
         GitHubReleaseAsset asset = SelectAsset(release, options.Architecture);
+        DownloadUtility.ValidateLockedGitHubSource(
+            apiUri,
+            defaultApiUri,
+            asset.BrowserDownloadUrl,
+            "yt-dlp",
+            "yt-dlp",
+            options.LockReleaseSource);
 
         string executablePath = Path.Combine(downloadDirectory, asset.Name);
         bool existed = File.Exists(executablePath);
@@ -116,6 +123,13 @@ public static class YtDlpDownloader
 
         string? currentVersion = File.Exists(executablePath) ? GetInstalledVersion(executablePath) : null;
         GitHubReleaseAsset asset = SelectAsset(release, options.Architecture);
+        DownloadUtility.ValidateLockedGitHubSource(
+            apiUri,
+            defaultApiUri,
+            asset.BrowserDownloadUrl,
+            "yt-dlp",
+            "yt-dlp",
+            options.LockReleaseSource);
 
         if (string.Equals(currentVersion, release.TagName, StringComparison.OrdinalIgnoreCase))
         {

@@ -36,6 +36,10 @@ public class MpvWpfPlayer : HwndHost
     /// 表示目前 DP 變更來源是 player（避免回頭再寫入 player 造成循環）。
     /// </summary>
     private bool _suppressPlayerWrite;
+    /// <summary>
+    /// 表示目前控制項是否已進入釋放流程。
+    /// </summary>
+    private bool _disposed;
 
     /// <summary>
     /// 識別 <see cref="OverlayContent"/> 相依性屬性。
@@ -631,6 +635,7 @@ public class MpvWpfPlayer : HwndHost
     {
         if (disposing)
         {
+            _disposed = true;
             Loaded -= PlayerLoaded;
             Unloaded -= PlayerUnloaded;
             IsVisibleChanged -= PlayerIsVisibleChanged;
@@ -858,6 +863,11 @@ public class MpvWpfPlayer : HwndHost
     {
         Dispatcher.BeginInvoke(new Action(() =>
         {
+            if (_disposed)
+            {
+                return;
+            }
+
             _suppressPlayerWrite = true;
             try
             {
@@ -884,7 +894,15 @@ public class MpvWpfPlayer : HwndHost
     /// </param>
     private void UpdateReadOnlyFromPlayer<T>(DependencyPropertyKey key, T value)
     {
-        Dispatcher.BeginInvoke(new Action(() => SetValue(key, value)));
+        Dispatcher.BeginInvoke(new Action(() =>
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            SetValue(key, value);
+        }));
     }
 
     /// <summary>

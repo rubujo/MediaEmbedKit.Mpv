@@ -4595,7 +4595,7 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
         lock (_lifetimeGate)
         {
             EnsureNotDisposed();
-            context = MpvOpenGlRenderContext.Create(this, options);
+            context = MpvOpenGlRenderContext.CreateUntracked(this, options, UnregisterRenderContext);
             RegisterRenderContext(context);
         }
 
@@ -4615,7 +4615,7 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
         lock (_lifetimeGate)
         {
             EnsureNotDisposed();
-            context = MpvSoftwareRenderContext.Create(this);
+            context = MpvSoftwareRenderContext.CreateUntracked(this, UnregisterRenderContext);
             RegisterRenderContext(context);
         }
 
@@ -4857,6 +4857,20 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
         lock (_renderContextsGate)
         {
             _renderContexts.Add(context);
+        }
+    }
+
+    /// <summary>
+    /// 解除由此播放器建立且已由呼叫端手動釋放的 render API 內容追蹤。
+    /// </summary>
+    /// <param name="context">
+    /// 要解除追蹤的 render API 內容。
+    /// </param>
+    private void UnregisterRenderContext(IDisposable context)
+    {
+        lock (_renderContextsGate)
+        {
+            _renderContexts.Remove(context);
         }
     }
 

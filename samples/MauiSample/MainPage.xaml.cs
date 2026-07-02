@@ -400,6 +400,17 @@ public sealed partial class MainPage : ContentPage, IDisposable
     }
 
     /// <summary>
+    /// 在頁面釋放前先讓 libmpv 非同步結束，降低平台 handler 同步釋放時等待事件執行緒的機率。
+    /// </summary>
+    /// <returns>
+    /// 代表關閉前收尾流程的工作。
+    /// </returns>
+    public Task PrepareCloseAsync()
+    {
+        return SampleShutdown.PreparePlayerCloseAsync(_currentPlayer, WriteCloseLifecycle);
+    }
+
+    /// <summary>
     /// 釋放 MAUI 範例頁面持有的背景分派器與播放器事件訂閱。
     /// </summary>
     public void Dispose()
@@ -420,6 +431,20 @@ public sealed partial class MainPage : ContentPage, IDisposable
         }
 
         _currentPlayer = null;
+    }
+
+    /// <summary>
+    /// 寫入關閉流程生命週期事件。
+    /// </summary>
+    /// <param name="name">
+    /// 事件名稱。
+    /// </param>
+    /// <param name="message">
+    /// 事件訊息。
+    /// </param>
+    private void WriteCloseLifecycle(string name, string message)
+    {
+        AppendEventLine(CreateLifecycleLine(name, message));
     }
 
     /// <summary>

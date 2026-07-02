@@ -40,6 +40,7 @@
     <Compile Include="..\SampleFeatureController.cs" Link="SampleFeatureController.cs" />
     <Compile Include="..\SampleEncodingHelper.cs" Link="SampleEncodingHelper.cs" />
     <Compile Include="..\SampleAsyncFeatureGate.cs" Link="SampleAsyncFeatureGate.cs" />
+    <Compile Include="..\SampleShutdown.cs" Link="SampleShutdown.cs" />
     <Compile Include="..\SampleTheme.cs" Link="SampleTheme.cs" />
     <PackageReference Include="Microsoft.Maui.Controls" />
     <ProjectReference Include="..\..\src\MediaEmbedKit.Mpv.Maui.Windows\MediaEmbedKit.Mpv.Maui.Windows.csproj" />

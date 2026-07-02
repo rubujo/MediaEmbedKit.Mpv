@@ -111,6 +111,7 @@ public static class MpvWindowsBuildDownloader
             : defaultApiUri;
         GitHubRelease release = await GetLatestReleaseAsync(options, apiUri, cancellationToken).ConfigureAwait(false);
         GitHubReleaseAsset asset = SelectLibMpvAsset(release, options);
+        ValidateLockedProviderSource(apiUri, defaultApiUri, asset.BrowserDownloadUrl, provider, options.LockReleaseSource);
 
         string archivePath = Path.Combine(downloadDirectory, asset.Name);
 
@@ -327,6 +328,7 @@ public static class MpvWindowsBuildDownloader
                     : defaultApiUri;
                 GitHubRelease release = await GetLatestReleaseAsync(options, apiUri, cancellationToken).ConfigureAwait(false);
                 GitHubReleaseAsset asset = SelectLibMpvAsset(release, options);
+                ValidateLockedProviderSource(apiUri, defaultApiUri, asset.BrowserDownloadUrl, provider, options.LockReleaseSource);
 
                 if (string.Equals(marker.Provider, provider.ToString(), StringComparison.OrdinalIgnoreCase) &&
                     string.Equals(marker.ReleaseTag, release.TagName, StringComparison.OrdinalIgnoreCase) &&
@@ -599,6 +601,40 @@ public static class MpvWindowsBuildDownloader
             default:
                 return new Uri("https://api.github.com/repos/shinchiro/mpv-winbuild-cmake/releases/latest");
         }
+    }
+
+    /// <summary>
+    /// 在啟用來源鎖定時驗證 GitHub Releases API URI 與下載 URL 皆屬於指定提供者。
+    /// </summary>
+    /// <param name="apiUri">
+    /// 實際使用的 GitHub Releases API URI。
+    /// </param>
+    /// <param name="expectedApiUri">
+    /// 預期的 GitHub Releases API URI。
+    /// </param>
+    /// <param name="assetUrl">
+    /// 發行資產的下載 URL。
+    /// </param>
+    /// <param name="provider">
+    /// Windows libmpv 建置提供者。
+    /// </param>
+    /// <param name="lockReleaseSource">
+    /// 是否啟用來源鎖定。
+    /// </param>
+    private static void ValidateLockedProviderSource(
+        Uri apiUri,
+        Uri expectedApiUri,
+        string assetUrl,
+        MpvWindowsBuildProvider provider,
+        bool lockReleaseSource)
+    {
+        DownloadUtility.ValidateLockedGitHubSource(
+            apiUri,
+            expectedApiUri,
+            assetUrl,
+            GetRepositoryOwner(provider),
+            GetRepositoryName(provider),
+            lockReleaseSource);
     }
 
     /// <summary>

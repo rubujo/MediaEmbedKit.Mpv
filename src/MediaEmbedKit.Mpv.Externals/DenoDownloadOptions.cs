@@ -18,6 +18,7 @@ public sealed class DenoDownloadOptions
         VerifyDigest = true;
         VerificationPolicy = MpvNativeAssetVerificationPolicy.RequireGitHubDigest;
         RetainArchive = false;
+        LockReleaseSource = true;
     }
 
     /// <summary>
@@ -75,6 +76,14 @@ public sealed class DenoDownloadOptions
     /// 自訂 GitHub 發行 API URI；未指定時使用 Deno 官方發行 API。
     /// </value>
     public Uri? ReleaseApiUriOverride { get; set; }
+
+    /// <summary>
+    /// 取得或設定是否鎖定 GitHub Releases API 與下載 URL 必須屬於 Deno 官方儲存庫。
+    /// </summary>
+    /// <value>
+    /// 啟用來源鎖定時為 <see langword="true"/>；預設為 <see langword="true"/>。
+    /// </value>
+    public bool LockReleaseSource { get; set; }
 
     /// <summary>
     /// 取得或設定解壓縮成功後是否保留下載的壓縮檔。

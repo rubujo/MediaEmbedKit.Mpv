@@ -47,10 +47,12 @@ internal static class Program
         runner.Add("mpv encoding mode 選項", VerifyEncodingOptions);
         runner.Add("播放器選項鏈式輔助方法", VerifyPlayerOptionFluentHelpers);
         runner.Add("外部工具命令列引數格式化", VerifyExternalToolArgumentFormatting);
+        runner.Add("外部工具串流輸出列舉", VerifyExternalToolStreamingAsync);
         runner.Add("原生資產 digest 強制驗證", VerifyNativeAssetDigestValidation);
         runner.Add("原生資產釘選 SHA-256 驗證", VerifyNativeAssetPinnedSha256Validation);
         runner.Add("原生資產 checksum 解析", VerifyNativeAssetChecksumParsing);
         runner.Add("原生資產來源鎖定驗證", VerifyNativeAssetSourceLockValidation);
+        runner.Add("下載器預設啟用來源鎖定", VerifyDownloaderSourceLockDefaultsAsync);
         runner.Add("下載要求瀏覽器標頭", VerifyBrowserRequestHeaders);
         runner.Add("FFmpeg 快速路徑 會清理 保留的封存檔", VerifyFFmpegFastPathPrunesArchivesAsync);
         runner.Add("FFmpeg 保留的封存檔 會驗證提供者總和檢查碼", VerifyFFmpegRetainedArchiveVerificationAsync);
@@ -1273,6 +1275,84 @@ internal static class Program
     }
 
     /// <summary>
+    /// 驗證外部工具串流 API 會逐行回傳標準輸出與標準錯誤。
+    /// </summary>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
+    private static async Task VerifyExternalToolStreamingAsync()
+    {
+        string tempDirectory = CreateTempDirectory("tool-stream");
+        try
+        {
+            string fakeToolPath = Path.Combine(tempDirectory, "fake-tool.cmd");
+            File.WriteAllText(
+                fakeToolPath,
+                "@echo off\r\necho mek-stream-out\r\n1>&2 echo mek-stream-err\r\n",
+                Encoding.ASCII);
+
+            ExternalToolProcessRunner runner = new ExternalToolProcessRunner(fakeToolPath);
+            List<ExternalToolOutputEventArgs> baseEvents = await CollectExternalToolOutputAsync(
+                runner.StreamAsync(new[] { "--ignored" })).ConfigureAwait(false);
+            VerifyStreamEvents(baseEvents, "ExternalToolProcessRunner.StreamAsync");
+
+            YtDlpProcessRunner ytDlpRunner = new YtDlpProcessRunner(fakeToolPath);
+            List<ExternalToolOutputEventArgs> ytDlpEvents = await CollectExternalToolOutputAsync(
+                ytDlpRunner.StreamFormatsAsync("https://example.test/video")).ConfigureAwait(false);
+            VerifyStreamEvents(ytDlpEvents, "YtDlpProcessRunner.StreamFormatsAsync");
+
+            DenoProcessRunner denoRunner = new DenoProcessRunner(fakeToolPath);
+            List<ExternalToolOutputEventArgs> denoEvents = await CollectExternalToolOutputAsync(
+                denoRunner.StreamVersionAsync()).ConfigureAwait(false);
+            VerifyStreamEvents(denoEvents, "DenoProcessRunner.StreamVersionAsync");
+        }
+        finally
+        {
+            TryDeleteDirectory(tempDirectory);
+        }
+    }
+
+    /// <summary>
+    /// 收集串流外部工具輸出。
+    /// </summary>
+    /// <param name="stream">
+    /// 要列舉的外部工具輸出串流。
+    /// </param>
+    /// <returns>
+    /// 已收集的輸出事件。
+    /// </returns>
+    private static async Task<List<ExternalToolOutputEventArgs>> CollectExternalToolOutputAsync(
+        IAsyncEnumerable<ExternalToolOutputEventArgs> stream)
+    {
+        List<ExternalToolOutputEventArgs> events = new List<ExternalToolOutputEventArgs>();
+        await foreach (ExternalToolOutputEventArgs item in stream)
+        {
+            events.Add(item);
+        }
+
+        return events;
+    }
+
+    /// <summary>
+    /// 驗證串流輸出事件包含預期的標準輸出與標準錯誤。
+    /// </summary>
+    /// <param name="events">
+    /// 已收集的輸出事件。
+    /// </param>
+    /// <param name="scenario">
+    /// 測試案例名稱。
+    /// </param>
+    private static void VerifyStreamEvents(List<ExternalToolOutputEventArgs> events, string scenario)
+    {
+        AssertEx.True(
+            events.Any(item => item.Stream == ExternalToolOutputStream.StandardOutput && item.Line == "mek-stream-out"),
+            scenario + " 應串流標準輸出。");
+        AssertEx.True(
+            events.Any(item => item.Stream == ExternalToolOutputStream.StandardError && item.Line == "mek-stream-err"),
+            scenario + " 應串流標準錯誤。");
+    }
+
+    /// <summary>
     /// 驗證強制 GitHub digest 策略會拒絕缺漏或不相符的 SHA-256 值。
     /// </summary>
     /// <returns>
@@ -1439,6 +1519,7 @@ internal static class Program
                 {
                     Architecture = MpvWindowsArchitecture.X64,
                     ReleaseApiUriOverride = server.BuildUri("/release"),
+                    LockReleaseSource = false,
                 };
                 FFmpegDownloadResult result = await FFmpegDownloader.DownloadAndExtractLatestAsync(tempDirectory, options).ConfigureAwait(false);
 
@@ -1497,6 +1578,7 @@ internal static class Program
                 {
                     Architecture = MpvWindowsArchitecture.X64,
                     ReleaseApiUriOverride = server.BuildUri("/release"),
+                    LockReleaseSource = false,
                     RetainArchive = true,
                     VerificationPolicy = MpvNativeAssetVerificationPolicy.RequireProviderChecksum,
                 };
@@ -1549,6 +1631,7 @@ internal static class Program
                 {
                     Architecture = MpvWindowsArchitecture.X64,
                     ReleaseApiUriOverride = server.BuildUri("/release"),
+                    LockReleaseSource = false,
                     RetainArchive = true,
                 };
 
@@ -1609,6 +1692,7 @@ internal static class Program
                 {
                     Architecture = DenoWindowsArchitecture.X64,
                     ReleaseApiUriOverride = server.BuildUri("/release"),
+                    LockReleaseSource = false,
                 };
                 DenoDownloadResult result = await DenoDownloader.DownloadAndExtractLatestAsync(tempDirectory, options).ConfigureAwait(false);
 
@@ -1909,6 +1993,69 @@ internal static class Program
     }
 
     /// <summary>
+    /// 驗證下載器預設會啟用來源鎖定，只有明確關閉時才接受自訂 release API。
+    /// </summary>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
+    private static async Task VerifyDownloaderSourceLockDefaultsAsync()
+    {
+        string tempDirectory = CreateTempDirectory("source-lock");
+        try
+        {
+            using (LoopbackHttpServer server = new LoopbackHttpServer())
+            {
+                byte[] executableBytes = Encoding.UTF8.GetBytes("fake yt-dlp executable");
+                string releaseJson = BuildReleaseJson(
+                    "2026.03.17",
+                    new[]
+                    {
+                        new FakeReleaseAsset(
+                            "yt-dlp.exe",
+                            server.BuildUri("/yt-dlp.exe").ToString(),
+                            "sha256:" + ComputeSha256Hex(executableBytes)),
+                    });
+                server.AddText("/release", releaseJson, "application/json");
+                server.AddBytes("/yt-dlp.exe", executableBytes, "application/octet-stream");
+
+                YtDlpDownloadOptions lockedOptions = new YtDlpDownloadOptions
+                {
+                    Architecture = YtDlpWindowsArchitecture.X64,
+                    ReleaseApiUriOverride = server.BuildUri("/release"),
+                };
+
+                bool threw = false;
+                try
+                {
+                    await YtDlpDownloader.DownloadLatestExecutableAsync(tempDirectory, lockedOptions).ConfigureAwait(false);
+                }
+                catch (InvalidOperationException)
+                {
+                    threw = true;
+                }
+
+                AssertEx.True(threw, "預設來源鎖定應拒絕自訂 release API。");
+                AssertEx.Equal(0, server.GetRequestCount("/yt-dlp.exe"), "來源鎖定拒絕後不應下載資產。");
+
+                YtDlpDownloadOptions unlockedOptions = new YtDlpDownloadOptions
+                {
+                    Architecture = YtDlpWindowsArchitecture.X64,
+                    ReleaseApiUriOverride = server.BuildUri("/release"),
+                    LockReleaseSource = false,
+                };
+                YtDlpDownloadResult result = await YtDlpDownloader.DownloadLatestExecutableAsync(tempDirectory, unlockedOptions).ConfigureAwait(false);
+
+                AssertEx.True(result.Updated, "明確關閉來源鎖定後應允許測試 release API。");
+                AssertEx.True(File.Exists(result.ExecutablePath), "關閉來源鎖定後應完成下載。");
+            }
+        }
+        finally
+        {
+            TryDeleteDirectory(tempDirectory);
+        }
+    }
+
+    /// <summary>
     /// 驗證 runtime 下載選項的驗證策略預設值要求 GitHub Releases 資產摘要。
     /// </summary>
     /// <returns>
@@ -1929,6 +2076,10 @@ internal static class Program
         AssertEx.True(deno.VerifyDigest, "Deno 應預設驗證可用 digest。");
         AssertEx.True(ffmpeg.VerifyDigest, "FFmpeg 應預設驗證可用 digest。");
         AssertEx.True(libMpv.VerifyDigest, "libmpv 應預設驗證可用 digest。");
+        AssertEx.True(ytDlp.LockReleaseSource, "yt-dlp 應預設啟用來源鎖定。");
+        AssertEx.True(deno.LockReleaseSource, "Deno 應預設啟用來源鎖定。");
+        AssertEx.True(ffmpeg.LockReleaseSource, "FFmpeg 應預設啟用來源鎖定。");
+        AssertEx.True(libMpv.LockReleaseSource, "libmpv 應預設啟用來源鎖定。");
         return Task.CompletedTask;
     }
 

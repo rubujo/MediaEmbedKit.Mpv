@@ -18,6 +18,7 @@ public sealed class YtDlpDownloadOptions
         OverwriteExisting = false;
         VerifyDigest = true;
         VerificationPolicy = MpvNativeAssetVerificationPolicy.RequireGitHubDigest;
+        LockReleaseSource = true;
     }
 
     /// <summary>
@@ -83,4 +84,12 @@ public sealed class YtDlpDownloadOptions
     /// 自訂 GitHub 發行 API URI；未指定時依發行通道使用預設 API。
     /// </value>
     public Uri? ReleaseApiUriOverride { get; set; }
+
+    /// <summary>
+    /// 取得或設定是否鎖定 GitHub Releases API 與下載 URL 必須屬於 yt-dlp 官方儲存庫。
+    /// </summary>
+    /// <value>
+    /// 啟用來源鎖定時為 <see langword="true"/>；預設為 <see langword="true"/>。
+    /// </value>
+    public bool LockReleaseSource { get; set; }
 }
