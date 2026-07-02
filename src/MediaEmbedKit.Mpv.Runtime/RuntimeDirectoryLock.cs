@@ -73,7 +73,7 @@ internal sealed class RuntimeDirectoryLock : IDisposable
     public static async Task<RuntimeDirectoryLock> AcquireAsync(
         string runtimeDirectory,
         TimeSpan? timeout = null,
-        CancellationToken cancellationToken = default(CancellationToken))
+        CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(runtimeDirectory))
         {

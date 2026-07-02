@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.IO;
 using System.Runtime.InteropServices;
 using MediaEmbedKit.Mpv.Native;
@@ -21,12 +22,7 @@ internal sealed class MpvStreamProtocolRegistration : IDisposable
     private readonly Func<string, Stream?> _openStream;
 
     /// <summary>
-    /// 保存註冊物件的 GC 控制代碼，讓原生回呼可找回此物件。
-    /// </summary>
-    private readonly GCHandle _registrationHandle;
-
-    /// <summary>
-    /// 保存原生開啟回呼委派。
+    /// 取得原生開啟回呼委派。
     /// </summary>
     private readonly MpvStreamOpenCallback _openCallback;
 
@@ -75,7 +71,6 @@ internal sealed class MpvStreamProtocolRegistration : IDisposable
         _sizeCallback = Size;
         _closeCallback = Close;
         _cancelCallback = Cancel;
-        _registrationHandle = GCHandle.Alloc(this);
     }
 
     /// <summary>
@@ -120,8 +115,7 @@ internal sealed class MpvStreamProtocolRegistration : IDisposable
         {
             using (Utf8String protocolName = new Utf8String(protocol))
             {
-                IntPtr userData = GCHandle.ToIntPtr(registration._registrationHandle);
-                player.RegisterStreamProtocolCore(protocolName.Pointer, userData, registration._openCallback);
+                player.RegisterStreamProtocolCore(protocolName.Pointer, IntPtr.Zero, registration._openCallback);
             }
 
             return registration;
@@ -144,10 +138,6 @@ internal sealed class MpvStreamProtocolRegistration : IDisposable
         }
 
         _disposed = true;
-        if (_registrationHandle.IsAllocated)
-        {
-            _registrationHandle.Free();
-        }
 
         GC.KeepAlive(_openCallback);
         GC.KeepAlive(_readCallback);
@@ -248,7 +238,7 @@ internal sealed class MpvStreamProtocolRegistration : IDisposable
             }
 
             int count = (int)Math.Min(byteCount, (ulong)MaximumReadBufferSize);
-            byte[] managedBuffer = System.Buffers.ArrayPool<byte>.Shared.Rent(count);
+            byte[] managedBuffer = ArrayPool<byte>.Shared.Rent(count);
             try
             {
                 int read = stream.Read(managedBuffer, 0, count);
@@ -261,7 +251,7 @@ internal sealed class MpvStreamProtocolRegistration : IDisposable
             }
             finally
             {
-                System.Buffers.ArrayPool<byte>.Shared.Return(managedBuffer);
+                ArrayPool<byte>.Shared.Return(managedBuffer);
             }
         }
         catch

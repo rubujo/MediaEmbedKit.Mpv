@@ -102,7 +102,7 @@ public sealed class YtDlpProcessRunner
     public Task<ExternalToolProcessResult> RunAsync(
         IEnumerable<string> arguments,
         TimeSpan? timeout = null,
-        CancellationToken cancellationToken = default(CancellationToken))
+        CancellationToken cancellationToken = default)
     {
         return _runner.RunAsync(arguments, timeout, cancellationToken);
     }
@@ -125,7 +125,7 @@ public sealed class YtDlpProcessRunner
     public Task<ExternalToolProcessResult> ListFormatsAsync(
         string url,
         TimeSpan? timeout = null,
-        CancellationToken cancellationToken = default(CancellationToken))
+        CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(url))
         {
@@ -153,7 +153,7 @@ public sealed class YtDlpProcessRunner
     public Task<ExternalToolProcessResult> DumpSingleJsonAsync(
         string url,
         TimeSpan? timeout = null,
-        CancellationToken cancellationToken = default(CancellationToken))
+        CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(url))
         {
@@ -177,7 +177,7 @@ public sealed class YtDlpProcessRunner
     /// </returns>
     public IAsyncEnumerable<ExternalToolOutputEventArgs> StreamAsync(
         IEnumerable<string> arguments,
-        CancellationToken cancellationToken = default(CancellationToken))
+        CancellationToken cancellationToken = default)
     {
         return _runner.StreamAsync(arguments, cancellationToken);
     }
@@ -196,7 +196,7 @@ public sealed class YtDlpProcessRunner
     /// </returns>
     public IAsyncEnumerable<ExternalToolOutputEventArgs> StreamFormatsAsync(
         string url,
-        CancellationToken cancellationToken = default(CancellationToken))
+        CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(url))
         {

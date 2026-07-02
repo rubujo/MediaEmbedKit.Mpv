@@ -93,6 +93,7 @@ internal static class DownloadUtility
     /// </returns>
     private static async Task<GitHubRelease> GetLatestReleaseOnceAsync(Uri apiUri, string? userAgent, CancellationToken cancellationToken)
     {
+        ConfigureServicePoint(apiUri);
         using (HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, apiUri))
         {
             // api.github.com 用誠實標識性 UA，不發瀏覽器 sec-ch-ua client hints
@@ -187,7 +188,9 @@ internal static class DownloadUtility
         bool completed = false;
         try
         {
-            using (HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, new Uri(url)))
+            Uri uri = new Uri(url);
+            ConfigureServicePoint(uri);
+            using (HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, uri))
             {
                 BrowserRequestHeaders.Apply(request.Headers, userAgent);
 
@@ -237,7 +240,9 @@ internal static class DownloadUtility
     /// </returns>
     public static async Task<byte[]> DownloadBytesAsync(string url, string? userAgent, CancellationToken cancellationToken)
     {
-        using (HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, new Uri(url)))
+        Uri uri = new Uri(url);
+        ConfigureServicePoint(uri);
+        using (HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, uri))
         {
             BrowserRequestHeaders.Apply(request.Headers, userAgent);
 
@@ -281,6 +286,24 @@ internal static class DownloadUtility
         };
 
         return new HttpClient(handler);
+#endif
+    }
+
+    /// <summary>
+    /// 針對 .NET Framework / .NET Standard 設定與指定 URI 對應的 ServicePoint 屬性，
+    /// 藉由套用連線租約過期時間防範 DNS 快取過期 (DNS Stale Cache) 問題。
+    /// </summary>
+    private static void ConfigureServicePoint(Uri uri)
+    {
+#if NETSTANDARD2_0 || NET472 || NET48
+        try
+        {
+            var sp = System.Net.ServicePointManager.FindServicePoint(uri);
+            sp.ConnectionLeaseTimeout = (int)PooledConnectionLifetime.TotalMilliseconds;
+        }
+        catch (PlatformNotSupportedException)
+        {
+        }
 #endif
     }
 

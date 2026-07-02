@@ -396,6 +396,18 @@ public sealed class MpvSoftwareRenderContext : IDisposable
         }
 
         GC.KeepAlive(_updateCallback);
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// 釋放 <see cref="MpvSoftwareRenderContext"/> 類別的資源。
+    /// </summary>
+    ~MpvSoftwareRenderContext()
+    {
+        if (_context != IntPtr.Zero)
+        {
+            MpvNative.mpv_render_context_free(_context);
+        }
     }
 
     /// <summary>

@@ -39,7 +39,7 @@ public static class MpvWindowsBuildDownloader
     public static async Task<MpvWindowsBuildDownloadResult> DownloadLatestLibMpvArchiveAsync(
         string downloadDirectory,
         MpvWindowsBuildDownloadOptions? options = null,
-        CancellationToken cancellationToken = default(CancellationToken))
+        CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(downloadDirectory))
         {
@@ -184,7 +184,7 @@ public static class MpvWindowsBuildDownloader
     public static async Task<MpvWindowsBuildDownloadResult> DownloadAndExtractLatestLibMpvAsync(
         string downloadDirectory,
         MpvWindowsBuildDownloadOptions? options = null,
-        CancellationToken cancellationToken = default(CancellationToken))
+        CancellationToken cancellationToken = default)
     {
         options = options ?? new MpvWindowsBuildDownloadOptions();
         Directory.CreateDirectory(downloadDirectory);
@@ -537,7 +537,7 @@ public static class MpvWindowsBuildDownloader
     public static async Task<string> DownloadExtractAndLoadLatestLibMpvAsync(
         string downloadDirectory,
         MpvWindowsBuildDownloadOptions? options = null,
-        CancellationToken cancellationToken = default(CancellationToken))
+        CancellationToken cancellationToken = default)
     {
         MpvWindowsBuildDownloadResult result = await DownloadAndExtractLatestLibMpvAsync(downloadDirectory, options, cancellationToken).ConfigureAwait(false);
         MpvLibraryLoader.Load(result.LibraryPath);

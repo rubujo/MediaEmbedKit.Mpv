@@ -30,7 +30,7 @@ public static class YtDlpDownloader
     public static async Task<YtDlpDownloadResult> DownloadLatestExecutableAsync(
         string downloadDirectory,
         YtDlpDownloadOptions? options = null,
-        CancellationToken cancellationToken = default(CancellationToken))
+        CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(downloadDirectory))
         {
@@ -96,7 +96,7 @@ public static class YtDlpDownloader
     public static async Task<YtDlpDownloadResult> InstallOrUpdateLatestExecutableAsync(
         string executablePath,
         YtDlpDownloadOptions? options = null,
-        CancellationToken cancellationToken = default(CancellationToken))
+        CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(executablePath))
         {
@@ -212,7 +212,7 @@ public static class YtDlpDownloader
         string executablePath,
         string? updateTo = null,
         TimeSpan? timeout = null,
-        CancellationToken cancellationToken = default(CancellationToken))
+        CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(executablePath) || !File.Exists(executablePath))
         {

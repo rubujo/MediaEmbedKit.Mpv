@@ -333,7 +333,7 @@ internal sealed class MpvWinUiHwndPlayer : Grid, IDisposable
     }
 
     /// <summary>
-    /// 在控制項卸載時釋放原生子視窗與播放器。
+    /// 在控制項卸載時釋放原生子視窗與覆蓋層。
     /// </summary>
     /// <param name="sender">
     /// 引發事件的物件。
@@ -344,7 +344,6 @@ internal sealed class MpvWinUiHwndPlayer : Grid, IDisposable
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
         UnsubscribeXamlRootChanged();
-        ReleasePlayer();
         DestroyOverlayWindow();
         DestroyVideoWindow();
     }
@@ -468,7 +467,7 @@ internal sealed class MpvWinUiHwndPlayer : Grid, IDisposable
     /// </summary>
     private void EnsurePlayer()
     {
-        if (_disposed || MpvWinUiDesignMode.IsEnabled || _player != null)
+        if (_disposed || MpvWinUiDesignMode.IsEnabled)
         {
             return;
         }
@@ -476,6 +475,12 @@ internal sealed class MpvWinUiHwndPlayer : Grid, IDisposable
         EnsureVideoWindow();
         if (_videoHwnd == IntPtr.Zero)
         {
+            return;
+        }
+
+        if (_player != null)
+        {
+            _player.SetVideoWindow(_videoHwnd);
             return;
         }
 

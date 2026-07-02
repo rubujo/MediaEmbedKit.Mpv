@@ -307,7 +307,7 @@ internal static class SampleRuntime
     /// <returns>
     /// 代表安裝或更新流程的工作。
     /// </returns>
-    internal static async Task InstallOrUpdateAsync(CancellationToken cancellationToken = default(CancellationToken))
+    internal static async Task InstallOrUpdateAsync(CancellationToken cancellationToken = default)
     {
         string runtimeDirectory = await PrepareCoreRuntimeAsync(cancellationToken).ConfigureAwait(false);
         ConfigurePlayerOptions(runtimeDirectory);
@@ -323,7 +323,7 @@ internal static class SampleRuntime
     /// <returns>
     /// 可提供給播放器選項的執行階段資料夾完整路徑。
     /// </returns>
-    internal static async Task<string> PrepareCoreRuntimeAsync(CancellationToken cancellationToken = default(CancellationToken))
+    internal static async Task<string> PrepareCoreRuntimeAsync(CancellationToken cancellationToken = default)
     {
         string runtimeDirectory = RuntimeDirectory;
         if (HasCompleteRuntime(runtimeDirectory))

@@ -1567,10 +1567,34 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// </returns>
     public Task CommandAsync(params string[] arguments)
     {
+        return CommandAsync(CancellationToken.None, arguments);
+    }
+
+    /// <summary>
+    /// 使用引數陣列與取消語彙非同步執行 libmpv 命令。
+    /// </summary>
+    /// <param name="cancellationToken">
+    /// 取消操作的權杖。
+    /// </param>
+    /// <param name="arguments">
+    /// 命令名稱與其後續引數。
+    /// </param>
+    /// <returns>
+    /// 代表 libmpv 命令回覆的工作。
+    /// </returns>
+    public Task CommandAsync(CancellationToken cancellationToken, params string[] arguments)
+    {
         EnsureNotDisposed();
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return Task.FromCanceled(cancellationToken);
+        }
+
         ulong requestId = NextRequestId();
         TaskCompletionSource<MpvNode> completion = new TaskCompletionSource<MpvNode>(TaskCreationOptions.RunContinuationsAsynchronously);
         _pendingRequests[requestId] = completion;
+
+        CancellationTokenRegistration registration = RegisterCancellation(requestId, completion, cancellationToken);
 
         using (Utf8StringArray args = new Utf8StringArray(arguments))
         {
@@ -1579,9 +1603,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
             {
                 TaskCompletionSource<MpvNode>? removed;
                 _pendingRequests.TryRemove(requestId, out removed);
+                registration.Dispose();
                 completion.TrySetException(new MpvException(error));
             }
         }
+
+        RegisterCancellationCleanup(completion, registration, cancellationToken);
 
         return completion.Task;
     }
@@ -1592,15 +1619,25 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <param name="arguments">
     /// 命令引數節點。
     /// </param>
+    /// <param name="cancellationToken">
+    /// 取消操作的權杖。
+    /// </param>
     /// <returns>
     /// 代表 libmpv 命令回覆節點的工作。
     /// </returns>
-    public Task<MpvNode> CommandNodeAsync(MpvNode arguments)
+    public Task<MpvNode> CommandNodeAsync(MpvNode arguments, CancellationToken cancellationToken = default)
     {
         EnsureNotDisposed();
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return Task.FromCanceled<MpvNode>(cancellationToken);
+        }
+
         ulong requestId = NextRequestId();
         TaskCompletionSource<MpvNode> completion = new TaskCompletionSource<MpvNode>(TaskCreationOptions.RunContinuationsAsynchronously);
         _pendingRequests[requestId] = completion;
+
+        CancellationTokenRegistration registration = RegisterCancellation(requestId, completion, cancellationToken);
 
         using (MpvNodeAllocation args = new MpvNodeAllocation(arguments))
         {
@@ -1615,9 +1652,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
             {
                 TaskCompletionSource<MpvNode>? removed;
                 _pendingRequests.TryRemove(requestId, out removed);
+                registration.Dispose();
                 completion.TrySetException(new MpvException(error));
             }
         }
+
+        RegisterCancellationCleanup(completion, registration, cancellationToken);
 
         return completion.Task;
     }
@@ -1631,12 +1671,15 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <param name="arguments">
     /// 命令具名引數。
     /// </param>
+    /// <param name="cancellationToken">
+    /// 取消操作的權杖。
+    /// </param>
     /// <returns>
     /// 代表 libmpv 命令回覆節點的工作。
     /// </returns>
-    public Task<MpvNode> CommandNamedAsync(string name, IDictionary<string, MpvNode> arguments)
+    public Task<MpvNode> CommandNamedAsync(string name, IDictionary<string, MpvNode> arguments, CancellationToken cancellationToken = default)
     {
-        return CommandNodeAsync(CreateNamedCommandNode(name, arguments));
+        return CommandNodeAsync(CreateNamedCommandNode(name, arguments), cancellationToken);
     }
 
     /// <summary>
@@ -1660,14 +1703,17 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <param name="value">
     /// 要套用到屬性的布林值。
     /// </param>
+    /// <param name="cancellationToken">
+    /// 取消操作的權杖。
+    /// </param>
     /// <returns>
     /// 代表 libmpv 設定屬性回覆的工作。
     /// </returns>
-    public Task SetPropertyFlagAsync(string name, bool value)
+    public Task SetPropertyFlagAsync(string name, bool value, CancellationToken cancellationToken = default)
     {
         EnsureNotDisposed();
         int flag = value ? 1 : 0;
-        return SetPropertyFlagAsyncCore(name, ref flag);
+        return SetPropertyFlagAsyncCore(name, ref flag, cancellationToken);
     }
 
     /// <summary>
@@ -1679,13 +1725,16 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <param name="value">
     /// 要套用到屬性的 64 位元整數值。
     /// </param>
+    /// <param name="cancellationToken">
+    /// 取消操作的權杖。
+    /// </param>
     /// <returns>
     /// 代表 libmpv 設定屬性回覆的工作。
     /// </returns>
-    public Task SetPropertyInt64Async(string name, long value)
+    public Task SetPropertyInt64Async(string name, long value, CancellationToken cancellationToken = default)
     {
         EnsureNotDisposed();
-        return SetPropertyInt64AsyncCore(name, ref value);
+        return SetPropertyInt64AsyncCore(name, ref value, cancellationToken);
     }
 
     /// <summary>
@@ -1697,13 +1746,16 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <param name="value">
     /// 要套用到屬性的雙精確度浮點數值。
     /// </param>
+    /// <param name="cancellationToken">
+    /// 取消操作的權杖。
+    /// </param>
     /// <returns>
     /// 代表 libmpv 設定屬性回覆的工作。
     /// </returns>
-    public Task SetPropertyDoubleAsync(string name, double value)
+    public Task SetPropertyDoubleAsync(string name, double value, CancellationToken cancellationToken = default)
     {
         EnsureNotDisposed();
-        return SetPropertyDoubleAsyncCore(name, ref value);
+        return SetPropertyDoubleAsyncCore(name, ref value, cancellationToken);
     }
 
     /// <summary>
@@ -1715,13 +1767,16 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <param name="value">
     /// 要套用到屬性的字串值。
     /// </param>
+    /// <param name="cancellationToken">
+    /// 取消操作的權杖。
+    /// </param>
     /// <returns>
     /// 代表 libmpv 設定屬性回覆的工作。
     /// </returns>
-    public Task SetPropertyStringAsync(string name, string value)
+    public Task SetPropertyStringAsync(string name, string value, CancellationToken cancellationToken = default)
     {
         EnsureNotDisposed();
-        return SetPropertyNodeAsync(name, MpvNode.FromString(value));
+        return SetPropertyNodeAsync(name, MpvNode.FromString(value), cancellationToken);
     }
 
     /// <summary>
@@ -1733,15 +1788,25 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <param name="value">
     /// 要套用到屬性的節點資料。
     /// </param>
+    /// <param name="cancellationToken">
+    /// 取消操作的權杖。
+    /// </param>
     /// <returns>
     /// 代表 libmpv 設定屬性回覆的工作。
     /// </returns>
-    public Task SetPropertyNodeAsync(string name, MpvNode value)
+    public Task SetPropertyNodeAsync(string name, MpvNode value, CancellationToken cancellationToken = default)
     {
         EnsureNotDisposed();
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return Task.FromCanceled(cancellationToken);
+        }
+
         ulong requestId = NextRequestId();
         TaskCompletionSource<MpvNode> completion = new TaskCompletionSource<MpvNode>(TaskCreationOptions.RunContinuationsAsynchronously);
         _pendingRequests[requestId] = completion;
+
+        CancellationTokenRegistration registration = RegisterCancellation(requestId, completion, cancellationToken);
 
         using (Utf8String propertyName = new Utf8String(name))
         using (MpvNodeAllocation node = new MpvNodeAllocation(value))
@@ -1757,9 +1822,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
             {
                 TaskCompletionSource<MpvNode>? removed;
                 _pendingRequests.TryRemove(requestId, out removed);
+                registration.Dispose();
                 completion.TrySetException(new MpvException(error));
             }
         }
+
+        RegisterCancellationCleanup(completion, registration, cancellationToken);
 
         return completion.Task;
     }
@@ -1794,12 +1862,15 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <param name="name">
     /// 要讀取的 mpv 屬性名稱。
     /// </param>
+    /// <param name="cancellationToken">
+    /// 取消操作的權杖。
+    /// </param>
     /// <returns>
     /// 代表 libmpv 屬性回覆節點的工作。
     /// </returns>
-    public Task<MpvNode> GetPropertyNodeAsync(string name)
+    public Task<MpvNode> GetPropertyNodeAsync(string name, CancellationToken cancellationToken = default)
     {
-        return GetPropertyNodeAsync(name, MpvFormat.Node);
+        return GetPropertyNodeAsync(name, MpvFormat.Node, cancellationToken);
     }
 
     /// <summary>
@@ -1811,15 +1882,25 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <param name="format">
     /// 屬性值要使用的 libmpv 資料格式。
     /// </param>
+    /// <param name="cancellationToken">
+    /// 取消操作的權杖。
+    /// </param>
     /// <returns>
     /// 代表 libmpv 屬性回覆節點的工作。
     /// </returns>
-    public Task<MpvNode> GetPropertyNodeAsync(string name, MpvFormat format)
+    public Task<MpvNode> GetPropertyNodeAsync(string name, MpvFormat format, CancellationToken cancellationToken = default)
     {
         EnsureNotDisposed();
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return Task.FromCanceled<MpvNode>(cancellationToken);
+        }
+
         ulong requestId = NextRequestId();
         TaskCompletionSource<MpvNode> completion = new TaskCompletionSource<MpvNode>(TaskCreationOptions.RunContinuationsAsynchronously);
         _pendingRequests[requestId] = completion;
+
+        CancellationTokenRegistration registration = RegisterCancellation(requestId, completion, cancellationToken);
 
         using (Utf8String propertyName = new Utf8String(name))
         {
@@ -1828,9 +1909,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
             {
                 TaskCompletionSource<MpvNode>? removed;
                 _pendingRequests.TryRemove(requestId, out removed);
+                registration.Dispose();
                 completion.TrySetException(new MpvException(error));
             }
         }
+
+        RegisterCancellationCleanup(completion, registration, cancellationToken);
 
         return completion.Task;
     }
@@ -2107,10 +2191,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
             InvokeNative(handle => MpvNative.mpv_set_wakeup_callback(handle, null, IntPtr.Zero));
             GC.KeepAlive(previousCallback);
             _wakeupCallback = null;
+            _handle.WakeupCallback = null;
             return;
         }
 
         _wakeupCallback = OnWakeup;
+        _handle.WakeupCallback = _wakeupCallback;
         InvokeNative(handle => MpvNative.mpv_set_wakeup_callback(handle, _wakeupCallback, IntPtr.Zero));
     }
 
@@ -4465,6 +4551,7 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
             EnsureNotDisposed();
             MpvStreamProtocolRegistration registration = MpvStreamProtocolRegistration.Register(this, protocol, openStream);
             _streamRegistrations.Add(registration);
+            _handle.Registrations.Add(registration);
         }
     }
 
@@ -5458,14 +5545,24 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <param name="value">
     /// 要套用到屬性的旗標值參考。
     /// </param>
+    /// <param name="cancellationToken">
+    /// 取消操作的權杖。
+    /// </param>
     /// <returns>
     /// 代表 libmpv 設定屬性回覆的工作。
     /// </returns>
-    private Task SetPropertyFlagAsyncCore(string name, ref int value)
+    private Task SetPropertyFlagAsyncCore(string name, ref int value, CancellationToken cancellationToken)
     {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return Task.FromCanceled(cancellationToken);
+        }
+
         ulong requestId = NextRequestId();
         TaskCompletionSource<MpvNode> completion = new TaskCompletionSource<MpvNode>(TaskCreationOptions.RunContinuationsAsynchronously);
         _pendingRequests[requestId] = completion;
+
+        CancellationTokenRegistration registration = RegisterCancellation(requestId, completion, cancellationToken);
 
         using (Utf8String propertyName = new Utf8String(name))
         {
@@ -5479,9 +5576,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
             {
                 TaskCompletionSource<MpvNode>? removed;
                 _pendingRequests.TryRemove(requestId, out removed);
+                registration.Dispose();
                 completion.TrySetException(new MpvException(error));
             }
         }
+
+        RegisterCancellationCleanup(completion, registration, cancellationToken);
 
         return completion.Task;
     }
@@ -5495,14 +5595,24 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// <param name="value">
     /// 要套用到屬性的 64 位元整數值參考。
     /// </param>
+    /// <param name="cancellationToken">
+    /// 取消操作的權杖。
+    /// </param>
     /// <returns>
     /// 代表 libmpv 設定屬性回覆的工作。
     /// </returns>
-    private Task SetPropertyInt64AsyncCore(string name, ref long value)
+    private Task SetPropertyInt64AsyncCore(string name, ref long value, CancellationToken cancellationToken)
     {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return Task.FromCanceled(cancellationToken);
+        }
+
         ulong requestId = NextRequestId();
         TaskCompletionSource<MpvNode> completion = new TaskCompletionSource<MpvNode>(TaskCreationOptions.RunContinuationsAsynchronously);
         _pendingRequests[requestId] = completion;
+
+        CancellationTokenRegistration registration = RegisterCancellation(requestId, completion, cancellationToken);
 
         using (Utf8String propertyName = new Utf8String(name))
         {
@@ -5516,9 +5626,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
             {
                 TaskCompletionSource<MpvNode>? removed;
                 _pendingRequests.TryRemove(requestId, out removed);
+                registration.Dispose();
                 completion.TrySetException(new MpvException(error));
             }
         }
+
+        RegisterCancellationCleanup(completion, registration, cancellationToken);
 
         return completion.Task;
     }
@@ -5527,19 +5640,29 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     /// 非同步設定雙精確度浮點數格式的 libmpv 屬性。
     /// </summary>
     /// <param name="name">
-    /// 要設定的 mpv 屬性名稱。
+    /// 要設定的 mpv 屬性名稱.
     /// </param>
     /// <param name="value">
     /// 要套用到屬性的雙精確度浮點數值參考。
     /// </param>
+    /// <param name="cancellationToken">
+    /// 取消操作的權杖。
+    /// </param>
     /// <returns>
     /// 代表 libmpv 設定屬性回覆的工作。
     /// </returns>
-    private Task SetPropertyDoubleAsyncCore(string name, ref double value)
+    private Task SetPropertyDoubleAsyncCore(string name, ref double value, CancellationToken cancellationToken)
     {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return Task.FromCanceled(cancellationToken);
+        }
+
         ulong requestId = NextRequestId();
         TaskCompletionSource<MpvNode> completion = new TaskCompletionSource<MpvNode>(TaskCreationOptions.RunContinuationsAsynchronously);
         _pendingRequests[requestId] = completion;
+
+        CancellationTokenRegistration registration = RegisterCancellation(requestId, completion, cancellationToken);
 
         using (Utf8String propertyName = new Utf8String(name))
         {
@@ -5553,9 +5676,12 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
             {
                 TaskCompletionSource<MpvNode>? removed;
                 _pendingRequests.TryRemove(requestId, out removed);
+                registration.Dispose();
                 completion.TrySetException(new MpvException(error));
             }
         }
+
+        RegisterCancellationCleanup(completion, registration, cancellationToken);
 
         return completion.Task;
     }
@@ -6180,4 +6306,46 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
             throw new ObjectDisposedException(GetType().FullName);
         }
     }
+
+    /// <summary>
+    /// 註冊非同步操作的取消處理。
+    /// </summary>
+    private CancellationTokenRegistration RegisterCancellation(ulong requestId, TaskCompletionSource<MpvNode> completion, CancellationToken cancellationToken)
+    {
+        if (!cancellationToken.CanBeCanceled)
+        {
+            return default;
+        }
+
+        return cancellationToken.Register(state =>
+        {
+            var tuple = ((ConcurrentDictionary<ulong, TaskCompletionSource<MpvNode>> pending, ulong id, TaskCompletionSource<MpvNode> tcs, MpvPlayer player, CancellationToken token))state!;
+            if (tuple.pending.TryRemove(tuple.id, out _))
+            {
+                try
+                {
+                    tuple.player.AbortAsyncCommand(tuple.id);
+                }
+                catch
+                {
+                }
+                tuple.tcs.TrySetCanceled(tuple.token);
+            }
+        }, (_pendingRequests, requestId, completion, this, cancellationToken));
+    }
+
+    /// <summary>
+    /// 註冊取消資源的清理處理。
+    /// </summary>
+    private void RegisterCancellationCleanup(TaskCompletionSource<MpvNode> completion, CancellationTokenRegistration registration, CancellationToken cancellationToken)
+    {
+        if (cancellationToken.CanBeCanceled)
+        {
+            completion.Task.ContinueWith(
+                (t, state) => ((CancellationTokenRegistration)state!).Dispose(),
+                registration,
+                TaskContinuationOptions.ExecuteSynchronously);
+        }
+    }
 }
+

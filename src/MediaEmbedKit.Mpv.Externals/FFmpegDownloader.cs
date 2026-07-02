@@ -69,7 +69,7 @@ public static class FFmpegDownloader
     public static async Task<FFmpegDownloadResult> DownloadAndExtractLatestAsync(
         string installDirectory,
         FFmpegDownloadOptions? options = null,
-        CancellationToken cancellationToken = default(CancellationToken))
+        CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(installDirectory))
         {

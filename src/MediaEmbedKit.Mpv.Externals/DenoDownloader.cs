@@ -30,7 +30,7 @@ public static class DenoDownloader
     public static async Task<DenoDownloadResult> DownloadAndExtractLatestAsync(
         string installDirectory,
         DenoDownloadOptions? options = null,
-        CancellationToken cancellationToken = default(CancellationToken))
+        CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(installDirectory))
         {
@@ -287,7 +287,7 @@ public static class DenoDownloader
         string executablePath,
         string? version = null,
         TimeSpan? timeout = null,
-        CancellationToken cancellationToken = default(CancellationToken))
+        CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(executablePath) || !File.Exists(executablePath))
         {
@@ -331,7 +331,7 @@ public static class DenoDownloader
         string checksum,
         string? version = null,
         TimeSpan? timeout = null,
-        CancellationToken cancellationToken = default(CancellationToken))
+        CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(executablePath) || !File.Exists(executablePath))
         {

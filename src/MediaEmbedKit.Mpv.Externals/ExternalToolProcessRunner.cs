@@ -133,7 +133,7 @@ public sealed class ExternalToolProcessRunner
     public async Task<ExternalToolProcessResult> RunAsync(
         IEnumerable<string> arguments,
         TimeSpan? timeout = null,
-        CancellationToken cancellationToken = default(CancellationToken))
+        CancellationToken cancellationToken = default)
     {
         if (arguments == null)
         {

@@ -453,6 +453,18 @@ public sealed class MpvOpenGlRenderContext : IDisposable
 
         GC.KeepAlive(_getProcAddressCallback);
         GC.KeepAlive(_updateCallback);
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// 釋放 <see cref="MpvOpenGlRenderContext"/> 類別的資源。
+    /// </summary>
+    ~MpvOpenGlRenderContext()
+    {
+        if (_context != IntPtr.Zero)
+        {
+            MpvNative.mpv_render_context_free(_context);
+        }
     }
 
     /// <summary>

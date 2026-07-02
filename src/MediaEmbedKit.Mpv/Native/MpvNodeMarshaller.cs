@@ -70,6 +70,16 @@ internal sealed class MpvNodeAllocation : IDisposable
                 Marshal.FreeHGlobal(_allocations[i]);
             }
         }
+
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// 終結 <see cref="MpvNodeAllocation"/> 類別的執行個體。
+    /// </summary>
+    ~MpvNodeAllocation()
+    {
+        Dispose();
     }
 
     /// <summary>

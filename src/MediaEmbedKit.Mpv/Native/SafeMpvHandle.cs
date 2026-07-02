@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 
 namespace MediaEmbedKit.Mpv.Native;
@@ -8,6 +9,16 @@ namespace MediaEmbedKit.Mpv.Native;
 /// </summary>
 internal sealed class SafeMpvHandle : SafeHandle
 {
+    /// <summary>
+    /// 保持喚醒回呼委派的參考，以防止在控制代碼釋放前被垃圾回收。
+    /// </summary>
+    public object? WakeupCallback { get; set; }
+
+    /// <summary>
+    /// 保持自訂串流通訊協定註冊物件的參考，以防止在控制代碼釋放前被垃圾回收。
+    /// </summary>
+    public ConcurrentBag<object> Registrations { get; } = new();
+
     /// <summary>
     /// 初始化 <see cref="SafeMpvHandle"/> 類別的新執行個體。
     /// </summary>

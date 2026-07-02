@@ -88,7 +88,7 @@ public sealed class DenoProcessRunner
     public Task<ExternalToolProcessResult> RunAsync(
         IEnumerable<string> arguments,
         TimeSpan? timeout = null,
-        CancellationToken cancellationToken = default(CancellationToken))
+        CancellationToken cancellationToken = default)
     {
         return _runner.RunAsync(arguments, timeout, cancellationToken);
     }
@@ -107,7 +107,7 @@ public sealed class DenoProcessRunner
     /// </returns>
     public Task<ExternalToolProcessResult> GetVersionAsync(
         TimeSpan? timeout = null,
-        CancellationToken cancellationToken = default(CancellationToken))
+        CancellationToken cancellationToken = default)
     {
         return RunAsync(new[] { "--version" }, timeout, cancellationToken);
     }
@@ -126,7 +126,7 @@ public sealed class DenoProcessRunner
     /// </returns>
     public IAsyncEnumerable<ExternalToolOutputEventArgs> StreamAsync(
         IEnumerable<string> arguments,
-        CancellationToken cancellationToken = default(CancellationToken))
+        CancellationToken cancellationToken = default)
     {
         return _runner.StreamAsync(arguments, cancellationToken);
     }
@@ -141,7 +141,7 @@ public sealed class DenoProcessRunner
     /// 逐行回傳 Deno 版本命令的輸出事件。
     /// </returns>
     public IAsyncEnumerable<ExternalToolOutputEventArgs> StreamVersionAsync(
-        CancellationToken cancellationToken = default(CancellationToken))
+        CancellationToken cancellationToken = default)
     {
         return _runner.StreamAsync(new[] { "--version" }, cancellationToken);
     }

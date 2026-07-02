@@ -47,6 +47,18 @@ internal sealed class Utf8String : IDisposable
             Marshal.FreeHGlobal(Pointer);
             Pointer = IntPtr.Zero;
         }
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// 解構 <see cref="Utf8String"/> 類別的執行個體。
+    /// </summary>
+    ~Utf8String()
+    {
+        if (Pointer != IntPtr.Zero)
+        {
+            Marshal.FreeHGlobal(Pointer);
+        }
     }
 }
 
@@ -93,11 +105,14 @@ internal sealed class Utf8StringArray : IDisposable
     /// </summary>
     public void Dispose()
     {
-        for (int i = 0; i < _strings.Length; i++)
+        if (_strings != null)
         {
-            if (_strings[i] != null)
+            for (int i = 0; i < _strings.Length; i++)
             {
-                _strings[i].Dispose();
+                if (_strings[i] != null)
+                {
+                    _strings[i].Dispose();
+                }
             }
         }
 
@@ -105,6 +120,29 @@ internal sealed class Utf8StringArray : IDisposable
         {
             Marshal.FreeHGlobal(Pointer);
             Pointer = IntPtr.Zero;
+        }
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// 解構 <see cref="Utf8StringArray"/> 類別的執行個體。
+    /// </summary>
+    ~Utf8StringArray()
+    {
+        if (_strings != null)
+        {
+            for (int i = 0; i < _strings.Length; i++)
+            {
+                if (_strings[i] != null)
+                {
+                    _strings[i].Dispose();
+                }
+            }
+        }
+
+        if (Pointer != IntPtr.Zero)
+        {
+            Marshal.FreeHGlobal(Pointer);
         }
     }
 }

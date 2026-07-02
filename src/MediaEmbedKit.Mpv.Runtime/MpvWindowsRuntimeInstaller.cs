@@ -30,7 +30,7 @@ public static class MpvWindowsRuntimeInstaller
     public static async Task<LibMpvUpdateResult> UpdateLibMpvAsync(
         string runtimeDirectory,
         MpvWindowsBuildDownloadOptions? options = null,
-        CancellationToken cancellationToken = default(CancellationToken))
+        CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(runtimeDirectory))
         {
@@ -142,7 +142,7 @@ public static class MpvWindowsRuntimeInstaller
     public static async Task<LibMpvUpdateResult> InstallOrUpdateLibMpvAsync(
         string runtimeDirectory,
         MpvWindowsBuildDownloadOptions? options = null,
-        CancellationToken cancellationToken = default(CancellationToken))
+        CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(runtimeDirectory))
         {
@@ -410,7 +410,7 @@ public static class MpvWindowsRuntimeInstaller
     public static async Task<MpvWindowsRuntimeDownloadResult> InstallOrUpdateAsync(
         string runtimeDirectory,
         MpvWindowsRuntimeDownloadOptions? options = null,
-        CancellationToken cancellationToken = default(CancellationToken))
+        CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(runtimeDirectory))
         {

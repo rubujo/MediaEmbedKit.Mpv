@@ -89,5 +89,15 @@ public sealed class MpvClientHandle : IDisposable
         {
             MpvNative.mpv_destroy(handle);
         }
+
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// 終結 <see cref="MpvClientHandle"/> 類別的執行個體。
+    /// </summary>
+    ~MpvClientHandle()
+    {
+        Dispose();
     }
 }

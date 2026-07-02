@@ -31,7 +31,7 @@ public static class MpvRuntimeInstaller
     public static async Task<MpvRuntimeInstallResult> InstallOrUpdateAsync(
         string runtimeDirectory,
         MpvRuntimeInstallOptions? options = null,
-        CancellationToken cancellationToken = default(CancellationToken))
+        CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(runtimeDirectory))
         {
