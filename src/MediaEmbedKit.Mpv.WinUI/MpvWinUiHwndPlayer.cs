@@ -78,6 +78,10 @@ internal sealed class MpvWinUiHwndPlayer : Grid, IDisposable
     /// </summary>
     private MpvPlayer? _player;
     /// <summary>
+    /// 目前播放器初始化前套用的視訊子視窗控制代碼。
+    /// </summary>
+    private IntPtr _playerVideoHwnd;
+    /// <summary>
     /// 等待播放器建立後載入的媒體來源。
     /// </summary>
     private string? _pendingSource;
@@ -480,8 +484,12 @@ internal sealed class MpvWinUiHwndPlayer : Grid, IDisposable
 
         if (_player != null)
         {
-            _player.SetVideoWindow(_videoHwnd);
-            return;
+            if (_playerVideoHwnd == _videoHwnd)
+            {
+                return;
+            }
+
+            ReleasePlayer();
         }
 
         MpvPlayer player = new MpvPlayer(PlayerOptions);
@@ -490,6 +498,7 @@ internal sealed class MpvWinUiHwndPlayer : Grid, IDisposable
             player.SetVideoWindow(_videoHwnd);
             player.Initialize();
             _player = player;
+            _playerVideoHwnd = _videoHwnd;
         }
         catch
         {
@@ -856,6 +865,7 @@ internal sealed class MpvWinUiHwndPlayer : Grid, IDisposable
 
         _player.Dispose();
         _player = null;
+        _playerVideoHwnd = IntPtr.Zero;
     }
 
     /// <summary>

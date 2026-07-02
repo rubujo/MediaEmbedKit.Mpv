@@ -6,7 +6,7 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="88" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="168" />
         </Grid.RowDefinitions>
@@ -50,94 +50,87 @@
                     Clicked="StopButtonClicked" />
         </Grid>
 
-        <!-- FeaturePanel：兩排 FlexLayout 都把 18 個 feature button + Picker + 2 個
-             Label 在 markup 完整宣告（對齊 VS 2026 / Visual Studio MAUI XAML
-             template 風格）。命名 Clicked handler 在 code-behind。 -->
-        <Grid Grid.Row="1">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="40" />
-                <RowDefinition Height="40" />
-            </Grid.RowDefinitions>
-            <FlexLayout Grid.Row="0"
-                        Direction="Row"
+        <!-- FeaturePanel：自動換行並由內容撐高，避免窄視窗時按鈕重疊或消失。 -->
+        <Grid Grid.Row="1"
+              Padding="0,0,0,6">
+            <FlexLayout Direction="Row"
                         Wrap="Wrap"
                         AlignItems="Center"
                         Padding="8,4,8,0">
                 <Picker x:Name="_formatPicker"
-                        WidthRequest="132" HeightRequest="32"
-                        Margin="0,0,8,4"
+                        WidthRequest="132"
+                        HeightRequest="36"
+                        Margin="0,0,8,6"
                         SelectedIndexChanged="FormatPickerSelectedIndexChanged" />
                 <Label x:Name="_statusLabel"
                        Text="播放器尚未初始化"
-                       WidthRequest="380" HeightRequest="32"
+                       WidthRequest="360"
+                       HeightRequest="36"
+                       Margin="0,0,8,6"
                        Padding="8,0"
                        VerticalTextAlignment="Center"
                        LineBreakMode="TailTruncation" />
                 <Label x:Name="_mvvmStateLabel"
                        Text="MVVM 綁定示範：狀態 = Idle"
-                       WidthRequest="240" HeightRequest="32"
+                       WidthRequest="260"
+                       HeightRequest="36"
+                       Margin="0,0,8,6"
                        Padding="8,0"
                        VerticalTextAlignment="Center"
                        LineBreakMode="TailTruncation" />
                 <Button x:Name="_osdButton" Text="OSD"
-                        WidthRequest="76" HeightRequest="32" Margin="0,0,8,4"
+                        WidthRequest="76" HeightRequest="36" Margin="0,0,8,6"
                         Clicked="OsdClicked" />
                 <Button x:Name="_seekBackwardButton" Text="-10s"
-                        WidthRequest="76" HeightRequest="32" Margin="0,0,8,4"
+                        WidthRequest="76" HeightRequest="36" Margin="0,0,8,6"
                         Clicked="SeekBackwardClicked" />
                 <Button x:Name="_seekForwardButton" Text="+10s"
-                        WidthRequest="76" HeightRequest="32" Margin="0,0,8,4"
+                        WidthRequest="76" HeightRequest="36" Margin="0,0,8,6"
                         Clicked="SeekForwardClicked" />
                 <Button x:Name="_volumeDownButton" Text="Vol-"
-                        WidthRequest="76" HeightRequest="32" Margin="0,0,8,4"
+                        WidthRequest="76" HeightRequest="36" Margin="0,0,8,6"
                         Clicked="VolumeDownClicked" />
                 <Button x:Name="_volumeUpButton" Text="Vol+"
-                        WidthRequest="76" HeightRequest="32" Margin="0,0,8,4"
+                        WidthRequest="76" HeightRequest="36" Margin="0,0,8,6"
                         Clicked="VolumeUpClicked" />
                 <Button x:Name="_muteButton" Text="Mute"
-                        WidthRequest="76" HeightRequest="32" Margin="0,0,8,4"
+                        WidthRequest="76" HeightRequest="36" Margin="0,0,8,6"
                         Clicked="MuteClicked" />
                 <Button x:Name="_speedButton" Text="Speed"
-                        WidthRequest="76" HeightRequest="32" Margin="0,0,8,4"
+                        WidthRequest="76" HeightRequest="36" Margin="0,0,8,6"
                         Clicked="SpeedClicked" />
-            </FlexLayout>
-            <FlexLayout Grid.Row="1"
-                        Direction="Row"
-                        Wrap="Wrap"
-                        AlignItems="Center"
-                        Padding="8,2,8,4">
                 <Button x:Name="_subtitleButton" Text="Sub"
-                        WidthRequest="76" HeightRequest="32" Margin="0,0,8,4"
+                        WidthRequest="76" HeightRequest="36" Margin="0,0,8,6"
                         Clicked="SubtitleClicked" />
                 <Button x:Name="_tracksButton" Text="Tracks"
-                        WidthRequest="76" HeightRequest="32" Margin="0,0,8,4"
+                        WidthRequest="76" HeightRequest="36" Margin="0,0,8,6"
                         Clicked="TracksClicked" />
                 <Button x:Name="_screenshotButton" Text="Shot"
-                        WidthRequest="76" HeightRequest="32" Margin="0,0,8,4"
+                        WidthRequest="76" HeightRequest="36" Margin="0,0,8,6"
                         Clicked="ScreenshotClicked" />
                 <Button x:Name="_configButton" Text="Config"
-                        WidthRequest="76" HeightRequest="32" Margin="0,0,8,4"
+                        WidthRequest="76" HeightRequest="36" Margin="0,0,8,6"
                         Clicked="ConfigClicked" />
                 <Button x:Name="_luaButton" Text="Lua"
-                        WidthRequest="76" HeightRequest="32" Margin="0,0,8,4"
+                        WidthRequest="76" HeightRequest="36" Margin="0,0,8,6"
                         Clicked="LuaClicked" />
                 <Button x:Name="_ytdlpButton" Text="yt-dlp"
-                        WidthRequest="76" HeightRequest="32" Margin="0,0,8,4"
+                        WidthRequest="76" HeightRequest="36" Margin="0,0,8,6"
                         Clicked="YtdlpClicked" />
                 <Button x:Name="_denoButton" Text="Deno"
-                        WidthRequest="76" HeightRequest="32" Margin="0,0,8,4"
+                        WidthRequest="76" HeightRequest="36" Margin="0,0,8,6"
                         Clicked="DenoClicked" />
                 <Button x:Name="_ffmpegButton" Text="FFmpeg"
-                        WidthRequest="76" HeightRequest="32" Margin="0,0,8,4"
+                        WidthRequest="76" HeightRequest="36" Margin="0,0,8,6"
                         Clicked="FFmpegClicked" />
                 <Button x:Name="_saveMp4Button" Text="Save MP4"
-                        WidthRequest="88" HeightRequest="32" Margin="0,0,8,4"
+                        WidthRequest="88" HeightRequest="36" Margin="0,0,8,6"
                         Clicked="SaveMp4Clicked" />
                 <Button x:Name="_ytdlpUpdateButton" Text="Update yt"
-                        WidthRequest="88" HeightRequest="32" Margin="0,0,8,4"
+                        WidthRequest="88" HeightRequest="36" Margin="0,0,8,6"
                         Clicked="YtdlpUpdateClicked" />
                 <Button x:Name="_denoUpdateButton" Text="Update Deno"
-                        WidthRequest="120" HeightRequest="32" Margin="0,0,8,4"
+                        WidthRequest="120" HeightRequest="36" Margin="0,0,8,6"
                         Clicked="DenoUpdateClicked" />
             </FlexLayout>
         </Grid>

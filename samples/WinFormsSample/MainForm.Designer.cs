@@ -24,7 +24,7 @@ partial class MainForm
     /// 建構式在 InitializeComponent 後續執行。
     /// 數值常數對齊 SampleRuntime（SampleButtonWidth=88、SampleButtonHeight=32、
     /// SampleFeatureButtonWidth=76、SampleControlSpacing=8、SampleControlPadding=8、
-    /// SampleToolbarHeight=48、SampleFeaturePanelHeight=88、SampleEventLogHeight=168、
+    /// SampleToolbarHeight=48、SampleEventLogHeight=168、
     /// SampleAirspaceComparisonHeight=40、SampleOverlayBadgeWidth=340、
     /// SampleOverlayBadgeHeight=32、SampleYtdlpUpdateButtonWidth=88、
     /// SampleDenoUpdateButtonWidth=120、SampleWindowWidth=1200、SampleWindowHeight=720）。
@@ -84,7 +84,7 @@ partial class MainForm
         this._rootLayout.Name = "_rootLayout";
         this._rootLayout.RowCount = 4;
         this._rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 48F));
-        this._rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 88F));
+        this._rootLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         this._rootLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
         this._rootLayout.RowStyles.Add(new RowStyle(SizeType.Absolute, 168F));
         this._rootLayout.Controls.Add(this._toolbarPanel, 0, 0);
@@ -158,7 +158,9 @@ partial class MainForm
         // _featurePanel
         //
         this._featurePanel.AutoScroll = false;
-        this._featurePanel.Dock = DockStyle.Fill;
+        this._featurePanel.AutoSize = true;
+        this._featurePanel.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+        this._featurePanel.Dock = DockStyle.Top;
         this._featurePanel.Name = "_featurePanel";
         this._featurePanel.Padding = new Padding(8, 4, 8, 4);
         this._featurePanel.WrapContents = true;

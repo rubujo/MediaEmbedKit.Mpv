@@ -9,7 +9,7 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="48" />
-            <RowDefinition Height="88" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="168" />
         </Grid.RowDefinitions>
@@ -47,12 +47,11 @@
         </Grid>
 
         <!-- FeaturePanel：兩排 WrapPanel 都把 18 個 feature button + ComboBox + 2 個
-             TextBlock 在 markup 完整宣告（對齊 Avalonia for Visual Studio 的 AXAML
-             template 風格）。命名 Click handler 在 code-behind。 -->
+             TextBlock 在 markup 完整宣告，外層高度依換行結果自動撐開。 -->
         <Grid Grid.Row="1" Margin="0">
             <Grid.RowDefinitions>
-                <RowDefinition Height="40" />
-                <RowDefinition Height="40" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <WrapPanel Grid.Row="0"
                        Margin="8,4,8,0"
