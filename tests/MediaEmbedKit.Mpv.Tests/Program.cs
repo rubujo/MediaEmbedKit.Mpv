@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
@@ -2295,7 +2295,7 @@ internal static class Program
         {
             // 1. 測試預設值：正常情況下應可成功連線 github.com
             DownloadUtility.EnableCertPinning = true;
-            
+
 #if NETSTANDARD2_0 || NET472 || NET48
             using (HttpClientHandler handler = new HttpClientHandler
             {
@@ -2355,7 +2355,7 @@ internal static class Program
 
             // 3. 測試關閉 Pinning 開關：即使 Pins 無效，關閉 Pinning 後連線也應成功 (使用一般的 CA)
             DownloadUtility.EnableCertPinning = false;
-            
+
 #if NETSTANDARD2_0 || NET472 || NET48
             using (HttpClientHandler handler = new HttpClientHandler
             {

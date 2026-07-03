@@ -1,4 +1,4 @@
-namespace MediaEmbedKit.Mpv;
+﻿namespace MediaEmbedKit.Mpv;
 
 /// <summary>
 /// 提供 mpv encoding mode 常用視訊編碼器的預設值。

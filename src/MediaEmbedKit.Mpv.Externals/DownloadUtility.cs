@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -488,7 +488,7 @@ internal static class DownloadUtility
                     // 取得公鑰 (ASN.1 DER-encoded subject public key without AlgorithmIdentifier header)
                     // 此方法在 netstandard2.0/net472/net48 平台上是唯一安全且相容的公鑰獲取方式
                     byte[] rawPublicKey = cert.PublicKey.EncodedKeyValue.RawData;
-                    
+
                     using (SHA256 sha256 = SHA256.Create())
                     {
                         byte[] hash = sha256.ComputeHash(rawPublicKey);
