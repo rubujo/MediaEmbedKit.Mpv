@@ -21,7 +21,15 @@ public sealed class FFmpegDownloadOptions
         VerificationPolicy = MpvNativeAssetVerificationPolicy.RequireGitHubDigest;
         RetainArchive = false;
         LockReleaseSource = true;
+        CheckInterval = TimeSpan.FromHours(24);
     }
+
+    /// <summary>
+    /// 取得或設定上游發行檢查的冷卻時間間隔。
+    /// 當本地已安裝有效的 FFmpeg 且此時間間隔內已檢查過上游時，將跳過 GitHub API 請求。
+    /// 預設為 24 小時。
+    /// </summary>
+    public TimeSpan CheckInterval { get; set; }
 
     /// <summary>
     /// 取得或設定要下載的 FFmpeg-Builds Windows 架構。

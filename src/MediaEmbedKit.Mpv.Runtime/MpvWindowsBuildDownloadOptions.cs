@@ -29,6 +29,7 @@ public sealed class MpvWindowsBuildDownloadOptions
         };
         RetainArchive = false;
         LockReleaseSource = true;
+        CheckInterval = TimeSpan.FromHours(24);
     }
 
     /// <summary>
@@ -164,6 +165,13 @@ public sealed class MpvWindowsBuildDownloadOptions
     public bool RetainArchive { get; set; }
 
     /// <summary>
+    /// 取得或設定上游發行檢查的冷卻時間間隔。
+    /// 當本地已安裝有效的 libmpv-2.dll 且此時間間隔內已檢查過上游時，將跳過 GitHub API 請求。
+    /// 預設為 24 小時。
+    /// </summary>
+    public TimeSpan CheckInterval { get; set; }
+
+    /// <summary>
     /// 建立此設定的淺層複本（含 <see cref="ProviderFallbackOrder"/> 的獨立 List）。
     /// 供需要暫時調整選項而不污染 呼叫端物件的內部輔助工具使用
     /// （例如 <see cref="MpvWindowsRuntimeInstaller.UpdateLibMpvAsync"/> 強制
@@ -189,6 +197,7 @@ public sealed class MpvWindowsBuildDownloadOptions
             ReleaseApiUriOverride = ReleaseApiUriOverride,
             RetainArchive = RetainArchive,
             LockReleaseSource = LockReleaseSource,
+            CheckInterval = CheckInterval,
         };
         copy.ProviderFallbackOrder.Clear();
         foreach (MpvWindowsBuildProvider fallback in ProviderFallbackOrder)

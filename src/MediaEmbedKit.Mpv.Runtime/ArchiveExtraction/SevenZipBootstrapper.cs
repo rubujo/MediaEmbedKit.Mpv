@@ -77,6 +77,8 @@ internal static class SevenZipBootstrapper
         GitHubRelease release = await DownloadUtility.GetLatestReleaseAsync(
             LatestReleaseApiUri,
             userAgent,
+            downloadDirectory,
+            TimeSpan.FromHours(24),
             cancellationToken).ConfigureAwait(false);
 
         GitHubReleaseAsset? asset = release.Assets.FirstOrDefault(

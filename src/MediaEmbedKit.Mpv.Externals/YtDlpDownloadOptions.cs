@@ -19,7 +19,15 @@ public sealed class YtDlpDownloadOptions
         VerifyDigest = true;
         VerificationPolicy = MpvNativeAssetVerificationPolicy.RequireGitHubDigest;
         LockReleaseSource = true;
+        CheckInterval = TimeSpan.FromHours(24);
     }
+
+    /// <summary>
+    /// 取得或設定上游發行檢查的冷卻時間間隔。
+    /// 當本地已安裝有效的 yt-dlp 且此時間間隔內已檢查過上游時，將跳過 GitHub API 請求。
+    /// 預設為 24 小時。
+    /// </summary>
+    public TimeSpan CheckInterval { get; set; }
 
     /// <summary>
     /// 取得或設定 yt-dlp 發行通道。

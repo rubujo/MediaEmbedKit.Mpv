@@ -45,6 +45,8 @@ public static class YtDlpDownloader
         GitHubRelease release = await DownloadUtility.GetLatestReleaseAsync(
             apiUri,
             options.UserAgent,
+            downloadDirectory,
+            options.CheckInterval,
             cancellationToken).ConfigureAwait(false);
 
         GitHubReleaseAsset asset = SelectAsset(release, options.Architecture);
@@ -119,6 +121,8 @@ public static class YtDlpDownloader
         GitHubRelease release = await DownloadUtility.GetLatestReleaseAsync(
             apiUri,
             options.UserAgent,
+            directory,
+            options.CheckInterval,
             cancellationToken).ConfigureAwait(false);
 
         string? currentVersion = File.Exists(executablePath) ? GetInstalledVersion(executablePath) : null;

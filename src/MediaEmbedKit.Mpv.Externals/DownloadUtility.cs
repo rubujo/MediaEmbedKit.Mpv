@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
@@ -31,7 +32,7 @@ internal static class DownloadUtility
     private static readonly HttpClient SharedHttpClient = CreateHttpClient();
 
     /// <summary>
-    /// 從 GitHub Releases API 取得最新發行資料。
+    /// 從 GitHub Releases API 取得最新發行資料，支援 ETag 快取與本地冷卻 TTL 檢查。
     /// </summary>
     /// <param name="apiUri">
     /// GitHub Releases API URI。
@@ -39,59 +40,133 @@ internal static class DownloadUtility
     /// <param name="userAgent">
     /// 下載要求使用的使用者代理字串。
     /// </param>
+    /// <param name="cacheDirectory">
+    /// 可選的快取資料夾；若指定則啟用 ETag 與本地冷卻快取。
+    /// </param>
+    /// <param name="checkInterval">
+    /// 本地檢查的冷卻時間。
+    /// </param>
     /// <param name="cancellationToken">
     /// 可取消非同步作業的語彙基元。
     /// </param>
     /// <returns>
     /// 表示最新 GitHub Releases 資料的工作。
     /// </returns>
-    public static async Task<GitHubRelease> GetLatestReleaseAsync(Uri apiUri, string? userAgent, CancellationToken cancellationToken)
+    public static async Task<GitHubRelease> GetLatestReleaseAsync(
+        Uri apiUri,
+        string? userAgent,
+        string? cacheDirectory,
+        TimeSpan checkInterval,
+        CancellationToken cancellationToken)
     {
-        // 對 5xx / 429 走指數 backoff retry（500ms / 2s / 8s），共 3 輪。GitHub API 偶發
-        // 5xx / rate-limit 觸發在使用者第一次安裝是最痛的失敗點 —— 重試讓多數臨時故障
-        // 自動恢復。其他 4xx（401、403 不是 429、404 等）不重試，因為 retry 不會自癒。
+        string? cacheKey = apiUri.ToString();
+        Dictionary<string, GitHubReleaseCacheEntry>? cache = null;
+        GitHubReleaseCacheEntry? cachedEntry = null;
+
+        if (!string.IsNullOrWhiteSpace(cacheDirectory))
+        {
+            cache = LoadCache(cacheDirectory!);
+            cache.TryGetValue(cacheKey, out cachedEntry);
+        }
+
+        // 1. 本地 TTL 檢查：如果在冷卻期內，且快取中有資料，直接回傳快取
+        if (cachedEntry != null && (DateTime.UtcNow - cachedEntry.LastCheckTime) < checkInterval && cachedEntry.Release != null)
+        {
+            return cachedEntry.Release;
+        }
+
+        // 對 5xx / 429 走指數 backoff retry（500ms / 2s / 8s），共 3 輪。
+        string? etag = cachedEntry?.ETag;
         TimeSpan[] backoffs = { TimeSpan.FromMilliseconds(500), TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(8) };
         for (int attempt = 0; attempt <= backoffs.Length; attempt++)
         {
             try
             {
-                return await GetLatestReleaseOnceAsync(apiUri, userAgent, cancellationToken).ConfigureAwait(false);
+                var (release, newEtag, isNotModified) = await GetLatestReleaseOnceAsync(apiUri, userAgent, etag, cancellationToken).ConfigureAwait(false);
+
+                if (isNotModified && cachedEntry != null && cachedEntry.Release != null)
+                {
+                    // 3. ETag 命中 304：更新 lastCheckTime，儲存並重用快取
+                    cachedEntry.LastCheckTime = DateTime.UtcNow;
+                    if (cache != null)
+                    {
+                        SaveCache(cacheDirectory!, cache);
+                    }
+                    return cachedEntry.Release;
+                }
+
+                if (release != null)
+                {
+                    // 4. 取得新資料 200 OK：寫入快取
+                    if (cache != null)
+                    {
+                        cache[cacheKey] = new GitHubReleaseCacheEntry
+                        {
+                            ETag = newEtag ?? string.Empty,
+                            LastCheckTime = DateTime.UtcNow,
+                            Release = release
+                        };
+                        SaveCache(cacheDirectory!, cache);
+                    }
+                    return release;
+                }
             }
-            catch (HttpRequestException) when (attempt < backoffs.Length)
+            catch (OperationCanceledException)
             {
-                // 網路層失敗（DNS / connection refused / TLS 等）通常是暫時的，重試一次值得試。
-                await Task.Delay(backoffs[attempt], cancellationToken).ConfigureAwait(false);
+                throw;
             }
-            catch (TransientHttpStatusException ex) when (attempt < backoffs.Length)
+            catch (Exception ex) when (attempt < backoffs.Length && IsTransient(ex))
             {
-                // 5xx 或 429：明確標示為可重試。記下 status code 供 log 追蹤。
+                // 網路層失敗（DNS / connection refused / TLS 等）或 5xx/429
                 System.Diagnostics.Trace.WriteLine(
-                    "GetLatestReleaseAsync: HTTP " + (int)ex.StatusCode + " (" + ex.StatusCode + ") on " +
-                    apiUri + ", retry in " + backoffs[attempt].TotalSeconds + "s (attempt " + (attempt + 1) + "/" + backoffs.Length + ")");
+                    "GetLatestReleaseAsync: Transient error on " + apiUri + ", retry in " +
+                    backoffs[attempt].TotalSeconds + "s (attempt " + (attempt + 1) + "/" + backoffs.Length + "). Error: " + ex.Message);
                 await Task.Delay(backoffs[attempt], cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                // 5. 容錯降級：若發生 403 Rate Limit 或是其他網路錯誤，且快取中有資料，直接降級重用快取
+                if (cachedEntry != null && cachedEntry.Release != null)
+                {
+                    System.Diagnostics.Trace.WriteLine(
+                        $"[DownloadUtility] GitHub API query failed for {apiUri}: {ex.Message}. Falling back to cached release metadata.");
+                    return cachedEntry.Release;
+                }
+
+                // 若為最後一輪且無快取可降級，直接讓 Exception 冒出
+                if (attempt == backoffs.Length)
+                {
+                    throw;
+                }
             }
         }
 
-        // 重試耗盡：再呼一次，這次直接讓例外冒出（不再 catch）。
-        return await GetLatestReleaseOnceAsync(apiUri, userAgent, cancellationToken).ConfigureAwait(false);
+        // 重試耗盡且無快取：再呼一次，這次直接讓例外冒出（不再 catch）。
+        var finalResult = await GetLatestReleaseOnceAsync(apiUri, userAgent, etag, cancellationToken).ConfigureAwait(false);
+        if (finalResult.isNotModified && cachedEntry != null && cachedEntry.Release != null)
+        {
+            return cachedEntry.Release;
+        }
+        if (finalResult.release != null)
+        {
+            return finalResult.release;
+        }
+        throw new InvalidOperationException("GitHub Releases 查詢失敗。");
+    }
+
+    private static bool IsTransient(Exception ex)
+    {
+        return ex is HttpRequestException || ex is TransientHttpStatusException;
     }
 
     /// <summary>
-    /// 單次嘗試取 GitHub Releases 資料（不含 retry / backoff）。
+    /// 單次嘗試取 GitHub Releases 資料（不含 retry / backoff，支援 ETag）。
     /// </summary>
-    /// <param name="apiUri">
-    /// GitHub Releases API 端點。
-    /// </param>
-    /// <param name="userAgent">
-    /// 自訂使用者代理字串；未指定時使用預設 GitHub API 使用者代理字串。
-    /// </param>
-    /// <param name="cancellationToken">
-    /// 可取消非同步作業的語彙基元。
-    /// </param>
-    /// <returns>
-    /// 表示單次 GitHub Releases API 查詢結果的工作。
-    /// </returns>
-    private static async Task<GitHubRelease> GetLatestReleaseOnceAsync(Uri apiUri, string? userAgent, CancellationToken cancellationToken)
+    private static async Task<(GitHubRelease? release, string? etag, bool isNotModified)> GetLatestReleaseOnceAsync(
+        Uri apiUri,
+        string? userAgent,
+        string? requestEtag,
+        CancellationToken cancellationToken)
     {
         ConfigureServicePoint(apiUri);
         using (HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, apiUri))
@@ -102,9 +177,19 @@ internal static class DownloadUtility
             BrowserRequestHeaders.ApplyForGitHubApi(request.Headers, userAgent);
             request.Headers.Accept.ParseAdd("application/vnd.github+json");
 
+            if (!string.IsNullOrEmpty(requestEtag))
+            {
+                request.Headers.IfNoneMatch.Add(new System.Net.Http.Headers.EntityTagHeaderValue(requestEtag));
+            }
+
             using (HttpResponseMessage response = await SharedHttpClient.SendAsync(request, cancellationToken).ConfigureAwait(false))
             {
                 int statusCode = (int)response.StatusCode;
+                if (statusCode == 304)
+                {
+                    return (null, requestEtag, true);
+                }
+
                 if (statusCode >= 500 || statusCode == 429)
                 {
                     // 包成可被 重試迴圈捕捉 的型別。429 額外帶 X-RateLimit-Remaining 讓呼叫端知道。
@@ -118,6 +203,9 @@ internal static class DownloadUtility
                 }
 
                 response.EnsureSuccessStatusCode();
+
+                string? responseEtag = response.Headers.ETag?.ToString();
+
 #if NET5_0_OR_GREATER
                 Stream stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
 #else
@@ -132,7 +220,50 @@ internal static class DownloadUtility
                     throw new InvalidOperationException("GitHub Releases 資料未包含可下載資產。");
                 }
 
-                return release;
+                return (release, responseEtag, false);
+            }
+        }
+    }
+
+    private static readonly object CacheLock = new object();
+
+    private static Dictionary<string, GitHubReleaseCacheEntry> LoadCache(string cacheDirectory)
+    {
+        string cachePath = Path.Combine(cacheDirectory, ".releases-cache.json");
+        if (!File.Exists(cachePath))
+        {
+            return new Dictionary<string, GitHubReleaseCacheEntry>(StringComparer.OrdinalIgnoreCase);
+        }
+
+        lock (CacheLock)
+        {
+            try
+            {
+                string json = File.ReadAllText(cachePath);
+                var dict = JsonSerializer.Deserialize(json, GitHubReleaseJsonContext.Default.DictionaryStringGitHubReleaseCacheEntry);
+                return dict ?? new Dictionary<string, GitHubReleaseCacheEntry>(StringComparer.OrdinalIgnoreCase);
+            }
+            catch
+            {
+                return new Dictionary<string, GitHubReleaseCacheEntry>(StringComparer.OrdinalIgnoreCase);
+            }
+        }
+    }
+
+    private static void SaveCache(string cacheDirectory, Dictionary<string, GitHubReleaseCacheEntry> cache)
+    {
+        string cachePath = Path.Combine(cacheDirectory, ".releases-cache.json");
+        lock (CacheLock)
+        {
+            try
+            {
+                Directory.CreateDirectory(cacheDirectory);
+                string json = JsonSerializer.Serialize(cache, GitHubReleaseJsonContext.Default.DictionaryStringGitHubReleaseCacheEntry);
+                File.WriteAllText(cachePath, json);
+            }
+            catch
+            {
+                // ignore
             }
         }
     }

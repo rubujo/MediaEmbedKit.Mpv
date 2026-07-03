@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using System;
+using System.Text.Json.Serialization;
 
 namespace MediaEmbedKit.Mpv.Externals;
 
@@ -65,6 +66,24 @@ internal sealed class GitHubReleaseAsset
 /// </summary>
 [JsonSerializable(typeof(GitHubRelease))]
 [JsonSerializable(typeof(GitHubReleaseAsset))]
+[JsonSerializable(typeof(GitHubReleaseCacheEntry))]
+[JsonSerializable(typeof(System.Collections.Generic.Dictionary<string, GitHubReleaseCacheEntry>))]
+[JsonSerializable(typeof(DateTime))]
 internal sealed partial class GitHubReleaseJsonContext : JsonSerializerContext
 {
+}
+
+/// <summary>
+/// 表示本地 GitHub Releases API 快取項目。
+/// </summary>
+internal sealed class GitHubReleaseCacheEntry
+{
+    [JsonPropertyName("etag")]
+    public string ETag { get; set; } = string.Empty;
+
+    [JsonPropertyName("last_check_time")]
+    public DateTime LastCheckTime { get; set; }
+
+    [JsonPropertyName("release")]
+    public GitHubRelease Release { get; set; } = new GitHubRelease();
 }

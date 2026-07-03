@@ -109,7 +109,7 @@ public static class MpvWindowsBuildDownloader
         Uri apiUri = provider == options.Provider && options.ReleaseApiUriOverride != null
             ? options.ReleaseApiUriOverride
             : defaultApiUri;
-        GitHubRelease release = await GetLatestReleaseAsync(options, apiUri, cancellationToken).ConfigureAwait(false);
+        GitHubRelease release = await GetLatestReleaseAsync(options, downloadDirectory, apiUri, cancellationToken).ConfigureAwait(false);
         GitHubReleaseAsset asset = SelectLibMpvAsset(release, options);
         ValidateLockedProviderSource(apiUri, defaultApiUri, asset.BrowserDownloadUrl, provider, options.LockReleaseSource);
 
@@ -326,7 +326,7 @@ public static class MpvWindowsBuildDownloader
                 Uri apiUri = provider == options.Provider && options.ReleaseApiUriOverride != null
                     ? options.ReleaseApiUriOverride
                     : defaultApiUri;
-                GitHubRelease release = await GetLatestReleaseAsync(options, apiUri, cancellationToken).ConfigureAwait(false);
+                GitHubRelease release = await GetLatestReleaseAsync(options, downloadDirectory, apiUri, cancellationToken).ConfigureAwait(false);
                 GitHubReleaseAsset asset = SelectLibMpvAsset(release, options);
                 ValidateLockedProviderSource(apiUri, defaultApiUri, asset.BrowserDownloadUrl, provider, options.LockReleaseSource);
 
@@ -552,6 +552,9 @@ public static class MpvWindowsBuildDownloader
     /// <param name="options">
     /// Windows libmpv 建置下載選項。
     /// </param>
+    /// <param name="cacheDirectory">
+    /// 快取下載資料的資料夾。
+    /// </param>
     /// <param name="apiUri">
     /// 要查詢的 GitHub Releases API URI。
     /// </param>
@@ -561,11 +564,11 @@ public static class MpvWindowsBuildDownloader
     /// <returns>
     /// 表示 GitHub Releases 資料的工作。
     /// </returns>
-    private static async Task<GitHubRelease> GetLatestReleaseAsync(MpvWindowsBuildDownloadOptions options, Uri apiUri, CancellationToken cancellationToken)
+    private static async Task<GitHubRelease> GetLatestReleaseAsync(MpvWindowsBuildDownloadOptions options, string cacheDirectory, Uri apiUri, CancellationToken cancellationToken)
     {
         ValidateProviderArchitecture(options.Provider, options.Architecture);
 
-        return await DownloadUtility.GetLatestReleaseAsync(apiUri, options.UserAgent, cancellationToken).ConfigureAwait(false);
+        return await DownloadUtility.GetLatestReleaseAsync(apiUri, options.UserAgent, cacheDirectory, options.CheckInterval, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>

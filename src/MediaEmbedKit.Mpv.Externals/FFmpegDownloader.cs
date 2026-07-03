@@ -99,6 +99,8 @@ public static class FFmpegDownloader
         GitHubRelease release = await DownloadUtility.GetLatestReleaseAsync(
             apiUri,
             options.UserAgent,
+            installDirectory,
+            options.CheckInterval,
             cancellationToken).ConfigureAwait(false);
 
         GitHubReleaseAsset asset = SelectAsset(release, options.Architecture);
