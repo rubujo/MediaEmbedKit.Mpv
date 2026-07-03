@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -6,6 +6,8 @@ using System.IO.Compression;
 using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
+using System.Net.Security;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -30,6 +32,35 @@ internal static class DownloadUtility
     /// 供所有下載作業重複使用的 HTTP 用戶端。
     /// </summary>
     private static readonly HttpClient SharedHttpClient = CreateHttpClient();
+
+    /// <summary>
+    /// 取得或設定是否啟用 HTTPS 憑證釘選防護。
+    /// </summary>
+    public static bool EnableCertPinning { get; set; } = true;
+
+    /// <summary>
+    /// 取得可用於 HTTPS 憑證釘選驗證的可信任公鑰 SHA-256 Base64 雜湊集合。
+    /// 預設包含 GitHub.com 與 AWS S3 託管資產所使用的主流根/中繼 CA。
+    /// </summary>
+    public static HashSet<string> TrustedPinnedPublicKeys { get; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    {
+        // Sectigo Public Server Authentication Root E46 (根 CA)
+        "EdsvlytFf4a/O+hCPwBXFFi46RKXqivCAF+mO7s+5Ng=",
+        // Sectigo Public Server Authentication CA DV E36 (中繼 CA)
+        "VqePxH3EcFwZuYK3CCOMz5HKMoeIZpZcEyBf4diPGSA=",
+        // ISRG Root X1 (Let's Encrypt 根 CA)
+        "9Fk6HgfMnM7/vtnBHcUhg1b3gU2bIpSd50XmKZkMbGA=",
+        // Root YR (Let's Encrypt 備用根 CA)
+        "3udbYNAibUAofT8NAf6ktVK0UZSjEhF99kRyhtyJ2yM=",
+        // DigiCert Global Root G2 (備用根 CA)
+        "yzy7t2Ax5eATj43TmiP53kf/w15DwRRMyifUalqxy18=",
+        // Amazon Root CA 1 (AWS 根 CA 1)
+        "UAJ/9yOqq6nk4CX2QtZgDmyT6JHYlkBfihOzezH/8cs=",
+        // Starfield Services Root Certificate Authority - G2 (AWS S3 上層根 CA)
+        "IluA1v9TE2XcrcYkqkmDGqLd+EHxHKR9D8TXUk4Et0A=",
+        // Amazon RSA 2048 M04 (AWS 中繼 CA)
+        "6nxPsa2kTA3VkIjhZo/4AwlOJ2QHhMEFG2KpZqkgNGk="
+    };
 
     /// <summary>
     /// 從 GitHub Releases API 取得最新發行資料，支援 ETag 快取與本地冷卻 TTL 檢查。
@@ -405,7 +436,8 @@ internal static class DownloadUtility
 #if NETSTANDARD2_0 || NET472 || NET48
         HttpClientHandler handler = new HttpClientHandler
         {
-            MaxConnectionsPerServer = DefaultMaxConnectionsPerServer
+            MaxConnectionsPerServer = DefaultMaxConnectionsPerServer,
+            ServerCertificateCustomValidationCallback = (request, cert, chain, errors) => ValidateServerCertificate(request, cert, chain, errors)
         };
 
         return new HttpClient(handler, true);
@@ -413,11 +445,67 @@ internal static class DownloadUtility
         SocketsHttpHandler handler = new SocketsHttpHandler
         {
             MaxConnectionsPerServer = DefaultMaxConnectionsPerServer,
-            PooledConnectionLifetime = PooledConnectionLifetime
+            PooledConnectionLifetime = PooledConnectionLifetime,
+            SslOptions = new SslClientAuthenticationOptions
+            {
+                RemoteCertificateValidationCallback = ValidateServerCertificate
+            }
         };
 
         return new HttpClient(handler);
 #endif
+    }
+
+    /// <summary>
+    /// 自訂的 HTTPS 伺服器憑證驗證回呼，提供業界標準的憑證公鑰釘選（Cert Pinning）防線。
+    /// </summary>
+    internal static bool ValidateServerCertificate(
+        object sender,
+        X509Certificate? certificate,
+        X509Chain? chain,
+        SslPolicyErrors sslPolicyErrors)
+    {
+        // 1. 若憑證釘選被關閉，只做一般的預設 SSL 驗證
+        if (!EnableCertPinning)
+        {
+            return sslPolicyErrors == SslPolicyErrors.None;
+        }
+
+        // 2. 若標準 SSL 驗證失敗（例如憑證過期或主機名不符），直接拒絕連線，不進行釘選比對
+        if (sslPolicyErrors != SslPolicyErrors.None)
+        {
+            return false;
+        }
+
+        // 3. 檢查憑證鏈中的公鑰
+        if (chain != null && certificate != null)
+        {
+            for (int i = 0; i < chain.ChainElements.Count; i++)
+            {
+                X509Certificate2 cert = chain.ChainElements[i].Certificate;
+                if (cert != null)
+                {
+                    // 取得公鑰 (ASN.1 DER-encoded subject public key without AlgorithmIdentifier header)
+                    // 此方法在 netstandard2.0/net472/net48 平台上是唯一安全且相容的公鑰獲取方式
+                    byte[] rawPublicKey = cert.PublicKey.EncodedKeyValue.RawData;
+                    
+                    using (SHA256 sha256 = SHA256.Create())
+                    {
+                        byte[] hash = sha256.ComputeHash(rawPublicKey);
+                        string base64Pin = Convert.ToBase64String(hash);
+
+                        // 只要鏈中至少有一個憑證（如中繼或根 CA）符合可信任的公鑰釘選，即為安全
+                        if (TrustedPinnedPublicKeys.Contains(base64Pin))
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+
+        // 4. 若走訪整條憑證鏈均無符合的 Pinned 公鑰，攔截連線
+        return false;
     }
 
     /// <summary>

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Text;
@@ -187,16 +187,19 @@ public sealed class MpvEncodingOptions
             case MpvVideoCodecPreset.H264Nvenc: return "h264_nvenc";
             case MpvVideoCodecPreset.H264Qsv: return "h264_qsv";
             case MpvVideoCodecPreset.H264Amf: return "h264_amf";
+            case MpvVideoCodecPreset.H264Mf: return "h264_mf";
             case MpvVideoCodecPreset.H265: return "libx265";
             case MpvVideoCodecPreset.H265Nvenc: return "hevc_nvenc";
             case MpvVideoCodecPreset.H265Qsv: return "hevc_qsv";
             case MpvVideoCodecPreset.H265Amf: return "hevc_amf";
+            case MpvVideoCodecPreset.H265Mf: return "hevc_mf";
             case MpvVideoCodecPreset.Vp9: return "libvpx-vp9";
             case MpvVideoCodecPreset.Av1: return "libsvtav1";
             case MpvVideoCodecPreset.Av1Aom: return "libaom-av1";
             case MpvVideoCodecPreset.Av1Nvenc: return "av1_nvenc";
             case MpvVideoCodecPreset.Av1Qsv: return "av1_qsv";
             case MpvVideoCodecPreset.Av1Amf: return "av1_amf";
+            case MpvVideoCodecPreset.Av1Mf: return "av1_mf";
             case MpvVideoCodecPreset.Copy: return "copy";
             default:
                 throw new ArgumentOutOfRangeException(nameof(preset), preset, "未支援的視訊編碼器預設值。");

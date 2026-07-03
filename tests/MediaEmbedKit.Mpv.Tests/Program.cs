@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
@@ -87,6 +87,7 @@ internal static class Program
         runner.Add("MpvNative 委派／陣列 輔助工具在 net7.0+ 仍走 LibraryImport", VerifyMpvNativeHelperUsesLibraryImport);
         runner.Add("Windows ARM64 資產對應正確（libmpv / yt-dlp / Deno / FFmpeg）", VerifyWindowsArm64AssetMapping);
         runner.Add("PackageVersion 與 docs/CONSUMING_PACKAGES.md 同步", VerifyPackageVersionInConsumingDoc);
+        runner.Add("HTTPS 憑證釘選驗證與關閉開關", VerifyDownloadUtilityCertPinning);
 
         await runner.RunAsync().ConfigureAwait(false);
         return runner.FailedCount == 0 ? 0 : 1;
@@ -1190,6 +1191,10 @@ internal static class Program
         AssertEx.Equal("comment", fluentOptions["oremove-metadata"], "鏈式移除中繼資料選項");
         AssertEx.Equal("24", fluentOptions["omaxfps"], "鏈式額外 encoding 選項");
 
+        AssertEx.Equal("h264_mf", MpvEncodingOptions.ResolveVideoCodecName(MpvVideoCodecPreset.H264Mf), "MF H264");
+        AssertEx.Equal("hevc_mf", MpvEncodingOptions.ResolveVideoCodecName(MpvVideoCodecPreset.H265Mf), "MF H265");
+        AssertEx.Equal("av1_mf", MpvEncodingOptions.ResolveVideoCodecName(MpvVideoCodecPreset.Av1Mf), "MF AV1");
+
         AssertEx.Throws<InvalidOperationException>(
             delegate
             {
@@ -2272,6 +2277,118 @@ internal static class Program
         AssertEx.Equal(FFmpegDownloader.WindowsArm64AssetName, FFmpegDownloader.GetWindowsAssetName(MpvWindowsArchitecture.Arm64), "FFmpeg ARM64 asset");
         AssertEx.Equal("ffmpeg-master-latest-winarm64-gpl.zip", FFmpegDownloader.WindowsArm64AssetName, "FFmpeg ARM64 GPL 資產檔名");
         return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// 驗證 DownloadUtility 的 HTTPS 憑證釘選防護機制與相容性開關。
+    /// </summary>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
+    private static async Task VerifyDownloadUtilityCertPinning()
+    {
+        // 備份原始設定
+        bool originalEnable = DownloadUtility.EnableCertPinning;
+        List<string> originalPins = new List<string>(DownloadUtility.TrustedPinnedPublicKeys);
+
+        try
+        {
+            // 1. 測試預設值：正常情況下應可成功連線 github.com
+            DownloadUtility.EnableCertPinning = true;
+            
+#if NETSTANDARD2_0 || NET472 || NET48
+            using (HttpClientHandler handler = new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = (request, cert, chain, errors) => 
+                    DownloadUtility.ValidateServerCertificate(request, cert, chain, errors)
+            })
+#else
+            using (SocketsHttpHandler handler = new SocketsHttpHandler())
+            {
+                handler.SslOptions.RemoteCertificateValidationCallback = DownloadUtility.ValidateServerCertificate;
+#endif
+                using (HttpClient client = new HttpClient(handler))
+                {
+                    client.DefaultRequestHeaders.Add("User-Agent", "MediaEmbedKit.Mpv.Tests");
+                    using (HttpResponseMessage res = await client.GetAsync("https://api.github.com/repos/mpv-player/mpv/releases/latest").ConfigureAwait(false))
+                    {
+                        AssertEx.True(res.IsSuccessStatusCode, "預設 Pinned CA 下載 GitHub API 應成功。");
+                    }
+                }
+#if !NETSTANDARD2_0 && !NET472 && !NET48
+            }
+#endif
+
+            // 2. 測試竄改 Pins：當把 Pins 清空，下載應被驗證攔截並失敗
+            DownloadUtility.TrustedPinnedPublicKeys.Clear();
+            DownloadUtility.TrustedPinnedPublicKeys.Add("invalid-pin-base64-string=");
+
+            bool failed = false;
+            try
+            {
+#if NETSTANDARD2_0 || NET472 || NET48
+                using (HttpClientHandler handler = new HttpClientHandler
+                {
+                    ServerCertificateCustomValidationCallback = (request, cert, chain, errors) => 
+                        DownloadUtility.ValidateServerCertificate(request, cert, chain, errors)
+                })
+#else
+                using (SocketsHttpHandler handler = new SocketsHttpHandler())
+                {
+                    handler.SslOptions.RemoteCertificateValidationCallback = DownloadUtility.ValidateServerCertificate;
+#endif
+                    using (HttpClient client = new HttpClient(handler))
+                    {
+                        client.DefaultRequestHeaders.Add("User-Agent", "MediaEmbedKit.Mpv.Tests");
+                        await client.GetAsync("https://api.github.com/repos/mpv-player/mpv/releases/latest").ConfigureAwait(false);
+                    }
+#if !NETSTANDARD2_0 && !NET472 && !NET48
+                }
+#endif
+            }
+            catch (Exception)
+            {
+                failed = true;
+            }
+
+            AssertEx.True(failed, "竄改 Pinned CA 後，下載應被憑證釘選防線攔截並失敗。");
+
+            // 3. 測試關閉 Pinning 開關：即使 Pins 無效，關閉 Pinning 後連線也應成功 (使用一般的 CA)
+            DownloadUtility.EnableCertPinning = false;
+            
+#if NETSTANDARD2_0 || NET472 || NET48
+            using (HttpClientHandler handler = new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = (request, cert, chain, errors) => 
+                    DownloadUtility.ValidateServerCertificate(request, cert, chain, errors)
+            })
+#else
+            using (SocketsHttpHandler handler = new SocketsHttpHandler())
+            {
+                handler.SslOptions.RemoteCertificateValidationCallback = DownloadUtility.ValidateServerCertificate;
+#endif
+                using (HttpClient client = new HttpClient(handler))
+                {
+                    client.DefaultRequestHeaders.Add("User-Agent", "MediaEmbedKit.Mpv.Tests");
+                    using (HttpResponseMessage resB = await client.GetAsync("https://api.github.com/repos/mpv-player/mpv/releases/latest").ConfigureAwait(false))
+                    {
+                        AssertEx.True(resB.IsSuccessStatusCode, "關閉憑證釘選防線後，即使 Pins 無效，使用一般 CA 也應下載成功。");
+                    }
+                }
+#if !NETSTANDARD2_0 && !NET472 && !NET48
+            }
+#endif
+        }
+        finally
+        {
+            // 還原原始設定
+            DownloadUtility.EnableCertPinning = originalEnable;
+            DownloadUtility.TrustedPinnedPublicKeys.Clear();
+            foreach (var pin in originalPins)
+            {
+                DownloadUtility.TrustedPinnedPublicKeys.Add(pin);
+            }
+        }
     }
 
     /// <summary>

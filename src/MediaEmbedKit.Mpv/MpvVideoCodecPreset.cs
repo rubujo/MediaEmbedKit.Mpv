@@ -1,4 +1,4 @@
-﻿namespace MediaEmbedKit.Mpv;
+namespace MediaEmbedKit.Mpv;
 
 /// <summary>
 /// 提供 mpv encoding mode 常用視訊編碼器的預設值。
@@ -29,6 +29,12 @@ public enum MpvVideoCodecPreset
     H264Amf = 3,
 
     /// <summary>
+    /// Windows Media Foundation 硬體 H.264 — <c>h264_mf</c>。
+    /// 常用於 Windows ARM64 裝置（如 Qualcomm Snapdragon X 晶片）及其他 Windows GPU 設備。
+    /// </summary>
+    H264Mf = 4,
+
+    /// <summary>
     /// 軟體 H.265 / HEVC — <c>libx265</c>。
     /// </summary>
     H265 = 10,
@@ -47,6 +53,12 @@ public enum MpvVideoCodecPreset
     /// AMD AMF 硬體 H.265 — <c>hevc_amf</c>。
     /// </summary>
     H265Amf = 13,
+
+    /// <summary>
+    /// Windows Media Foundation 硬體 H.265 / HEVC — <c>hevc_mf</c>。
+    /// 常用於 Windows ARM64 裝置（如 Qualcomm Snapdragon X 晶片）及其他 Windows GPU 設備。
+    /// </summary>
+    H265Mf = 14,
 
     /// <summary>
     /// 軟體 VP9 — <c>libvpx-vp9</c>。
@@ -77,6 +89,12 @@ public enum MpvVideoCodecPreset
     /// AMD 硬體 AV1 — <c>av1_amf</c>（RDNA3 起）。
     /// </summary>
     Av1Amf = 34,
+
+    /// <summary>
+    /// Windows Media Foundation 硬體 AV1 — <c>av1_mf</c>。
+    /// 常用於 Windows ARM64 裝置（如 Qualcomm Snapdragon X 晶片）及其他 Windows GPU 設備。
+    /// </summary>
+    Av1Mf = 35,
 
     /// <summary>
     /// Stream copy（不重新編碼）— <c>copy</c>。輸出格式必須能容納來源視訊串流的編碼格式。
