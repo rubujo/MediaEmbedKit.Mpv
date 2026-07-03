@@ -37,36 +37,39 @@ internal static class ArchiveSafety
     /// </exception>
     public static void RejectIfReparsePoint(string filePath, string contextDescription)
     {
-        if (!File.Exists(filePath))
-        {
-            return;
-        }
-
         FileAttributes attributes;
         try
         {
             attributes = File.GetAttributes(filePath);
         }
+        catch (FileNotFoundException)
+        {
+            return;
+        }
+        catch (DirectoryNotFoundException)
+        {
+            return;
+        }
         catch (IOException)
         {
             // 無法讀屬性 → 保守拒絕（這個檔案不該被信任繼續使用）。
-            TryDeleteFile(filePath);
+            TryDeletePath(filePath);
             throw new InvalidOperationException(
                 "無法讀取檔案屬性以驗證 reparse point；已刪除以防 archive 不安全內容繼續使用：" + filePath +
                 "（context: " + contextDescription + "）");
         }
         catch (UnauthorizedAccessException)
         {
-            TryDeleteFile(filePath);
+            TryDeletePath(filePath);
             throw new InvalidOperationException(
                 "無權限讀取檔案屬性；已嘗試刪除：" + filePath + "（context: " + contextDescription + "）");
         }
 
         if ((attributes & FileAttributes.ReparsePoint) != 0)
         {
-            TryDeleteFile(filePath);
+            TryDeletePath(filePath);
             throw new InvalidOperationException(
-                "解壓出的檔案為 symlink / NTFS reparse point，拒絕信任：" + filePath +
+                "解壓出的路徑為 symlink / NTFS reparse point，拒絕信任：" + filePath +
                 "（context: " + contextDescription + "）。" +
                 "可能是 archive 被替換成含 symlink 指向系統路徑的攻擊（參見 CVE-2025-11001 同類）。" +
                 "請使用 ExpectedSha256 + RequirePinnedSha256 驗證 archive 完整性。");
@@ -79,11 +82,25 @@ internal static class ArchiveSafety
     /// <param name="filePath">
     /// 要刪除的檔案路徑。
     /// </param>
-    private static void TryDeleteFile(string filePath)
+    private static void TryDeletePath(string filePath)
     {
         try
         {
             File.Delete(filePath);
+        }
+        catch (IOException)
+        {
+        }
+        catch (UnauthorizedAccessException)
+        {
+        }
+
+        try
+        {
+            if (Directory.Exists(filePath))
+            {
+                Directory.Delete(filePath, false);
+            }
         }
         catch (IOException)
         {

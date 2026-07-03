@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Threading;
 using MediaEmbedKit.Mpv.Native;
 
 namespace MediaEmbedKit.Mpv.Render;
@@ -8,6 +10,13 @@ namespace MediaEmbedKit.Mpv.Render;
 /// <summary>
 /// 封裝 libmpv OpenGL render API 內容。
 /// </summary>
+/// <remarks>
+/// <para>
+/// OpenGL render context 必須由呼叫端在具備活動 OpenGL Context 的擁有執行緒上
+/// 決定性呼叫 <see cref="Dispose"/> 釋放。GC Finalizer 執行緒通常不具備活動 OpenGL
+/// Context，因此 Finalizer 僅做最小保護，不會嘗試呼叫原生釋放 API。
+/// </para>
+/// </remarks>
 public sealed class MpvOpenGlRenderContext : IDisposable
 {
     /// <summary>
@@ -541,13 +550,16 @@ public sealed class MpvOpenGlRenderContext : IDisposable
     /// </summary>
     ~MpvOpenGlRenderContext()
     {
-        lock (_syncRoot)
+        // 避免在 Finalizer 執行緒直接釋放 OpenGL render context。
+        // OpenGL backend 需要活動 GL Context，GC Finalizer 執行緒通常不具備此條件。
+        IntPtr context = Interlocked.Exchange(ref _context, IntPtr.Zero);
+        if (context != IntPtr.Zero)
         {
-            if (_context != IntPtr.Zero)
-            {
-                MpvNative.mpv_render_context_free(_context);
-                _context = IntPtr.Zero;
-            }
+            _disposed = true;
+            Trace.TraceWarning("MpvOpenGlRenderContext 未經 Dispose 即進入 Finalizer。請在擁有 OpenGL Context 的執行緒決定性釋放。");
+#if DEBUG
+            Debug.Fail("MpvOpenGlRenderContext 必須決定性呼叫 Dispose()，不可依賴 Finalizer 釋放。");
+#endif
         }
     }
 

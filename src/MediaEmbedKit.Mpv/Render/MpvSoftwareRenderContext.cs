@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using System.Threading;
 using MediaEmbedKit.Mpv.Native;
 
 namespace MediaEmbedKit.Mpv.Render;
@@ -9,6 +10,7 @@ namespace MediaEmbedKit.Mpv.Render;
 /// </summary>
 public sealed class MpvSoftwareRenderContext : IDisposable
 {
+    private const string DefaultSoftwareFormat = "bgr0";
     /// <summary>
     /// 序列化所有 libmpv render API 呼叫與釋放流程的同步物件。
     /// </summary>
@@ -182,7 +184,7 @@ public sealed class MpvSoftwareRenderContext : IDisposable
         int width,
         int height,
         int stride,
-        string format = "bgr0",
+        string format = DefaultSoftwareFormat,
         bool blockForTargetTime = true,
         bool skipRendering = false)
     {
@@ -212,32 +214,42 @@ public sealed class MpvSoftwareRenderContext : IDisposable
             throw new ArgumentOutOfRangeException(nameof(stride), "步幅必須可容納整列像素。");
         }
 
-        IntPtr sizePointer = IntPtr.Zero;
-        IntPtr stridePointer = IntPtr.Zero;
-        IntPtr blockPointer = IntPtr.Zero;
-        IntPtr skipPointer = IntPtr.Zero;
+        Utf8String? customFormatString = null;
         lock (_syncRoot)
         {
             EnsureNotDisposed();
             try
             {
-                sizePointer = Marshal.AllocHGlobal(sizeof(int) * 2);
-                Marshal.WriteInt32(sizePointer, 0, width);
-                Marshal.WriteInt32(sizePointer, sizeof(int), height);
-                stridePointer = AllocSizeT(stride);
-                blockPointer = AllocInt32(blockForTargetTime ? 1 : 0);
-                skipPointer = AllocInt32(skipRendering ? 1 : 0);
-
-                using (Utf8String formatString = new Utf8String(format))
+                unsafe
                 {
+                    int* size = stackalloc int[2];
+                    size[0] = width;
+                    size[1] = height;
+
+                    UIntPtr strideValue = new UIntPtr(unchecked((uint)stride));
+                    if (IntPtr.Size == 8)
+                    {
+                        strideValue = new UIntPtr(unchecked((ulong)(uint)stride));
+                    }
+
+                    int block = blockForTargetTime ? 1 : 0;
+                    int skip = skipRendering ? 1 : 0;
+                    byte* defaultFormat = stackalloc byte[5] { (byte)'b', (byte)'g', (byte)'r', (byte)'0', 0 };
+                    IntPtr formatPointer = (IntPtr)defaultFormat;
+                    if (!string.Equals(format, DefaultSoftwareFormat, StringComparison.Ordinal))
+                    {
+                        customFormatString = new Utf8String(format);
+                        formatPointer = customFormatString.Pointer;
+                    }
+
                     MpvRenderParam[] parameters = new[]
                     {
-                        new MpvRenderParam(MpvRenderParamType.SoftwareSize, sizePointer),
-                        new MpvRenderParam(MpvRenderParamType.SoftwareFormat, formatString.Pointer),
-                        new MpvRenderParam(MpvRenderParamType.SoftwareStride, stridePointer),
+                        new MpvRenderParam(MpvRenderParamType.SoftwareSize, (IntPtr)size),
+                        new MpvRenderParam(MpvRenderParamType.SoftwareFormat, formatPointer),
+                        new MpvRenderParam(MpvRenderParamType.SoftwareStride, (IntPtr)(&strideValue)),
                         new MpvRenderParam(MpvRenderParamType.SoftwarePointer, buffer),
-                        new MpvRenderParam(MpvRenderParamType.BlockForTargetTime, blockPointer),
-                        new MpvRenderParam(MpvRenderParamType.SkipRendering, skipPointer),
+                        new MpvRenderParam(MpvRenderParamType.BlockForTargetTime, (IntPtr)(&block)),
+                        new MpvRenderParam(MpvRenderParamType.SkipRendering, (IntPtr)(&skip)),
                         MpvRenderParam.Terminator
                     };
 
@@ -246,10 +258,7 @@ public sealed class MpvSoftwareRenderContext : IDisposable
             }
             finally
             {
-                Free(sizePointer);
-                Free(stridePointer);
-                Free(blockPointer);
-                Free(skipPointer);
+                customFormatString?.Dispose();
             }
         }
     }
@@ -262,28 +271,21 @@ public sealed class MpvSoftwareRenderContext : IDisposable
     /// </param>
     public void SkipRender(bool blockForTargetTime = true)
     {
-        IntPtr blockPointer = IntPtr.Zero;
-        IntPtr skipPointer = IntPtr.Zero;
         lock (_syncRoot)
         {
             EnsureNotDisposed();
-            try
+            unsafe
             {
-                blockPointer = AllocInt32(blockForTargetTime ? 1 : 0);
-                skipPointer = AllocInt32(1);
+                int block = blockForTargetTime ? 1 : 0;
+                int skip = 1;
                 MpvRenderParam[] parameters = new[]
                 {
-                    new MpvRenderParam(MpvRenderParamType.BlockForTargetTime, blockPointer),
-                    new MpvRenderParam(MpvRenderParamType.SkipRendering, skipPointer),
+                    new MpvRenderParam(MpvRenderParamType.BlockForTargetTime, (IntPtr)(&block)),
+                    new MpvRenderParam(MpvRenderParamType.SkipRendering, (IntPtr)(&skip)),
                     MpvRenderParam.Terminator
                 };
 
                 MpvError.ThrowIfError(MpvNative.mpv_render_context_render(_context, parameters));
-            }
-            finally
-            {
-                Free(blockPointer);
-                Free(skipPointer);
             }
         }
     }
@@ -482,14 +484,17 @@ public sealed class MpvSoftwareRenderContext : IDisposable
     /// </summary>
     ~MpvSoftwareRenderContext()
     {
-        lock (_syncRoot)
+        // Software backend 不需要 GL context，可在 Finalizer 執行緒執行最小清理，
+        // 避免遺留 callback 與 native context 造成後續不穩定。
+        IntPtr context = Interlocked.Exchange(ref _context, IntPtr.Zero);
+        if (context == IntPtr.Zero)
         {
-            if (_context != IntPtr.Zero)
-            {
-                MpvNative.mpv_render_context_free(_context);
-                _context = IntPtr.Zero;
-            }
+            return;
         }
+
+        _disposed = true;
+        MpvNative.mpv_render_context_set_update_callback(context, null, IntPtr.Zero);
+        MpvNative.mpv_render_context_free(context);
     }
 
     /// <summary>

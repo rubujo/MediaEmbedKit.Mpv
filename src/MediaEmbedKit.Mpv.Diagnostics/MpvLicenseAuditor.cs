@@ -83,7 +83,18 @@ public static class MpvLicenseAuditor
         MpvBuildLicense libMpvLicense = MpvBuildLicense.Unknown;
         if (File.Exists(libMpvPath))
         {
-            if (probeLibMpv && !MpvLibraryLoader.IsLoaded)
+            bool libMpvPathTrusted = true;
+            try
+            {
+                RejectIfReparsePoint(libMpvPath, "MpvLicenseAuditor libmpv path");
+            }
+            catch (InvalidOperationException ex)
+            {
+                warnings.Add("libmpv 路徑安全檢查失敗：" + ex.Message);
+                libMpvPathTrusted = false;
+            }
+
+            if (libMpvPathTrusted && probeLibMpv && !MpvLibraryLoader.IsLoaded)
             {
                 try
                 {
@@ -101,7 +112,10 @@ public static class MpvLicenseAuditor
                 }
             }
 
-            libMpvLicense = ClassifyMpvLicense(mpvConfiguration);
+            if (libMpvPathTrusted)
+            {
+                libMpvLicense = ClassifyMpvLicense(mpvConfiguration);
+            }
         }
         else
         {
@@ -114,10 +128,11 @@ public static class MpvLicenseAuditor
         {
             try
             {
+                RejectIfReparsePoint(ffmpegPath, "MpvLicenseAuditor ffmpeg path");
                 ExternalToolProcessRunner runner = new ExternalToolProcessRunner(ffmpegPath);
                 ExternalToolProcessResult result = await runner.RunAsync(
                     new[] { "-hide_banner", "-version" },
-                    TimeSpan.FromSeconds(20),
+                    TimeSpan.FromSeconds(5),
                     cancellationToken).ConfigureAwait(false);
                 ffmpegVersionText = result.StandardOutput;
                 ffmpegLicense = ClassifyFFmpegLicense(ffmpegVersionText);
@@ -210,6 +225,52 @@ public static class MpvLicenseAuditor
         }
 
         return MpvBuildLicense.Unknown;
+    }
+
+    /// <summary>
+    /// 拒絕指定路徑為 symlink / NTFS reparse point。
+    /// </summary>
+    /// <param name="path">
+    /// 要檢查的路徑。
+    /// </param>
+    /// <param name="contextDescription">
+    /// 擲例外時包含的脈絡文字。
+    /// </param>
+    /// <exception cref="InvalidOperationException">
+    /// 路徑為 reparse point 或無法安全驗證。
+    /// </exception>
+    private static void RejectIfReparsePoint(string path, string contextDescription)
+    {
+        FileAttributes attributes;
+        try
+        {
+            attributes = File.GetAttributes(path);
+        }
+        catch (FileNotFoundException)
+        {
+            return;
+        }
+        catch (DirectoryNotFoundException)
+        {
+            return;
+        }
+        catch (IOException ex)
+        {
+            throw new InvalidOperationException(
+                "無法讀取路徑屬性以驗證 reparse point：" + path + "（context: " + contextDescription + "）。", ex);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            throw new InvalidOperationException(
+                "無權限讀取路徑屬性：" + path + "（context: " + contextDescription + "）。", ex);
+        }
+
+        if ((attributes & FileAttributes.ReparsePoint) != 0)
+        {
+            throw new InvalidOperationException(
+                "偵測到 symlink / NTFS reparse point，拒絕啟動外部程序：" + path +
+                "（context: " + contextDescription + "）。");
+        }
     }
 
     /// <summary>
