@@ -38,7 +38,9 @@ XML 文件註解不得使用一行式標籤排版。`<summary>`、`<param>`、`<
 
 ## C# 型別宣告
 
-區域變數、`using` 陳述式與 `foreach` 迴圈變數應使用明確型別。只有匿名型別、編譯器要求或明確型別明顯降低可讀性時，才可使用 `var`。
+遵循微軟官方 C# 編碼慣例（Microsoft C# Coding Conventions）：
+- **使用 `var`**：當指派右側的型別顯而易見時（例如右側為 `new` 建構子、明確的 `(Type)` 強制轉型或明確的字面值），建議使用 `var` 以提高可讀性。匿名型別與 `foreach` 迴圈變數（右側顯而易見時）亦建議使用 `var`。
+- **使用明確型別**：當指派右側的型別不明顯時（例如方法呼叫、複雜的 LINQ 或無明確型別提示的運算），必須使用明確型別，以方便無 IDE 的代碼審查（例如 GitHub Pull Request）。
 
 ## 文件
 
@@ -53,7 +55,7 @@ Markdown 文件應使用正式、精煉且一致的正體中文臺灣地區用�
 - `docs/RUNTIME_ASSETS.md`：執行階段政策。
 - `docs/HIGH_LEVEL_API.md`：高階 API 與編碼操作指南。
 - `docs/CONTROLS_API.md`：五個 UI 框架控制項共通綁定屬性與命令。
-- `docs/CONSUMING_PACKAGES.md`：從 GitHub Releases 安裝本地 NuGet 套件。
+- `docs/CONSUMING_PACKAGES.md`：從 GitHub Releases 安裝本機 NuGet 套件。
 - `docs/LIBMPV_C_API_TEST_MATRIX.md`：libmpv C API 覆蓋與驗證矩陣。
 - `docs/RELEASE_CHECKLIST.md`：發佈前本機檢查。
 - `docs/DESIGN_TIME_CHECKLIST.md`：Windows UI 控制項設計階段檢查。

@@ -11,7 +11,7 @@
 | libmpv C API 覆蓋與測試矩陣 | `docs/LIBMPV_C_API_TEST_MATRIX.md` |
 | 高階 API 與 ergonomics 指南 | `docs/HIGH_LEVEL_API.md` |
 | 控制項共通綁定 API | `docs/CONTROLS_API.md` |
-| 從 GitHub Releases 安裝本地 NuGet 套件 | `docs/CONSUMING_PACKAGES.md` |
+| 從 GitHub Releases 安裝本機 NuGet 套件 | `docs/CONSUMING_PACKAGES.md` |
 | 發佈前本機檢查 | `docs/RELEASE_CHECKLIST.md` |
 | Windows 設計階段檢查 | `docs/DESIGN_TIME_CHECKLIST.md` |
 | 工程、文件、提交與驗證規則 | `docs/ENGINEERING_STANDARDS.md` |

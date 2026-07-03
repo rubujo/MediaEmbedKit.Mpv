@@ -37,7 +37,7 @@ public static class MpvLicenseAuditor
     /// <strong>⚠️ 副作用警示</strong>：<paramref name="probeLibMpv"/> = <see langword="true"/>
     /// 時本方法會透過 <c>NativeLibrary.Load</c> 載入 <c>libmpv-2.dll</c> 讀取
     /// <c>mpv-configuration</c> 屬性。<strong>libmpv 一旦載入當前處理序就無法 unload</strong>，
-    /// 之後若要 update libmpv 必須走 暫存更新 + 處理序重啟流程
+    /// 之後若要 update libmpv 必須走暫存更新 + 處理序重啟流程
     /// （參見 <see cref="MpvLibraryUpdateScheduler"/>）。
     /// </para>
     /// <para>
@@ -385,7 +385,7 @@ public sealed class MpvLicenseAuditReport
     /// 取得被分析的執行階段資料夾。
     /// </summary>
     /// <value>
-    ///執行階段資料夾完整路徑。
+    /// 執行階段資料夾完整路徑。
     /// </value>
     public string RuntimeDirectory { get; }
 

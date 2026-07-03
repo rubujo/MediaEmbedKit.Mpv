@@ -157,7 +157,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// </summary>
     private MpvPlayer? _boundPlayer;
     /// <summary>
-    /// 控制項用來把 UI 變更回送至 UI thread 的 dispatcher queue。
+    /// 控制項用來把 UI 變更回送至 UI 執行緒的 dispatcher queue。
     /// </summary>
     private readonly Microsoft.UI.Dispatching.DispatcherQueue _dispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
 
@@ -845,7 +845,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     }
 
     /// <summary>
-    /// 將控制項的 DP 與目前播放器雙向綁定。
+    /// 將控制項的 DP 與目前播放器雙向繫結。
     /// </summary>
     /// <param name="player">
     /// 已初始化的播放器。

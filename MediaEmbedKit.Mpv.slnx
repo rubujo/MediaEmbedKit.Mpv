@@ -1,4 +1,4 @@
-﻿<Solution>
+<Solution>
   <Folder Name="/src/">
     <Project Path="src/MediaEmbedKit.Mpv/MediaEmbedKit.Mpv.csproj" />
     <Project Path="src/MediaEmbedKit.Mpv.Externals/MediaEmbedKit.Mpv.Externals.csproj" />
@@ -39,10 +39,10 @@
     <File Path="CLAUDE.md" />
     <File Path="Directory.Build.props" />
     <File Path="Directory.Packages.props" />
-    <File Path="GEMINI.md" />
     <File Path="global.json" />
     <File Path="LICENSE" />
     <File Path="README.md" />
+    <File Path="SECURITY.md" />
     <File Path="THIRD_PARTY_NOTICES.md" />
   </Folder>
   <Folder Name="/方案項目/.agents/skills/">
@@ -64,13 +64,17 @@
   <Folder Name="/方案項目/docs/">
     <File Path="docs/AI_AGENT_INTEGRATION.md" />
     <File Path="docs/CONSUMING_PACKAGES.md" />
+    <File Path="docs/CONTROLS_API.md" />
     <File Path="docs/DESIGN_TIME_CHECKLIST.md" />
     <File Path="docs/ENGINEERING_STANDARDS.md" />
+    <File Path="docs/HIGH_LEVEL_API.md" />
     <File Path="docs/LIBMPV_C_API_TEST_MATRIX.md" />
+    <File Path="docs/PACKAGE_ARCHITECTURE.md" />
     <File Path="docs/PROJECT_SPEC.md" />
     <File Path="docs/REFERENCE_SOURCES.md" />
     <File Path="docs/RELEASE_CHECKLIST.md" />
     <File Path="docs/RUNTIME_ASSETS.md" />
+    <File Path="docs/SECURITY_MODEL.md" />
     <File Path="docs/SUPPORT_MATRIX.md" />
     <File Path="docs/UI_BACKENDS.md" />
   </Folder>

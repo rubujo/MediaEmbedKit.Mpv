@@ -116,13 +116,25 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
 
         MpvLibraryLoader.Load(options.MpvLibraryPath);
 
-        IntPtr handle = MpvNative.mpv_create();
-        if (handle == IntPtr.Zero)
+        IntPtr handle = IntPtr.Zero;
+        try
         {
-            throw new MpvException("mpv_create returned null. Verify libmpv is loadable and LC_NUMERIC is C-compatible.");
+            handle = MpvNative.mpv_create();
+            if (handle == IntPtr.Zero)
+            {
+                throw new MpvException("mpv_create returned null. Verify libmpv is loadable and LC_NUMERIC is C-compatible.");
+            }
+            _handle = new SafeMpvHandle(handle);
+        }
+        catch
+        {
+            if (handle != IntPtr.Zero)
+            {
+                MpvNative.mpv_terminate_destroy(handle);
+            }
+            throw;
         }
 
-        _handle = new SafeMpvHandle(handle);
         _lifetimeGate = new object();
         _renderContextsGate = new object();
         _pendingRequests = new ConcurrentDictionary<ulong, TaskCompletionSource<MpvNode>>();

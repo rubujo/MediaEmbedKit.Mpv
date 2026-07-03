@@ -74,7 +74,7 @@
 
 ### 為何沒有 UI 共用 base class
 
-原本考慮抽 `MediaEmbedKit.Mpv.UI.Core` 含 abstract `MpvPlayerHostBase`，讓 5 UI 控制項繼承後只剩 framework-specific 適配。實作前驗證後 abandon，**架構上不可行**：
+原本考慮抽 `MediaEmbedKit.Mpv.UI.Core` 含 abstract `MpvPlayerHostBase`，讓 5 UI 控制項繼承後只剩 framework-specific 轉接。實作前驗證後 abandon，**架構上不可行**：
 
 - **C# 不支援多重繼承**：5 控制項各自必須繼承自己框架的 UI base（`Control` / `HwndHost` / `OpenGlControlBase` / `Grid` / `View`），無法同時繼承共用 base。
 - **Avalonia 不走 HWND 嵌入**：用 `mpv_render_context_create` + OpenGL render API，原 plan 的「set `wid`」邏輯只適用 4/5 框架。

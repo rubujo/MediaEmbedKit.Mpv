@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -82,7 +82,7 @@ internal static class DownloadUtility
         {
             try
             {
-                var (release, newEtag, isNotModified) = await GetLatestReleaseOnceAsync(apiUri, userAgent, etag, cancellationToken).ConfigureAwait(false);
+                (GitHubRelease? release, string? newEtag, bool isNotModified) = await GetLatestReleaseOnceAsync(apiUri, userAgent, etag, cancellationToken).ConfigureAwait(false);
 
                 if (isNotModified && cachedEntry != null && cachedEntry.Release != null)
                 {
@@ -142,7 +142,7 @@ internal static class DownloadUtility
         }
 
         // 重試耗盡且無快取：再呼一次，這次直接讓例外冒出（不再 catch）。
-        var finalResult = await GetLatestReleaseOnceAsync(apiUri, userAgent, etag, cancellationToken).ConfigureAwait(false);
+        (GitHubRelease? release, string? etag, bool isNotModified) finalResult = await GetLatestReleaseOnceAsync(apiUri, userAgent, etag, cancellationToken).ConfigureAwait(false);
         if (finalResult.isNotModified && cachedEntry != null && cachedEntry.Release != null)
         {
             return cachedEntry.Release;
@@ -194,7 +194,7 @@ internal static class DownloadUtility
                 {
                     // 包成可被 重試迴圈捕捉 的型別。429 額外帶 X-RateLimit-Remaining 讓呼叫端知道。
                     string detail = string.Empty;
-                    if (statusCode == 429 && response.Headers.TryGetValues("X-RateLimit-Remaining", out var values))
+                    if (statusCode == 429 && response.Headers.TryGetValues("X-RateLimit-Remaining", out IEnumerable<string>? values))
                     {
                         detail = " (X-RateLimit-Remaining=" + string.Join(",", values) + ")";
                     }
@@ -240,7 +240,7 @@ internal static class DownloadUtility
             try
             {
                 string json = File.ReadAllText(cachePath);
-                var dict = JsonSerializer.Deserialize(json, GitHubReleaseJsonContext.Default.DictionaryStringGitHubReleaseCacheEntry);
+                Dictionary<string, GitHubReleaseCacheEntry>? dict = JsonSerializer.Deserialize(json, GitHubReleaseJsonContext.Default.DictionaryStringGitHubReleaseCacheEntry);
                 return dict ?? new Dictionary<string, GitHubReleaseCacheEntry>(StringComparer.OrdinalIgnoreCase);
             }
             catch
@@ -429,7 +429,7 @@ internal static class DownloadUtility
 #if NETSTANDARD2_0 || NET472 || NET48
         try
         {
-            var sp = System.Net.ServicePointManager.FindServicePoint(uri);
+            System.Net.ServicePoint sp = System.Net.ServicePointManager.FindServicePoint(uri);
             sp.ConnectionLeaseTimeout = (int)PooledConnectionLifetime.TotalMilliseconds;
         }
         catch (PlatformNotSupportedException)

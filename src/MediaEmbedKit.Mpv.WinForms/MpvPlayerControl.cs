@@ -23,7 +23,7 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
     /// </summary>
     private MpvPlayer? _player;
     /// <summary>
-    /// 已附加的播放器屬性訂閱清單；player dispose 時一次釋放。
+    /// 已附加的播放器屬性訂閱清單； player dispose 時一次釋放。
     /// </summary>
     private readonly List<IDisposable> _propertyWatchers = new List<IDisposable>();
     /// <summary>
@@ -753,7 +753,7 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
     }
 
     /// <summary>
-    /// 將控制項的屬性與目前播放器雙向綁定。
+    /// 將控制項的屬性與目前播放器雙向繫結。
     /// </summary>
     /// <param name="player">
     /// 已初始化的播放器。

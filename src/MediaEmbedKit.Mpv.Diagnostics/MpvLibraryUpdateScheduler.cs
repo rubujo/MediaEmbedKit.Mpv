@@ -38,7 +38,7 @@ public sealed class MpvLibraryUpdateScheduler
     private const string LockFileName = ".lock";
 
     /// <summary>
-    ///執行階段資料夾完整路徑。
+    /// 執行階段資料夾完整路徑。
     /// </summary>
     private readonly string _runtimeDirectory;
     /// <summary>
@@ -57,7 +57,7 @@ public sealed class MpvLibraryUpdateScheduler
     /// 初始化 <see cref="MpvLibraryUpdateScheduler"/> 類別的新執行個體。
     /// </summary>
     /// <param name="runtimeDirectory">
-    ///執行階段資料夾，必須是日後 libmpv-2.dll 載入位置的根目錄。
+    /// 執行階段資料夾，必須是日後 libmpv-2.dll 載入位置的根目錄。
     /// </param>
     /// <param name="options">
     /// 下載 Windows libmpv 建置時的預設選項；未提供時使用預設值。
@@ -77,7 +77,7 @@ public sealed class MpvLibraryUpdateScheduler
     /// 取得執行階段資料夾完整路徑。
     /// </summary>
     /// <value>
-    ///執行階段資料夾完整路徑。
+    /// 執行階段資料夾完整路徑。
     /// </value>
     public string RuntimeDirectory
     {
@@ -411,13 +411,13 @@ public sealed class MpvLibraryStageResult
     /// 初始化 <see cref="MpvLibraryStageResult"/> 類別的新執行個體。
     /// </summary>
     /// <param name="runtimeDirectory">
-    ///執行階段資料夾。
+    /// 執行階段資料夾。
     /// </param>
     /// <param name="stagedLibraryPath">
     /// 暫存或已套用的 libmpv-2.dll 路徑。
     /// </param>
     /// <param name="currentLibraryPath">
-    ///執行階段資料夾中目前的 libmpv-2.dll 路徑。
+    /// 執行階段資料夾中目前的 libmpv-2.dll 路徑。
     /// </param>
     /// <param name="requiresProcessRestart">
     /// 是否需要重新啟動處理序才能套用更新。
@@ -448,7 +448,7 @@ public sealed class MpvLibraryStageResult
     /// 取得執行階段資料夾。
     /// </summary>
     /// <value>
-    ///執行階段資料夾完整路徑。
+    /// 執行階段資料夾完整路徑。
     /// </value>
     public string RuntimeDirectory { get; }
 

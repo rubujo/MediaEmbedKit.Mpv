@@ -198,7 +198,7 @@ public sealed class MpvRuntimeHealthReport
     /// yt-dlp.exe 是否存在。
     /// </param>
     /// <param name="isDenoPresent">
-    /// deno.exe 是否存在。
+    /// Deno 可執行檔 (deno.exe) 是否存在。
     /// </param>
     /// <param name="isFFmpegPresent">
     /// ffmpeg.exe 是否存在。
@@ -237,7 +237,7 @@ public sealed class MpvRuntimeHealthReport
     /// 取得被檢查的執行階段資料夾。
     /// </summary>
     /// <value>
-    ///執行階段資料夾完整路徑。
+    /// 執行階段資料夾完整路徑。
     /// </value>
     public string RuntimeDirectory { get; }
 
@@ -282,7 +282,7 @@ public sealed class MpvRuntimeHealthReport
     public bool IsYtdlpPresent { get; }
 
     /// <summary>
-    /// 取得 deno.exe 是否存在。
+    /// 取得 Deno 可執行檔 (deno.exe) 是否存在。
     /// </summary>
     /// <value>
     /// 存在時為 <see langword="true"/>。
@@ -290,7 +290,7 @@ public sealed class MpvRuntimeHealthReport
     public bool IsDenoPresent { get; }
 
     /// <summary>
-    /// 取得 ffmpeg.exe 是否存在。
+    /// 取得 FFmpeg 可執行檔 (ffmpeg.exe) 是否存在。
     /// </summary>
     /// <value>
     /// 存在時為 <see langword="true"/>。
@@ -298,7 +298,7 @@ public sealed class MpvRuntimeHealthReport
     public bool IsFFmpegPresent { get; }
 
     /// <summary>
-    /// 取得 ffprobe.exe 是否存在。
+    /// 取得 FFprobe 可執行檔 (ffprobe.exe) 是否存在。
     /// </summary>
     /// <value>
     /// 存在時為 <see langword="true"/>。
@@ -330,7 +330,7 @@ public sealed class MpvRuntimeHealthReport
 
     /// <summary>
     /// 取得整體執行階段是否為「完整 runtime」，亦即除核心 libmpv 外，
-    /// yt-dlp / deno / ffmpeg / ffprobe 等附帶工具也都齊備。
+    /// yt-dlp / Deno / FFmpeg / FFprobe 等附帶工具也都齊備。
     /// </summary>
     /// <value>
     /// 核心 libmpv 與全部附帶工具皆就緒時為 <see langword="true"/>。

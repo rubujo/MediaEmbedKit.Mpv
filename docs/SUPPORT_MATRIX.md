@@ -67,7 +67,7 @@ Windows 發佈前驗證以本機發行檢查閘門為準：
 | --- | --- | --- |
 | OS 版本 | Windows 11 Pro for Workstations 10.0.26200 | Windows 10、其他 Windows 11 build、Windows Server |
 | 架構 | x64（開發機）；ARM64 CI 建置 smoke | ARM64 實機 GUI 播放 |
-| 長時穩定性 | 24 小時連續播放 soak 1916 iterations（wav / mp4 / cancel 三路）通過、0 leak 信號（[`tests/MediaEmbedKit.Mpv.SoakTests`](../tests/MediaEmbedKit.Mpv.SoakTests)） | — |
+| 長時穩定性 | 24 小時連續播放 soak 1916 iterations（wav / mp4 / cancel 三路）通過、0 leak 訊號（[`tests/MediaEmbedKit.Mpv.SoakTests`](../tests/MediaEmbedKit.Mpv.SoakTests)） | — |
 
 未在表中的 OS 版本與架構**不在實機驗證範圍**。設計目標仍是支援 csproj 內 `TargetPlatformMinVersion` 宣告的所有版本（WinUI / MAUI 為 `10.0.17763.0`、WPF / WinForms 為 `.NET Framework 4.7.2+` 或 `.NET 10`），但實際相容性需由使用者在目標環境自行驗證。
 

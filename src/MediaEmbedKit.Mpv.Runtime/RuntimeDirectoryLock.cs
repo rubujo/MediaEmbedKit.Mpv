@@ -125,8 +125,10 @@ internal sealed class RuntimeDirectoryLock : IDisposable
         }
     }
 
-    /// <summary>釋放 跨處理序鎖定 —— 關閉 FileStream，配合 <see cref="FileOptions.DeleteOnClose"/>
-    /// 自動刪除 <c>.lock</c> 檔。Dispose 失敗（檔案被其他 process 鎖等異常情境）會吞掉。</summary>
+    /// <summary>
+    /// 釋放跨處理序鎖定 —— 關閉 FileStream，配合 <see cref="FileOptions.DeleteOnClose"/>
+    /// 自動刪除 <c>.lock</c> 檔。Dispose 失敗（檔案被其他 process 鎖等異常情境）會吞掉。
+    /// </summary>
     public void Dispose()
     {
         if (_stream != null)

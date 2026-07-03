@@ -82,14 +82,31 @@ internal sealed class Utf8StringArray : IDisposable
     {
         _strings = new Utf8String[values.Length];
         Pointer = Marshal.AllocHGlobal(IntPtr.Size * (values.Length + 1));
-
-        for (int i = 0; i < values.Length; i++)
+        try
         {
-            _strings[i] = new Utf8String(values[i]);
-            Marshal.WriteIntPtr(Pointer, i * IntPtr.Size, _strings[i].Pointer);
+            for (int i = 0; i < values.Length; i++)
+            {
+                _strings[i] = new Utf8String(values[i]);
+                Marshal.WriteIntPtr(Pointer, i * IntPtr.Size, _strings[i].Pointer);
+            }
+            Marshal.WriteIntPtr(Pointer, values.Length * IntPtr.Size, IntPtr.Zero);
         }
-
-        Marshal.WriteIntPtr(Pointer, values.Length * IntPtr.Size, IntPtr.Zero);
+        catch
+        {
+            for (int i = 0; i < values.Length; i++)
+            {
+                if (_strings[i] != null)
+                {
+                    _strings[i].Dispose();
+                }
+            }
+            if (Pointer != IntPtr.Zero)
+            {
+                Marshal.FreeHGlobal(Pointer);
+                Pointer = IntPtr.Zero;
+            }
+            throw;
+        }
     }
 
     /// <summary>

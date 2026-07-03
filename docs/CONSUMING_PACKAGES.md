@@ -1,4 +1,4 @@
-# 從 GitHub Releases 安裝本地 NuGet 套件
+# 從 GitHub Releases 安裝本機 NuGet 套件
 
 本專案 **不發行到 nuget.org**。所有 `.nupkg` 與 `.snupkg`（符號套件）改由 GitHub Releases 提供，使用端自行下載後，以本機 NuGet 套件來源安裝。本文件說明從零開始的完整流程。
 

@@ -804,7 +804,7 @@ public class MpvWpfPlayer : HwndHost
     }
 
     /// <summary>
-    /// 將控制項的 DP 與目前播放器雙向綁定。
+    /// 將控制項的 DP 與目前播放器雙向繫結。
     /// </summary>
     /// <param name="player">
     /// 已初始化的播放器。

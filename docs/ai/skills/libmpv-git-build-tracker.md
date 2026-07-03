@@ -17,7 +17,7 @@
 4. 若公開匯出函式、列舉、旗標或資料結構異動，先更新 `src/MediaEmbedKit.Mpv/Native` 與受控型別，再更新測試矩陣。
 5. 若只有註解或語意說明異動，更新高階 API 文件，不新增不必要的 P/Invoke。
 6. 使用 `tools/libmpv/Update-LibMpvGitBuildManifest.ps1` 更新提供者對齊紀錄。
-7. 使用 `tools/libmpv/Sync-ProviderDocs.ps1` 把 catalog 的建置與查核日期同步到下游事實宣告型文件（`LIBMPV_C_API_TEST_MATRIX.md`、`HIGH_LEVEL_API.md`、`REFERENCE_SOURCES.md`）。發行工作流程（`release.yml`）已透過 `Invoke-PreReleaseValidation.ps1 -IncludeDocSyncCheck` 自動跑 `-Check` 模式作為漂移檢查閘門；本地推送 tag 前可手動 `pwsh tools/libmpv/Sync-ProviderDocs.ps1 -Check` 預演。
+7. 使用 `tools/libmpv/Sync-ProviderDocs.ps1` 把 catalog 的建置與查核日期同步到下游事實宣告型文件（`LIBMPV_C_API_TEST_MATRIX.md`、`HIGH_LEVEL_API.md`、`REFERENCE_SOURCES.md`）。發行工作流程（`release.yml`）已透過 `Invoke-PreReleaseValidation.ps1 -IncludeDocSyncCheck` 自動跑 `-Check` 模式作為漂移檢查閘門；本機推送 tag 前可手動 `pwsh tools/libmpv/Sync-ProviderDocs.ps1 -Check` 預演。
 
 ## 判讀規則
 

@@ -36,7 +36,15 @@ internal sealed class MpvNodeAllocation : IDisposable
             throw new ArgumentNullException(nameof(node));
         }
 
-        NativeNode = BuildNode(node);
+        try
+        {
+            NativeNode = BuildNode(node);
+        }
+        catch
+        {
+            Dispose();
+            throw;
+        }
     }
 
     /// <summary>
