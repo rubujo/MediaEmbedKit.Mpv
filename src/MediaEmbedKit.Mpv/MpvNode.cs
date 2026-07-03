@@ -402,7 +402,7 @@ public sealed class MpvNode
     /// <returns>
     /// 受控位元組陣列。
     /// </returns>
-    private static byte[] DecodeByteArray(IntPtr byteArrayPointer)
+    internal static byte[] DecodeByteArray(IntPtr byteArrayPointer)
     {
         if (byteArrayPointer == IntPtr.Zero)
         {

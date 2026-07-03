@@ -22,7 +22,7 @@ namespace MediaEmbedKit.Mpv.Runtime.ArchiveExtraction;
 /// </para>
 /// <para>
 /// 抓最新版（<c>/releases/latest</c>，ip7z 用版本 tag 如 26.01，無 dual-release 陷阱），
-/// 既有 <c>7zr.exe</c> 存在時直接重用、不重複下載。下載完用專案既有的
+/// 既有 <c>7zr.exe</c> 存在時仍會重新驗證 GitHub digest。下載完用專案既有的
 /// <see cref="MpvNativeAssetVerificationPolicy.RequireGitHubDigest"/> 政策驗證
 /// 資產的 SHA-256 與 GitHub API 回傳 digest 一致。
 /// </para>
@@ -74,13 +74,6 @@ internal static class SevenZipBootstrapper
         Directory.CreateDirectory(downloadDirectory);
         string targetPath = Path.Combine(downloadDirectory, AssetName);
 
-        // 既有檔存在直接重用：避免每次 install 都打 GitHub API + 重複下載。
-        // 想強制重新下載最新版的使用者可自行刪除此檔再呼叫，或日後改裝系統 7-Zip 走第 3 段備援。
-        if (File.Exists(targetPath))
-        {
-            return targetPath;
-        }
-
         GitHubRelease release = await DownloadUtility.GetLatestReleaseAsync(
             LatestReleaseApiUri,
             userAgent,
@@ -103,15 +96,19 @@ internal static class SevenZipBootstrapper
             "7zip",
             lockReleaseSource: true);
 
-        await DownloadUtility.DownloadFileAsync(
-            asset.BrowserDownloadUrl,
-            targetPath,
-            userAgent,
-            true,
-            cancellationToken).ConfigureAwait(false);
+        if (!File.Exists(targetPath))
+        {
+            await DownloadUtility.DownloadFileAsync(
+                asset.BrowserDownloadUrl,
+                targetPath,
+                userAgent,
+                true,
+                cancellationToken).ConfigureAwait(false);
+        }
 
         // 用專案既有的 RequireGitHubDigest 政策驗證下載內容 SHA-256 與 GitHub API
         // 提供的 asset.Digest 一致（跟 libmpv / FFmpeg / Deno 同一道防線）。
+        ArchiveSafety.RejectIfReparsePoint(targetPath, "7zr.exe bootstrap executable");
         DownloadUtility.VerifyDownloadedAsset(
             targetPath,
             asset.Digest,

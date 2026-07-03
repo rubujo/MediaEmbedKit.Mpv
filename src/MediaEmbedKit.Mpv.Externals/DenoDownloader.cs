@@ -345,14 +345,11 @@ public static class DenoDownloader
             throw new FileNotFoundException("找不到 Deno 可執行檔。", executablePath);
         }
 
-        if (string.IsNullOrWhiteSpace(checksum))
-        {
-            throw new ArgumentException("checksum 不可為空白。", nameof(checksum));
-        }
+        string normalizedChecksum = NormalizeSha256(checksum, nameof(checksum));
 
         string arguments = string.IsNullOrWhiteSpace(version)
-            ? "upgrade --checksum=" + checksum.Trim()
-            : "upgrade --checksum=" + checksum.Trim() + " " + Quote(version!);
+            ? "upgrade --checksum=" + normalizedChecksum
+            : "upgrade --checksum=" + normalizedChecksum + " " + Quote(version!);
 
         return DownloadUtility.RunProcessAsync(
             executablePath,
@@ -373,6 +370,44 @@ public static class DenoDownloader
     private static string Quote(string value)
     {
         return "\"" + value.Replace("\"", "\\\"") + "\"";
+    }
+
+    /// <summary>
+    /// 將 SHA-256 十六進位文字正規化。
+    /// </summary>
+    /// <param name="checksum">
+    /// 要正規化的 SHA-256 文字。
+    /// </param>
+    /// <param name="parameterName">
+    /// 參數名稱。
+    /// </param>
+    /// <returns>
+    /// 小寫 SHA-256 十六進位文字。
+    /// </returns>
+    private static string NormalizeSha256(string checksum, string parameterName)
+    {
+        if (string.IsNullOrWhiteSpace(checksum))
+        {
+            throw new ArgumentException("checksum 不可為空白。", parameterName);
+        }
+
+        string normalized = checksum.Trim().ToLowerInvariant();
+        if (normalized.Length != 64)
+        {
+            throw new ArgumentException("checksum 必須是 64 個十六進位字元。", parameterName);
+        }
+
+        for (int index = 0; index < normalized.Length; index++)
+        {
+            char value = normalized[index];
+            bool isHex = (value >= '0' && value <= '9') || (value >= 'a' && value <= 'f');
+            if (!isHex)
+            {
+                throw new ArgumentException("checksum 必須是 64 個十六進位字元。", parameterName);
+            }
+        }
+
+        return normalized;
     }
 
     /// <summary>

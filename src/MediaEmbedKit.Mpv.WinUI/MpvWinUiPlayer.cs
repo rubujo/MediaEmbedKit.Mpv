@@ -283,7 +283,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
             return;
         }
 
-        try { _boundPlayer.Pause = false; } catch (MpvException) { }
+        try { _boundPlayer.Pause = false; } catch (MpvException) { } catch (ObjectDisposedException) { DetachPlayerBindings(); }
     }
 
     /// <summary>
@@ -296,7 +296,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
             return;
         }
 
-        try { _boundPlayer.Pause = true; } catch (MpvException) { }
+        try { _boundPlayer.Pause = true; } catch (MpvException) { } catch (ObjectDisposedException) { DetachPlayerBindings(); }
     }
 
     /// <summary>
@@ -309,7 +309,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
             return;
         }
 
-        try { _boundPlayer.Stop(); } catch (MpvException) { }
+        try { _boundPlayer.Stop(); } catch (MpvException) { } catch (ObjectDisposedException) { DetachPlayerBindings(); }
     }
 
     /// <summary>
@@ -322,7 +322,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
             return;
         }
 
-        try { _boundPlayer.Pause = !_boundPlayer.Pause; } catch (MpvException) { }
+        try { _boundPlayer.Pause = !_boundPlayer.Pause; } catch (MpvException) { } catch (ObjectDisposedException) { DetachPlayerBindings(); }
     }
 
     /// <summary>
@@ -335,7 +335,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
             return;
         }
 
-        try { _boundPlayer.Mute = !_boundPlayer.Mute; } catch (MpvException) { }
+        try { _boundPlayer.Mute = !_boundPlayer.Mute; } catch (MpvException) { } catch (ObjectDisposedException) { DetachPlayerBindings(); }
     }
 
     /// <summary>
@@ -354,6 +354,11 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// 在控制項建立 mpv 播放器後發生。
     /// </summary>
     public event EventHandler? PlayerCreated;
+
+    /// <summary>
+    /// 在控制項釋放目前 mpv 播放器後發生。
+    /// </summary>
+    public event EventHandler? PlayerReleased;
 
     /// <summary>
     /// 取得控制項建立播放器時使用的選項。
@@ -733,6 +738,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
             {
                 _hwndPlayer = new MpvWinUiHwndPlayer();
                 _hwndPlayer.PlayerCreated += BackendPlayerCreated;
+                _hwndPlayer.PlayerReleased += BackendPlayerReleased;
             }
 
             PlayerOptions.CopyTo(_hwndPlayer.PlayerOptions);
@@ -824,6 +830,21 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     }
 
     /// <summary>
+    /// 處理內部後端釋放播放器的事件。
+    /// </summary>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
+    private void BackendPlayerReleased(object? sender, EventArgs e)
+    {
+        DetachPlayerBindings();
+        PlayerReleased?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>
     /// 將控制項的 DP 與目前播放器雙向綁定。
     /// </summary>
     /// <param name="player">
@@ -845,17 +866,17 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
 
         if (IsPaused != player.Pause)
         {
-            try { player.Pause = IsPaused; } catch (MpvException) { }
+            try { player.Pause = IsPaused; } catch (MpvException) { } catch (ObjectDisposedException) { }
         }
 
         if (IsMuted != player.Mute)
         {
-            try { player.Mute = IsMuted; } catch (MpvException) { }
+            try { player.Mute = IsMuted; } catch (MpvException) { } catch (ObjectDisposedException) { }
         }
 
         if (Math.Abs(Volume - player.Volume) > 0.01)
         {
-            try { player.Volume = Volume; } catch (MpvException) { }
+            try { player.Volume = Volume; } catch (MpvException) { } catch (ObjectDisposedException) { }
         }
     }
 
@@ -944,6 +965,10 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
         catch (MpvException)
         {
         }
+        catch (ObjectDisposedException)
+        {
+            control.DetachPlayerBindings();
+        }
     }
 
     /// <summary>
@@ -969,6 +994,10 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
         }
         catch (MpvException)
         {
+        }
+        catch (ObjectDisposedException)
+        {
+            control.DetachPlayerBindings();
         }
     }
 
@@ -996,6 +1025,10 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
         catch (MpvException)
         {
         }
+        catch (ObjectDisposedException)
+        {
+            control.DetachPlayerBindings();
+        }
     }
 
     /// <summary>
@@ -1022,6 +1055,10 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
         catch (MpvException)
         {
         }
+        catch (ObjectDisposedException)
+        {
+            control.DetachPlayerBindings();
+        }
     }
 
     /// <summary>
@@ -1047,6 +1084,10 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
         }
         catch (MpvException)
         {
+        }
+        catch (ObjectDisposedException)
+        {
+            control.DetachPlayerBindings();
         }
     }
 
@@ -1079,6 +1120,10 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
         }
         catch (MpvException)
         {
+        }
+        catch (ObjectDisposedException)
+        {
+            control.DetachPlayerBindings();
         }
     }
 
@@ -1114,6 +1159,10 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
         }
         catch (ArgumentOutOfRangeException)
         {
+        }
+        catch (ObjectDisposedException)
+        {
+            control.DetachPlayerBindings();
         }
     }
 
@@ -1297,6 +1346,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
 
         _hwndPlayer.OverlayContent = null;
         _hwndPlayer.PlayerCreated -= BackendPlayerCreated;
+        _hwndPlayer.PlayerReleased -= BackendPlayerReleased;
         Children.Remove(_hwndPlayer);
         _hwndPlayer.Dispose();
         _hwndPlayer = null;

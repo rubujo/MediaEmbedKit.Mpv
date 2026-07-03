@@ -1500,6 +1500,9 @@ internal static class Program
             File.WriteAllText(staleArchivePath, "stale ffmpeg archive", Encoding.UTF8);
             File.WriteAllText(Path.Combine(tempDirectory, "ffmpeg.exe"), "ffmpeg", Encoding.UTF8);
             File.WriteAllText(Path.Combine(tempDirectory, "ffprobe.exe"), "ffprobe", Encoding.UTF8);
+            string archiveSha256 = ComputeSha256Hex(File.ReadAllBytes(archivePath));
+            FFmpegVersionMarker marker = new FFmpegVersionMarker("latest", FFmpegDownloader.WindowsX64AssetName, "sha256:" + archiveSha256);
+            marker.Write(Path.Combine(tempDirectory, "ffmpeg.exe.version"));
 
             using (LoopbackHttpServer server = new LoopbackHttpServer())
             {
@@ -1510,7 +1513,7 @@ internal static class Program
                         new FakeReleaseAsset(
                             FFmpegDownloader.WindowsX64AssetName,
                             server.BuildUri("/ffmpeg.zip").ToString(),
-                            "sha256:" + ComputeSha256Hex(File.ReadAllBytes(archivePath))),
+                            "sha256:" + archiveSha256),
                     });
                 server.AddText("/release", releaseJson, "application/json");
                 server.AddBytes("/ffmpeg.zip", Encoding.UTF8.GetBytes("should not download"), "application/octet-stream");
@@ -1554,6 +1557,8 @@ internal static class Program
             File.WriteAllText(Path.Combine(tempDirectory, "ffprobe.exe"), "ffprobe", Encoding.UTF8);
 
             string archiveSha256 = ComputeSha256Hex(File.ReadAllBytes(archivePath));
+            FFmpegVersionMarker marker = new FFmpegVersionMarker("latest", FFmpegDownloader.WindowsX64AssetName, "sha256:" + archiveSha256);
+            marker.Write(Path.Combine(tempDirectory, "ffmpeg.exe.version"));
             byte[] checksumBytes = Encoding.UTF8.GetBytes(archiveSha256 + "  " + FFmpegDownloader.WindowsX64AssetName + Environment.NewLine);
             using (LoopbackHttpServer server = new LoopbackHttpServer())
             {

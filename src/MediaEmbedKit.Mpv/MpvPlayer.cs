@@ -1596,16 +1596,18 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
 
         CancellationTokenRegistration registration = RegisterCancellation(requestId, completion, cancellationToken);
 
-        using (Utf8StringArray args = new Utf8StringArray(arguments))
+        try
         {
-            int error = InvokeNative(handle => MpvNative.mpv_command_async(handle, requestId, args.Pointer));
-            if (error < 0)
+            using (Utf8StringArray args = new Utf8StringArray(arguments))
             {
-                TaskCompletionSource<MpvNode>? removed;
-                _pendingRequests.TryRemove(requestId, out removed);
-                registration.Dispose();
-                completion.TrySetException(new MpvException(error));
+                int error = InvokeNative(handle => MpvNative.mpv_command_async(handle, requestId, args.Pointer));
+                CompletePendingSubmissionOnError(requestId, registration, completion, error);
             }
+        }
+        catch
+        {
+            RemovePendingRequest(requestId, registration);
+            throw;
         }
 
         RegisterCancellationCleanup(completion, registration, cancellationToken);
@@ -1639,22 +1641,24 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
 
         CancellationTokenRegistration registration = RegisterCancellation(requestId, completion, cancellationToken);
 
-        using (MpvNodeAllocation args = new MpvNodeAllocation(arguments))
+        try
         {
-            NativeMpvNode nativeArguments = args.NativeNode;
-            int error;
-            using (NativeHandleLease handleLease = AcquireNativeHandle())
+            using (MpvNodeAllocation args = new MpvNodeAllocation(arguments))
             {
-                error = MpvNative.mpv_command_node_async(handleLease.Handle, requestId, ref nativeArguments);
-            }
+                NativeMpvNode nativeArguments = args.NativeNode;
+                int error;
+                using (NativeHandleLease handleLease = AcquireNativeHandle())
+                {
+                    error = MpvNative.mpv_command_node_async(handleLease.Handle, requestId, ref nativeArguments);
+                }
 
-            if (error < 0)
-            {
-                TaskCompletionSource<MpvNode>? removed;
-                _pendingRequests.TryRemove(requestId, out removed);
-                registration.Dispose();
-                completion.TrySetException(new MpvException(error));
+                CompletePendingSubmissionOnError(requestId, registration, completion, error);
             }
+        }
+        catch
+        {
+            RemovePendingRequest(requestId, registration);
+            throw;
         }
 
         RegisterCancellationCleanup(completion, registration, cancellationToken);
@@ -1808,23 +1812,25 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
 
         CancellationTokenRegistration registration = RegisterCancellation(requestId, completion, cancellationToken);
 
-        using (Utf8String propertyName = new Utf8String(name))
-        using (MpvNodeAllocation node = new MpvNodeAllocation(value))
+        try
         {
-            NativeMpvNode nativeNode = node.NativeNode;
-            int error;
-            using (NativeHandleLease handleLease = AcquireNativeHandle())
+            using (Utf8String propertyName = new Utf8String(name))
+            using (MpvNodeAllocation node = new MpvNodeAllocation(value))
             {
-                error = MpvNative.mpv_set_property_async(handleLease.Handle, requestId, propertyName.Pointer, MpvFormat.Node, ref nativeNode);
-            }
+                NativeMpvNode nativeNode = node.NativeNode;
+                int error;
+                using (NativeHandleLease handleLease = AcquireNativeHandle())
+                {
+                    error = MpvNative.mpv_set_property_async(handleLease.Handle, requestId, propertyName.Pointer, MpvFormat.Node, ref nativeNode);
+                }
 
-            if (error < 0)
-            {
-                TaskCompletionSource<MpvNode>? removed;
-                _pendingRequests.TryRemove(requestId, out removed);
-                registration.Dispose();
-                completion.TrySetException(new MpvException(error));
+                CompletePendingSubmissionOnError(requestId, registration, completion, error);
             }
+        }
+        catch
+        {
+            RemovePendingRequest(requestId, registration);
+            throw;
         }
 
         RegisterCancellationCleanup(completion, registration, cancellationToken);
@@ -1902,16 +1908,18 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
 
         CancellationTokenRegistration registration = RegisterCancellation(requestId, completion, cancellationToken);
 
-        using (Utf8String propertyName = new Utf8String(name))
+        try
         {
-            int error = InvokeNative(handle => MpvNative.mpv_get_property_async(handle, requestId, propertyName.Pointer, format));
-            if (error < 0)
+            using (Utf8String propertyName = new Utf8String(name))
             {
-                TaskCompletionSource<MpvNode>? removed;
-                _pendingRequests.TryRemove(requestId, out removed);
-                registration.Dispose();
-                completion.TrySetException(new MpvException(error));
+                int error = InvokeNative(handle => MpvNative.mpv_get_property_async(handle, requestId, propertyName.Pointer, format));
+                CompletePendingSubmissionOnError(requestId, registration, completion, error);
             }
+        }
+        catch
+        {
+            RemovePendingRequest(requestId, registration);
+            throw;
         }
 
         RegisterCancellationCleanup(completion, registration, cancellationToken);
@@ -5578,21 +5586,23 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
 
         CancellationTokenRegistration registration = RegisterCancellation(requestId, completion, cancellationToken);
 
-        using (Utf8String propertyName = new Utf8String(name))
+        try
         {
-            int error;
-            using (NativeHandleLease handleLease = AcquireNativeHandle())
+            using (Utf8String propertyName = new Utf8String(name))
             {
-                error = MpvNative.mpv_set_property_async(handleLease.Handle, requestId, propertyName.Pointer, MpvFormat.Flag, ref value);
-            }
+                int error;
+                using (NativeHandleLease handleLease = AcquireNativeHandle())
+                {
+                    error = MpvNative.mpv_set_property_async(handleLease.Handle, requestId, propertyName.Pointer, MpvFormat.Flag, ref value);
+                }
 
-            if (error < 0)
-            {
-                TaskCompletionSource<MpvNode>? removed;
-                _pendingRequests.TryRemove(requestId, out removed);
-                registration.Dispose();
-                completion.TrySetException(new MpvException(error));
+                CompletePendingSubmissionOnError(requestId, registration, completion, error);
             }
+        }
+        catch
+        {
+            RemovePendingRequest(requestId, registration);
+            throw;
         }
 
         RegisterCancellationCleanup(completion, registration, cancellationToken);
@@ -5628,21 +5638,23 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
 
         CancellationTokenRegistration registration = RegisterCancellation(requestId, completion, cancellationToken);
 
-        using (Utf8String propertyName = new Utf8String(name))
+        try
         {
-            int error;
-            using (NativeHandleLease handleLease = AcquireNativeHandle())
+            using (Utf8String propertyName = new Utf8String(name))
             {
-                error = MpvNative.mpv_set_property_async(handleLease.Handle, requestId, propertyName.Pointer, MpvFormat.Int64, ref value);
-            }
+                int error;
+                using (NativeHandleLease handleLease = AcquireNativeHandle())
+                {
+                    error = MpvNative.mpv_set_property_async(handleLease.Handle, requestId, propertyName.Pointer, MpvFormat.Int64, ref value);
+                }
 
-            if (error < 0)
-            {
-                TaskCompletionSource<MpvNode>? removed;
-                _pendingRequests.TryRemove(requestId, out removed);
-                registration.Dispose();
-                completion.TrySetException(new MpvException(error));
+                CompletePendingSubmissionOnError(requestId, registration, completion, error);
             }
+        }
+        catch
+        {
+            RemovePendingRequest(requestId, registration);
+            throw;
         }
 
         RegisterCancellationCleanup(completion, registration, cancellationToken);
@@ -5678,21 +5690,23 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
 
         CancellationTokenRegistration registration = RegisterCancellation(requestId, completion, cancellationToken);
 
-        using (Utf8String propertyName = new Utf8String(name))
+        try
         {
-            int error;
-            using (NativeHandleLease handleLease = AcquireNativeHandle())
+            using (Utf8String propertyName = new Utf8String(name))
             {
-                error = MpvNative.mpv_set_property_async(handleLease.Handle, requestId, propertyName.Pointer, MpvFormat.Double, ref value);
-            }
+                int error;
+                using (NativeHandleLease handleLease = AcquireNativeHandle())
+                {
+                    error = MpvNative.mpv_set_property_async(handleLease.Handle, requestId, propertyName.Pointer, MpvFormat.Double, ref value);
+                }
 
-            if (error < 0)
-            {
-                TaskCompletionSource<MpvNode>? removed;
-                _pendingRequests.TryRemove(requestId, out removed);
-                registration.Dispose();
-                completion.TrySetException(new MpvException(error));
+                CompletePendingSubmissionOnError(requestId, registration, completion, error);
             }
+        }
+        catch
+        {
+            RemovePendingRequest(requestId, registration);
+            throw;
         }
 
         RegisterCancellationCleanup(completion, registration, cancellationToken);
@@ -6050,6 +6064,8 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
                 return MpvNode.FromDouble(value is double number ? number : 0);
             case MpvFormat.Node:
                 return value as MpvNode ?? MpvNode.None();
+            case MpvFormat.ByteArray:
+                return MpvNode.FromByteArray(value as byte[] ?? Array.Empty<byte>());
             default:
                 return MpvNode.None();
         }
@@ -6147,6 +6163,8 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
             case MpvFormat.Node:
                 NativeMpvNode node = Marshal.PtrToStructure<NativeMpvNode>(property.Data);
                 return MpvNode.FromNative(node);
+            case MpvFormat.ByteArray:
+                return MpvNode.DecodeByteArray(property.Data);
             default:
                 return null;
         }
@@ -6346,6 +6364,32 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
                 tuple.tcs.TrySetCanceled(tuple.token);
             }
         }, (_pendingRequests, requestId, completion, this, cancellationToken));
+    }
+
+    /// <summary>
+    /// 在原生非同步要求提交失敗時完成清理並回報例外。
+    /// </summary>
+    private void CompletePendingSubmissionOnError(
+        ulong requestId,
+        CancellationTokenRegistration registration,
+        TaskCompletionSource<MpvNode> completion,
+        int error)
+    {
+        if (error < 0)
+        {
+            RemovePendingRequest(requestId, registration);
+            completion.TrySetException(new MpvException(error));
+        }
+    }
+
+    /// <summary>
+    /// 移除尚未送出的非同步要求並釋放取消註冊。
+    /// </summary>
+    private void RemovePendingRequest(ulong requestId, CancellationTokenRegistration registration)
+    {
+        TaskCompletionSource<MpvNode>? removed;
+        _pendingRequests.TryRemove(requestId, out removed);
+        registration.Dispose();
     }
 
     /// <summary>

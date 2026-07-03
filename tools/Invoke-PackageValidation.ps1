@@ -65,6 +65,27 @@ $metaPackageIds = @(
     "MediaEmbedKit.Mpv.Full"
 )
 
+$expectedLibTfms = @{
+    "MediaEmbedKit.Mpv" = @("netstandard2.0", "net472", "net48", "net10.0")
+    "MediaEmbedKit.Mpv.Externals" = @("netstandard2.0", "net472", "net48", "net10.0")
+    "MediaEmbedKit.Mpv.Runtime" = @("netstandard2.0", "net472", "net48", "net10.0")
+    "MediaEmbedKit.Mpv.Diagnostics" = @("netstandard2.0", "net472", "net48", "net10.0")
+    "MediaEmbedKit.Mpv.Hosting" = @("netstandard2.0", "net472", "net48", "net10.0")
+    "MediaEmbedKit.Mpv.WinForms" = @("net472", "net48", "net10.0-windows7.0")
+    "MediaEmbedKit.Mpv.Wpf" = @("net472", "net48", "net10.0-windows7.0")
+    "MediaEmbedKit.Mpv.Avalonia" = @("net10.0-windows7.0")
+    "MediaEmbedKit.Mpv.WinUI" = @("net10.0-windows10.0.19041")
+    "MediaEmbedKit.Mpv.Maui.Windows" = @("net10.0-windows10.0.19041")
+}
+
+$expectedFullDependencies = @(
+    "MediaEmbedKit.Mpv",
+    "MediaEmbedKit.Mpv.Externals",
+    "MediaEmbedKit.Mpv.Runtime",
+    "MediaEmbedKit.Mpv.Diagnostics",
+    "MediaEmbedKit.Mpv.Hosting"
+)
+
 $forbiddenRuntimeFiles = @(
     "libmpv-2.dll",
     "yt-dlp.exe",
@@ -82,20 +103,60 @@ $forbiddenRuntimeFilePatterns = @(
     "^mpv-dev-.*\.7z$"
 )
 
+function Read-ZipEntryText {
+    param(
+        [System.IO.Compression.ZipArchive] $Archive,
+        [string] $EntryName
+    )
+
+    $entry = $Archive.GetEntry($EntryName)
+    if ($null -eq $entry) {
+        throw "套件缺少項目：$EntryName"
+    }
+
+    $stream = $entry.Open()
+    try {
+        $reader = [System.IO.StreamReader]::new($stream, [System.Text.Encoding]::UTF8)
+        try {
+            return $reader.ReadToEnd()
+        }
+        finally {
+            $reader.Dispose()
+        }
+    }
+    finally {
+        $stream.Dispose()
+    }
+}
+
 foreach ($packageId in $expectedPackageIds) {
     $packagePattern = "^" + [System.Text.RegularExpressions.Regex]::Escape($packageId) + "\.\d"
     $packages = @(Get-ChildItem -LiteralPath $resolvedPackageDirectory -Filter "$packageId.*.nupkg" |
         Where-Object { $_.Name -notlike "*.symbols.nupkg" -and $_.BaseName -match $packagePattern })
+    $symbolPackages = @(Get-ChildItem -LiteralPath $resolvedPackageDirectory -Filter "$packageId.*.snupkg" |
+        Where-Object { $_.BaseName -match $packagePattern })
 
     if ($packages.Count -ne 1) {
         throw "找不到唯一的套件：$packageId"
     }
 
+    if ($symbolPackages.Count -ne 1) {
+        throw "找不到唯一的符號套件：$packageId"
+    }
+
     $package = $packages[0]
+    $symbolPackage = $symbolPackages[0]
+    $packageVersion = $package.BaseName.Substring($packageId.Length + 1)
+    $symbolVersion = $symbolPackage.BaseName.Substring($packageId.Length + 1)
+    if ($packageVersion -ne $symbolVersion) {
+        throw "主套件與符號套件版本不一致：$packageId"
+    }
+
     $archive = [System.IO.Compression.ZipFile]::OpenRead($package.FullName)
     try {
         $entryNames = @($archive.Entries | ForEach-Object { $_.FullName })
-        if (-not ($entryNames | Where-Object { $_ -like "*.nuspec" })) {
+        $nuspecName = @($entryNames | Where-Object { $_ -like "*.nuspec" } | Select-Object -First 1)
+        if ($nuspecName.Count -eq 0) {
             throw "套件缺少 nuspec：$($package.Name)"
         }
 
@@ -110,6 +171,22 @@ foreach ($packageId in $expectedPackageIds) {
         if ($metaPackageIds -notcontains $packageId) {
             if (-not ($entryNames | Where-Object { $_ -like "lib/*/*.dll" })) {
                 throw "套件缺少 lib DLL：$($package.Name)"
+            }
+
+            foreach ($tfm in $expectedLibTfms[$packageId]) {
+                $expectedDll = "lib/$tfm/$packageId.dll"
+                if ($entryNames -notcontains $expectedDll) {
+                    throw "套件缺少目標框架 DLL：$expectedDll"
+                }
+            }
+        }
+        else {
+            [xml] $nuspec = Read-ZipEntryText -Archive $archive -EntryName $nuspecName[0]
+            $dependencies = @($nuspec.package.metadata.dependencies.group.dependency | ForEach-Object { $_.id })
+            foreach ($dependencyId in $expectedFullDependencies) {
+                if ($dependencies -notcontains $dependencyId) {
+                    throw "中繼套件缺少相依套件：$dependencyId"
+                }
             }
         }
 
@@ -130,6 +207,17 @@ foreach ($packageId in $expectedPackageIds) {
     }
     finally {
         $archive.Dispose()
+    }
+
+    $symbolArchive = [System.IO.Compression.ZipFile]::OpenRead($symbolPackage.FullName)
+    try {
+        $symbolEntryNames = @($symbolArchive.Entries | ForEach-Object { $_.FullName })
+        if ($metaPackageIds -notcontains $packageId -and -not ($symbolEntryNames | Where-Object { $_ -like "lib/*/*.pdb" })) {
+            throw "符號套件缺少 PDB：$($symbolPackage.Name)"
+        }
+    }
+    finally {
+        $symbolArchive.Dispose()
     }
 }
 

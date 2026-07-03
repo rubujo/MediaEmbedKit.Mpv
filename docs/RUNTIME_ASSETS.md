@@ -42,7 +42,7 @@ runtime/
 | **libmpv** | runtime/libmpv-2.dll 存在 + 同目錄有 `libmpv-2.dll.version.json` sidecar 標記 + marker 內 provider / releaseTag / assetName 全部對得上上游當前 release + `OverwriteExisting=false` + 無 `ExpectedSha256` |
 | **yt-dlp** | runtime/yt-dlp.exe 存在 + `yt-dlp --version` 與上游 release tag 相符 + `OverwriteExisting=false` + 無 `ExpectedSha256` |
 | **Deno** | runtime/deno.exe 存在 + `deno --version` 與上游 release tag 相符 + `OverwriteExisting=false` + 無 `ExpectedSha256` |
-| **FFmpeg**（若啟用） | runtime/ffmpeg.exe + ffprobe.exe 都存在 + `OverwriteExisting=false` + 無 `ExpectedSha256`（FFmpeg 不做版本比對，純檢查檔案存在） |
+| **FFmpeg**（若啟用） | runtime/ffmpeg.exe + ffprobe.exe 都存在 + 同目錄有 `ffmpeg.exe.version` sidecar 標記 + marker 內 releaseTag / assetName / digest 全部對得上上游當前 release + `OverwriteExisting=false` + 無 `ExpectedSha256` |
 
 對「裝完即用」與「CI 快取命中」情境，重複呼叫 `InstallOrUpdateAsync` 第二次起應該幾乎零成本（每元件最多打一次 GitHub Releases API 做版本比對）。要強制完整重新下載，設 `OverwriteExisting = true` 在對應選項（或呼叫 `UpdateLibMpvAsync(...)` 顯式重新下載 libmpv）。
 
@@ -59,6 +59,8 @@ libmpv 的 sidecar 標記檔（`libmpv-2.dll.version.json`）格式：
 
 輔助工具在每次成功安裝後寫入此檔，下次安裝時讀回比對。**手動刪除此檔**會強制下次呼叫走完整下載 + 解壓路徑。
 
+FFmpeg 的 sidecar 標記檔（`ffmpeg.exe.version`）使用簡單 key-value 格式，記錄 `releaseTag`、`assetName` 與 GitHub Releases `digest`。既有 `ffmpeg.exe` / `ffprobe.exe` 只有在 marker 同步符合目前 `latest` 發行資產時才會被重用；手動放入兩個 exe 但沒有 marker 時，輔助工具會重新下載並寫入可稽核狀態。
+
 ### 同處理序內 libmpv 已載入後的暫存更新
 
 libmpv-2.dll 一旦載入處理序就無法熱替換（檔案被鎖）。同處理序內呼叫 `UpdateLibMpvAsync` 會把新版暫存至 `runtime/.updates/<時戳>/`，回傳 `RequiresProcessRestart = true`。下次處理序啟動時先呼叫 `ApplyStagedLibMpvUpdate(...)` 把暫存版本提升為使用版本，再載入 libmpv。
@@ -69,7 +71,7 @@ libmpv-2.dll 一旦載入處理序就無法熱替換（檔案被鎖）。同處�
 
 `FFmpegDownloadOptions.RetainArchive`、`MpvWindowsBuildDownloadOptions.RetainArchive` 與 `DenoDownloadOptions.RetainArchive` 控制解壓成功後是否保留下載的壓縮檔（zip / 7z）。預設值為 `false`：解壓成功後輔助工具立即清掉壓縮檔，避免長期佔用磁碟（一次完整執行階段安裝可省 ~290 MB：FFmpeg-Builds zip ~200 MB + libmpv .7z ~50–100 MB + Deno zip ~30 MB）。
 
-需在「暖啟動重新驗證 SHA-256 而不重新下載」流程下保留壓縮檔的呼叫端，應明確設 `RetainArchive = true`。下次再呼叫 `Download*Async(...)` 時，FFmpeg 輔助工具即使已可重用既有 `ffmpeg.exe` / `ffprobe.exe`，仍會先驗證 保留的封存檔的 GitHub digest / 提供者總和檢查碼，確認後才走快速路徑。
+需在「暖啟動重新驗證 SHA-256 而不重新下載」流程下保留壓縮檔的呼叫端，應明確設 `RetainArchive = true`。下次再呼叫 `Download*Async(...)` 時，FFmpeg 輔助工具即使已可重用既有 `ffmpeg.exe` / `ffprobe.exe` 與 sidecar marker，仍會先驗證保留的封存檔的 GitHub digest / 提供者總和檢查碼，確認後才走快速路徑。
 
 清掉壓縮檔的失敗（檔案被其他處理序鎖、權限不足等）不會擲例外或失敗整個下載流程 —— 壓縮檔本身已不再被需要，留下也只是磁碟用量問題。
 
@@ -263,7 +265,7 @@ FFmpeg 輔助工具支援從 yt-dlp `FFmpeg-Builds` 下載對應架構的 GPL �
 >
 > 本輔助工具僅提供下載與驗證工具，不對授權合規做進一步處理 —— 啟用此選項即視同自願接受 GPLv2+ 散發義務。
 
-FFmpeg 沒有本專案可呼叫的內建自我更新命令。若要更新，請重新呼叫 `FFmpegDownloader.DownloadAndExtractLatestAsync(...)` 或 `MpvWindowsRuntimeInstaller.InstallOrUpdateAsync(...)`，並於 `FFmpegDownloadOptions.OverwriteExisting = true` 時覆蓋既有檔案。既有 `ffmpeg.exe` / `ffprobe.exe` 可重用時，輔助工具仍會依 `RetainArchive` 處理 `ffmpeg-master-latest-*-gpl.zip`：預設 `false` 清掉所有 FFmpeg-Builds zip，明確 `true` 時驗證並只保留目前資產。
+FFmpeg 沒有本專案可呼叫的內建自我更新命令。若要更新，請重新呼叫 `FFmpegDownloader.DownloadAndExtractLatestAsync(...)` 或 `MpvWindowsRuntimeInstaller.InstallOrUpdateAsync(...)`，並於 `FFmpegDownloadOptions.OverwriteExisting = true` 時覆蓋既有檔案。既有 `ffmpeg.exe` / `ffprobe.exe` 必須搭配符合目前發行資產的 `ffmpeg.exe.version` 才會重用；輔助工具仍會依 `RetainArchive` 處理 `ffmpeg-master-latest-*-gpl.zip`：預設 `false` 清掉所有 FFmpeg-Builds zip，明確 `true` 時驗證並只保留目前資產。
 
 ### yt-dlp/FFmpeg-Builds 的雙發行結構
 

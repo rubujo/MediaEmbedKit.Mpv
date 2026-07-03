@@ -141,6 +141,11 @@ internal sealed class MpvWinUiHwndPlayer : Grid, IDisposable
     public event EventHandler? PlayerCreated;
 
     /// <summary>
+    /// 在控制項釋放目前 mpv 播放器後發生。
+    /// </summary>
+    public event EventHandler? PlayerReleased;
+
+    /// <summary>
     /// 取得控制項建立播放器時使用的選項。
     /// </summary>
     /// <value>
@@ -867,6 +872,7 @@ internal sealed class MpvWinUiHwndPlayer : Grid, IDisposable
         _player.Dispose();
         _player = null;
         _playerVideoHwnd = IntPtr.Zero;
+        PlayerReleased?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>

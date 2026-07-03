@@ -148,6 +148,7 @@ public class MpvViewHandler : ViewHandler<MpvView, object>
         AttachPlatformWindow(platformView);
         UpdateOverlayContent();
         platformView.PlayerCreated += OnPlayerCreated;
+        platformView.PlayerReleased += OnPlayerReleased;
         VirtualView.SetPlayer(platformView.Player);
 
         if (!string.IsNullOrWhiteSpace(VirtualView.PendingSource))
@@ -171,6 +172,7 @@ public class MpvViewHandler : ViewHandler<MpvView, object>
     {
 #if WINDOWS
         platformView.PlayerCreated -= OnPlayerCreated;
+        platformView.PlayerReleased -= OnPlayerReleased;
         platformView.OverlayContent = null;
         ReleaseResolvedOverlayView();
         VirtualView.SetPlayer(null);
@@ -192,6 +194,22 @@ public class MpvViewHandler : ViewHandler<MpvView, object>
     {
 #if WINDOWS
         VirtualView.SetPlayer(PlatformView.Player);
+#endif
+    }
+
+    /// <summary>
+    /// 在平台控制項釋放播放器後同步清除虛擬檢視的播放器參考。
+    /// </summary>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 事件資料。
+    /// </param>
+    private void OnPlayerReleased(object? sender, System.EventArgs e)
+    {
+#if WINDOWS
+        VirtualView.SetPlayer(null);
 #endif
     }
 

@@ -28,6 +28,10 @@ public static class FFmpegDownloader
     /// FFmpeg-Builds 發行資產 總和檢查碼檔案名稱。
     /// </summary>
     public const string ChecksumAssetName = "checksums.sha256";
+    /// <summary>
+    /// FFmpeg 安裝 sidecar 標記檔名稱。
+    /// </summary>
+    private const string VersionMarkerFileName = "ffmpeg.exe.version";
 
     /// <summary>
     /// 取得指定 Windows 架構對應的 FFmpeg-Builds 發行資產檔名。
@@ -109,7 +113,8 @@ public static class FFmpegDownloader
         string archivePath = Path.Combine(installDirectory, asset.Name);
         string ffmpegPath = Path.Combine(installDirectory, "ffmpeg.exe");
         string ffprobePath = Path.Combine(installDirectory, "ffprobe.exe");
-        if (CanUseExistingTools(ffmpegPath, ffprobePath, options))
+        string markerPath = Path.Combine(installDirectory, VersionMarkerFileName);
+        if (CanUseExistingTools(ffmpegPath, ffprobePath, markerPath, release, asset, options))
         {
             if (File.Exists(archivePath) && options.RetainArchive)
             {
@@ -139,6 +144,7 @@ public static class FFmpegDownloader
                 TryPruneFFmpegArchives(
                     installDirectory,
                     keepArchiveName: options.RetainArchive ? asset.Name : null);
+                WriteVersionMarker(markerPath, release, asset);
 
                 return new FFmpegDownloadResult(
                     release.TagName,
@@ -183,6 +189,7 @@ public static class FFmpegDownloader
             ArchiveSafety.RejectIfReparsePoint(extractedFFprobePath, "FFmpeg-Builds archive extracted ffprobe.exe");
             File.Copy(extractedFFmpegPath, ffmpegPath, true);
             File.Copy(extractedFFprobePath, ffprobePath, true);
+            WriteVersionMarker(markerPath, release, asset);
         }
         finally
         {
@@ -376,22 +383,63 @@ public static class FFmpegDownloader
     /// <param name="ffprobePath">
     /// FFprobe 可執行檔路徑。
     /// </param>
+    /// <param name="markerPath">
+    /// FFmpeg 安裝 sidecar 標記檔路徑。
+    /// </param>
+    /// <param name="release">
+    /// GitHub Releases 資料。
+    /// </param>
+    /// <param name="asset">
+    /// 發行資產。
+    /// </param>
     /// <param name="options">
     /// FFmpeg 下載選項。
     /// </param>
     /// <returns>
     /// 可重用既有工具時為 <see langword="true"/>。
     /// </returns>
-    private static bool CanUseExistingTools(string ffmpegPath, string ffprobePath, FFmpegDownloadOptions options)
+    private static bool CanUseExistingTools(
+        string ffmpegPath,
+        string ffprobePath,
+        string markerPath,
+        GitHubRelease release,
+        GitHubReleaseAsset asset,
+        FFmpegDownloadOptions options)
     {
-        // Idempotency skip：ffmpeg.exe + ffprobe.exe 已存在、呼叫端未要求覆寫或釘版 SHA
-        // → 跳過下載 + 解壓。先前要求 BestEffort 才允許 skip，但 OverwriteExisting=false
-        // + 沒 ExpectedSha256 就足夠保證「使用者沒要求重新驗證」—— 信任 disk 上的檔是
-        // 我們上次自己安裝完成寫入的。要強制重新下載請設 OverwriteExisting=true。
-        return File.Exists(ffmpegPath) &&
-            File.Exists(ffprobePath) &&
-            !options.OverwriteExisting &&
-            string.IsNullOrWhiteSpace(options.ExpectedSha256);
+        if (!File.Exists(ffmpegPath) ||
+            !File.Exists(ffprobePath) ||
+            options.OverwriteExisting ||
+            !string.IsNullOrWhiteSpace(options.ExpectedSha256))
+        {
+            return false;
+        }
+
+        ArchiveSafety.RejectIfReparsePoint(ffmpegPath, "FFmpeg runtime ffmpeg.exe");
+        ArchiveSafety.RejectIfReparsePoint(ffprobePath, "FFmpeg runtime ffprobe.exe");
+
+        FFmpegVersionMarker? marker = FFmpegVersionMarker.TryRead(markerPath);
+        return marker != null &&
+            string.Equals(marker.ReleaseTag, release.TagName, StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(marker.AssetName, asset.Name, StringComparison.OrdinalIgnoreCase) &&
+            string.Equals(marker.Digest ?? string.Empty, asset.Digest ?? string.Empty, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// 寫入 FFmpeg 安裝 sidecar 標記。
+    /// </summary>
+    /// <param name="markerPath">
+    /// sidecar 標記檔路徑。
+    /// </param>
+    /// <param name="release">
+    /// GitHub Releases 資料。
+    /// </param>
+    /// <param name="asset">
+    /// 發行資產。
+    /// </param>
+    private static void WriteVersionMarker(string markerPath, GitHubRelease release, GitHubReleaseAsset asset)
+    {
+        FFmpegVersionMarker marker = new FFmpegVersionMarker(release.TagName, asset.Name, asset.Digest);
+        marker.Write(markerPath);
     }
 
     /// <summary>
@@ -530,5 +578,152 @@ public static class FFmpegDownloader
         }
 
         return executablePath;
+    }
+}
+
+/// <summary>
+/// 描述 FFmpeg-Builds 安裝來源的 sidecar 標記。
+/// </summary>
+internal sealed class FFmpegVersionMarker
+{
+    /// <summary>
+    /// 標記檔 schema 版本。
+    /// </summary>
+    private const string SchemaVersion = "1";
+
+    /// <summary>
+    /// 初始化 <see cref="FFmpegVersionMarker"/> 類別的新執行個體。
+    /// </summary>
+    /// <param name="releaseTag">
+    /// GitHub Releases 標籤。
+    /// </param>
+    /// <param name="assetName">
+    /// 發行資產名稱。
+    /// </param>
+    /// <param name="digest">
+    /// GitHub Releases digest 欄位。
+    /// </param>
+    public FFmpegVersionMarker(string releaseTag, string assetName, string? digest)
+    {
+        ReleaseTag = releaseTag ?? string.Empty;
+        AssetName = assetName ?? string.Empty;
+        Digest = digest;
+    }
+
+    /// <summary>
+    /// 取得 GitHub Releases 標籤。
+    /// </summary>
+    /// <value>
+    /// GitHub Releases 標籤。
+    /// </value>
+    public string ReleaseTag { get; private set; }
+
+    /// <summary>
+    /// 取得發行資產名稱。
+    /// </summary>
+    /// <value>
+    /// 發行資產名稱。
+    /// </value>
+    public string AssetName { get; private set; }
+
+    /// <summary>
+    /// 取得 GitHub Releases digest 欄位。
+    /// </summary>
+    /// <value>
+    /// GitHub Releases digest 欄位。
+    /// </value>
+    public string? Digest { get; private set; }
+
+    /// <summary>
+    /// 嘗試讀取 sidecar 標記。
+    /// </summary>
+    /// <param name="markerPath">
+    /// sidecar 標記檔路徑。
+    /// </param>
+    /// <returns>
+    /// 可辨識的標記；讀取失敗或 schema 不符時為 <see langword="null"/>。
+    /// </returns>
+    public static FFmpegVersionMarker? TryRead(string markerPath)
+    {
+        if (string.IsNullOrWhiteSpace(markerPath) || !File.Exists(markerPath))
+        {
+            return null;
+        }
+
+        try
+        {
+            string schemaVersion = string.Empty;
+            string releaseTag = string.Empty;
+            string assetName = string.Empty;
+            string? digest = null;
+            string[] lines = File.ReadAllLines(markerPath);
+            foreach (string line in lines)
+            {
+                int separator = line.IndexOf('=');
+                if (separator <= 0)
+                {
+                    continue;
+                }
+
+                string key = line.Substring(0, separator);
+                string value = line.Substring(separator + 1);
+                switch (key)
+                {
+                    case "schemaVersion":
+                        schemaVersion = value;
+                        break;
+                    case "releaseTag":
+                        releaseTag = value;
+                        break;
+                    case "assetName":
+                        assetName = value;
+                        break;
+                    case "digest":
+                        digest = value;
+                        break;
+                }
+            }
+
+            if (!string.Equals(schemaVersion, SchemaVersion, StringComparison.Ordinal) ||
+                string.IsNullOrWhiteSpace(releaseTag) ||
+                string.IsNullOrWhiteSpace(assetName))
+            {
+                return null;
+            }
+
+            return new FFmpegVersionMarker(releaseTag, assetName, digest);
+        }
+        catch (IOException)
+        {
+            return null;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// 寫入 sidecar 標記。
+    /// </summary>
+    /// <param name="markerPath">
+    /// sidecar 標記檔路徑。
+    /// </param>
+    public void Write(string markerPath)
+    {
+        string? directory = Path.GetDirectoryName(Path.GetFullPath(markerPath));
+        if (!string.IsNullOrEmpty(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+
+        string[] lines = new[]
+        {
+            "schemaVersion=" + SchemaVersion,
+            "releaseTag=" + ReleaseTag,
+            "assetName=" + AssetName,
+            "digest=" + (Digest ?? string.Empty)
+        };
+        File.WriteAllLines(markerPath, lines, Encoding.UTF8);
     }
 }

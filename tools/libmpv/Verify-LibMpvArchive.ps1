@@ -80,11 +80,19 @@ if ($LASTEXITCODE -ne 0) {
     throw "7z 解壓縮失敗，結束碼：$LASTEXITCODE"
 }
 
+$reparseEntries = @(Get-ChildItem -LiteralPath $extractDirectory -Recurse -Force | Where-Object {
+    ($_.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0
+})
+if ($reparseEntries.Count -gt 0) {
+    throw "壓縮檔解出 reparse point，拒絕驗證：$($reparseEntries[0].FullName)"
+}
+
 $libMpv = Get-ChildItem -LiteralPath $extractDirectory -Recurse -File -Filter 'libmpv-2.dll' | Select-Object -First 1
 [ordered]@{
     archivePath = (Resolve-Path -LiteralPath $ArchivePath).Path
     sha256 = $archiveSha256
     extractDirectory = (Resolve-Path -LiteralPath $extractDirectory).Path
+    containsReparsePoint = $false
     containsLibMpv2Dll = ($null -ne $libMpv)
     libMpv2DllPath = if ($null -eq $libMpv) { $null } else { $libMpv.FullName }
 } | ConvertTo-Json -Depth 4

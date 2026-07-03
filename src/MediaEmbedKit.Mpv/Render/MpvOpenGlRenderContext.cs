@@ -11,6 +11,10 @@ namespace MediaEmbedKit.Mpv.Render;
 public sealed class MpvOpenGlRenderContext : IDisposable
 {
     /// <summary>
+    /// 序列化所有 libmpv render API 呼叫與釋放流程的同步物件。
+    /// </summary>
+    private readonly object _syncRoot = new object();
+    /// <summary>
     /// 保存解析 OpenGL 函式位址的委派，避免遭到記憶體回收。
     /// </summary>
     private readonly MpvOpenGlGetProcAddress _getProcAddressCallback;
@@ -65,7 +69,13 @@ public sealed class MpvOpenGlRenderContext : IDisposable
     /// </value>
     public bool IsDisposed
     {
-        get { return _disposed; }
+        get
+        {
+            lock (_syncRoot)
+            {
+                return _disposed;
+            }
+        }
     }
 
     /// <summary>
@@ -78,8 +88,11 @@ public sealed class MpvOpenGlRenderContext : IDisposable
     {
         get
         {
-            EnsureNotDisposed();
-            return _context;
+            lock (_syncRoot)
+            {
+                EnsureNotDisposed();
+                return _context;
+            }
         }
     }
 
@@ -216,8 +229,11 @@ public sealed class MpvOpenGlRenderContext : IDisposable
     /// </returns>
     public MpvRenderUpdateFlags Update()
     {
-        EnsureNotDisposed();
-        return (MpvRenderUpdateFlags)MpvNative.mpv_render_context_update(_context);
+        lock (_syncRoot)
+        {
+            EnsureNotDisposed();
+            return (MpvRenderUpdateFlags)MpvNative.mpv_render_context_update(_context);
+        }
     }
 
     /// <summary>
@@ -257,40 +273,42 @@ public sealed class MpvOpenGlRenderContext : IDisposable
         int depth = 0,
         bool skipRendering = false)
     {
-        EnsureNotDisposed();
-
         IntPtr fboPointer = IntPtr.Zero;
         IntPtr flipPointer = IntPtr.Zero;
         IntPtr blockPointer = IntPtr.Zero;
         IntPtr depthPointer = IntPtr.Zero;
         IntPtr skipPointer = IntPtr.Zero;
-        try
+        lock (_syncRoot)
         {
-            fboPointer = AllocStructure(new MpvOpenGlFbo(framebufferObject, width, height, internalFormat));
-            flipPointer = AllocInt32(flipY ? 1 : 0);
-            blockPointer = AllocInt32(blockForTargetTime ? 1 : 0);
-            depthPointer = AllocInt32(depth);
-            skipPointer = AllocInt32(skipRendering ? 1 : 0);
-
-            MpvRenderParam[] parameters = new[]
+            EnsureNotDisposed();
+            try
             {
-                new MpvRenderParam(MpvRenderParamType.OpenGlFbo, fboPointer),
-                new MpvRenderParam(MpvRenderParamType.FlipY, flipPointer),
-                new MpvRenderParam(MpvRenderParamType.BlockForTargetTime, blockPointer),
-                new MpvRenderParam(MpvRenderParamType.Depth, depthPointer),
-                new MpvRenderParam(MpvRenderParamType.SkipRendering, skipPointer),
-                MpvRenderParam.Terminator
-            };
+                fboPointer = AllocStructure(new MpvOpenGlFbo(framebufferObject, width, height, internalFormat));
+                flipPointer = AllocInt32(flipY ? 1 : 0);
+                blockPointer = AllocInt32(blockForTargetTime ? 1 : 0);
+                depthPointer = AllocInt32(depth);
+                skipPointer = AllocInt32(skipRendering ? 1 : 0);
 
-            MpvError.ThrowIfError(MpvNative.mpv_render_context_render(_context, parameters));
-        }
-        finally
-        {
-            Free(fboPointer);
-            Free(flipPointer);
-            Free(blockPointer);
-            Free(depthPointer);
-            Free(skipPointer);
+                MpvRenderParam[] parameters = new[]
+                {
+                    new MpvRenderParam(MpvRenderParamType.OpenGlFbo, fboPointer),
+                    new MpvRenderParam(MpvRenderParamType.FlipY, flipPointer),
+                    new MpvRenderParam(MpvRenderParamType.BlockForTargetTime, blockPointer),
+                    new MpvRenderParam(MpvRenderParamType.Depth, depthPointer),
+                    new MpvRenderParam(MpvRenderParamType.SkipRendering, skipPointer),
+                    MpvRenderParam.Terminator
+                };
+
+                MpvError.ThrowIfError(MpvNative.mpv_render_context_render(_context, parameters));
+            }
+            finally
+            {
+                Free(fboPointer);
+                Free(flipPointer);
+                Free(blockPointer);
+                Free(depthPointer);
+                Free(skipPointer);
+            }
         }
     }
 
@@ -302,27 +320,29 @@ public sealed class MpvOpenGlRenderContext : IDisposable
     /// </param>
     public void SkipRender(bool blockForTargetTime = true)
     {
-        EnsureNotDisposed();
-
         IntPtr blockPointer = IntPtr.Zero;
         IntPtr skipPointer = IntPtr.Zero;
-        try
+        lock (_syncRoot)
         {
-            blockPointer = AllocInt32(blockForTargetTime ? 1 : 0);
-            skipPointer = AllocInt32(1);
-            MpvRenderParam[] parameters = new[]
+            EnsureNotDisposed();
+            try
             {
-                new MpvRenderParam(MpvRenderParamType.BlockForTargetTime, blockPointer),
-                new MpvRenderParam(MpvRenderParamType.SkipRendering, skipPointer),
-                MpvRenderParam.Terminator
-            };
+                blockPointer = AllocInt32(blockForTargetTime ? 1 : 0);
+                skipPointer = AllocInt32(1);
+                MpvRenderParam[] parameters = new[]
+                {
+                    new MpvRenderParam(MpvRenderParamType.BlockForTargetTime, blockPointer),
+                    new MpvRenderParam(MpvRenderParamType.SkipRendering, skipPointer),
+                    MpvRenderParam.Terminator
+                };
 
-            MpvError.ThrowIfError(MpvNative.mpv_render_context_render(_context, parameters));
-        }
-        finally
-        {
-            Free(blockPointer);
-            Free(skipPointer);
+                MpvError.ThrowIfError(MpvNative.mpv_render_context_render(_context, parameters));
+            }
+            finally
+            {
+                Free(blockPointer);
+                Free(skipPointer);
+            }
         }
     }
 
@@ -334,21 +354,23 @@ public sealed class MpvOpenGlRenderContext : IDisposable
     /// </returns>
     public MpvRenderFrameInformation GetNextFrameInformation()
     {
-        EnsureNotDisposed();
-
         IntPtr infoPointer = IntPtr.Zero;
-        try
+        lock (_syncRoot)
         {
-            infoPointer = Marshal.AllocHGlobal(Marshal.SizeOf<MpvRenderFrameInfo>());
-            Marshal.StructureToPtr(new MpvRenderFrameInfo(), infoPointer, false);
-            MpvRenderParam parameter = new MpvRenderParam(MpvRenderParamType.NextFrameInfo, infoPointer);
-            MpvError.ThrowIfError(MpvNative.mpv_render_context_get_info(_context, parameter));
-            MpvRenderFrameInfo info = Marshal.PtrToStructure<MpvRenderFrameInfo>(infoPointer);
-            return new MpvRenderFrameInformation((MpvRenderFrameInfoFlags)info.Flags, info.TargetTime);
-        }
-        finally
-        {
-            Free(infoPointer);
+            EnsureNotDisposed();
+            try
+            {
+                infoPointer = Marshal.AllocHGlobal(Marshal.SizeOf<MpvRenderFrameInfo>());
+                Marshal.StructureToPtr(new MpvRenderFrameInfo(), infoPointer, false);
+                MpvRenderParam parameter = new MpvRenderParam(MpvRenderParamType.NextFrameInfo, infoPointer);
+                MpvError.ThrowIfError(MpvNative.mpv_render_context_get_info(_context, parameter));
+                MpvRenderFrameInfo info = Marshal.PtrToStructure<MpvRenderFrameInfo>(infoPointer);
+                return new MpvRenderFrameInformation((MpvRenderFrameInfoFlags)info.Flags, info.TargetTime);
+            }
+            finally
+            {
+                Free(infoPointer);
+            }
         }
     }
 
@@ -363,8 +385,11 @@ public sealed class MpvOpenGlRenderContext : IDisposable
     /// </param>
     public void SetParameter(MpvRenderParamType type, IntPtr data)
     {
-        EnsureNotDisposed();
-        MpvError.ThrowIfError(MpvNative.mpv_render_context_set_parameter(_context, new MpvRenderParam(type, data)));
+        lock (_syncRoot)
+        {
+            EnsureNotDisposed();
+            MpvError.ThrowIfError(MpvNative.mpv_render_context_set_parameter(_context, new MpvRenderParam(type, data)));
+        }
     }
 
     /// <summary>
@@ -378,8 +403,11 @@ public sealed class MpvOpenGlRenderContext : IDisposable
     /// </param>
     public void GetInformation(MpvRenderParamType type, IntPtr data)
     {
-        EnsureNotDisposed();
-        MpvError.ThrowIfError(MpvNative.mpv_render_context_get_info(_context, new MpvRenderParam(type, data)));
+        lock (_syncRoot)
+        {
+            EnsureNotDisposed();
+            MpvError.ThrowIfError(MpvNative.mpv_render_context_get_info(_context, new MpvRenderParam(type, data)));
+        }
     }
 
     /// <summary>
@@ -395,29 +423,31 @@ public sealed class MpvOpenGlRenderContext : IDisposable
             throw new ArgumentNullException(nameof(profile));
         }
 
-        EnsureNotDisposed();
-
         IntPtr profilePointer = IntPtr.Zero;
         IntPtr byteArrayPointer = IntPtr.Zero;
-        try
+        lock (_syncRoot)
         {
-            profilePointer = Marshal.AllocHGlobal(profile.Length);
-            if (profile.Length > 0)
+            EnsureNotDisposed();
+            try
             {
-                Marshal.Copy(profile, 0, profilePointer, profile.Length);
-            }
+                profilePointer = Marshal.AllocHGlobal(profile.Length);
+                if (profile.Length > 0)
+                {
+                    Marshal.Copy(profile, 0, profilePointer, profile.Length);
+                }
 
-            byteArrayPointer = AllocStructure(new NativeMpvByteArray
+                byteArrayPointer = AllocStructure(new NativeMpvByteArray
+                {
+                    Data = profilePointer,
+                    Size = new UIntPtr(unchecked((ulong)profile.Length))
+                });
+                SetParameter(MpvRenderParamType.IccProfile, byteArrayPointer);
+            }
+            finally
             {
-                Data = profilePointer,
-                Size = new UIntPtr(unchecked((ulong)profile.Length))
-            });
-            SetParameter(MpvRenderParamType.IccProfile, byteArrayPointer);
-        }
-        finally
-        {
-            Free(profilePointer);
-            Free(byteArrayPointer);
+                Free(profilePointer);
+                Free(byteArrayPointer);
+            }
         }
     }
 
@@ -442,18 +472,21 @@ public sealed class MpvOpenGlRenderContext : IDisposable
     [Obsolete("libmpv 0.40 已 deprecate MPV_RENDER_PARAM_AMBIENT_LIGHT，並無替代參數；本方法已對應為 obsolete。")]
     public void SetAmbientLight(int lux)
     {
-        EnsureNotDisposed();
         IntPtr valuePointer = IntPtr.Zero;
-        try
+        lock (_syncRoot)
         {
-            valuePointer = AllocInt32(lux);
+            EnsureNotDisposed();
+            try
+            {
+                valuePointer = AllocInt32(lux);
 #pragma warning disable CS0618 // 仍須把值傳給 libmpv 已 deprecated 的參數，保留以維持 ABI。
-            SetParameter(MpvRenderParamType.AmbientLight, valuePointer);
+                SetParameter(MpvRenderParamType.AmbientLight, valuePointer);
 #pragma warning restore CS0618
-        }
-        finally
-        {
-            Free(valuePointer);
+            }
+            finally
+            {
+                Free(valuePointer);
+            }
         }
     }
 
@@ -462,8 +495,11 @@ public sealed class MpvOpenGlRenderContext : IDisposable
     /// </summary>
     public void ReportSwap()
     {
-        EnsureNotDisposed();
-        MpvNative.mpv_render_context_report_swap(_context);
+        lock (_syncRoot)
+        {
+            EnsureNotDisposed();
+            MpvNative.mpv_render_context_report_swap(_context);
+        }
     }
 
     /// <summary>
@@ -471,20 +507,30 @@ public sealed class MpvOpenGlRenderContext : IDisposable
     /// </summary>
     public void Dispose()
     {
-        if (_disposed)
+        bool shouldNotify = false;
+        lock (_syncRoot)
         {
-            return;
+            if (_disposed)
+            {
+                return;
+            }
+
+            _disposed = true;
+            if (_context != IntPtr.Zero)
+            {
+                MpvNative.mpv_render_context_set_update_callback(_context, null, IntPtr.Zero);
+                MpvNative.mpv_render_context_free(_context);
+                _context = IntPtr.Zero;
+            }
+
+            shouldNotify = true;
         }
 
-        _disposed = true;
-        if (_context != IntPtr.Zero)
+        if (shouldNotify)
         {
-            MpvNative.mpv_render_context_set_update_callback(_context, null, IntPtr.Zero);
-            MpvNative.mpv_render_context_free(_context);
-            _context = IntPtr.Zero;
+            _disposeCallback?.Invoke(this);
         }
 
-        _disposeCallback?.Invoke(this);
         GC.KeepAlive(_getProcAddressCallback);
         GC.KeepAlive(_updateCallback);
         GC.SuppressFinalize(this);
@@ -495,9 +541,13 @@ public sealed class MpvOpenGlRenderContext : IDisposable
     /// </summary>
     ~MpvOpenGlRenderContext()
     {
-        if (_context != IntPtr.Zero)
+        lock (_syncRoot)
         {
-            MpvNative.mpv_render_context_free(_context);
+            if (_context != IntPtr.Zero)
+            {
+                MpvNative.mpv_render_context_free(_context);
+                _context = IntPtr.Zero;
+            }
         }
     }
 
