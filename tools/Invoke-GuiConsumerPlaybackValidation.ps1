@@ -41,6 +41,34 @@ function Assert-WorkspacePath {
     }
 }
 
+function Remove-WorkDirectorySafely {
+    param(
+        [string] $Path
+    )
+
+    if (-not (Test-Path -LiteralPath $Path)) {
+        return
+    }
+
+    for ($attempt = 1; $attempt -le 3; $attempt++) {
+        try {
+            Remove-Item -LiteralPath $Path -Recurse -Force
+            return
+        }
+        catch {
+            if ($attempt -eq 1) {
+                & dotnet build-server shutdown *> $null
+            }
+
+            if ($attempt -eq 3) {
+                throw "清理工作資料夾失敗：$Path。$($_.Exception.Message)"
+            }
+
+            Start-Sleep -Seconds $attempt
+        }
+    }
+}
+
 function Get-PackageVersionFromDirectoryProps {
     param(
         [string] $PackageId
@@ -189,7 +217,7 @@ if (-not $SkipPackageValidation) {
 }
 
 if ((Test-Path -LiteralPath $resolvedWorkDirectory) -and -not $KeepWorkDirectory) {
-    Remove-Item -LiteralPath $resolvedWorkDirectory -Recurse -Force
+    Remove-WorkDirectorySafely -Path $resolvedWorkDirectory
 }
 
 New-Item -ItemType Directory -Path $resolvedWorkDirectory -Force | Out-Null
