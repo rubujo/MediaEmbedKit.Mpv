@@ -36,13 +36,20 @@ internal sealed class MpvDelegateObserver<T> : IObserver<T>
         _onCompleted = onCompleted;
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// 通知觀察已完成。
+    /// </summary>
     public void OnCompleted()
     {
         _onCompleted?.Invoke();
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// 通知觀察發生錯誤。
+    /// </summary>
+    /// <param name="error">
+    /// 觀察期間發生的錯誤。
+    /// </param>
     public void OnError(Exception error)
     {
         if (_onError != null)
@@ -54,7 +61,12 @@ internal sealed class MpvDelegateObserver<T> : IObserver<T>
         throw error;
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// 通知最新的屬性值。
+    /// </summary>
+    /// <param name="value">
+    /// 最新的屬性值。
+    /// </param>
     public void OnNext(T value)
     {
         _onNext(value);

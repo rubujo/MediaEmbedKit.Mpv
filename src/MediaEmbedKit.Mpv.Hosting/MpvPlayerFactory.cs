@@ -22,7 +22,15 @@ public sealed class MpvPlayerFactory : IMpvPlayerFactory
         _configure = configure ?? throw new ArgumentNullException(nameof(configure));
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// 建立並初始化新的 <see cref="MpvPlayer"/>。
+    /// </summary>
+    /// <param name="cancellationToken">
+    /// 取消建立流程的語彙基元。
+    /// </param>
+    /// <returns>
+    /// 已初始化的播放器。
+    /// </returns>
     public Task<MpvPlayer> CreateAsync(CancellationToken cancellationToken = default)
     {
         MpvAppBuilder builder = new MpvAppBuilder();
