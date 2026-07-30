@@ -442,6 +442,18 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     }
 
     /// <summary>
+    /// 取得或設定播放是否暫停。
+    /// </summary>
+    /// <value>
+    /// 播放暫停時為 <see langword="true"/>。
+    /// </value>
+    public bool IsPaused
+    {
+        get { return Pause; }
+        set { Pause = value; }
+    }
+
+    /// <summary>
     /// 取得或設定播放器音量。
     /// </summary>
     /// <value>
@@ -466,6 +478,18 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     }
 
     /// <summary>
+    /// 取得或設定音訊是否靜音。
+    /// </summary>
+    /// <value>
+    /// 靜音時為 <see langword="true"/>。
+    /// </value>
+    public bool IsMuted
+    {
+        get { return Mute; }
+        set { Mute = value; }
+    }
+
+    /// <summary>
     /// 取得或設定播放速度。
     /// </summary>
     /// <value>
@@ -486,6 +510,18 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     public double TimePosition
     {
         get { return GetPropertyDouble("time-pos"); }
+    }
+
+    /// <summary>
+    /// 取得或設定目前播放位置。
+    /// </summary>
+    /// <value>
+    /// 目前播放位置。
+    /// </value>
+    public TimeSpan Position
+    {
+        get { return TimeSpan.FromSeconds(TimePosition); }
+        set { SetPropertyDouble("time-pos", value.TotalSeconds); }
     }
 
     /// <summary>
@@ -2581,6 +2617,130 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     }
 
     /// <summary>
+    /// 使用強型別模式搜尋目前播放項目的秒數或百分比位置。
+    /// </summary>
+    /// <param name="value">
+    /// 秒數或百分比數值。
+    /// </param>
+    /// <param name="mode">
+    /// 搜尋位置基準與精確度。
+    /// </param>
+    public void Seek(double value, MpvSeekMode mode)
+    {
+        Command("seek", value.ToString(CultureInfo.InvariantCulture), mode.ToMpvValue());
+    }
+
+    /// <summary>
+    /// 使用強型別模式非同步搜尋目前播放項目的秒數或百分比位置。
+    /// </summary>
+    /// <param name="value">
+    /// 秒數或百分比數值。
+    /// </param>
+    /// <param name="mode">
+    /// 搜尋位置基準與精確度。
+    /// </param>
+    /// <returns>
+    /// 代表 libmpv 命令回覆的工作。
+    /// </returns>
+    public Task SeekAsync(double value, MpvSeekMode mode)
+    {
+        return CommandAsync("seek", value.ToString(CultureInfo.InvariantCulture), mode.ToMpvValue());
+    }
+
+    /// <summary>
+    /// 使用強型別模式非同步搜尋目前播放項目的秒數或百分比位置。
+    /// </summary>
+    /// <param name="value">
+    /// 秒數或百分比數值。
+    /// </param>
+    /// <param name="mode">
+    /// 搜尋位置基準與精確度。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 取消等待命令回覆的語彙基元。
+    /// </param>
+    /// <returns>
+    /// 代表 libmpv 命令回覆的工作。
+    /// </returns>
+    public Task SeekAsync(double value, MpvSeekMode mode, CancellationToken cancellationToken)
+    {
+        return CommandAsync(
+            cancellationToken,
+            "seek",
+            value.ToString(CultureInfo.InvariantCulture),
+            mode.ToMpvValue());
+    }
+
+    /// <summary>
+    /// 使用強型別模式搜尋目前播放項目的播放位置。
+    /// </summary>
+    /// <param name="position">
+    /// 要搜尋的相對或絕對時間。
+    /// </param>
+    /// <param name="mode">
+    /// 搜尋位置基準與精確度。
+    /// </param>
+    public void Seek(TimeSpan position, MpvSeekMode mode = MpvSeekMode.Relative)
+    {
+        ValidateTimeSeekMode(mode);
+        Seek(position.TotalSeconds, mode);
+    }
+
+    /// <summary>
+    /// 使用強型別模式非同步搜尋目前播放項目的播放位置。
+    /// </summary>
+    /// <param name="position">
+    /// 要搜尋的相對或絕對時間。
+    /// </param>
+    /// <param name="mode">
+    /// 搜尋位置基準與精確度。
+    /// </param>
+    /// <returns>
+    /// 代表 libmpv 命令回覆的工作。
+    /// </returns>
+    public Task SeekAsync(TimeSpan position, MpvSeekMode mode = MpvSeekMode.Relative)
+    {
+        ValidateTimeSeekMode(mode);
+        return SeekAsync(position.TotalSeconds, mode);
+    }
+
+    /// <summary>
+    /// 使用強型別模式非同步搜尋目前播放項目的時間位置。
+    /// </summary>
+    /// <param name="position">
+    /// 要搜尋的相對或絕對時間。
+    /// </param>
+    /// <param name="mode">
+    /// 搜尋位置基準與精確度。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 取消等待命令回覆的語彙基元。
+    /// </param>
+    /// <returns>
+    /// 代表 libmpv 命令回覆的工作。
+    /// </returns>
+    public Task SeekAsync(
+        TimeSpan position,
+        MpvSeekMode mode,
+        CancellationToken cancellationToken)
+    {
+        ValidateTimeSeekMode(mode);
+        return SeekAsync(position.TotalSeconds, mode, cancellationToken);
+    }
+
+    private static void ValidateTimeSeekMode(MpvSeekMode mode)
+    {
+        _ = mode.ToMpvValue();
+        if (mode.UsesPercentage())
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(mode),
+                mode,
+                "TimeSpan 多載不支援百分比模式；請使用 double 多載。");
+        }
+    }
+
+    /// <summary>
     /// 暫停播放。
     /// </summary>
     public void PausePlayback()
@@ -4493,6 +4653,42 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     }
 
     /// <summary>
+    /// 使用 callback 觀察指定 libmpv 屬性，不需要額外安裝 System.Reactive。
+    /// </summary>
+    /// <typeparam name="T">
+    /// 屬性值型別；支援 <see cref="double"/>、<see cref="long"/>、<see cref="bool"/>、<see cref="string"/> 與 <see cref="MpvNode"/>。
+    /// </typeparam>
+    /// <param name="propertyName">
+    /// 要觀察的屬性名稱。
+    /// </param>
+    /// <param name="onNext">
+    /// 每次屬性變更時執行的 callback。
+    /// </param>
+    /// <param name="onError">
+    /// 觀察失敗時執行的 callback；未指定時會重新擲出例外。
+    /// </param>
+    /// <param name="onCompleted">
+    /// player 釋放或觀察完成時執行的 callback。
+    /// </param>
+    /// <returns>
+    /// 可用於停止觀察的訂閱。
+    /// </returns>
+    public IDisposable WatchProperty<T>(
+        string propertyName,
+        Action<T> onNext,
+        Action<Exception>? onError = null,
+        Action? onCompleted = null)
+    {
+        if (onNext == null)
+        {
+            throw new ArgumentNullException(nameof(onNext));
+        }
+
+        return WatchProperty<T>(propertyName).Subscribe(
+            new MpvDelegateObserver<T>(onNext, onError, onCompleted));
+    }
+
+    /// <summary>
     /// 啟用或停用指定的 libmpv 事件。
     /// </summary>
     /// <param name="eventId">
@@ -4834,7 +5030,7 @@ public sealed class MpvPlayer : IDisposable, IAsyncDisposable
     }
 
     /// <summary>
-    /// 對所有透過 <see cref="WatchProperty{T}"/> 建立的觀察送出 <see cref="IObserver{T}.OnCompleted"/>。
+    /// 對所有透過 <see cref="WatchProperty{T}(string)"/> 建立的觀察送出 <see cref="IObserver{T}.OnCompleted"/>。
     /// </summary>
     private void CompletePropertyObservables()
     {

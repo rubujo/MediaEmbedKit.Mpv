@@ -1,6 +1,6 @@
 # 參考來源
 
-本文件列出專案規範採用的主要來源。最後查核日期：2026-07-02。
+本文件列出專案規範採用的主要來源。最後查核日期：2026-07-30。
 
 ## libmpv 與 mpv
 
@@ -70,6 +70,7 @@
 ## AI Agent 與提交規範
 
 - Codex `AGENTS.md`：https://developers.openai.com/codex/guides/agents-md
+- OpenAI GPT-5.6 提示最佳實務：https://developers.openai.com/api/docs/guides/model-guidance?model=gpt-5.6#prompting-best-practices
 - Codex Agent Skills：https://developers.openai.com/codex/skills
 - AGENTS.md 開放格式：https://agents.md/
 - Agent Skills 規格：https://agentskills.io/specification

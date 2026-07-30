@@ -101,7 +101,9 @@ internal static class TestRunner
             MpvWinUiPlayer.VolumeProperty,
             MpvWinUiPlayer.IsPausedProperty,
             MpvWinUiPlayer.IsMutedProperty,
-            MpvWinUiPlayer.PlaybackStateProperty
+            MpvWinUiPlayer.PlaybackStateProperty,
+            MpvWinUiPlayer.IsPlayerReadyProperty,
+            MpvWinUiPlayer.LastErrorProperty
         };
         for (int index = 0; index < properties.Length; index++)
         {
@@ -126,6 +128,8 @@ internal static class TestRunner
             Assert(player.PlaybackState == MpvPlaybackState.Idle, "PlaybackState 預設應為 Idle");
             Assert(player.IsOverlayOpen == true, "IsOverlayOpen 預設應為 true");
             Assert(player.OverlayContent == null, "OverlayContent 預設應為 null");
+            Assert(player.IsPlayerReady == false, "IsPlayerReady 預設應為 false");
+            Assert(player.LastError == null, "LastError 預設應為 null");
             Assert(player.Player == null, "尚未 Initialize 時 Player 應為 null");
         }
         finally

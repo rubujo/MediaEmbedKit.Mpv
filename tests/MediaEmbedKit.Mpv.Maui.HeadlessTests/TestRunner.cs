@@ -108,7 +108,9 @@ internal static class TestRunner
             MpvView.VolumeProperty,
             MpvView.IsPausedProperty,
             MpvView.IsMutedProperty,
-            MpvView.PlaybackStateProperty
+            MpvView.PlaybackStateProperty,
+            MpvView.IsPlayerReadyProperty,
+            MpvView.LastErrorProperty
         };
         for (int index = 0; index < properties.Length; index++)
         {
@@ -132,6 +134,8 @@ internal static class TestRunner
         Assert(view.IsOverlayOpen == true, "IsOverlayOpen 預設應為 true");
         Assert(view.OverlayView == null, "OverlayView 預設應為 null");
         Assert(view.OverlayContent == null, "OverlayContent 預設應為 null");
+        Assert(view.IsPlayerReady == false, "IsPlayerReady 預設應為 false");
+        Assert(view.LastError == null, "LastError 預設應為 null");
     }
 
     /// <summary>
@@ -173,6 +177,10 @@ internal static class TestRunner
             "DurationProperty 應由 CreateReadOnly 註冊（IsReadOnly == true）");
         Assert(MpvView.PlaybackStateProperty.IsReadOnly,
             "PlaybackStateProperty 應由 CreateReadOnly 註冊（IsReadOnly == true）");
+        Assert(MpvView.IsPlayerReadyProperty.IsReadOnly,
+            "IsPlayerReadyProperty 應由 CreateReadOnly 註冊（IsReadOnly == true）");
+        Assert(MpvView.LastErrorProperty.IsReadOnly,
+            "LastErrorProperty 應由 CreateReadOnly 註冊（IsReadOnly == true）");
 
         try
         {

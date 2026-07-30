@@ -54,7 +54,7 @@
 | `MediaEmbedKit.Mpv.Externals` | FFmpeg / Deno / yt-dlp 下載器 + ExternalTool 基礎型別 + 共用網路基礎設施 (`DownloadUtility` / `BrowserRequestHeaders` / `GitHubReleaseModels`) + `ArchiveSafety` + `MpvNativeAssetVerificationPolicy` + `MpvNativeRuntime*` catalog | `.Mpv` | 要 yt-dlp / Deno / FFmpeg 輔助工具的人 |
 | `MediaEmbedKit.Mpv.Runtime` | libmpv Windows 執行階段 安裝器 + 4-tier 壓縮檔解壓 + 跨處理序鎖定 + sidecar 標記 + `MpvAppBuilder.UseWindowsRuntimeAutoInstall` 擴充方法 | `.Mpv`, `.Externals` | 想要 輔助工具自動裝 runtime 的人 |
 | `MediaEmbedKit.Mpv.Diagnostics` | `MpvLicenseAuditor` + `MpvRuntimeHealthCheck` + `MpvLibraryUpdateScheduler` | `.Mpv`, `.Externals`, `.Runtime` | 商用合規、staging update 需求 |
-| `MediaEmbedKit.Mpv.Hosting` | `Microsoft.Extensions.DependencyInjection` integration（`AddMpvPlayer` / `AddMpvPlayerFactory`） | `.Mpv` | DI 使用者 |
+| `MediaEmbedKit.Mpv.Hosting` | `Microsoft.Extensions.DependencyInjection` 整合（`IMpvPlayerFactory` / `AddMpvPlayerFactory`） | `.Mpv` | DI 使用者 |
 | `MediaEmbedKit.Mpv.WinForms` | `MpvPlayerControl`（繼承 `System.Windows.Forms.Control`） | `.Mpv` | WinForms 使用者 |
 | `MediaEmbedKit.Mpv.Wpf` | `MpvWpfPlayer`（繼承 `HwndHost`）+ Airspace popup | `.Mpv` | WPF 使用者 |
 | `MediaEmbedKit.Mpv.Avalonia` | `MpvAvaloniaPlayer`（繼承 `OpenGlControlBase`，OpenGL render API，不走 HWND） | `.Mpv` | Avalonia 使用者 |

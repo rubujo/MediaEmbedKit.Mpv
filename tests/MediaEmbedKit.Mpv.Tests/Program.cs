@@ -83,6 +83,8 @@ internal static class Program
         runner.Add("MpvRuntimeHealthReport IsComplete / IsHealthyFor", VerifyMpvRuntimeHealthReportSemantics);
         runner.Add("MpvRenderParamType.AmbientLight 已標 [Obsolete]", VerifyAmbientLightObsolete);
         runner.Add("MpvPlayer 提供 TryGetProperty* 系列", VerifyTryGetPropertySurface);
+        runner.Add("MpvPlayer 強型別播放便利 API", VerifyTypedPlaybackConvenienceSurface);
+        runner.Add("MpvSeekMode 轉換與防呆", VerifySeekModeFormatting);
         runner.Add("MpvNative 在 net7.0+ 採用 LibraryImport", VerifyMpvNativeUsesLibraryImport);
         runner.Add("MpvNative 委派／陣列 輔助工具在 net7.0+ 仍走 LibraryImport", VerifyMpvNativeHelperUsesLibraryImport);
         runner.Add("Windows ARM64 資產對應正確（libmpv / yt-dlp / Deno / FFmpeg）", VerifyWindowsArm64AssetMapping);
@@ -201,6 +203,74 @@ internal static class Program
         AssertEx.True(
             HasInstanceMethod(playerType, "TryGetPropertyNode", typeof(string), typeof(MpvNode).MakeByRefType()),
             "MpvPlayer 應提供 TryGetPropertyNode(string, out MpvNode)。");
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// 驗證 <see cref="MpvPlayer"/> 提供強型別播放狀態、位置、搜尋與 callback 觀察入口。
+    /// </summary>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
+    private static Task VerifyTypedPlaybackConvenienceSurface()
+    {
+        Type playerType = typeof(MpvPlayer);
+        AssertEx.True(playerType.GetProperty(nameof(MpvPlayer.IsPaused)) != null, "應提供 IsPaused 屬性");
+        AssertEx.True(playerType.GetProperty(nameof(MpvPlayer.IsMuted)) != null, "應提供 IsMuted 屬性");
+        AssertEx.True(
+            playerType.GetProperty(nameof(MpvPlayer.Position))?.PropertyType == typeof(TimeSpan),
+            "Position 應使用 TimeSpan");
+        AssertEx.True(
+            playerType.GetMethod(nameof(MpvPlayer.Seek), new[] { typeof(TimeSpan), typeof(MpvSeekMode) }) != null,
+            "應提供 Seek(TimeSpan, MpvSeekMode)");
+        AssertEx.True(
+            playerType.GetMethod(nameof(MpvPlayer.SeekAsync), new[] { typeof(TimeSpan), typeof(MpvSeekMode) }) != null,
+            "應提供 SeekAsync(TimeSpan, MpvSeekMode)");
+        AssertEx.True(
+            playerType.GetMethod(nameof(MpvPlayer.Seek), new[] { typeof(double), typeof(MpvSeekMode) }) != null,
+            "應提供 Seek(double, MpvSeekMode)");
+        AssertEx.True(
+            playerType.GetMethod(nameof(MpvPlayer.SeekAsync), new[] { typeof(double), typeof(MpvSeekMode) }) != null,
+            "應提供 SeekAsync(double, MpvSeekMode)");
+        AssertEx.True(
+            playerType.GetMethod(
+                nameof(MpvPlayer.SeekAsync),
+                new[] { typeof(TimeSpan), typeof(MpvSeekMode), typeof(CancellationToken) }) != null,
+            "應提供可取消的 SeekAsync(TimeSpan, MpvSeekMode, CancellationToken)");
+
+        MethodInfo? callbackWatch = playerType
+            .GetMethods(BindingFlags.Public | BindingFlags.Instance)
+            .FirstOrDefault(method =>
+                method.Name == nameof(MpvPlayer.WatchProperty)
+                && method.IsGenericMethodDefinition
+                && method.GetParameters().Length == 4);
+        AssertEx.True(callbackWatch != null, "應提供 callback 形式的 WatchProperty<T>");
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// 驗證 <see cref="MpvSeekMode"/> 能產生合法 mpv 搜尋旗標並拒絕衝突組合。
+    /// </summary>
+    /// <returns>
+    /// 代表測試流程的工作。
+    /// </returns>
+    private static Task VerifySeekModeFormatting()
+    {
+        AssertEx.Equal("relative", MpvSeekMode.Relative.ToMpvValue(), "Relative 轉換錯誤");
+        AssertEx.Equal(
+            "absolute+exact",
+            (MpvSeekMode.Absolute | MpvSeekMode.Exact).ToMpvValue(),
+            "Absolute + Exact 轉換錯誤");
+        AssertEx.Equal(
+            "relative-percent+keyframes",
+            (MpvSeekMode.RelativePercent | MpvSeekMode.Keyframes).ToMpvValue(),
+            "RelativePercent + Keyframes 轉換錯誤");
+        AssertEx.Throws<ArgumentOutOfRangeException>(
+            delegate { _ = (MpvSeekMode.Relative | MpvSeekMode.Absolute).ToMpvValue(); },
+            "不可同時指定兩個位置基準");
+        AssertEx.Throws<ArgumentOutOfRangeException>(
+            delegate { _ = (MpvSeekMode.Relative | MpvSeekMode.Exact | MpvSeekMode.Keyframes).ToMpvValue(); },
+            "不可同時指定兩個精確度旗標");
         return Task.CompletedTask;
     }
 
@@ -921,6 +991,9 @@ internal static class Program
         {
             Func<Task<MpvPlayer>>? factory = provider.GetService<Func<Task<MpvPlayer>>>();
             AssertEx.True(factory != null, "AddMpvPlayerFactory 應註冊 Func<Task<MpvPlayer>>");
+            IMpvPlayerFactory? namedFactory = provider.GetService<IMpvPlayerFactory>();
+            AssertEx.True(namedFactory != null, "AddMpvPlayerFactory 應註冊 IMpvPlayerFactory");
+            AssertEx.True(namedFactory is MpvPlayerFactory, "預設具名工廠應為 MpvPlayerFactory");
 
             AssertEx.Throws<ArgumentNullException>(
                 delegate

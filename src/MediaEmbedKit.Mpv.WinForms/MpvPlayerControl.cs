@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Runtime.CompilerServices;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Windows.Input;
 
@@ -66,6 +68,10 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
     /// 後援 <see cref="Chapter"/> 的目前值。
     /// </summary>
     private int? _chapter;
+    /// <summary>
+    /// 最近一次控制項操作失敗的例外。
+    /// </summary>
+    private Exception? _lastError;
 
     /// <summary>
     /// 初始化 <see cref="MpvPlayerControl"/> 類別的新執行個體。
@@ -190,7 +196,7 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
             return;
         }
 
-        try { _player.Pause = false; } catch (MpvException) { }
+        try { _player.Pause = false; } catch (MpvException exception) { ReportOperationFailure(MpvControlOperation.Command, exception); }
     }
 
     /// <summary>
@@ -203,7 +209,7 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
             return;
         }
 
-        try { _player.Pause = true; } catch (MpvException) { }
+        try { _player.Pause = true; } catch (MpvException exception) { ReportOperationFailure(MpvControlOperation.Command, exception); }
     }
 
     /// <summary>
@@ -216,7 +222,7 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
             return;
         }
 
-        try { _player.Stop(); } catch (MpvException) { }
+        try { _player.Stop(); } catch (MpvException exception) { ReportOperationFailure(MpvControlOperation.Command, exception); }
     }
 
     /// <summary>
@@ -229,7 +235,7 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
             return;
         }
 
-        try { _player.Pause = !_player.Pause; } catch (MpvException) { }
+        try { _player.Pause = !_player.Pause; } catch (MpvException exception) { ReportOperationFailure(MpvControlOperation.Command, exception); }
     }
 
     /// <summary>
@@ -242,7 +248,7 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
             return;
         }
 
-        try { _player.Mute = !_player.Mute; } catch (MpvException) { }
+        try { _player.Mute = !_player.Mute; } catch (MpvException exception) { ReportOperationFailure(MpvControlOperation.Command, exception); }
     }
 
     /// <summary>
@@ -263,6 +269,13 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
     [Category("MediaEmbedKit.Mpv")]
     [Description("在控制項建立 mpv 播放器後發生。")]
     public event EventHandler? PlayerCreated;
+
+    /// <summary>
+    /// 在控制項操作失敗時發生。
+    /// </summary>
+    [Category("MediaEmbedKit.Mpv")]
+    [Description("在播放器初始化、載入、命令或屬性操作失敗時發生。")]
+    public event EventHandler<MpvControlOperationFailedEventArgs>? OperationFailed;
 
     /// <summary>
     /// 在 <see cref="INotifyPropertyChanged"/> 屬性變更時發生。
@@ -302,8 +315,9 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
             {
                 _player.Load(new MpvMediaItem(value!));
             }
-            catch (MpvException)
+            catch (MpvException exception)
             {
+                ReportOperationFailure(MpvControlOperation.Load, exception, value);
             }
         }
     }
@@ -338,8 +352,9 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
             {
                 _player.Seek(value.TotalSeconds, "absolute");
             }
-            catch (MpvException)
+            catch (MpvException exception)
             {
+                ReportOperationFailure(MpvControlOperation.Seek, exception);
             }
         }
     }
@@ -389,8 +404,9 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
             {
                 _player.Volume = value;
             }
-            catch (MpvException)
+            catch (MpvException exception)
             {
+                ReportOperationFailure(MpvControlOperation.PropertyWrite, exception);
             }
         }
     }
@@ -427,8 +443,9 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
             {
                 _player.Pause = value;
             }
-            catch (MpvException)
+            catch (MpvException exception)
             {
+                ReportOperationFailure(MpvControlOperation.PropertyWrite, exception);
             }
         }
     }
@@ -465,8 +482,9 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
             {
                 _player.Mute = value;
             }
-            catch (MpvException)
+            catch (MpvException exception)
             {
+                ReportOperationFailure(MpvControlOperation.PropertyWrite, exception);
             }
         }
     }
@@ -516,8 +534,9 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
             {
                 _player.PlaylistIndex = value;
             }
-            catch (MpvException)
+            catch (MpvException exception)
             {
+                ReportOperationFailure(MpvControlOperation.PropertyWrite, exception);
             }
         }
     }
@@ -554,11 +573,13 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
             {
                 _player.Chapter = value.Value;
             }
-            catch (MpvException)
+            catch (MpvException exception)
             {
+                ReportOperationFailure(MpvControlOperation.PropertyWrite, exception);
             }
-            catch (ArgumentOutOfRangeException)
+            catch (ArgumentOutOfRangeException exception)
             {
+                ReportOperationFailure(MpvControlOperation.PropertyWrite, exception);
             }
         }
     }
@@ -598,6 +619,32 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
     }
 
     /// <summary>
+    /// 取得控制項是否已建立並初始化播放器。
+    /// </summary>
+    /// <value>
+    /// 播放器可用時為 <see langword="true"/>。
+    /// </value>
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public bool IsPlayerReady
+    {
+        get { return _player?.IsInitialized == true; }
+    }
+
+    /// <summary>
+    /// 取得最近一次控制項操作失敗的例外。
+    /// </summary>
+    /// <value>
+    /// 最近一次例外；尚未失敗時為 <see langword="null"/>。
+    /// </value>
+    [Browsable(false)]
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+    public Exception? LastError
+    {
+        get { return _lastError; }
+    }
+
+    /// <summary>
     /// 依目前的播放器選項明確初始化播放器。
     /// </summary>
     public void InitializePlayer()
@@ -633,7 +680,15 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
             throw new InvalidOperationException("播放器尚未建立。");
         }
 
-        player.LoadFile(pathOrUrl, mode);
+        try
+        {
+            player.LoadFile(pathOrUrl, mode);
+        }
+        catch (Exception exception) when (exception is MpvException || exception is ArgumentException)
+        {
+            ReportOperationFailure(MpvControlOperation.Load, exception, pathOrUrl);
+            throw;
+        }
     }
 
     /// <summary>
@@ -730,14 +785,16 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
             player.Initialize();
             _player = player;
         }
-        catch
+        catch (Exception exception)
         {
             player.Dispose();
+            ReportOperationFailure(MpvControlOperation.Initialize, exception);
             throw;
         }
 
         AttachPlayerBindings(_player);
         RaiseCommandCanExecuteChanged();
+        OnPropertyChanged(nameof(IsPlayerReady));
         PlayerCreated?.Invoke(this, EventArgs.Empty);
 
         if (!string.IsNullOrWhiteSpace(_source))
@@ -746,8 +803,9 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
             {
                 _player.Load(new MpvMediaItem(_source!));
             }
-            catch (MpvException)
+            catch (MpvException exception)
             {
+                ReportOperationFailure(MpvControlOperation.Load, exception, _source);
             }
         }
     }
@@ -760,28 +818,29 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
     /// </param>
     private void AttachPlayerBindings(MpvPlayer player)
     {
-        _propertyWatchers.Add(player.WatchProperty<bool>("pause").Subscribe(new MpvDpObserver<bool>(value => UpdateFromPlayer(nameof(IsPaused), ref _isPaused, value))));
-        _propertyWatchers.Add(player.WatchProperty<bool>("mute").Subscribe(new MpvDpObserver<bool>(value => UpdateFromPlayer(nameof(IsMuted), ref _isMuted, value))));
-        _propertyWatchers.Add(player.WatchProperty<double>("volume").Subscribe(new MpvDpObserver<double>(value => UpdateFromPlayer(nameof(Volume), ref _volume, value))));
-        _propertyWatchers.Add(player.WatchProperty<double>("time-pos").Subscribe(new MpvDpObserver<double>(value => UpdateFromPlayer(nameof(Position), ref _position, TimeSpan.FromSeconds(value)))));
-        _propertyWatchers.Add(player.WatchProperty<double>("duration").Subscribe(new MpvDpObserver<double>(value => UpdateFromPlayer(nameof(Duration), ref _duration, TimeSpan.FromSeconds(value)))));
-        _propertyWatchers.Add(player.WatchProperty<long>("playlist-pos").Subscribe(new MpvDpObserver<long>(value => UpdateFromPlayer(nameof(PlaylistIndex), ref _playlistIndex, checked((int)value)))));
-        _propertyWatchers.Add(player.WatchProperty<long>("chapter").Subscribe(new MpvDpObserver<long>(value => UpdateFromPlayer(nameof(Chapter), ref _chapter, value < 0 ? (int?)null : checked((int)value)))));
+        Action<Exception> reportError = error => ReportOperationFailure(MpvControlOperation.PropertyWrite, error);
+        _propertyWatchers.Add(player.WatchProperty<bool>("pause", value => UpdateFromPlayer(nameof(IsPaused), ref _isPaused, value), reportError));
+        _propertyWatchers.Add(player.WatchProperty<bool>("mute", value => UpdateFromPlayer(nameof(IsMuted), ref _isMuted, value), reportError));
+        _propertyWatchers.Add(player.WatchProperty<double>("volume", value => UpdateFromPlayer(nameof(Volume), ref _volume, value), reportError));
+        _propertyWatchers.Add(player.WatchProperty<double>("time-pos", value => UpdateFromPlayer(nameof(Position), ref _position, TimeSpan.FromSeconds(value)), reportError));
+        _propertyWatchers.Add(player.WatchProperty<double>("duration", value => UpdateFromPlayer(nameof(Duration), ref _duration, TimeSpan.FromSeconds(value)), reportError));
+        _propertyWatchers.Add(player.WatchProperty<long>("playlist-pos", value => UpdateFromPlayer(nameof(PlaylistIndex), ref _playlistIndex, checked((int)value)), reportError));
+        _propertyWatchers.Add(player.WatchProperty<long>("chapter", value => UpdateFromPlayer(nameof(Chapter), ref _chapter, value < 0 ? (int?)null : checked((int)value)), reportError));
         player.StateChanged += OnPlayerStateChanged;
 
         if (IsPaused != player.Pause)
         {
-            try { player.Pause = IsPaused; } catch (MpvException) { }
+            try { player.Pause = IsPaused; } catch (MpvException exception) { ReportOperationFailure(MpvControlOperation.PropertyWrite, exception); }
         }
 
         if (IsMuted != player.Mute)
         {
-            try { player.Mute = IsMuted; } catch (MpvException) { }
+            try { player.Mute = IsMuted; } catch (MpvException exception) { ReportOperationFailure(MpvControlOperation.PropertyWrite, exception); }
         }
 
         if (Math.Abs(Volume - player.Volume) > 0.01)
         {
-            try { player.Volume = Volume; } catch (MpvException) { }
+            try { player.Volume = Volume; } catch (MpvException exception) { ReportOperationFailure(MpvControlOperation.PropertyWrite, exception); }
         }
     }
 
@@ -854,6 +913,72 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
     protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+
+    /// <summary>
+    /// 載入媒體項目並等待 libmpv 完成載入或回報失敗。
+    /// </summary>
+    /// <param name="item">
+    /// 要載入的媒體項目。
+    /// </param>
+    /// <param name="mode">
+    /// 播放項目加入播放清單的方式。
+    /// </param>
+    /// <param name="timeout">
+    /// 等待載入完成的逾時時間。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 取消等待的語彙基元。
+    /// </param>
+    /// <returns>
+    /// 代表載入流程的工作。
+    /// </returns>
+    public async Task LoadAsync(
+        MpvMediaItem item,
+        MpvLoadFileMode mode = MpvLoadFileMode.Replace,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        InitializePlayer();
+        MpvPlayer? player = _player;
+        if (player == null)
+        {
+            throw new InvalidOperationException("播放器尚未建立。");
+        }
+
+        try
+        {
+            await player.LoadAsync(item, mode, timeout, cancellationToken).ConfigureAwait(true);
+        }
+        catch (Exception exception)
+        {
+            ReportOperationFailure(MpvControlOperation.Load, exception, item?.Source);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// 記錄控制項操作失敗並通知呼叫端。
+    /// </summary>
+    /// <param name="operation">
+    /// 失敗的操作種類。
+    /// </param>
+    /// <param name="exception">
+    /// 操作失敗的例外。
+    /// </param>
+    /// <param name="source">
+    /// 操作涉及的媒體來源。
+    /// </param>
+    private void ReportOperationFailure(
+        MpvControlOperation operation,
+        Exception exception,
+        string? source = null)
+    {
+        _lastError = exception;
+        OnPropertyChanged(nameof(LastError));
+        OperationFailed?.Invoke(
+            this,
+            new MpvControlOperationFailedEventArgs(operation, exception, source));
     }
 
     /// <summary>
@@ -936,6 +1061,7 @@ public class MpvPlayerControl : Control, INotifyPropertyChanged
         _player.Dispose();
         _player = null;
         RaiseCommandCanExecuteChanged();
+        OnPropertyChanged(nameof(IsPlayerReady));
     }
 
     /// <summary>

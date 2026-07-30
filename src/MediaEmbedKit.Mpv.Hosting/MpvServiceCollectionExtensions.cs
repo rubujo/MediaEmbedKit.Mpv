@@ -23,8 +23,9 @@ public static class MpvServiceCollectionExtensions
     /// </returns>
     /// <remarks>
     /// 此擴充方法適合配合 <c>IHostedService</c> 啟動流程使用：取得
-    /// <see cref="Func{TResult}"/>，於 <c>StartAsync</c> 中 <c>await</c> 建構，
-    /// 完成後再以 singleton 或 scoped 形式自行管理生命週期。
+    /// <see cref="IMpvPlayerFactory"/>，於 <c>StartAsync</c> 中非同步建構，
+    /// 完成後再以 singleton 或 scoped 形式自行管理生命週期。為維持相容性，
+    /// 也會註冊 <see cref="Func{TResult}"/> 形式的轉接器。
     /// </remarks>
     public static IServiceCollection AddMpvPlayerFactory(this IServiceCollection services, Action<MpvAppBuilder> configure)
     {
@@ -38,14 +39,15 @@ public static class MpvServiceCollectionExtensions
             throw new ArgumentNullException(nameof(configure));
         }
 
+        services.TryAddSingleton<IMpvPlayerFactory>(_ =>
+        {
+            return new MpvPlayerFactory(configure);
+        });
+
         services.TryAddSingleton<Func<System.Threading.Tasks.Task<MpvPlayer>>>(serviceProvider =>
         {
-            return () =>
-            {
-                MpvAppBuilder builder = new MpvAppBuilder();
-                configure(builder);
-                return builder.BuildAsync();
-            };
+            IMpvPlayerFactory factory = serviceProvider.GetRequiredService<IMpvPlayerFactory>();
+            return () => factory.CreateAsync();
         });
 
         return services;

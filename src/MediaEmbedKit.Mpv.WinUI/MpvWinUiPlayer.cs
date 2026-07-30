@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
@@ -101,6 +103,24 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
         typeof(MpvPlaybackState),
         typeof(MpvWinUiPlayer),
         new PropertyMetadata(MpvPlaybackState.Idle, OnPlaybackStateChanged));
+
+    /// <summary>
+    /// 識別 <see cref="IsPlayerReady"/> 相依性屬性。
+    /// </summary>
+    public static readonly DependencyProperty IsPlayerReadyProperty = DependencyProperty.Register(
+        nameof(IsPlayerReady),
+        typeof(bool),
+        typeof(MpvWinUiPlayer),
+        new PropertyMetadata(false));
+
+    /// <summary>
+    /// 識別 <see cref="LastError"/> 相依性屬性。
+    /// </summary>
+    public static readonly DependencyProperty LastErrorProperty = DependencyProperty.Register(
+        nameof(LastError),
+        typeof(Exception),
+        typeof(MpvWinUiPlayer),
+        new PropertyMetadata(null));
 
     /// <summary>
     /// 識別 <see cref="PlaylistIndex"/> 相依性屬性。
@@ -283,7 +303,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
             return;
         }
 
-        try { _boundPlayer.Pause = false; } catch (MpvException) { } catch (ObjectDisposedException) { DetachPlayerBindings(); }
+        try { _boundPlayer.Pause = false; } catch (MpvException exception) { ReportOperationFailure(MpvControlOperation.Command, exception); } catch (ObjectDisposedException exception) { ReportOperationFailure(MpvControlOperation.Command, exception); DetachPlayerBindings(); }
     }
 
     /// <summary>
@@ -296,7 +316,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
             return;
         }
 
-        try { _boundPlayer.Pause = true; } catch (MpvException) { } catch (ObjectDisposedException) { DetachPlayerBindings(); }
+        try { _boundPlayer.Pause = true; } catch (MpvException exception) { ReportOperationFailure(MpvControlOperation.Command, exception); } catch (ObjectDisposedException exception) { ReportOperationFailure(MpvControlOperation.Command, exception); DetachPlayerBindings(); }
     }
 
     /// <summary>
@@ -309,7 +329,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
             return;
         }
 
-        try { _boundPlayer.Stop(); } catch (MpvException) { } catch (ObjectDisposedException) { DetachPlayerBindings(); }
+        try { _boundPlayer.Stop(); } catch (MpvException exception) { ReportOperationFailure(MpvControlOperation.Command, exception); } catch (ObjectDisposedException exception) { ReportOperationFailure(MpvControlOperation.Command, exception); DetachPlayerBindings(); }
     }
 
     /// <summary>
@@ -322,7 +342,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
             return;
         }
 
-        try { _boundPlayer.Pause = !_boundPlayer.Pause; } catch (MpvException) { } catch (ObjectDisposedException) { DetachPlayerBindings(); }
+        try { _boundPlayer.Pause = !_boundPlayer.Pause; } catch (MpvException exception) { ReportOperationFailure(MpvControlOperation.Command, exception); } catch (ObjectDisposedException exception) { ReportOperationFailure(MpvControlOperation.Command, exception); DetachPlayerBindings(); }
     }
 
     /// <summary>
@@ -335,7 +355,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
             return;
         }
 
-        try { _boundPlayer.Mute = !_boundPlayer.Mute; } catch (MpvException) { } catch (ObjectDisposedException) { DetachPlayerBindings(); }
+        try { _boundPlayer.Mute = !_boundPlayer.Mute; } catch (MpvException exception) { ReportOperationFailure(MpvControlOperation.Command, exception); } catch (ObjectDisposedException exception) { ReportOperationFailure(MpvControlOperation.Command, exception); DetachPlayerBindings(); }
     }
 
     /// <summary>
@@ -359,6 +379,11 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// 在控制項釋放目前 mpv 播放器後發生。
     /// </summary>
     public event EventHandler? PlayerReleased;
+
+    /// <summary>
+    /// 在控制項操作失敗時發生。
+    /// </summary>
+    public event EventHandler<MpvControlOperationFailedEventArgs>? OperationFailed;
 
     /// <summary>
     /// 取得控制項建立播放器時使用的選項。
@@ -425,6 +450,32 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     /// </value>
     [System.ComponentModel.Browsable(false)]
     public Exception? LastBackendError { get; private set; }
+
+    /// <summary>
+    /// 取得控制項是否已建立並初始化播放器。
+    /// </summary>
+    /// <value>
+    /// 播放器可用時為 <see langword="true"/>。
+    /// </value>
+    [System.ComponentModel.Browsable(false)]
+    public bool IsPlayerReady
+    {
+        get { return (bool)GetValue(IsPlayerReadyProperty); }
+        private set { SetValue(IsPlayerReadyProperty, value); }
+    }
+
+    /// <summary>
+    /// 取得最近一次控制項操作失敗的例外。
+    /// </summary>
+    /// <value>
+    /// 最近一次例外；尚未失敗時為 <see langword="null"/>。
+    /// </value>
+    [System.ComponentModel.Browsable(false)]
+    public Exception? LastError
+    {
+        get { return (Exception?)GetValue(LastErrorProperty); }
+        private set { SetValue(LastErrorProperty, value); }
+    }
 
     /// <summary>
     /// 取得或設定要由控制項自行放入 AirSpace 覆蓋層的 WinUI 內容。
@@ -649,6 +700,51 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     }
 
     /// <summary>
+    /// 載入媒體項目並等待 libmpv 完成載入或回報失敗。
+    /// </summary>
+    /// <param name="item">
+    /// 要載入的媒體項目。
+    /// </param>
+    /// <param name="mode">
+    /// 播放項目加入播放清單的方式。
+    /// </param>
+    /// <param name="timeout">
+    /// 等待載入完成的逾時時間。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 取消等待的語彙基元。
+    /// </param>
+    /// <returns>
+    /// 代表載入流程的工作。
+    /// </returns>
+    public async Task LoadAsync(
+        MpvMediaItem item,
+        MpvLoadFileMode mode = MpvLoadFileMode.Replace,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        EnsureNotDisposed();
+        EnsureHwndBackend();
+        MpvPlayer? player = Player;
+        if (player == null || !player.IsInitialized)
+        {
+            var exception = new InvalidOperationException("播放器尚未就緒；請在 PlayerCreated 後呼叫 LoadAsync。");
+            ReportOperationFailure(MpvControlOperation.Load, exception, item?.Source);
+            throw exception;
+        }
+
+        try
+        {
+            await player.LoadAsync(item, mode, timeout, cancellationToken).ConfigureAwait(true);
+        }
+        catch (Exception exception)
+        {
+            ReportOperationFailure(MpvControlOperation.Load, exception, item?.Source);
+            throw;
+        }
+    }
+
+    /// <summary>
     /// 釋放控制項持有的播放後端。
     /// </summary>
     public void Dispose()
@@ -752,6 +848,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
 
             _hwndPlayer.Attach(_parentHwnd);
             LastBackendError = null;
+            LastError = null;
             if (!string.IsNullOrWhiteSpace(_pendingSource))
             {
                 _hwndPlayer.LoadFile(_pendingSource!, _pendingMode);
@@ -762,6 +859,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
         catch (Exception exception)
         {
             LastBackendError = exception;
+            ReportOperationFailure(MpvControlOperation.Backend, exception, _pendingSource);
             DisposeHwndBackend();
             throw;
         }
@@ -826,6 +924,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
         }
 
         RaiseCommandCanExecuteChanged();
+        IsPlayerReady = player?.IsInitialized == true;
         PlayerCreated?.Invoke(this, EventArgs.Empty);
     }
 
@@ -841,6 +940,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
     private void BackendPlayerReleased(object? sender, EventArgs e)
     {
         DetachPlayerBindings();
+        IsPlayerReady = false;
         PlayerReleased?.Invoke(this, EventArgs.Empty);
     }
 
@@ -855,28 +955,29 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
         DetachPlayerBindings();
 
         _boundPlayer = player;
-        _propertyWatchers.Add(player.WatchProperty<bool>("pause").Subscribe(new MpvDpObserver<bool>(value => UpdateFromPlayer(IsPausedProperty, value))));
-        _propertyWatchers.Add(player.WatchProperty<bool>("mute").Subscribe(new MpvDpObserver<bool>(value => UpdateFromPlayer(IsMutedProperty, value))));
-        _propertyWatchers.Add(player.WatchProperty<double>("volume").Subscribe(new MpvDpObserver<double>(value => UpdateFromPlayer(VolumeProperty, value))));
-        _propertyWatchers.Add(player.WatchProperty<double>("time-pos").Subscribe(new MpvDpObserver<double>(value => UpdateFromPlayer(PositionProperty, TimeSpan.FromSeconds(value)))));
-        _propertyWatchers.Add(player.WatchProperty<double>("duration").Subscribe(new MpvDpObserver<double>(value => UpdateFromPlayer(DurationProperty, TimeSpan.FromSeconds(value)))));
-        _propertyWatchers.Add(player.WatchProperty<long>("playlist-pos").Subscribe(new MpvDpObserver<long>(value => UpdateFromPlayer(PlaylistIndexProperty, checked((int)value)))));
-        _propertyWatchers.Add(player.WatchProperty<long>("chapter").Subscribe(new MpvDpObserver<long>(value => UpdateFromPlayer(ChapterProperty, value < 0 ? (int?)null : checked((int)value)))));
+        Action<Exception> reportError = error => ReportOperationFailure(MpvControlOperation.PropertyWrite, error);
+        _propertyWatchers.Add(player.WatchProperty<bool>("pause", value => UpdateFromPlayer(IsPausedProperty, value), reportError));
+        _propertyWatchers.Add(player.WatchProperty<bool>("mute", value => UpdateFromPlayer(IsMutedProperty, value), reportError));
+        _propertyWatchers.Add(player.WatchProperty<double>("volume", value => UpdateFromPlayer(VolumeProperty, value), reportError));
+        _propertyWatchers.Add(player.WatchProperty<double>("time-pos", value => UpdateFromPlayer(PositionProperty, TimeSpan.FromSeconds(value)), reportError));
+        _propertyWatchers.Add(player.WatchProperty<double>("duration", value => UpdateFromPlayer(DurationProperty, TimeSpan.FromSeconds(value)), reportError));
+        _propertyWatchers.Add(player.WatchProperty<long>("playlist-pos", value => UpdateFromPlayer(PlaylistIndexProperty, checked((int)value)), reportError));
+        _propertyWatchers.Add(player.WatchProperty<long>("chapter", value => UpdateFromPlayer(ChapterProperty, value < 0 ? (int?)null : checked((int)value)), reportError));
         player.StateChanged += OnPlayerStateChanged;
 
         if (IsPaused != player.Pause)
         {
-            try { player.Pause = IsPaused; } catch (MpvException) { } catch (ObjectDisposedException) { }
+            try { player.Pause = IsPaused; } catch (MpvException exception) { ReportOperationFailure(MpvControlOperation.PropertyWrite, exception); } catch (ObjectDisposedException exception) { ReportOperationFailure(MpvControlOperation.PropertyWrite, exception); }
         }
 
         if (IsMuted != player.Mute)
         {
-            try { player.Mute = IsMuted; } catch (MpvException) { } catch (ObjectDisposedException) { }
+            try { player.Mute = IsMuted; } catch (MpvException exception) { ReportOperationFailure(MpvControlOperation.PropertyWrite, exception); } catch (ObjectDisposedException exception) { ReportOperationFailure(MpvControlOperation.PropertyWrite, exception); }
         }
 
         if (Math.Abs(Volume - player.Volume) > 0.01)
         {
-            try { player.Volume = Volume; } catch (MpvException) { } catch (ObjectDisposedException) { }
+            try { player.Volume = Volume; } catch (MpvException exception) { ReportOperationFailure(MpvControlOperation.PropertyWrite, exception); } catch (ObjectDisposedException exception) { ReportOperationFailure(MpvControlOperation.PropertyWrite, exception); }
         }
     }
 
@@ -962,11 +1063,13 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
         {
             control._hwndPlayer.LoadFile(newSource!, MpvLoadFileMode.Replace);
         }
-        catch (MpvException)
+        catch (MpvException exception)
         {
+            control.ReportOperationFailure(MpvControlOperation.Load, exception, newSource);
         }
-        catch (ObjectDisposedException)
+        catch (ObjectDisposedException exception)
         {
+            control.ReportOperationFailure(MpvControlOperation.Load, exception, newSource);
             control.DetachPlayerBindings();
         }
     }
@@ -992,11 +1095,13 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
         {
             control._boundPlayer.Seek(((TimeSpan)e.NewValue).TotalSeconds, "absolute");
         }
-        catch (MpvException)
+        catch (MpvException exception)
         {
+            control.ReportOperationFailure(MpvControlOperation.Seek, exception);
         }
-        catch (ObjectDisposedException)
+        catch (ObjectDisposedException exception)
         {
+            control.ReportOperationFailure(MpvControlOperation.Seek, exception);
             control.DetachPlayerBindings();
         }
     }
@@ -1022,11 +1127,13 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
         {
             control._boundPlayer.Volume = (double)e.NewValue;
         }
-        catch (MpvException)
+        catch (MpvException exception)
         {
+            control.ReportOperationFailure(MpvControlOperation.PropertyWrite, exception);
         }
-        catch (ObjectDisposedException)
+        catch (ObjectDisposedException exception)
         {
+            control.ReportOperationFailure(MpvControlOperation.PropertyWrite, exception);
             control.DetachPlayerBindings();
         }
     }
@@ -1052,11 +1159,13 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
         {
             control._boundPlayer.Pause = (bool)e.NewValue;
         }
-        catch (MpvException)
+        catch (MpvException exception)
         {
+            control.ReportOperationFailure(MpvControlOperation.PropertyWrite, exception);
         }
-        catch (ObjectDisposedException)
+        catch (ObjectDisposedException exception)
         {
+            control.ReportOperationFailure(MpvControlOperation.PropertyWrite, exception);
             control.DetachPlayerBindings();
         }
     }
@@ -1082,11 +1191,13 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
         {
             control._boundPlayer.Mute = (bool)e.NewValue;
         }
-        catch (MpvException)
+        catch (MpvException exception)
         {
+            control.ReportOperationFailure(MpvControlOperation.PropertyWrite, exception);
         }
-        catch (ObjectDisposedException)
+        catch (ObjectDisposedException exception)
         {
+            control.ReportOperationFailure(MpvControlOperation.PropertyWrite, exception);
             control.DetachPlayerBindings();
         }
     }
@@ -1118,11 +1229,13 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
         {
             control._boundPlayer.PlaylistIndex = newIndex;
         }
-        catch (MpvException)
+        catch (MpvException exception)
         {
+            control.ReportOperationFailure(MpvControlOperation.PropertyWrite, exception);
         }
-        catch (ObjectDisposedException)
+        catch (ObjectDisposedException exception)
         {
+            control.ReportOperationFailure(MpvControlOperation.PropertyWrite, exception);
             control.DetachPlayerBindings();
         }
     }
@@ -1154,14 +1267,17 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
         {
             control._boundPlayer.Chapter = newChapter.Value;
         }
-        catch (MpvException)
+        catch (MpvException exception)
         {
+            control.ReportOperationFailure(MpvControlOperation.PropertyWrite, exception);
         }
-        catch (ArgumentOutOfRangeException)
+        catch (ArgumentOutOfRangeException exception)
         {
+            control.ReportOperationFailure(MpvControlOperation.PropertyWrite, exception);
         }
-        catch (ObjectDisposedException)
+        catch (ObjectDisposedException exception)
         {
+            control.ReportOperationFailure(MpvControlOperation.PropertyWrite, exception);
             control.DetachPlayerBindings();
         }
     }
@@ -1231,6 +1347,46 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
         finally
         {
             control._suppressPlayerWrite = false;
+        }
+    }
+
+    /// <summary>
+    /// 記錄控制項操作失敗並在 UI 執行緒通知呼叫端。
+    /// </summary>
+    /// <param name="operation">
+    /// 失敗的操作種類。
+    /// </param>
+    /// <param name="exception">
+    /// 操作失敗的例外。
+    /// </param>
+    /// <param name="source">
+    /// 操作涉及的媒體來源。
+    /// </param>
+    private void ReportOperationFailure(
+        MpvControlOperation operation,
+        Exception exception,
+        string? source = null)
+    {
+        void Report()
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            LastError = exception;
+            OperationFailed?.Invoke(
+                this,
+                new MpvControlOperationFailedEventArgs(operation, exception, source));
+        }
+
+        if (_dispatcherQueue.HasThreadAccess)
+        {
+            Report();
+        }
+        else
+        {
+            _dispatcherQueue.TryEnqueue(Report);
         }
     }
 
@@ -1311,6 +1467,7 @@ public sealed class MpvWinUiPlayer : Grid, IDisposable
         }
 
         _propertyWatchers.Clear();
+        IsPlayerReady = false;
 
         if (hadPlayer)
         {

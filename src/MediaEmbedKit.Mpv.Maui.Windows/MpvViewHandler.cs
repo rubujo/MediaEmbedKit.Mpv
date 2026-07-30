@@ -149,6 +149,7 @@ public class MpvViewHandler : ViewHandler<MpvView, object>
         UpdateOverlayContent();
         platformView.PlayerCreated += OnPlayerCreated;
         platformView.PlayerReleased += OnPlayerReleased;
+        platformView.OperationFailed += OnOperationFailed;
         VirtualView.SetPlayer(platformView.Player);
 
         if (!string.IsNullOrWhiteSpace(VirtualView.PendingSource))
@@ -173,6 +174,7 @@ public class MpvViewHandler : ViewHandler<MpvView, object>
 #if WINDOWS
         platformView.PlayerCreated -= OnPlayerCreated;
         platformView.PlayerReleased -= OnPlayerReleased;
+        platformView.OperationFailed -= OnOperationFailed;
         platformView.OverlayContent = null;
         ReleaseResolvedOverlayView();
         VirtualView.SetPlayer(null);
@@ -210,6 +212,22 @@ public class MpvViewHandler : ViewHandler<MpvView, object>
     {
 #if WINDOWS
         VirtualView.SetPlayer(null);
+#endif
+    }
+
+    /// <summary>
+    /// 將平台控制項的操作失敗同步到 MAUI 虛擬檢視。
+    /// </summary>
+    /// <param name="sender">
+    /// 引發事件的物件。
+    /// </param>
+    /// <param name="e">
+    /// 操作失敗資料。
+    /// </param>
+    private void OnOperationFailed(object? sender, MpvControlOperationFailedEventArgs e)
+    {
+#if WINDOWS
+        VirtualView.ReportOperationFailure(e);
 #endif
     }
 

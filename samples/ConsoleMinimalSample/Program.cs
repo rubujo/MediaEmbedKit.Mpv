@@ -108,15 +108,16 @@ internal static class Program
             // volume 四個屬性同時訂閱；各自獨立 IObservable<T>，內部以 (Name, Format)
             // 鍵共享單一 mpv_observe_property 註冊。player Dispose 時所有 subscription
             // 自動收到 OnCompleted，下面 IDisposable[] 是「明確結束」的範例寫法。
+            var positionObserver = new ConsoleTimePositionObserver();
             IDisposable[] subscriptions = new[]
             {
-                player.WatchProperty<double>("time-pos").Subscribe(new ConsoleTimePositionObserver()),
-                player.WatchProperty<double>("duration").Subscribe(new ActionObserver<double>(value =>
-                    Console.WriteLine("[duration] " + value.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture) + "s"))),
-                player.WatchProperty<bool>("pause").Subscribe(new ActionObserver<bool>(paused =>
-                    Console.WriteLine("[pause] " + (paused ? "paused" : "playing")))),
-                player.WatchProperty<double>("volume").Subscribe(new ActionObserver<double>(volume =>
-                    Console.WriteLine("[volume] " + volume.ToString("0", System.Globalization.CultureInfo.InvariantCulture))))
+                player.WatchProperty<double>("time-pos", positionObserver.OnNext),
+                player.WatchProperty<double>("duration", value =>
+                    Console.WriteLine("[duration] " + value.ToString("0.000", System.Globalization.CultureInfo.InvariantCulture) + "s")),
+                player.WatchProperty<bool>("pause", paused =>
+                    Console.WriteLine("[pause] " + (paused ? "paused" : "playing"))),
+                player.WatchProperty<double>("volume", volume =>
+                    Console.WriteLine("[volume] " + volume.ToString("0", System.Globalization.CultureInfo.InvariantCulture)))
             };
 
             Console.WriteLine("載入媒體：" + source);

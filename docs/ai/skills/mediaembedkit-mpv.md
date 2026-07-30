@@ -32,20 +32,9 @@
 - 執行階段資產更新走 `MpvLibraryUpdateScheduler.StageAsync` + `ApplyStagedOnStartup`；不要直接覆蓋已載入處理序的 `libmpv-2.dll`。
 - 執行階段啟動前的健檢呼叫 `MpvRuntimeHealthCheck.AnalyzeAsync`；散發授權判定呼叫 `MpvLicenseAuditor.AnalyzeAsync`。
 - C# XML 註解只能使用正體中文臺灣地區用語，且不得共用註解；具有內容的 XML 文件註解標籤不得使用一行式排版，必須將開始標籤、內容與結束標籤分行。
-- 文件、程式碼註解、使用者可見字串與提交訊息必須使用正體中文臺灣地區用語；除官方名稱、API 名稱、程式識別字、命令、路徑、URL、授權原文與必要技術術語外，避免直接使用英文詞彙。
-- 提及第三方函式庫、軟體、服務、工具、規格或品牌時，必須使用其官方正式名稱與大小寫；中英文與中文數字混排需保留盤古之白。
-- 區域變數、`using` 陳述式與 `foreach` 迴圈變數依微軟官方 C# 編碼慣例：右側型別顯而易見時（如 `new`、強制轉型）建議使用 `var`，型別不明顯時（如方法呼叫）則必須使用明確型別。
-- Markdown 文件使用正式、精煉的正體中文。
-- 提交訊息遵循慣例式提交，必須包含主旨與正文。
+- 語言、排版、C# 型別宣告、提交與任務授權等共通規則以 `AGENTS.md` 與 `docs/ENGINEERING_STANDARDS.md` 為準，本技能不重複定義。
 
 ## 驗證
 
-```powershell
-dotnet format .\MediaEmbedKit.Mpv.slnx --no-restore
-dotnet run --project .\tests\MediaEmbedKit.Mpv.Tests\MediaEmbedKit.Mpv.Tests.csproj
-dotnet run --project .\tests\MediaEmbedKit.Mpv.IntegrationTests\MediaEmbedKit.Mpv.IntegrationTests.csproj
-dotnet build .\MediaEmbedKit.Mpv.slnx
-```
-
-使用 `rg` 搜尋程式碼。變更 API 行為、支援範圍或平台宣告時，必須同步更新文件。
+依 `AGENTS.md` 的範圍判準與驗證清單執行。使用 `rg` 搜尋程式碼；變更 API 行為、支援範圍或平台宣告時，必須同步更新文件。
 發佈品質相關任務以 `tools/Invoke-PreReleaseValidation.ps1` 為主流程；需要完整 Windows 發行檢查閘門時使用 `-IncludeWindowsReleaseGate`。

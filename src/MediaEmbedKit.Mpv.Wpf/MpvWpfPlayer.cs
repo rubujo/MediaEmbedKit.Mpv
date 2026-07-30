@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
@@ -131,6 +133,34 @@ public class MpvWpfPlayer : HwndHost
     /// 識別 <see cref="PlaybackState"/> 相依性屬性（唯讀）。
     /// </summary>
     public static readonly DependencyProperty PlaybackStateProperty = PlaybackStatePropertyKey.DependencyProperty;
+
+    /// <summary>
+    /// 唯讀 <see cref="IsPlayerReady"/> 相依性屬性的金鑰。
+    /// </summary>
+    private static readonly DependencyPropertyKey IsPlayerReadyPropertyKey = DependencyProperty.RegisterReadOnly(
+        nameof(IsPlayerReady),
+        typeof(bool),
+        typeof(MpvWpfPlayer),
+        new PropertyMetadata(false));
+
+    /// <summary>
+    /// 識別 <see cref="IsPlayerReady"/> 相依性屬性（唯讀）。
+    /// </summary>
+    public static readonly DependencyProperty IsPlayerReadyProperty = IsPlayerReadyPropertyKey.DependencyProperty;
+
+    /// <summary>
+    /// 唯讀 <see cref="LastError"/> 相依性屬性的金鑰。
+    /// </summary>
+    private static readonly DependencyPropertyKey LastErrorPropertyKey = DependencyProperty.RegisterReadOnly(
+        nameof(LastError),
+        typeof(Exception),
+        typeof(MpvWpfPlayer),
+        new PropertyMetadata(null));
+
+    /// <summary>
+    /// 識別 <see cref="LastError"/> 相依性屬性（唯讀）。
+    /// </summary>
+    public static readonly DependencyProperty LastErrorProperty = LastErrorPropertyKey.DependencyProperty;
 
     /// <summary>
     /// 識別 <see cref="PlaylistIndex"/> 相依性屬性。
@@ -269,7 +299,7 @@ public class MpvWpfPlayer : HwndHost
             return;
         }
 
-        try { _player.Pause = false; } catch (MpvException) { }
+        try { _player.Pause = false; } catch (MpvException exception) { ReportOperationFailure(MpvControlOperation.Command, exception); }
     }
 
     /// <summary>
@@ -282,7 +312,7 @@ public class MpvWpfPlayer : HwndHost
             return;
         }
 
-        try { _player.Pause = true; } catch (MpvException) { }
+        try { _player.Pause = true; } catch (MpvException exception) { ReportOperationFailure(MpvControlOperation.Command, exception); }
     }
 
     /// <summary>
@@ -295,7 +325,7 @@ public class MpvWpfPlayer : HwndHost
             return;
         }
 
-        try { _player.Stop(); } catch (MpvException) { }
+        try { _player.Stop(); } catch (MpvException exception) { ReportOperationFailure(MpvControlOperation.Command, exception); }
     }
 
     /// <summary>
@@ -308,7 +338,7 @@ public class MpvWpfPlayer : HwndHost
             return;
         }
 
-        try { _player.Pause = !_player.Pause; } catch (MpvException) { }
+        try { _player.Pause = !_player.Pause; } catch (MpvException exception) { ReportOperationFailure(MpvControlOperation.Command, exception); }
     }
 
     /// <summary>
@@ -321,7 +351,7 @@ public class MpvWpfPlayer : HwndHost
             return;
         }
 
-        try { _player.Mute = !_player.Mute; } catch (MpvException) { }
+        try { _player.Mute = !_player.Mute; } catch (MpvException exception) { ReportOperationFailure(MpvControlOperation.Command, exception); }
     }
 
     /// <summary>
@@ -342,6 +372,11 @@ public class MpvWpfPlayer : HwndHost
     public event EventHandler? PlayerCreated;
 
     /// <summary>
+    /// 在控制項操作失敗時發生。
+    /// </summary>
+    public event EventHandler<MpvControlOperationFailedEventArgs>? OperationFailed;
+
+    /// <summary>
     /// 取得主控項建立播放器時使用的選項。
     /// </summary>
     /// <value>
@@ -360,6 +395,30 @@ public class MpvWpfPlayer : HwndHost
     public MpvPlayer? Player
     {
         get { return _player; }
+    }
+
+    /// <summary>
+    /// 取得控制項是否已建立並初始化播放器。
+    /// </summary>
+    /// <value>
+    /// 播放器可用時為 <see langword="true"/>。
+    /// </value>
+    [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
+    public bool IsPlayerReady
+    {
+        get { return (bool)GetValue(IsPlayerReadyProperty); }
+    }
+
+    /// <summary>
+    /// 取得最近一次控制項操作失敗的例外。
+    /// </summary>
+    /// <value>
+    /// 最近一次例外；尚未失敗時為 <see langword="null"/>。
+    /// </value>
+    [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
+    public Exception? LastError
+    {
+        get { return (Exception?)GetValue(LastErrorProperty); }
     }
 
     /// <summary>
@@ -526,7 +585,15 @@ public class MpvWpfPlayer : HwndHost
             throw new InvalidOperationException("播放器尚未建立。");
         }
 
-        player.LoadFile(pathOrUrl, mode);
+        try
+        {
+            player.LoadFile(pathOrUrl, mode);
+        }
+        catch (Exception exception) when (exception is MpvException || exception is ArgumentException)
+        {
+            ReportOperationFailure(MpvControlOperation.Load, exception, pathOrUrl);
+            throw;
+        }
     }
 
     /// <summary>
@@ -792,14 +859,16 @@ public class MpvWpfPlayer : HwndHost
             player.Initialize();
             _player = player;
         }
-        catch
+        catch (Exception exception)
         {
             player.Dispose();
+            ReportOperationFailure(MpvControlOperation.Initialize, exception);
             throw;
         }
 
         AttachPlayerBindings(_player);
         RaiseCommandCanExecuteChanged();
+        SetValue(IsPlayerReadyPropertyKey, true);
         PlayerCreated?.Invoke(this, EventArgs.Empty);
     }
 
@@ -811,13 +880,14 @@ public class MpvWpfPlayer : HwndHost
     /// </param>
     private void AttachPlayerBindings(MpvPlayer player)
     {
-        _propertyWatchers.Add(player.WatchProperty<bool>("pause").Subscribe(new MpvDpObserver<bool>(value => UpdateFromPlayer(IsPausedProperty, value))));
-        _propertyWatchers.Add(player.WatchProperty<bool>("mute").Subscribe(new MpvDpObserver<bool>(value => UpdateFromPlayer(IsMutedProperty, value))));
-        _propertyWatchers.Add(player.WatchProperty<double>("volume").Subscribe(new MpvDpObserver<double>(value => UpdateFromPlayer(VolumeProperty, value))));
-        _propertyWatchers.Add(player.WatchProperty<double>("time-pos").Subscribe(new MpvDpObserver<double>(value => UpdateFromPlayer(PositionProperty, TimeSpan.FromSeconds(value)))));
-        _propertyWatchers.Add(player.WatchProperty<double>("duration").Subscribe(new MpvDpObserver<double>(value => UpdateReadOnlyFromPlayer(DurationPropertyKey, TimeSpan.FromSeconds(value)))));
-        _propertyWatchers.Add(player.WatchProperty<long>("playlist-pos").Subscribe(new MpvDpObserver<long>(value => UpdateFromPlayer(PlaylistIndexProperty, checked((int)value)))));
-        _propertyWatchers.Add(player.WatchProperty<long>("chapter").Subscribe(new MpvDpObserver<long>(value => UpdateFromPlayer(ChapterProperty, value < 0 ? (int?)null : checked((int)value)))));
+        Action<Exception> reportError = error => ReportOperationFailure(MpvControlOperation.PropertyWrite, error);
+        _propertyWatchers.Add(player.WatchProperty<bool>("pause", value => UpdateFromPlayer(IsPausedProperty, value), reportError));
+        _propertyWatchers.Add(player.WatchProperty<bool>("mute", value => UpdateFromPlayer(IsMutedProperty, value), reportError));
+        _propertyWatchers.Add(player.WatchProperty<double>("volume", value => UpdateFromPlayer(VolumeProperty, value), reportError));
+        _propertyWatchers.Add(player.WatchProperty<double>("time-pos", value => UpdateFromPlayer(PositionProperty, TimeSpan.FromSeconds(value)), reportError));
+        _propertyWatchers.Add(player.WatchProperty<double>("duration", value => UpdateReadOnlyFromPlayer(DurationPropertyKey, TimeSpan.FromSeconds(value)), reportError));
+        _propertyWatchers.Add(player.WatchProperty<long>("playlist-pos", value => UpdateFromPlayer(PlaylistIndexProperty, checked((int)value)), reportError));
+        _propertyWatchers.Add(player.WatchProperty<long>("chapter", value => UpdateFromPlayer(ChapterProperty, value < 0 ? (int?)null : checked((int)value)), reportError));
         player.StateChanged += OnPlayerStateChanged;
 
         if (!string.IsNullOrWhiteSpace(Source))
@@ -826,24 +896,25 @@ public class MpvWpfPlayer : HwndHost
             {
                 player.Load(new MpvMediaItem(Source!));
             }
-            catch (MpvException)
+            catch (MpvException exception)
             {
+                ReportOperationFailure(MpvControlOperation.Load, exception, Source);
             }
         }
 
         if (IsPaused != player.Pause)
         {
-            try { player.Pause = IsPaused; } catch (MpvException) { }
+            try { player.Pause = IsPaused; } catch (MpvException exception) { ReportOperationFailure(MpvControlOperation.PropertyWrite, exception); }
         }
 
         if (IsMuted != player.Mute)
         {
-            try { player.Mute = IsMuted; } catch (MpvException) { }
+            try { player.Mute = IsMuted; } catch (MpvException exception) { ReportOperationFailure(MpvControlOperation.PropertyWrite, exception); }
         }
 
         if (Math.Abs(Volume - player.Volume) > 0.01)
         {
-            try { player.Volume = Volume; } catch (MpvException) { }
+            try { player.Volume = Volume; } catch (MpvException exception) { ReportOperationFailure(MpvControlOperation.PropertyWrite, exception); }
         }
     }
 
@@ -946,8 +1017,9 @@ public class MpvWpfPlayer : HwndHost
         {
             control._player.Load(new MpvMediaItem(newSource!));
         }
-        catch (MpvException)
+        catch (MpvException exception)
         {
+            control.ReportOperationFailure(MpvControlOperation.Load, exception, newSource);
         }
     }
 
@@ -972,8 +1044,9 @@ public class MpvWpfPlayer : HwndHost
         {
             control._player.Seek(((TimeSpan)e.NewValue).TotalSeconds, "absolute");
         }
-        catch (MpvException)
+        catch (MpvException exception)
         {
+            control.ReportOperationFailure(MpvControlOperation.Seek, exception);
         }
     }
 
@@ -998,8 +1071,9 @@ public class MpvWpfPlayer : HwndHost
         {
             control._player.Volume = (double)e.NewValue;
         }
-        catch (MpvException)
+        catch (MpvException exception)
         {
+            control.ReportOperationFailure(MpvControlOperation.PropertyWrite, exception);
         }
     }
 
@@ -1024,8 +1098,9 @@ public class MpvWpfPlayer : HwndHost
         {
             control._player.Pause = (bool)e.NewValue;
         }
-        catch (MpvException)
+        catch (MpvException exception)
         {
+            control.ReportOperationFailure(MpvControlOperation.PropertyWrite, exception);
         }
     }
 
@@ -1050,8 +1125,9 @@ public class MpvWpfPlayer : HwndHost
         {
             control._player.Mute = (bool)e.NewValue;
         }
-        catch (MpvException)
+        catch (MpvException exception)
         {
+            control.ReportOperationFailure(MpvControlOperation.PropertyWrite, exception);
         }
     }
 
@@ -1082,8 +1158,9 @@ public class MpvWpfPlayer : HwndHost
         {
             control._player.PlaylistIndex = newIndex;
         }
-        catch (MpvException)
+        catch (MpvException exception)
         {
+            control.ReportOperationFailure(MpvControlOperation.PropertyWrite, exception);
         }
     }
 
@@ -1114,11 +1191,95 @@ public class MpvWpfPlayer : HwndHost
         {
             control._player.Chapter = newChapter.Value;
         }
-        catch (MpvException)
+        catch (MpvException exception)
         {
+            control.ReportOperationFailure(MpvControlOperation.PropertyWrite, exception);
         }
-        catch (ArgumentOutOfRangeException)
+        catch (ArgumentOutOfRangeException exception)
         {
+            control.ReportOperationFailure(MpvControlOperation.PropertyWrite, exception);
+        }
+    }
+
+    /// <summary>
+    /// 載入媒體項目並等待 libmpv 完成載入或回報失敗。
+    /// </summary>
+    /// <param name="item">
+    /// 要載入的媒體項目。
+    /// </param>
+    /// <param name="mode">
+    /// 播放項目加入播放清單的方式。
+    /// </param>
+    /// <param name="timeout">
+    /// 等待載入完成的逾時時間。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 取消等待的語彙基元。
+    /// </param>
+    /// <returns>
+    /// 代表載入流程的工作。
+    /// </returns>
+    public async Task LoadAsync(
+        MpvMediaItem item,
+        MpvLoadFileMode mode = MpvLoadFileMode.Replace,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        EnsurePlayer();
+        MpvPlayer? player = _player;
+        if (player == null)
+        {
+            throw new InvalidOperationException("播放器尚未建立。");
+        }
+
+        try
+        {
+            await player.LoadAsync(item, mode, timeout, cancellationToken).ConfigureAwait(true);
+        }
+        catch (Exception exception)
+        {
+            ReportOperationFailure(MpvControlOperation.Load, exception, item?.Source);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// 記錄控制項操作失敗並在 UI 執行緒通知呼叫端。
+    /// </summary>
+    /// <param name="operation">
+    /// 失敗的操作種類。
+    /// </param>
+    /// <param name="exception">
+    /// 操作失敗的例外。
+    /// </param>
+    /// <param name="source">
+    /// 操作涉及的媒體來源。
+    /// </param>
+    private void ReportOperationFailure(
+        MpvControlOperation operation,
+        Exception exception,
+        string? source = null)
+    {
+        Action report = () =>
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            SetValue(LastErrorPropertyKey, exception);
+            OperationFailed?.Invoke(
+                this,
+                new MpvControlOperationFailedEventArgs(operation, exception, source));
+        };
+
+        if (Dispatcher.CheckAccess())
+        {
+            report();
+        }
+        else
+        {
+            Dispatcher.BeginInvoke(report);
         }
     }
 
@@ -1212,6 +1373,7 @@ public class MpvWpfPlayer : HwndHost
 
         _player.Dispose();
         _player = null;
+        SetValue(IsPlayerReadyPropertyKey, false);
         RaiseCommandCanExecuteChanged();
     }
 

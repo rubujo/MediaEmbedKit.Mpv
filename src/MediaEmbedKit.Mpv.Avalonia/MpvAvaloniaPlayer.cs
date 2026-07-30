@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls;
@@ -94,6 +95,18 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
         AvaloniaProperty.RegisterDirect<MpvAvaloniaPlayer, MpvPlaybackState>(nameof(PlaybackState), control => control._playbackState);
 
     /// <summary>
+    /// 識別 <see cref="IsPlayerReady"/> 唯讀屬性。
+    /// </summary>
+    public static readonly DirectProperty<MpvAvaloniaPlayer, bool> IsPlayerReadyProperty =
+        AvaloniaProperty.RegisterDirect<MpvAvaloniaPlayer, bool>(nameof(IsPlayerReady), control => control._isPlayerReady);
+
+    /// <summary>
+    /// 識別 <see cref="LastError"/> 唯讀屬性。
+    /// </summary>
+    public static readonly DirectProperty<MpvAvaloniaPlayer, Exception?> LastErrorProperty =
+        AvaloniaProperty.RegisterDirect<MpvAvaloniaPlayer, Exception?>(nameof(LastError), control => control._lastError);
+
+    /// <summary>
     /// 識別 <see cref="PlaylistIndex"/> 屬性。
     /// </summary>
     public static readonly StyledProperty<int> PlaylistIndexProperty =
@@ -113,6 +126,14 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// 由 <see cref="PlaybackStateProperty"/> 反射的目前播放狀態。
     /// </summary>
     private MpvPlaybackState _playbackState;
+    /// <summary>
+    /// 由 <see cref="IsPlayerReadyProperty"/> 反射的播放器就緒狀態。
+    /// </summary>
+    private bool _isPlayerReady;
+    /// <summary>
+    /// 由 <see cref="LastErrorProperty"/> 反射的最近一次操作失敗。
+    /// </summary>
+    private Exception? _lastError;
 
     /// <summary>
     /// 初始化 <see cref="MpvAvaloniaPlayer"/> 類別的新執行個體。
@@ -242,7 +263,7 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
             return;
         }
 
-        try { _player.Pause = false; } catch (MpvException) { }
+        try { _player.Pause = false; } catch (MpvException exception) { ReportOperationFailure(MpvControlOperation.Command, exception); }
     }
 
     /// <summary>
@@ -255,7 +276,7 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
             return;
         }
 
-        try { _player.Pause = true; } catch (MpvException) { }
+        try { _player.Pause = true; } catch (MpvException exception) { ReportOperationFailure(MpvControlOperation.Command, exception); }
     }
 
     /// <summary>
@@ -268,7 +289,7 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
             return;
         }
 
-        try { _player.Stop(); } catch (MpvException) { }
+        try { _player.Stop(); } catch (MpvException exception) { ReportOperationFailure(MpvControlOperation.Command, exception); }
     }
 
     /// <summary>
@@ -281,7 +302,7 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
             return;
         }
 
-        try { _player.Pause = !_player.Pause; } catch (MpvException) { }
+        try { _player.Pause = !_player.Pause; } catch (MpvException exception) { ReportOperationFailure(MpvControlOperation.Command, exception); }
     }
 
     /// <summary>
@@ -294,7 +315,7 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
             return;
         }
 
-        try { _player.Mute = !_player.Mute; } catch (MpvException) { }
+        try { _player.Mute = !_player.Mute; } catch (MpvException exception) { ReportOperationFailure(MpvControlOperation.Command, exception); }
     }
 
     /// <summary>
@@ -401,6 +422,32 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     }
 
     /// <summary>
+    /// 取得控制項是否已建立並初始化播放器。
+    /// </summary>
+    /// <value>
+    /// 播放器可用時為 <see langword="true"/>。
+    /// </value>
+    [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
+    public bool IsPlayerReady
+    {
+        get { return _isPlayerReady; }
+        private set { SetAndRaise(IsPlayerReadyProperty, ref _isPlayerReady, value); }
+    }
+
+    /// <summary>
+    /// 取得最近一次控制項操作失敗的例外。
+    /// </summary>
+    /// <value>
+    /// 最近一次例外；尚未失敗時為 <see langword="null"/>。
+    /// </value>
+    [System.ComponentModel.Category("MediaEmbedKit.Mpv")]
+    public Exception? LastError
+    {
+        get { return _lastError; }
+        private set { SetAndRaise(LastErrorProperty, ref _lastError, value); }
+    }
+
+    /// <summary>
     /// 取得或設定目前播放清單索引。
     /// </summary>
     /// <value>
@@ -430,6 +477,11 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// 在控制項建立 mpv 播放器後發生。
     /// </summary>
     public event EventHandler? PlayerCreated;
+
+    /// <summary>
+    /// 在控制項操作失敗時發生。
+    /// </summary>
+    public event EventHandler<MpvControlOperationFailedEventArgs>? OperationFailed;
 
     /// <summary>
     /// 取得控制項建立播放器時使用的選項。
@@ -501,7 +553,15 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
 
         if (_player != null && _player.IsInitialized)
         {
-            _player.LoadFile(pathOrUrl, mode);
+            try
+            {
+                _player.LoadFile(pathOrUrl, mode);
+            }
+            catch (Exception exception) when (exception is MpvException || exception is ArgumentException)
+            {
+                ReportOperationFailure(MpvControlOperation.Load, exception, pathOrUrl);
+                throw;
+            }
         }
     }
 
@@ -642,7 +702,7 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
             player = null;
             renderContext = null;
         }
-        catch
+        catch (Exception exception)
         {
             if (renderContext != null)
             {
@@ -654,16 +714,25 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
                 player.Dispose();
             }
 
+            ReportOperationFailure(MpvControlOperation.Initialize, exception);
             throw;
         }
 
         AttachPlayerBindings(_player!);
         RaiseCommandCanExecuteChanged();
+        IsPlayerReady = true;
         PlayerCreated?.Invoke(this, EventArgs.Empty);
 
         if (_player != null && !string.IsNullOrWhiteSpace(_pendingSource))
         {
-            _player.LoadFile(_pendingSource!, _pendingMode);
+            try
+            {
+                _player.LoadFile(_pendingSource!, _pendingMode);
+            }
+            catch (MpvException exception)
+            {
+                ReportOperationFailure(MpvControlOperation.Load, exception, _pendingSource);
+            }
         }
     }
 
@@ -675,13 +744,14 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
     /// </param>
     private void AttachPlayerBindings(MpvPlayer player)
     {
-        _propertyWatchers.Add(player.WatchProperty<bool>("pause").Subscribe(new MpvDpObserver<bool>(value => UpdateFromPlayer(IsPausedProperty, value))));
-        _propertyWatchers.Add(player.WatchProperty<bool>("mute").Subscribe(new MpvDpObserver<bool>(value => UpdateFromPlayer(IsMutedProperty, value))));
-        _propertyWatchers.Add(player.WatchProperty<double>("volume").Subscribe(new MpvDpObserver<double>(value => UpdateFromPlayer(VolumeProperty, value))));
-        _propertyWatchers.Add(player.WatchProperty<double>("time-pos").Subscribe(new MpvDpObserver<double>(value => UpdateFromPlayer(PositionProperty, TimeSpan.FromSeconds(value)))));
-        _propertyWatchers.Add(player.WatchProperty<double>("duration").Subscribe(new MpvDpObserver<double>(value => UpdateDurationFromPlayer(TimeSpan.FromSeconds(value)))));
-        _propertyWatchers.Add(player.WatchProperty<long>("playlist-pos").Subscribe(new MpvDpObserver<long>(value => UpdateFromPlayer(PlaylistIndexProperty, checked((int)value)))));
-        _propertyWatchers.Add(player.WatchProperty<long>("chapter").Subscribe(new MpvDpObserver<long>(value => UpdateFromPlayer(ChapterProperty, value < 0 ? (int?)null : checked((int)value)))));
+        Action<Exception> reportError = error => ReportOperationFailure(MpvControlOperation.PropertyWrite, error);
+        _propertyWatchers.Add(player.WatchProperty<bool>("pause", value => UpdateFromPlayer(IsPausedProperty, value), reportError));
+        _propertyWatchers.Add(player.WatchProperty<bool>("mute", value => UpdateFromPlayer(IsMutedProperty, value), reportError));
+        _propertyWatchers.Add(player.WatchProperty<double>("volume", value => UpdateFromPlayer(VolumeProperty, value), reportError));
+        _propertyWatchers.Add(player.WatchProperty<double>("time-pos", value => UpdateFromPlayer(PositionProperty, TimeSpan.FromSeconds(value)), reportError));
+        _propertyWatchers.Add(player.WatchProperty<double>("duration", value => UpdateDurationFromPlayer(TimeSpan.FromSeconds(value)), reportError));
+        _propertyWatchers.Add(player.WatchProperty<long>("playlist-pos", value => UpdateFromPlayer(PlaylistIndexProperty, checked((int)value)), reportError));
+        _propertyWatchers.Add(player.WatchProperty<long>("chapter", value => UpdateFromPlayer(ChapterProperty, value < 0 ? (int?)null : checked((int)value)), reportError));
         player.StateChanged += OnPlayerStateChanged;
 
         string? currentSource = Source;
@@ -691,24 +761,25 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
             {
                 player.Load(new MpvMediaItem(currentSource!));
             }
-            catch (MpvException)
+            catch (MpvException exception)
             {
+                ReportOperationFailure(MpvControlOperation.Load, exception, currentSource);
             }
         }
 
         if (IsPaused != player.Pause)
         {
-            try { player.Pause = IsPaused; } catch (MpvException) { }
+            try { player.Pause = IsPaused; } catch (MpvException exception) { ReportOperationFailure(MpvControlOperation.PropertyWrite, exception); }
         }
 
         if (IsMuted != player.Mute)
         {
-            try { player.Mute = IsMuted; } catch (MpvException) { }
+            try { player.Mute = IsMuted; } catch (MpvException exception) { ReportOperationFailure(MpvControlOperation.PropertyWrite, exception); }
         }
 
         if (Math.Abs(Volume - player.Volume) > 0.01)
         {
-            try { player.Volume = Volume; } catch (MpvException) { }
+            try { player.Volume = Volume; } catch (MpvException exception) { ReportOperationFailure(MpvControlOperation.PropertyWrite, exception); }
         }
     }
 
@@ -822,8 +893,9 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
         {
             _player.Load(new MpvMediaItem(newSource!));
         }
-        catch (MpvException)
+        catch (MpvException exception)
         {
+            ReportOperationFailure(MpvControlOperation.Load, exception, newSource);
         }
     }
 
@@ -844,8 +916,9 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
         {
             _player.Seek(args.GetNewValue<TimeSpan>().TotalSeconds, "absolute");
         }
-        catch (MpvException)
+        catch (MpvException exception)
         {
+            ReportOperationFailure(MpvControlOperation.Seek, exception);
         }
     }
 
@@ -866,8 +939,9 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
         {
             _player.Volume = args.GetNewValue<double>();
         }
-        catch (MpvException)
+        catch (MpvException exception)
         {
+            ReportOperationFailure(MpvControlOperation.PropertyWrite, exception);
         }
     }
 
@@ -888,8 +962,9 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
         {
             _player.Pause = args.GetNewValue<bool>();
         }
-        catch (MpvException)
+        catch (MpvException exception)
         {
+            ReportOperationFailure(MpvControlOperation.PropertyWrite, exception);
         }
     }
 
@@ -910,8 +985,9 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
         {
             _player.Mute = args.GetNewValue<bool>();
         }
-        catch (MpvException)
+        catch (MpvException exception)
         {
+            ReportOperationFailure(MpvControlOperation.PropertyWrite, exception);
         }
     }
 
@@ -938,8 +1014,9 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
         {
             _player.PlaylistIndex = newIndex;
         }
-        catch (MpvException)
+        catch (MpvException exception)
         {
+            ReportOperationFailure(MpvControlOperation.PropertyWrite, exception);
         }
     }
 
@@ -966,11 +1043,97 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
         {
             _player.Chapter = newChapter.Value;
         }
-        catch (MpvException)
+        catch (MpvException exception)
         {
+            ReportOperationFailure(MpvControlOperation.PropertyWrite, exception);
         }
-        catch (ArgumentOutOfRangeException)
+        catch (ArgumentOutOfRangeException exception)
         {
+            ReportOperationFailure(MpvControlOperation.PropertyWrite, exception);
+        }
+    }
+
+    /// <summary>
+    /// 載入媒體項目並等待 libmpv 完成載入或回報失敗。
+    /// </summary>
+    /// <param name="item">
+    /// 要載入的媒體項目。
+    /// </param>
+    /// <param name="mode">
+    /// 播放項目加入播放清單的方式。
+    /// </param>
+    /// <param name="timeout">
+    /// 等待載入完成的逾時時間。
+    /// </param>
+    /// <param name="cancellationToken">
+    /// 取消等待的語彙基元。
+    /// </param>
+    /// <returns>
+    /// 代表載入流程的工作。
+    /// </returns>
+    public async Task LoadAsync(
+        MpvMediaItem item,
+        MpvLoadFileMode mode = MpvLoadFileMode.Replace,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        EnsureNotDisposed();
+        MpvPlayer? player = _player;
+        if (player == null || !player.IsInitialized)
+        {
+            var exception = new InvalidOperationException("播放器尚未就緒；請在 PlayerCreated 後呼叫 LoadAsync。");
+            ReportOperationFailure(MpvControlOperation.Load, exception, item?.Source);
+            throw exception;
+        }
+
+        try
+        {
+            await player.LoadAsync(item, mode, timeout, cancellationToken).ConfigureAwait(true);
+        }
+        catch (Exception exception)
+        {
+            ReportOperationFailure(MpvControlOperation.Load, exception, item?.Source);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// 記錄控制項操作失敗並在 UI 執行緒通知呼叫端。
+    /// </summary>
+    /// <param name="operation">
+    /// 失敗的操作種類。
+    /// </param>
+    /// <param name="exception">
+    /// 操作失敗的例外。
+    /// </param>
+    /// <param name="source">
+    /// 操作涉及的媒體來源。
+    /// </param>
+    private void ReportOperationFailure(
+        MpvControlOperation operation,
+        Exception exception,
+        string? source = null)
+    {
+        void Report()
+        {
+            if (Volatile.Read(ref _disposed))
+            {
+                return;
+            }
+
+            LastError = exception;
+            OperationFailed?.Invoke(
+                this,
+                new MpvControlOperationFailedEventArgs(operation, exception, source));
+        }
+
+        if (Dispatcher.UIThread.CheckAccess())
+        {
+            Report();
+        }
+        else
+        {
+            Dispatcher.UIThread.Post(Report);
         }
     }
 
@@ -1133,6 +1296,7 @@ public sealed class MpvAvaloniaPlayer : OpenGlControlBase, IDisposable
 
         _player.Dispose();
         _player = null;
+        IsPlayerReady = false;
         RaiseCommandCanExecuteChanged();
     }
 

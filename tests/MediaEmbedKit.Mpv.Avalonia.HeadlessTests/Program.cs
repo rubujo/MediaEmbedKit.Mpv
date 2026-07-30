@@ -113,6 +113,8 @@ internal static class Program
         Assert(player.IsMuted == false, "IsMuted 預設應為 false");
         Assert(player.Duration == TimeSpan.Zero, "Duration 預設應為 TimeSpan.Zero");
         Assert(player.PlaybackState == MpvPlaybackState.Idle, "PlaybackState 預設應為 Idle");
+        Assert(player.IsPlayerReady == false, "IsPlayerReady 預設應為 false");
+        Assert(player.LastError == null, "LastError 預設應為 null");
         Assert(player.Player == null, "尚未 Initialize 時 Player 應為 null");
     }
 
@@ -160,6 +162,8 @@ internal static class Program
         // 確認 DirectProperty 註冊存在
         Assert(MpvAvaloniaPlayer.DurationProperty != null, "DurationProperty 註冊應存在");
         Assert(MpvAvaloniaPlayer.PlaybackStateProperty != null, "PlaybackStateProperty 註冊應存在");
+        Assert(MpvAvaloniaPlayer.IsPlayerReadyProperty != null, "IsPlayerReadyProperty 註冊應存在");
+        Assert(MpvAvaloniaPlayer.LastErrorProperty != null, "LastErrorProperty 註冊應存在");
         // 由於 setter 為 private，外部無法寫入；初始值維持預設。
         Assert(player.Duration == TimeSpan.Zero, "Duration 應維持預設 TimeSpan.Zero");
         Assert(player.PlaybackState == MpvPlaybackState.Idle, "PlaybackState 應維持預設 Idle");

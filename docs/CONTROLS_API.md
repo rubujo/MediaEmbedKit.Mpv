@@ -25,6 +25,8 @@ WinForms 透過 `INotifyPropertyChanged` 與 `Control.DataBindings` 支援程式
 | `IsPaused` | `bool` | `false` | `pause` | 否 | 全部 | |
 | `IsMuted` | `bool` | `false` | `mute` | 否 | 全部 | |
 | `PlaybackState` | `MpvPlaybackState` | `Idle` | n/a（事件聚合） | 是 | 全部 | 由 libmpv `StartFile`/`FileLoaded`/`EndFile`/`Idle`/`Shutdown` 聚合，詳見 `MpvPlaybackState`。 |
+| `IsPlayerReady` | `bool` | `false` | n/a | 是 | 全部 | `Player` 已建立並完成初始化時為 `true`；可用於停用尚不可執行的 UI。 |
+| `LastError` | `Exception?` | `null` | n/a | 是 | 全部 | 最近一次初始化、載入、命令、跳轉、屬性寫入或後端操作失敗。 |
 | `PlaylistIndex` | `int` | `0` | `playlist-pos` | 否 | 全部 | 以 0 起始；設值會跳到該播放清單項目。負數不寫入 player。 |
 | `Chapter` | `int?` | `null` | `chapter` | 否 | 全部 | 以 0 起始；`null` 代表無章節或尚未載入。mpv `-1` 自動映射為 `null`。設值為 `null` 或負數時不寫入 player。 |
 | `OverlayContent` | `UIElement?` / `View?` / `WinUiElement?` | `null` | n/a | 否 | WPF / WinUI / MAUI | AirSpace 覆蓋層內容；HwndHost 之上的 WPF / WinUI / MAUI 元素，解決 mpv child HWND 蓋住 framework 內容的 z-order 問題。 |
@@ -51,6 +53,12 @@ Avalonia 沒有 child HWND airspace 問題，使用端用標準 Avalonia `Grid` 
 控制項已替您處理 libmpv 背景事件迴圈 → UI thread 的 marshalling，因此可以直接以一般 XAML / WinForms binding 使用上表所有屬性。
 
 但如果您**自行訂閱** `MpvPlayer.EventReceived` / `PropertyChanged` / `StateChanged`（控制項以外的事件），這些 callback 仍然在 libmpv 背景執行緒觸發，必須自行 marshal 至 UI thread 才能修改 UI 元素。詳見 `docs/HIGH_LEVEL_API.md` 的「事件分派與執行緒模型」。
+
+### 載入與錯誤處理
+
+所有控制項都提供 `LoadAsync(MpvMediaItem, MpvLoadFileMode, TimeSpan?, CancellationToken)`，可等待 `FileLoaded` 並取得逾時、取消或載入錯誤。Avalonia、WinUI 3 與 MAUI Windows 應在 `IsPlayerReady` 為 `true` 或 `PlayerCreated` 事件後呼叫；WPF 與 WinForms 會視需要先完成初始化。
+
+控制項不再靜默忽略播放操作錯誤。失敗時會更新唯讀 `LastError` 並引發 `OperationFailed`；事件引數的 `Operation` 可區分 `Initialize`、`Load`、`Command`、`Seek`、`PropertyWrite` 與 `Backend`，`Source` 則在可用時包含媒體來源。這些通知已切回 UI 執行緒。
 
 ## 共通 命令
 

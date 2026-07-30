@@ -411,7 +411,7 @@ internal static class Program
     }
 
     /// <summary>
-    /// 驗證 <see cref="MpvPlayer.WatchProperty{T}"/> 多訂閱者共享 libmpv 觀察。
+    /// 驗證 <see cref="MpvPlayer.WatchProperty{T}(string)"/> 多訂閱者共享 libmpv 觀察。
     /// </summary>
     /// <param name="runtimeDirectory">
     /// 包含 libmpv 的執行階段資料夾。
@@ -442,7 +442,7 @@ internal static class Program
     }
 
     /// <summary>
-    /// 驗證 <see cref="MpvPlayer.WatchProperty{T}"/> 在 player 釋放時送出 OnCompleted。
+    /// 驗證 <see cref="MpvPlayer.WatchProperty{T}(string)"/> 在 player 釋放時送出 OnCompleted。
     /// </summary>
     /// <param name="runtimeDirectory">
     /// 包含 libmpv 的執行階段資料夾。

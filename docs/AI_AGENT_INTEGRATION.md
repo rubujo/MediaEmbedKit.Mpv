@@ -28,3 +28,14 @@
 - 修改技能流程時，只更新 `docs/ai/skills/*.md`，並確認 `.agents/skills` 與 `.claude/skills` 的 `SKILL.md` 仍指向正確文件。
 - 新增技能時，同步新增 `.agents/skills/<skill-name>/SKILL.md` 與 `.claude/skills/<skill-name>/SKILL.md`，兩者只放 front matter、簡短標題與共用技能路徑。
 - 若官方文件新增真正共同入口，才重新評估是否移除現有橋接；不得為單一工具新增平行規則來源。
+
+## GPT-5.6 Sol 規則校準
+
+依 OpenAI 的 GPT-5.6 提示指南與 Codex `AGENTS.md` 說明，專案規則應保持精簡、每項規則只宣告一次，並明確寫出自主操作界線與可驗證的完成條件。評估專案規範時使用下列代表性任務：
+
+- 唯讀 API 檢視不得產生未授權變更。
+- 明確實作要求可完成範圍內修改與相關驗證。
+- 涉及刪除、外部寫入、成本或範圍擴張時應停下取得同意。
+- 跨專案公開 API 變更應同步文件，並回報完整建置與測試證據。
+
+根目錄 `AGENTS.md` 保存跨任務共同規則；技能文件只保存領域限制與流程，避免重複語句造成權威不明。詳細工程規範仍由 `docs/ENGINEERING_STANDARDS.md` 維護。

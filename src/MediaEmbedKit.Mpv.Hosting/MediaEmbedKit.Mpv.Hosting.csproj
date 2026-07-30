@@ -3,7 +3,7 @@
     <TargetFrameworks>netstandard2.0;net472;net48;net10.0</TargetFrameworks>
     <AssemblyName>MediaEmbedKit.Mpv.Hosting</AssemblyName>
     <RootNamespace>MediaEmbedKit.Mpv.Hosting</RootNamespace>
-    <Description>MediaEmbedKit.Mpv 的 Microsoft.Extensions.DependencyInjection 整合，提供 AddMpvPlayer 與 AddMpvPlayerFactory 輔助方法。</Description>
+    <Description>MediaEmbedKit.Mpv 的 Microsoft.Extensions.DependencyInjection 整合，提供 IMpvPlayerFactory 與 AddMpvPlayerFactory 輔助方法。</Description>
     <PackageId>MediaEmbedKit.Mpv.Hosting</PackageId>
     <Title>MediaEmbedKit.Mpv.Hosting</Title>
   </PropertyGroup>

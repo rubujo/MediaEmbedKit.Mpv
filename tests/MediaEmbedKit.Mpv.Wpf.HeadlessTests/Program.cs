@@ -89,6 +89,8 @@ internal static class Program
         Assert(player.IsMuted == false, "IsMuted 預設應為 false");
         Assert(player.Duration == TimeSpan.Zero, "Duration 預設應為 TimeSpan.Zero");
         Assert(player.PlaybackState == MpvPlaybackState.Idle, "PlaybackState 預設應為 Idle");
+        Assert(player.IsPlayerReady == false, "IsPlayerReady 預設應為 false");
+        Assert(player.LastError == null, "LastError 預設應為 null");
         Assert(player.Player == null, "尚未 Initialize 時 Player 應為 null");
     }
 
@@ -120,6 +122,8 @@ internal static class Program
         MpvWpfPlayer player = new MpvWpfPlayer();
         Assert(MpvWpfPlayer.DurationProperty != null, "DurationProperty 註冊應存在");
         Assert(MpvWpfPlayer.PlaybackStateProperty != null, "PlaybackStateProperty 註冊應存在");
+        Assert(MpvWpfPlayer.IsPlayerReadyProperty != null, "IsPlayerReadyProperty 註冊應存在");
+        Assert(MpvWpfPlayer.LastErrorProperty != null, "LastErrorProperty 註冊應存在");
         Assert(player.Duration == TimeSpan.Zero, "Duration 應維持預設");
         Assert(player.PlaybackState == MpvPlaybackState.Idle, "PlaybackState 應維持預設");
     }

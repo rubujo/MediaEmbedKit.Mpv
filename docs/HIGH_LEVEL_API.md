@@ -51,28 +51,27 @@ await player.LoadAsync(item, MpvLoadFileMode.Replace, TimeSpan.FromSeconds(30));
 
 ## WatchProperty<T>
 
-把 libmpv 屬性變更包裝為 `IObservable<T>`，多訂閱者共享單一 `ObserveProperty` 註冊。Player 釋放時所有訂閱者會收到 `OnCompleted`。
+把 libmpv 屬性變更包裝為 `IObservable<T>`，多訂閱者共享單一 `ObserveProperty` 註冊。一般應用程式可直接傳入回呼，不必另外引用 Reactive Extensions 或自行實作 `IObserver<T>`。Player 釋放時所有訂閱者會收到 `OnCompleted`。
 
 ```csharp
-IDisposable subscription = player
-    .WatchProperty<double>("time-pos")
-    .Subscribe(position => UpdateUi(position));
+IDisposable subscription = player.WatchProperty<double>(
+    "time-pos",
+    position => UpdateUi(position),
+    error => logger.LogError(error, "監看播放位置失敗"));
 
 // Player 釋放時：subscription 會收到 OnCompleted，無須手動 dispose。
 ```
 
-目前支援的型別：`double` / `long` / `bool` / `string` / `MpvNode`。
+若需要組合事件流，`WatchProperty<T>(string)` 仍會回傳標準 `IObservable<T>`。目前支援的型別：`double` / `long` / `bool` / `string` / `MpvNode`。
 
 ### 多訂閱者共享註冊
 
 同一屬性的多個 `WatchProperty<T>().Subscribe(...)` 共用單一底層 `mpv_observe_property` 註冊，避免對 libmpv 重複下訂閱：
 
 ```csharp
-IObservable<double> timePos = player.WatchProperty<double>("time-pos");
-
-IDisposable uiSub = timePos.Subscribe(p => seekBar.Position = p);
-IDisposable logSub = timePos.Subscribe(p => logger.LogTrace("time-pos={Position}", p));
-IDisposable metricsSub = timePos.Subscribe(p => metrics.RecordPosition(p));
+IDisposable uiSub = player.WatchProperty<double>("time-pos", p => seekBar.Position = p);
+IDisposable logSub = player.WatchProperty<double>("time-pos", p => logger.LogTrace("time-pos={Position}", p));
+IDisposable metricsSub = player.WatchProperty<double>("time-pos", p => metrics.RecordPosition(p));
 ```
 
 三個訂閱者收到同一份事件流，內部只對 libmpv 註冊一次。當最後一個訂閱者 `Dispose` 後，整個觀察才會解註冊。
@@ -82,11 +81,11 @@ IDisposable metricsSub = timePos.Subscribe(p => metrics.RecordPosition(p));
 ```csharp
 IDisposable[] subs = new[]
 {
-    player.WatchProperty<double>("time-pos").Subscribe(OnPositionChanged),
-    player.WatchProperty<double>("duration").Subscribe(OnDurationChanged),
-    player.WatchProperty<bool>("pause").Subscribe(OnPauseChanged),
-    player.WatchProperty<double>("volume").Subscribe(OnVolumeChanged),
-    player.WatchProperty<string>("media-title").Subscribe(OnTitleChanged)
+    player.WatchProperty<double>("time-pos", OnPositionChanged),
+    player.WatchProperty<double>("duration", OnDurationChanged),
+    player.WatchProperty<bool>("pause", OnPauseChanged),
+    player.WatchProperty<double>("volume", OnVolumeChanged),
+    player.WatchProperty<string>("media-title", OnTitleChanged)
 };
 
 // 一次取消所有訂閱
@@ -105,7 +104,7 @@ foreach (IDisposable sub in subs) sub.Dispose();
 
 | 舊式 | 新式 |
 | --- | --- |
-| `ulong id = player.ObserveProperty("time-pos", MpvFormat.Double);` 搭配 `player.PropertyChanged += ...;` 內手動 switch | `IDisposable sub = player.WatchProperty<double>("time-pos").Subscribe(...);` |
+| `ulong id = player.ObserveProperty("time-pos", MpvFormat.Double);` 搭配 `player.PropertyChanged += ...;` 內手動 switch | `IDisposable sub = player.WatchProperty<double>("time-pos", onNext);` |
 | `player.UnobserveProperty(id);` | `sub.Dispose();` |
 | 共用 `PropertyChanged` 事件多屬性 routing | 每個屬性各自 `WatchProperty<T>`，內部以 `(Name, Format)` 作鍵共享單一 `ObserveProperty` 註冊 |
 
@@ -123,6 +122,26 @@ if (player.TryGetPropertyDouble("video-bitrate", out double bitrate))
 ```
 
 支援：`TryGetPropertyString`、`TryGetPropertyFlag`、`TryGetPropertyInt64`、`TryGetPropertyDouble`、`TryGetPropertyNode`。其他錯誤（例如未初始化、格式不匹配）仍會以 `MpvException` 擲回，因此這組 API 只吞下「屬性不存在／暫時無法使用」兩種錯誤碼。
+
+## 常用播放狀態與跳轉
+
+`IsPaused`、`IsMuted` 與 `Position` 是既有 `Pause`、`Mute` 與 `TimePosition` 的語意化別名，適合資料繫結與一般應用程式碼。`Seek` 可直接使用 `TimeSpan` 與強型別模式：
+
+```csharp
+player.IsPaused = true;
+player.IsMuted = false;
+player.Position = TimeSpan.FromMinutes(2);
+
+player.Seek(TimeSpan.FromSeconds(10), MpvSeekMode.Relative);
+await player.SeekAsync(
+    TimeSpan.FromMinutes(5),
+    MpvSeekMode.Absolute | MpvSeekMode.Exact,
+    cancellationToken);
+
+player.Seek(50, MpvSeekMode.AbsolutePercent);
+```
+
+`TimeSpan` 多載只接受相對或絕對秒數；百分比應使用 `double` 多載。`MpvSeekMode` 必須包含且只能包含一種位置基準，並可選擇 `Keyframes` 或 `Exact` 其中之一。
 
 ## 事件分派與執行緒模型
 
@@ -176,7 +195,7 @@ services.AddMpvPlayerFactory(builder => builder
     .UseHardwareDecoding());
 ```
 
-`AddMpvPlayerFactory` 會註冊一個 `Func<Task<MpvPlayer>>`，由呼叫端在啟動流程（例如 `IHostedService.StartAsync`、應用程式啟動程式碼）以 `await` 建立並自行決定生命週期。`MpvPlayer` 的初始化本質上是非同步的，本函式庫只提供非同步入口，不提供同步等待版本以避免常見的 `GetAwaiter().GetResult()` 死鎖。
+`AddMpvPlayerFactory` 會註冊具名的 `IMpvPlayerFactory`，由呼叫端在啟動流程（例如 `IHostedService.StartAsync`、應用程式啟動程式碼）以 `await factory.CreateAsync(cancellationToken)` 建立並自行決定生命週期。為維持相容性，也會註冊 `Func<Task<MpvPlayer>>` 轉接器。`MpvPlayer` 的初始化本質上是非同步的，本函式庫只提供非同步入口，不提供同步等待版本以避免常見的 `GetAwaiter().GetResult()` 死鎖。
 
 ## 章節 / Subtitle / Audio styling typed API
 
@@ -314,7 +333,7 @@ mpv 的 encoding mode 允許把 player 當作一次性轉碼器：設定 `o=...`
 | FFmpeg（shinchiro / zhongfly build 內建） | git master commits（2026-04+，內含 SVT-AV1 two-pass patch `5ba2525`，2026-02-25）；對應 stable 為 FFmpeg 8.1 "Hoare"（2026-03-16） |
 | SVT-AV1 | `4.0`（2026-01-13） |
 
-可用編碼器（依 shinchiro 20260610 / zhongfly 2026-07-01 build）：
+可用編碼器（依 shinchiro 20260610 / zhongfly 2026-07-29 build）：
 
 - 視訊：`libx264` / `libx265` / `libvpx-vp9` / `libsvtav1` / `libaom-av1` / `*_nvenc` / `*_qsv` / `*_amf`
 - 音訊：`aac`（內建） / `libopus` / `libmp3lame`
@@ -447,6 +466,6 @@ builder 路徑適合需要混合其他 `Use*` 設定（hwdec、yt-dlp 格式、l
 | `new MpvPlayer(options).Initialize()` | `await new MpvAppBuilder().BuildAsync()` |
 | `using player = ...` | `await using player = ...` |
 | `player.LoadFile(url)` + 自己觀察 `FileLoaded` | `await player.LoadAsync(new MpvMediaItem(url))` |
-| `player.ObserveProperty(...)` + `PropertyChanged` 事件 | `player.WatchProperty<double>(...).Subscribe(...)` |
+| `player.ObserveProperty(...)` + `PropertyChanged` 事件 | `player.WatchProperty<double>(..., onNext)` |
 | 直接覆蓋 `libmpv-2.dll` | `MpvLibraryUpdateScheduler.StageAsync` + `ApplyStagedOnStartup` |
 | 自己解析 `demuxer-cache-state` 節點 | `player.GetDemuxerCacheState()` 取 `MpvDemuxerCacheState` |

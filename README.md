@@ -54,21 +54,19 @@ AI 產製內容可能包含缺漏、錯誤假設或未涵蓋的邊界情境。�
 
 ## 基本使用
 
-應用程式可自行部署 `libmpv-2.dll`，或明確呼叫輔助工具建立 Windows x64 / ARM64 執行階段資料夾（輔助工具依目前處理序架構自動選擇對應資產）。下列範例需引用 `MediaEmbedKit.Mpv` + `MediaEmbedKit.Mpv.Runtime` 兩個套件：
+應用程式可自行部署 `libmpv-2.dll`，或明確啟用 Windows 執行階段自動安裝。下列範例需引用 `MediaEmbedKit.Mpv` 與 `MediaEmbedKit.Mpv.Runtime` 兩個套件；下載仍由 `UseWindowsRuntimeAutoInstall` 明確宣告，不會在控制項建構時隱藏執行：
 
 ```csharp
-MpvWindowsRuntimeDownloadResult runtime =
-    await MpvWindowsRuntimeInstaller.InstallOrUpdateAsync("runtime");
+await using MpvPlayer player = await new MpvAppBuilder()
+    .UseWindowsRuntimeAutoInstall("runtime")
+    .UseHardwareDecoding()
+    .BuildAsync();
 
-MpvPlayerOptions options =
-    MpvWindowsRuntimeInstaller.CreatePlayerOptions(runtime.RuntimeDirectory);
-
-using MpvPlayer player = new MpvPlayer(options);
-player.Initialize();
-player.LoadFile("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+await player.LoadAsync(
+    new MpvMediaItem("https://www.youtube.com/watch?v=dQw4w9WgXcQ"));
 ```
 
-若要讓執行階段資料夾同時作為 mpv 設定資料夾，於 `CreatePlayerOptions` 傳入 `loadRuntimeConfiguration: true`。
+若要自行控制下載與檢查碼策略，仍可先呼叫 `MpvWindowsRuntimeInstaller.InstallOrUpdateAsync`，再把結果交給 `MpvAppBuilder.UseWindowsRuntime`。
 
 鏈式 builder、`MpvMediaItem` per-file 選項、`MpvEncoder` 轉碼、`WatchProperty<T>` 等高階入口請參考 `docs/HIGH_LEVEL_API.md`。
 

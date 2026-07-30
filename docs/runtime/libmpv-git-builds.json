@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "lastCheckedDate": "2026-07-02",
+  "lastCheckedDate": "2026-07-30",
   "stableBaseline": {
     "mpvTag": "v0.41.0",
     "clientApiVersion": "2.5",
@@ -27,14 +27,14 @@
     {
       "name": "Zhongfly",
       "repository": "zhongfly/mpv-winbuild",
-      "releaseTag": "2026-07-01-99b4c12ccc",
-      "releaseUrl": "https://github.com/zhongfly/mpv-winbuild/releases/tag/2026-07-01-99b4c12ccc",
-      "publishedAt": "2026-07-01T12:36:03Z",
-      "mpvCommit": "99b4c12ccc",
+      "releaseTag": "2026-07-29-74356c0fc6",
+      "releaseUrl": "https://github.com/zhongfly/mpv-winbuild/releases/tag/2026-07-29-74356c0fc6",
+      "publishedAt": "2026-07-29T17:39:07Z",
+      "mpvCommit": "74356c0fc6",
       "sourceKind": "git-build",
       "cApiStatus": "header-compatible",
       "managedAction": "CommandNamed 已針對 mpv_command_node 具名命令 map 使用 _name；本次無需新增 P/Invoke 或受控型別。",
-      "notes": "Compare-LibMpvHeaders.ps1 -TargetCommit 99b4c12ccc：公開 header hash 與基準 v0.41.0 相容；client.h 僅既有註解與 _name 支援說明差異，render 與 stream callback 標頭無差異。"
+      "notes": "Compare-LibMpvHeaders.ps1 -TargetCommit 74356c0fc6：client.h 僅既有 _name 與 mpv_wait_async_requests 註解差異；render.h、render_gl.h、stream_cb.h 無差異。"
     }
   ]
 }

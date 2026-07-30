@@ -93,6 +93,8 @@ internal static class Program
         Assert(control.PlaybackState == MpvPlaybackState.Idle, "PlaybackState 預設應為 Idle");
         Assert(control.PlaylistIndex == 0, "PlaylistIndex 預設應為 0");
         Assert(control.Chapter == null, "Chapter 預設應為 null");
+        Assert(control.IsPlayerReady == false, "IsPlayerReady 預設應為 false");
+        Assert(control.LastError == null, "LastError 預設應為 null");
         Assert(control.Player == null, "尚未 Initialize 時 Player 應為 null");
     }
 
@@ -189,6 +191,14 @@ internal static class Program
         System.Reflection.PropertyInfo? stateProperty = typeof(MpvPlayerControl).GetProperty(nameof(MpvPlayerControl.PlaybackState));
         Assert(stateProperty != null, "PlaybackState property 反射應存在");
         Assert(stateProperty!.GetSetMethod(nonPublic: false) == null, "PlaybackState 不應有 public setter");
+
+        System.Reflection.PropertyInfo? readyProperty = typeof(MpvPlayerControl).GetProperty(nameof(MpvPlayerControl.IsPlayerReady));
+        Assert(readyProperty != null, "IsPlayerReady property 反射應存在");
+        Assert(readyProperty!.GetSetMethod(nonPublic: false) == null, "IsPlayerReady 不應有 public setter");
+
+        System.Reflection.PropertyInfo? errorProperty = typeof(MpvPlayerControl).GetProperty(nameof(MpvPlayerControl.LastError));
+        Assert(errorProperty != null, "LastError property 反射應存在");
+        Assert(errorProperty!.GetSetMethod(nonPublic: false) == null, "LastError 不應有 public setter");
     }
 
     /// <summary>

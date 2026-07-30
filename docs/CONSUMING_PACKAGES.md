@@ -22,7 +22,7 @@
 | `MediaEmbedKit.Mpv.Externals` | FFmpeg / Deno / yt-dlp 下載器 + 共用網路基礎設施 | `netstandard2.0;net472;net48;net10.0` |
 | `MediaEmbedKit.Mpv.Runtime` | libmpv Windows 執行階段 安裝器 + 4-tier 壓縮檔解壓 + 跨處理序鎖定 | `netstandard2.0;net472;net48;net10.0` |
 | `MediaEmbedKit.Mpv.Diagnostics` | `MpvLicenseAuditor` / `MpvRuntimeHealthCheck` / `MpvLibraryUpdateScheduler` | `netstandard2.0;net472;net48;net10.0` |
-| `MediaEmbedKit.Mpv.Hosting` | `Microsoft.Extensions.DependencyInjection` 整合（`AddMpvPlayer` / `AddMpvPlayerFactory`） | `netstandard2.0;net472;net48;net10.0` |
+| `MediaEmbedKit.Mpv.Hosting` | `Microsoft.Extensions.DependencyInjection` 整合（`IMpvPlayerFactory` / `AddMpvPlayerFactory`） | `netstandard2.0;net472;net48;net10.0` |
 
 ### UI 層（5 個）
 
@@ -145,7 +145,7 @@ dotnet nuget add source "C:\NuGet\MediaEmbedKit.Mpv" --name "MediaEmbedKit.Mpv (
   <!-- 商用合規與健康檢查（需要 LicenseAuditor / HealthCheck / UpdateScheduler 才裝） -->
   <PackageReference Include="MediaEmbedKit.Mpv.Diagnostics" Version="<version>" />
 
-  <!-- DI 整合（需要 AddMpvPlayer / AddMpvPlayerFactory 才裝） -->
+  <!-- DI 整合（需要 IMpvPlayerFactory / AddMpvPlayerFactory 才裝） -->
   <PackageReference Include="MediaEmbedKit.Mpv.Hosting" Version="<version>" />
 
   <!-- 一次裝 5 個 service 套件的 meta（UI 仍需另加） -->
