@@ -1,4 +1,4 @@
-﻿param(
+param(
     [Parameter(Mandatory = $true)]
     [ValidateSet('Shinchiro', 'Zhongfly')]
     [string] $Provider,
@@ -34,7 +34,7 @@ function Get-MpvCommit {
     }
 
     foreach ($asset in $Release.assets) {
-        if ($asset.name -match '^mpv(?:-dev|-debug)?-[^-]+(?:-v3)?-\d+-git-([0-9a-fA-F]+)\.7z$') {
+        if ($asset.name -match '^mpv(?:-dev|-debug|-dev-lgpl)?-[^-]+(?:-v3)?-\d+-git-([0-9a-fA-F]+)\.7z$') {
             return $Matches[1].ToLowerInvariant()
         }
     }
@@ -43,26 +43,84 @@ function Get-MpvCommit {
 }
 
 $repository = Get-RepositoryName -ProviderName $Provider
-if ([string]::IsNullOrWhiteSpace($ReleaseTag)) {
-    $uri = "https://api.github.com/repos/$repository/releases/latest"
-}
-else {
-    $escapedTag = [uri]::EscapeDataString($ReleaseTag)
-    $uri = "https://api.github.com/repos/$repository/releases/tags/$escapedTag"
-}
-
 $headers = @{
     'User-Agent' = $UserAgent
     'Accept' = 'application/vnd.github+json'
 }
 
-$release = Invoke-RestMethod -Uri $uri -Headers $headers
+$token = if ($env:GITHUB_TOKEN) { $env:GITHUB_TOKEN } elseif ($env:GH_TOKEN) { $env:GH_TOKEN } else { $null }
+if (-not [string]::IsNullOrWhiteSpace($token)) {
+    $headers['Authorization'] = "Bearer $token"
+}
+
+$release = $null
+
+try {
+    if ([string]::IsNullOrWhiteSpace($ReleaseTag)) {
+        $uri = "https://api.github.com/repos/$repository/releases/latest"
+    }
+    else {
+        $escapedTag = [uri]::EscapeDataString($ReleaseTag)
+        $uri = "https://api.github.com/repos/$repository/releases/tags/$escapedTag"
+    }
+
+    $release = Invoke-RestMethod -Uri $uri -Headers $headers
+}
+catch {
+    $atomUri = "https://github.com/$repository/releases.atom"
+    $atomContent = (Invoke-WebRequest -Uri $atomUri -Headers @{ 'User-Agent' = $UserAgent }).Content
+    $atomXml = [xml]$atomContent
+
+    $selectedEntry = $null
+    if ([string]::IsNullOrWhiteSpace($ReleaseTag)) {
+        $selectedEntry = $atomXml.feed.entry[0]
+    }
+    else {
+        $selectedEntry = $atomXml.feed.entry | Where-Object { $_.id -like "*$ReleaseTag*" -or $_.link.href -like "*$ReleaseTag*" } | Select-Object -First 1
+    }
+
+    if (-not $selectedEntry) {
+        throw "無法從 Atom feed 找到發行版 '$ReleaseTag'。"
+    }
+
+    $tag = if ($selectedEntry.id -match '/([^/]+)$') { $Matches[1] } else { $selectedEntry.title }
+    $tagUrl = "https://github.com/$repository/releases/tag/$tag"
+    $expandedUri = "https://github.com/$repository/releases/expanded_assets/$tag"
+
+    $assets = @()
+    try {
+        $expandedContent = (Invoke-WebRequest -Uri $expandedUri -Headers @{ 'User-Agent' = $UserAgent }).Content
+        $matches = [regex]::Matches($expandedContent, 'href="([^"]*/releases/download/[^"]+)"')
+        foreach ($m in $matches) {
+            $href = $m.Groups[1].Value
+            $fileName = [System.IO.Path]::GetFileName($href)
+            if ($fileName -like 'mpv-*.7z' -or $fileName -like 'mpv-dev-*.7z') {
+                $assets += [ordered]@{
+                    name = $fileName
+                    size = 0
+                    browserDownloadUrl = if ($href.StartsWith('http')) { $href } else { "https://github.com$href" }
+                }
+            }
+        }
+    }
+    catch {
+    }
+
+    $release = [PSCustomObject]@{
+        tag_name = $tag
+        html_url = $tagUrl
+        published_at = $selectedEntry.updated
+        body = $selectedEntry.content.'#text'
+        assets = $assets
+    }
+}
+
 $mpvCommit = Get-MpvCommit -Release $release
 $mpvAssets = @($release.assets | Where-Object { $_.name -like 'mpv-*.7z' -or $_.name -like 'mpv-dev-*.7z' } | ForEach-Object {
     [ordered]@{
         name = $_.name
-        size = $_.size
-        browserDownloadUrl = $_.browser_download_url
+        size = if ($_.size) { $_.size } else { 0 }
+        browserDownloadUrl = if ($_.browser_download_url) { $_.browser_download_url } else { $_.browserDownloadUrl }
     }
 })
 

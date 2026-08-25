@@ -2383,9 +2383,9 @@ internal static class Program
                 using (HttpClient client = new HttpClient(handler))
                 {
                     client.DefaultRequestHeaders.Add("User-Agent", "MediaEmbedKit.Mpv.Tests");
-                    using (HttpResponseMessage res = await client.GetAsync("https://api.github.com/repos/mpv-player/mpv/releases/latest").ConfigureAwait(false))
+                    using (HttpResponseMessage res = await client.GetAsync("https://github.com").ConfigureAwait(false))
                     {
-                        AssertEx.True(res.IsSuccessStatusCode, "預設 Pinned CA 下載 GitHub API 應成功。");
+                        AssertEx.True(res.IsSuccessStatusCode, "預設 Pinned CA 下載 GitHub 應成功。");
                     }
                 }
 #if !NETSTANDARD2_0 && !NET472 && !NET48
@@ -2413,7 +2413,7 @@ internal static class Program
                     using (HttpClient client = new HttpClient(handler))
                     {
                         client.DefaultRequestHeaders.Add("User-Agent", "MediaEmbedKit.Mpv.Tests");
-                        await client.GetAsync("https://api.github.com/repos/mpv-player/mpv/releases/latest").ConfigureAwait(false);
+                        await client.GetAsync("https://github.com").ConfigureAwait(false);
                     }
 #if !NETSTANDARD2_0 && !NET472 && !NET48
                 }
@@ -2443,7 +2443,7 @@ internal static class Program
                 using (HttpClient client = new HttpClient(handler))
                 {
                     client.DefaultRequestHeaders.Add("User-Agent", "MediaEmbedKit.Mpv.Tests");
-                    using (HttpResponseMessage resB = await client.GetAsync("https://api.github.com/repos/mpv-player/mpv/releases/latest").ConfigureAwait(false))
+                    using (HttpResponseMessage resB = await client.GetAsync("https://github.com").ConfigureAwait(false))
                     {
                         AssertEx.True(resB.IsSuccessStatusCode, "關閉憑證釘選防線後，即使 Pins 無效，使用一般 CA 也應下載成功。");
                     }

@@ -7,7 +7,7 @@
 | 項目 | 狀態 |
 | --- | --- |
 | 官方基準 | mpv v0.41.0 |
-| 提供者對齊 | shinchiro `20260610` / mpv `304426c`；zhongfly `2026-07-29-74356c0fc6` / mpv `74356c0fc6` |
+| 提供者對齊 | shinchiro `20260814` / mpv `7b8915bc1d`；zhongfly `2026-08-24-654e9382c0` / mpv `654e9382c0` |
 | 公開匯出函式 | 官方標頭 54 個；`MpvNative` P/Invoke 54 個 |
 | 列舉與旗標 | `MpvErrorCode`、`MpvFormat`、`MpvLogLevel`、`MpvEndFileReason`、render 相關列舉已對齊 v0.41.0 |
 | 原生資料結構 | 事件、節點、stream callback、OpenGL、DRM、render frame info 與 `mpv_byte_array` 皆有受控對應 |
@@ -29,7 +29,7 @@
 
 ## render.h 與 render_gl.h
 
-已比對 shinchiro git build `304426c` 與 zhongfly git build `74356c0fc6`，未發現相對 stable v0.41.0 的公開 header 形狀差異。
+已比對 shinchiro git build `7b8915bc1d` 與 zhongfly git build `654e9382c0`，未發現相對 stable v0.41.0 的公開 header 形狀差異。
 
 | 區域 | 受控入口 | 驗證狀態 |
 | --- | --- | --- |
