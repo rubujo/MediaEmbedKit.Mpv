@@ -51,7 +51,7 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Cache NuGet packages
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.nuget/packages
           key: nuget-${{ runner.os }}-${{ hashFiles('Directory.Packages.props', 'Directory.Build.props') }}
@@ -60,7 +60,7 @@ jobs:
 
       - name: Cache libmpv / yt-dlp / FFmpeg / Deno runtime
         # 僅在執行階段清單變更時失效。若下載器邏輯有重大調整，可手動修改尾碼 v1 進行強制失效
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: .cache/runtime
           key: runtime-${{ runner.os }}-${{ hashFiles('docs/runtime/libmpv-git-builds.json') }}-v1
@@ -106,7 +106,7 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Cache NuGet packages
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.nuget/packages
           key: nuget-${{ runner.os }}-${{ hashFiles('Directory.Packages.props', 'Directory.Build.props') }}
