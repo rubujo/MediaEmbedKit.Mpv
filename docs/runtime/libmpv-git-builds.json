@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "lastCheckedDate": "2026-08-25",
+  "lastCheckedDate": "2026-09-13",
   "stableBaseline": {
     "mpvTag": "v0.41.0",
     "clientApiVersion": "2.5",
@@ -15,26 +15,26 @@
     {
       "name": "Shinchiro",
       "repository": "shinchiro/mpv-winbuild-cmake",
-      "releaseTag": "20260814",
-      "releaseUrl": "https://github.com/shinchiro/mpv-winbuild-cmake/releases/tag/20260814",
-      "publishedAt": "2026-08-14T00:43:31Z",
-      "mpvCommit": "7b8915bc1d",
+      "releaseTag": "20260903",
+      "releaseUrl": "https://github.com/shinchiro/mpv-winbuild-cmake/releases/tag/20260903",
+      "publishedAt": "2026-09-03T00:47:54Z",
+      "mpvCommit": "69e63f425a",
       "sourceKind": "git-build",
       "cApiStatus": "header-compatible",
       "managedAction": "CommandNamed 已針對 mpv_command_node 具名命令 map 使用 _name；本次無需新增 P/Invoke 或受控型別。",
-      "notes": "Compare-LibMpvHeaders.ps1 -TargetCommit 7b8915bc1d：client.h 僅既有 _name 與 mpv_wait_async_requests 註解差異；render.h、render_gl.h、stream_cb.h 無差異。"
+      "notes": "Compare-LibMpvHeaders.ps1 -TargetCommit 69e63f425a：client.h 僅既有 _name 與 mpv_wait_async_requests 註解差異；render.h、render_gl.h、stream_cb.h 無差異。"
     },
     {
       "name": "Zhongfly",
       "repository": "zhongfly/mpv-winbuild",
-      "releaseTag": "2026-08-24-654e9382c0",
-      "releaseUrl": "https://github.com/zhongfly/mpv-winbuild/releases/tag/2026-08-24-654e9382c0",
-      "publishedAt": "2026-08-24T12:30:41Z",
-      "mpvCommit": "654e9382c0",
+      "releaseTag": "2026-09-12-14f2d48cbc",
+      "releaseUrl": "https://github.com/zhongfly/mpv-winbuild/releases/tag/2026-09-12-14f2d48cbc",
+      "publishedAt": "2026-09-12T12:46:48Z",
+      "mpvCommit": "14f2d48cbc",
       "sourceKind": "git-build",
       "cApiStatus": "header-compatible",
       "managedAction": "CommandNamed 已針對 mpv_command_node 具名命令 map 使用 _name；本次無需新增 P/Invoke 或受控型別。",
-      "notes": "Compare-LibMpvHeaders.ps1 -TargetCommit 654e9382c0：client.h 僅既有 _name 與 mpv_wait_async_requests 註解差異；render.h、render_gl.h、stream_cb.h 無差異。"
+      "notes": "Compare-LibMpvHeaders.ps1 -TargetCommit 14f2d48cbc：client.h 僅既有 _name 與 mpv_wait_async_requests 註解差異；render.h、render_gl.h、stream_cb.h 無差異。"
     }
   ]
 }
