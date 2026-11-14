@@ -207,6 +207,9 @@ internal static class DownloadUtility
             // 路徑（DownloadFileAsync），用 Apply() 完整 Chrome 標頭避免 anti-bot。
             BrowserRequestHeaders.ApplyForGitHubApi(request.Headers, userAgent);
             request.Headers.Accept.ParseAdd("application/vnd.github+json");
+            ApplyGitHubAuthentication(request,
+                Environment.GetEnvironmentVariable("GITHUB_TOKEN"),
+                Environment.GetEnvironmentVariable("GH_TOKEN"));
 
             if (!string.IsNullOrEmpty(requestEtag))
             {
@@ -253,6 +256,35 @@ internal static class DownloadUtility
 
                 return (release, responseEtag, false);
             }
+        }
+    }
+
+    /// <summary>
+    /// 僅為官方 GitHub HTTPS API 要求加入環境變數提供的認證，不影響共用用戶端或資產下載。
+    /// </summary>
+    /// <param name="request">
+    /// 要設定的單次 API 要求。
+    /// </param>
+    /// <param name="githubToken">
+    /// GITHUB_TOKEN 的值；空白時使用備援值。
+    /// </param>
+    /// <param name="ghToken">
+    /// GH_TOKEN 的備援值。
+    /// </param>
+    internal static void ApplyGitHubAuthentication(HttpRequestMessage request, string? githubToken, string? ghToken)
+    {
+        Uri? uri = request.RequestUri;
+        if (uri == null || !uri.IsAbsoluteUri || uri.Scheme != Uri.UriSchemeHttps || !uri.IsDefaultPort
+            || !string.Equals(uri.Host, "api.github.com", StringComparison.OrdinalIgnoreCase)
+            || !string.IsNullOrEmpty(uri.UserInfo))
+        {
+            return;
+        }
+
+        string? token = !string.IsNullOrWhiteSpace(githubToken) ? githubToken : ghToken;
+        if (!string.IsNullOrWhiteSpace(token))
+        {
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token!.Trim());
         }
     }
 

@@ -75,6 +75,8 @@ jobs:
 
       - name: Run發行檢查閘門
         shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           .\tools\Invoke-PreReleaseValidation.ps1
 

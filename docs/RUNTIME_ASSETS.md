@@ -22,6 +22,8 @@ runtime/
 
 ## 完整性驗證與來源鎖定
 
+GitHub Releases 中繼資料查詢會優先使用目前處理序的 `GITHUB_TOKEN`，空白時改用 `GH_TOKEN`；未提供時維持匿名。認證僅加入標準 HTTPS 連接埠的 `api.github.com` 單次 API 要求，不加入共用 HTTP 用戶端，也不傳送至自訂鏡像、資產下載或 CDN。GitHub Actions 的發佈前檢查步驟明確傳入內建權杖，以避免共用執行器 IP 的匿名 API 限流；SHA-256 與來源鎖定要求維持不變。
+
 執行階段輔助工具預設要求 GitHub Releases API 提供 `sha256:` digest，並驗證下載內容與該 digest 相符。若需要自訂鏡像來源、舊版發行或內部測試來源，可由呼叫端明確改用 `BestEffort` 相容模式。
 
 - `MpvNativeAssetVerificationPolicy.RequireGitHubDigest`（**預設值**）：要求 GitHub Releases 資產必須提供 `sha256:` digest，下載內容必須驗證一致。

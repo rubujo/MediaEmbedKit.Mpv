@@ -69,6 +69,8 @@ jobs:
         # -IncludeDocSyncCheck：要求提供者下游事實宣告型文件已與 catalog 同步。
         # ci.yml（PR-CI）不開此旗標，留給 release 路徑當最後一道把關（drift 不能上正式版）。
         shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           .\tools\Invoke-PreReleaseValidation.ps1 -IncludeDocSyncCheck
 

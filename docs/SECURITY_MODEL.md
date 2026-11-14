@@ -18,6 +18,12 @@
 
 ## 輔助工具防線
 
+### GitHub API 認證邊界
+
+執行階段中繼資料下載器可讀取 `GITHUB_TOKEN` 或備援的 `GH_TOKEN`。權杖僅加入 `https://api.github.com` 標準連接埠且未含使用者資訊的單次 API 要求；自訂來源、HTTP、非標準連接埠、相似網域與資產 CDN 均不取得權杖。共用 HTTP 用戶端不保存認證標頭，下載完整性策略亦不因認證而降低。
+
+CI 只在發佈前檢查步驟傳入 GitHub Actions 內建權杖，權限維持既有 `contents: read`；發行工作流程維持上傳套件所需的原有權限。不得將權杖寫入快取、下載標記或記錄。
+
 ### GitHub 資產 digest 驗證
 
 `MpvNativeAssetVerificationPolicy.RequireGitHubDigest`（預設）要求 GitHub Releases API 提供 `sha256:` digest，並驗證下載內容與 digest 一致。`RequireProviderChecksum` 額外驗證 提供者發行的總和檢查碼檔（例如 yt-dlp 的 `SHA2-256SUMS`）。

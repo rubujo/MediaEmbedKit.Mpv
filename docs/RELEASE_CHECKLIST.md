@@ -8,6 +8,8 @@
 - [`.github/workflows/ci.yml`](../.github/workflows/ci.yml)：推送至 main / 送往 main 的 PR 觸發；執行不含 GUI 播放的發行檢查閘門（GitHub-hosted runner 無顯示環境）。
 - [`.github/workflows/release.yml`](../.github/workflows/release.yml)：推送 `v*.*.*` 標籤觸發；執行發行檢查閘門並把 `.nupkg` / `.snupkg` 上傳到對應 GitHub Releases。本專案不發行至 nuget.org，使用端流程見 [`docs/CONSUMING_PACKAGES.md`](CONSUMING_PACKAGES.md)。
 
+CI 與發行工作流程的發佈前檢查步驟會傳入內建 `GITHUB_TOKEN`，讓執行階段下載器以已驗證身分查詢 GitHub Releases API，避免共用執行器 IP 遭匿名限流。不得因下載限流而略過整合測試或降低完整性驗證。本機可選擇提供 `GITHUB_TOKEN` 或 `GH_TOKEN`，未提供時維持匿名；認證邊界見 [`SECURITY_MODEL.md`](SECURITY_MODEL.md#github-api-認證邊界)。
+
 ## 必要檢查
 
 執行完整本機驗證：

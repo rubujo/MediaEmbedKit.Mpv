@@ -92,9 +92,53 @@ internal static class Program
         runner.Add("HTTPS 憑證釘選驗證與關閉開關", VerifyDownloadUtilityCertPinning);
 
         runner.Add("Direct3D 11 結構符合 C API 2.6 ABI", VerifyD3D11Abi);
+        runner.Add("GitHub API 認證限定官方 HTTPS 來源", VerifyGitHubApiAuthentication);
 
         await runner.RunAsync().ConfigureAwait(false);
         return runner.FailedCount == 0 ? 0 : 1;
+    }
+
+    /// <summary>
+    /// 驗證認證優先序、匿名情況與自訂來源不得取得權杖的邊界。
+    /// </summary>
+    /// <returns>
+    /// 已完成的驗證工作。
+    /// </returns>
+    private static Task VerifyGitHubApiAuthentication()
+    {
+        const string official = "https://api.github.com/repos/mpv-player/mpv/releases/latest";
+        using (var request = new HttpRequestMessage(HttpMethod.Get, official))
+        {
+            DownloadUtility.ApplyGitHubAuthentication(request, "primary-test-token", "fallback-test-token");
+            AssertEx.Equal("Bearer", request.Headers.Authorization?.Scheme, "官方 API 使用 Bearer 認證。");
+            AssertEx.Equal("primary-test-token", request.Headers.Authorization?.Parameter, "GITHUB_TOKEN 優先。");
+        }
+        using (var request = new HttpRequestMessage(HttpMethod.Get, official))
+        {
+            DownloadUtility.ApplyGitHubAuthentication(request, " ", "fallback-test-token");
+            AssertEx.Equal("fallback-test-token", request.Headers.Authorization?.Parameter, "空白主權杖應使用 GH_TOKEN。");
+        }
+        using (var request = new HttpRequestMessage(HttpMethod.Get, official))
+        {
+            DownloadUtility.ApplyGitHubAuthentication(request, null, " ");
+            AssertEx.True(request.Headers.Authorization == null, "未提供權杖時維持匿名。");
+        }
+        foreach (string uri in new[]
+        {
+            "http://api.github.com/repos/example/releases/latest",
+            "https://api.github.com:8443/repos/example/releases/latest",
+            "https://api.github.com.example.test/repos/example/releases/latest",
+            "https://mirror.example.test/releases/latest",
+            "https://github.com/example/releases/download/test/archive.7z",
+            "https://objects.githubusercontent.com/archive.7z",
+            "https://user@api.github.com/repos/example/releases/latest"
+        })
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, uri);
+            DownloadUtility.ApplyGitHubAuthentication(request, "primary-test-token", "fallback-test-token");
+            AssertEx.True(request.Headers.Authorization == null, "權杖不得傳送至 " + uri);
+        }
+        return Task.CompletedTask;
     }
 
     /// <summary>
