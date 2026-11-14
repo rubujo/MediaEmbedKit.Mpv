@@ -95,5 +95,13 @@ public enum MpvRenderParamType
     /// <summary>
     /// 指定軟體 render 緩衝區指標。
     /// </summary>
-    SoftwarePointer = 20
+    SoftwarePointer = 20,
+    /// <summary>
+    /// 指定 Direct3D 11 初始化參數；需要 C API 2.6。
+    /// </summary>
+    D3D11InitParams = 21,
+    /// <summary>
+    /// 指定 Direct3D 11 紋理目標；需要 C API 2.6。
+    /// </summary>
+    D3D11Fbo = 22
 }

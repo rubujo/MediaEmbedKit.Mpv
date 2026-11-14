@@ -1,4 +1,4 @@
-<Solution>
+﻿<Solution>
   <Folder Name="/src/">
     <Project Path="src/MediaEmbedKit.Mpv/MediaEmbedKit.Mpv.csproj" />
     <Project Path="src/MediaEmbedKit.Mpv.Externals/MediaEmbedKit.Mpv.Externals.csproj" />
@@ -86,6 +86,7 @@
     <File Path="docs/ai/skills/mediaembedkit-mpv.md" />
   </Folder>
   <Folder Name="/方案項目/docs/runtime/">
+    <File Path="docs/runtime/D3D11_VALIDATION.md" />
     <File Path="docs/runtime/libmpv-git-builds.json" />
   </Folder>
   <Folder Name="/方案項目/tools/">

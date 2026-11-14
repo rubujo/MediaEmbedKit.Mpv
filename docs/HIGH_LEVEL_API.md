@@ -333,7 +333,7 @@ mpv 的 encoding mode 允許把 player 當作一次性轉碼器：設定 `o=...`
 | FFmpeg（shinchiro / zhongfly build 內建） | git master commits（2026-04+，內含 SVT-AV1 two-pass patch `5ba2525`，2026-02-25）；對應 stable 為 FFmpeg 8.1 "Hoare"（2026-03-16） |
 | SVT-AV1 | `4.0`（2026-01-13） |
 
-可用編碼器（依 shinchiro 20260903 / zhongfly 2026-09-12 build）：
+可用編碼器（依 shinchiro 20261111 / zhongfly 2026-11-13 build）：
 
 - 視訊：`libx264` / `libx265` / `libvpx-vp9` / `libsvtav1` / `libaom-av1` / `*_nvenc` / `*_qsv` / `*_amf`
 - 音訊：`aac`（內建） / `libopus` / `libmp3lame`
@@ -469,3 +469,7 @@ builder 路徑適合需要混合其他 `Use*` 設定（hwdec、yt-dlp 格式、l
 | `player.ObserveProperty(...)` + `PropertyChanged` 事件 | `player.WatchProperty<double>(..., onNext)` |
 | 直接覆蓋 `libmpv-2.dll` | `MpvLibraryUpdateScheduler.StageAsync` + `ApplyStagedOnStartup` |
 | 自己解析 `demuxer-cache-state` 節點 | `player.GetDemuxerCacheState()` 取 `MpvDemuxerCacheState` |
+
+## 提供者 C API 2.6 查核限制
+
+2026-11-14 已查核兩家提供者的公開標頭；新增 Direct3D 11 參數與結構僅有底層對應，尚未提供高階繪製內容。Direct3D 11 會使用且不還原裝置的即時內容狀態，呼叫端須負責狀態與跨裝置同步。兩家建置已通過硬體與 WARP 裝置的紅、藍影像紋理讀回與視窗呈現驗證，硬體裝置另通過 H.264 d3d11va 解碼，詳見 [`runtime/D3D11_VALIDATION.md`](runtime/D3D11_VALIDATION.md)。此探測不代表所有播放情境或上列編碼器均已實測。

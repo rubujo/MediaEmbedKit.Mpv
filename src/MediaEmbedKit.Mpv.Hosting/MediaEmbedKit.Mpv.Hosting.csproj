@@ -3,6 +3,8 @@
     <TargetFrameworks>netstandard2.0;net472;net48;net10.0</TargetFrameworks>
     <AssemblyName>MediaEmbedKit.Mpv.Hosting</AssemblyName>
     <RootNamespace>MediaEmbedKit.Mpv.Hosting</RootNamespace>
+    <!-- 各目標都產生參考組件，讓 Roslyn 工作區可正確對應多目標專案參考。 -->
+    <ProduceReferenceAssembly>true</ProduceReferenceAssembly>
     <Description>MediaEmbedKit.Mpv 的 Microsoft.Extensions.DependencyInjection 整合，提供 IMpvPlayerFactory 與 AddMpvPlayerFactory 輔助方法。</Description>
     <PackageId>MediaEmbedKit.Mpv.Hosting</PackageId>
     <Title>MediaEmbedKit.Mpv.Hosting</Title>

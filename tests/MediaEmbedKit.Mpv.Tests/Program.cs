@@ -91,8 +91,24 @@ internal static class Program
         runner.Add("PackageVersion 與 docs/CONSUMING_PACKAGES.md 同步", VerifyPackageVersionInConsumingDoc);
         runner.Add("HTTPS 憑證釘選驗證與關閉開關", VerifyDownloadUtilityCertPinning);
 
+        runner.Add("Direct3D 11 結構符合 C API 2.6 ABI", VerifyD3D11Abi);
+
         await runner.RunAsync().ConfigureAwait(false);
         return runner.FailedCount == 0 ? 0 : 1;
+    }
+
+    /// <summary>
+    /// 驗證 Direct3D 11 結構大小與欄位偏移符合原生 ABI。
+    /// </summary>
+    private static Task VerifyD3D11Abi()
+    {
+        AssertEx.Equal(21, (int)MpvRenderParamType.D3D11InitParams, "初始化參數值。");
+        AssertEx.Equal(22, (int)MpvRenderParamType.D3D11Fbo, "紋理參數值。");
+        AssertEx.Equal(IntPtr.Size, Marshal.SizeOf<MpvD3D11InitParams>(), "裝置結構大小。");
+        AssertEx.Equal(IntPtr.Size, Marshal.SizeOf<MpvD3D11Fbo>(), "紋理結構大小。");
+        AssertEx.Equal(IntPtr.Zero, Marshal.OffsetOf<MpvD3D11InitParams>(nameof(MpvD3D11InitParams.Device)), "裝置欄位偏移。");
+        AssertEx.Equal(IntPtr.Zero, Marshal.OffsetOf<MpvD3D11Fbo>(nameof(MpvD3D11Fbo.Texture)), "紋理欄位偏移。");
+        return Task.CompletedTask;
     }
 
     /// <summary>

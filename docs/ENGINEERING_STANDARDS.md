@@ -99,7 +99,22 @@ Markdown 文件應使用正式、精煉且一致的正體中文臺灣地區用�
 
 ## 驗證
 
+### .NET MAUI Windows 工作負載
+
+本方案只需要 `maui-windows`，不需要 Tizen。若 Windows 目標出現要求 `maui-tizen` 的 `NETSDK1147`，先檢查 `dotnet workload list`、目前 SDK 使用的工作負載資訊清單，以及 `dotnet/packs/Microsoft.Maui.Sdk` 的版本是否一致。只有安裝紀錄而缺少資訊清單指定的 SDK 套件時，也可能出現此提示；不得停用工作負載檢查來略過問題。
+
+2026-11-14 本機的 .NET SDK 10.0.404 使用 MAUI 10.0.0 資訊清單，但只存在 10.0.110 與 11.0.0 SDK 套件。以下命令補齊資訊清單指定的 Windows 工作負載後，MAUI Windows 目標可正常建置：
+
+```powershell
+dotnet workload install maui-windows --skip-manifest-update --source https://api.nuget.org/v3/index.json
+dotnet build .\MediaEmbedKit.Mpv.slnx -m:1 -nr:false
+```
+
+此命令會修改本機 .NET 安裝，並可能修復其他已登記工作負載的相依套件及清理未被安裝紀錄引用的套件。本次安裝器亦修復既有 WebAssembly、iOS、Android 與 Mac Catalyst 相依套件，並清理未被引用的 MAUI 11 套件；其他環境應先核對實際版本。命令選項以 [Microsoft 官方文件](https://learn.microsoft.com/dotnet/core/tools/dotnet-workload-install) 為準。
+
 程式碼、專案檔、套件版本或共用 API 變更後執行：
+
+`MediaEmbedKit.Mpv.Hosting` 的所有目標都明確產生參考組件（`ProduceReferenceAssembly=true`），確保 Roslyn 工作區能對應多目標專案參考。若格式工具提示缺少相符的中繼資料參考，須先修復參考組件及專案對應，不得只隱藏工作區警告。
 
 ```powershell
 dotnet format .\MediaEmbedKit.Mpv.slnx --no-restore

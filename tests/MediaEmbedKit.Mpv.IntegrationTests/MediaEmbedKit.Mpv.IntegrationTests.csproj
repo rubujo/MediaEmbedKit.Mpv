@@ -5,6 +5,7 @@
     <AssemblyName>MediaEmbedKit.Mpv.IntegrationTests</AssemblyName>
     <RootNamespace>MediaEmbedKit.Mpv.IntegrationTests</RootNamespace>
     <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 

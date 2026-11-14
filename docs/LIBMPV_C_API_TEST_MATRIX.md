@@ -7,7 +7,7 @@
 | 項目 | 狀態 |
 | --- | --- |
 | 官方基準 | mpv v0.41.0 |
-| 提供者對齊 | shinchiro `20260903` / mpv `69e63f425a`；zhongfly `2026-09-12-14f2d48cbc` / mpv `14f2d48cbc` |
+| 提供者對齊 | shinchiro `20261111` / mpv `bcde6b93cc`；zhongfly `2026-11-13-fe753a7824` / mpv `fe753a7824` |
 | 公開匯出函式 | 官方標頭 54 個；`MpvNative` P/Invoke 54 個 |
 | 列舉與旗標 | `MpvErrorCode`、`MpvFormat`、`MpvLogLevel`、`MpvEndFileReason`、render 相關列舉已對齊 v0.41.0 |
 | 原生資料結構 | 事件、節點、stream callback、OpenGL、DRM、render frame info 與 `mpv_byte_array` 皆有受控對應 |
@@ -29,13 +29,19 @@
 
 ## render.h 與 render_gl.h
 
-已比對 shinchiro git build `69e63f425a` 與 zhongfly git build `14f2d48cbc`，未發現相對 stable v0.41.0 的公開 header 形狀差異。
+已比對 shinchiro git build `bcde6b93cc` 與 zhongfly git build `fe753a7824`；相對 stable v0.41.0 的公開標頭查核結果請見提供者對齊紀錄。
 
 | 區域 | 受控入口 | 驗證狀態 |
 | --- | --- | --- |
 | OpenGL render API | `MpvOpenGlRenderContext` | 已驗證 context 建立錯誤、無 OpenGL 函式位址錯誤、更新旗標、frame info 與 `ReportSwap()` 呼叫路徑。 |
 | software render API | `MpvSoftwareRenderContext` | 已驗證 context 建立或 runtime 不支援錯誤、stride、像素格式、錯誤尺寸與 `ReportSwap()` 呼叫路徑。 |
 | render 參數 | `SetParameter()`、`GetInformation()`、ICC、環境光、skip rendering | 已驗證 skip rendering、ICC 清除、環境光設定、frame info 與錯誤參數。 |
+
+### C API 2.6 新增項目
+
+兩家提供者的四個既有標頭內容相同。相對 stable v0.41.0，新增 Direct3D 11 參數 21、22、後端名稱 `d3d11` 與 `render_d3d11.h` 的兩個單指標結構。`MpvRenderParamType`、`MpvD3D11InitParams` 與 `MpvD3D11Fbo` 已對應；公開匯出函式未增加。尚未提供高階 Direct3D 11 繪製內容。既有 UI 後端維持原配置。
+
+2026-11-14 已在 Windows x64 以兩家對齊建置完成硬體及 WARP 裝置的實際紋理繪製：連續載入紅、藍 PPM 影像，透過 `mpv_render_context_render` 繪入 `ID3D11Texture2D`，複製至 CPU 可讀紋理並檢查中心 32 × 32 像素。4 組全部通過；詳細版本、DLL SHA-256 與重現方式見 [`runtime/D3D11_VALIDATION.md`](runtime/D3D11_VALIDATION.md)。追加交換鏈視窗呈現與 H.264 d3d11va 硬體解碼驗證皆已通過；不涵蓋 HDR 與跨裝置共用，ARM64 實機依指示略過。
 
 ## stream_cb.h
 

@@ -36,7 +36,7 @@ internal static class Program
     /// 測試執行進入點。
     /// </summary>
     /// <param name="args">
-    /// 命令列引數；目前僅支援 <c>--scheduler-only</c>。
+    /// 命令列引數；支援 <c>--scheduler-only</c>、<c>--d3d11-only</c> 與 <c>--d3d11-full</c>。
     /// </param>
     /// <returns>
     /// 所有測試通過時傳回 0，否則傳回 1。
@@ -44,6 +44,20 @@ internal static class Program
     private static async Task<int> Main(string[] args)
     {
         ConfigureConsoleEncoding();
+        if (args.Length == 1 && (args[0] == "--d3d11-only" || args[0] == "--d3d11-full"))
+        {
+            try
+            {
+                string directory = await RuntimeResolver.ResolveAsync().ConfigureAwait(false);
+                D3D11RenderProbe.Run(directory, args[0] == "--d3d11-full");
+                return 0;
+            }
+            catch (Exception exception)
+            {
+                Console.Error.WriteLine(exception);
+                return 1;
+            }
+        }
         if (args.Length > 0 && string.Equals(args[0], SchedulerOnlyArgument, StringComparison.Ordinal))
         {
             try

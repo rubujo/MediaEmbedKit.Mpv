@@ -1,6 +1,6 @@
 # 參考來源
 
-本文件列出專案規範採用的主要來源。最後查核日期：2026-09-13。
+本文件列出專案規範採用的主要來源。最後查核日期：2026-11-14。
 
 ## libmpv 與 mpv
 
@@ -11,6 +11,8 @@
 - mpv 安裝頁：https://mpv.io/installation/
 - mpv v0.41.0 headers：https://github.com/mpv-player/mpv/tree/v0.41.0/include/mpv
 - mpv interface changes：https://github.com/mpv-player/mpv/blob/master/DOCS/interface-changes.rst
+
+- mpv C API 2.6 Direct3D 11 標頭：https://github.com/mpv-player/mpv/blob/fe753a7824/include/mpv/render_d3d11.h
 
 ## .NET 與 UI
 

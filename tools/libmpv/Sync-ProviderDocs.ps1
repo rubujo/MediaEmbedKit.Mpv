@@ -80,8 +80,8 @@ $edits = @(
     }
     @{
         Path        = 'docs/LIBMPV_C_API_TEST_MATRIX.md'
-        Pattern     = '(?m)^已比對[^\r\n]+未發現相對 stable v0\.41\.0 的公開 header 形狀差異。'
-        Replacement = "已比對 $builtPhrase，未發現相對 stable v0.41.0 的公開 header 形狀差異。"
+        Pattern     = '(?m)^已比對[^\r\n]+'
+        Replacement = "已比對 $builtPhrase；相對 stable v0.41.0 的公開標頭查核結果請見提供者對齊紀錄。"
     }
     @{
         Path        = 'docs/HIGH_LEVEL_API.md'

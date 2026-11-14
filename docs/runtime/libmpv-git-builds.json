@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "lastCheckedDate": "2026-09-13",
+  "lastCheckedDate": "2026-11-14",
   "stableBaseline": {
     "mpvTag": "v0.41.0",
     "clientApiVersion": "2.5",
@@ -15,26 +15,26 @@
     {
       "name": "Shinchiro",
       "repository": "shinchiro/mpv-winbuild-cmake",
-      "releaseTag": "20260903",
-      "releaseUrl": "https://github.com/shinchiro/mpv-winbuild-cmake/releases/tag/20260903",
-      "publishedAt": "2026-09-03T00:47:54Z",
-      "mpvCommit": "69e63f425a",
+      "releaseTag": "20261111",
+      "releaseUrl": "https://github.com/shinchiro/mpv-winbuild-cmake/releases/tag/20261111",
+      "publishedAt": "2026-11-11T00:54:46Z",
+      "mpvCommit": "bcde6b93cc",
       "sourceKind": "git-build",
-      "cApiStatus": "header-compatible",
-      "managedAction": "CommandNamed 已針對 mpv_command_node 具名命令 map 使用 _name；本次無需新增 P/Invoke 或受控型別。",
-      "notes": "Compare-LibMpvHeaders.ps1 -TargetCommit 69e63f425a：client.h 僅既有 _name 與 mpv_wait_async_requests 註解差異；render.h、render_gl.h、stream_cb.h 無差異。"
+      "cApiStatus": "header-additions",
+      "managedAction": "已補齊 C API 2.6 的 Direct3D 11 參數列舉與原生結構；未新增高階繪製內容或切換 UI 後端。",
+      "notes": "相對 v0.41.0：client.h 升為 2.6；render.h 新增參數 21、22 與 d3d11 後端名稱，render_d3d11.h 新增兩個單指標結構；render_gl.h、stream_cb.h 無差異。2026-11-14 已在 Windows x64 通過硬體與 WARP 裝置的紅、藍影像紋理讀回及交換鏈視窗呈現，硬體裝置另通過 H.264 d3d11va 解碼，警告與錯誤皆為 0；詳見 D3D11_VALIDATION.md。"
     },
     {
       "name": "Zhongfly",
       "repository": "zhongfly/mpv-winbuild",
-      "releaseTag": "2026-09-12-14f2d48cbc",
-      "releaseUrl": "https://github.com/zhongfly/mpv-winbuild/releases/tag/2026-09-12-14f2d48cbc",
-      "publishedAt": "2026-09-12T12:46:48Z",
-      "mpvCommit": "14f2d48cbc",
+      "releaseTag": "2026-11-13-fe753a7824",
+      "releaseUrl": "https://github.com/zhongfly/mpv-winbuild/releases/tag/2026-11-13-fe753a7824",
+      "publishedAt": "2026-11-13T12:34:07Z",
+      "mpvCommit": "fe753a7824",
       "sourceKind": "git-build",
-      "cApiStatus": "header-compatible",
-      "managedAction": "CommandNamed 已針對 mpv_command_node 具名命令 map 使用 _name；本次無需新增 P/Invoke 或受控型別。",
-      "notes": "Compare-LibMpvHeaders.ps1 -TargetCommit 14f2d48cbc：client.h 僅既有 _name 與 mpv_wait_async_requests 註解差異；render.h、render_gl.h、stream_cb.h 無差異。"
+      "cApiStatus": "header-additions",
+      "managedAction": "已補齊 C API 2.6 的 Direct3D 11 參數列舉與原生結構；未新增高階繪製內容或切換 UI 後端。",
+      "notes": "相對 v0.41.0：client.h 升為 2.6；render.h 新增參數 21、22 與 d3d11 後端名稱，render_d3d11.h 新增兩個單指標結構；render_gl.h、stream_cb.h 無差異。2026-11-14 已在 Windows x64 通過硬體與 WARP 裝置的紅、藍影像紋理讀回及交換鏈視窗呈現，硬體裝置另通過 H.264 d3d11va 解碼，警告與錯誤皆為 0；詳見 D3D11_VALIDATION.md。"
     }
   ]
 }

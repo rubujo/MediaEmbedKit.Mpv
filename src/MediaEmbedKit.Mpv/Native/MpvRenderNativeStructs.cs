@@ -230,3 +230,27 @@ internal struct MpvRenderFrameInfo
     /// </summary>
     public long TargetTime;
 }
+
+/// <summary>
+/// 對應 C API 2.6 的 mpv_d3d11_init_params。
+/// </summary>
+[StructLayout(LayoutKind.Sequential)]
+internal struct MpvD3D11InitParams
+{
+    /// <summary>
+    /// ID3D11Device 指標；libmpv 建立繪製內容時會保留裝置參考。
+    /// </summary>
+    public IntPtr Device;
+}
+
+/// <summary>
+/// 對應 C API 2.6 的 mpv_d3d11_fbo。
+/// </summary>
+[StructLayout(LayoutKind.Sequential)]
+internal struct MpvD3D11Fbo
+{
+    /// <summary>
+    /// 呼叫端持有、由同一裝置建立的 ID3D11Texture2D 指標。
+    /// </summary>
+    public IntPtr Texture;
+}
